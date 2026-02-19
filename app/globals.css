@@ -303,6 +303,12 @@ body {
   overflow-x: auto;
 }
 
+.pm-page .ProseMirror hr {
+  border: 0;
+  border-top: 1px solid #c4c4c4;
+  margin: 10px 0;
+}
+
 /* ── Tablo wrapper & drag handle ── */
 .pm-table-wrapper {
   position: relative;

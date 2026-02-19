@@ -21,6 +21,92 @@ import TableContextMenu from "./TableContextMenu";
 import { Popover, PopoverAnchor, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 
 // ── Schema ────────────────────────────────────────────────────────────────
+const normalizeTextAlign = (value: string | null | undefined) => {
+  if (!value) return "left";
+  const v = value.trim().toLowerCase();
+  if (v === "left" || v === "center" || v === "right" || v === "justify") return v;
+  return "left";
+};
+
+const normalizeIndent = (value: unknown) => {
+  const n = typeof value === "number" ? value : Number.parseInt(String(value ?? "0"), 10);
+  if (Number.isNaN(n)) return 0;
+  return Math.max(0, Math.min(12, n));
+};
+
+const parseIndentFromDom = (el: HTMLElement) => {
+  const dataIndent = el.getAttribute("data-indent");
+  if (dataIndent !== null) return normalizeIndent(dataIndent);
+  const marginLeft = el.style.marginLeft || "";
+  if (!marginLeft) return 0;
+  const px = Number.parseFloat(marginLeft);
+  if (Number.isNaN(px)) return 0;
+  return normalizeIndent(Math.round(px / 24));
+};
+
+const paragraphNodeSpec = {
+  ...basicSchema.spec.nodes.get("paragraph"),
+  attrs: {
+    textAlign: { default: "left" },
+    indent: { default: 0 },
+  },
+  parseDOM: [{
+    tag: "p",
+    getAttrs(dom: Node | string) {
+      if (typeof dom === "string") return { textAlign: "left", indent: 0 };
+      const el = dom as HTMLElement;
+      return {
+        textAlign: normalizeTextAlign(el.style.textAlign),
+        indent: parseIndentFromDom(el),
+      };
+    },
+  }],
+  toDOM(node: PMNode) {
+    const textAlign = normalizeTextAlign(node.attrs.textAlign);
+    const indent = normalizeIndent(node.attrs.indent);
+    const style: string[] = [];
+    if (textAlign !== "left") style.push(`text-align:${textAlign}`);
+    if (indent > 0) style.push(`margin-left:${indent * 24}px`);
+    const attrs: Record<string, string> = {};
+    if (style.length) attrs.style = style.join(";");
+    if (indent > 0) attrs["data-indent"] = String(indent);
+    return ["p", attrs, 0];
+  },
+};
+
+const headingNodeSpec = {
+  ...basicSchema.spec.nodes.get("heading"),
+  attrs: {
+    level: { default: 1 },
+    textAlign: { default: "left" },
+    indent: { default: 0 },
+  },
+  parseDOM: [1, 2, 3, 4, 5, 6].map((level) => ({
+    tag: `h${level}`,
+    getAttrs(dom: Node | string) {
+      if (typeof dom === "string") return { level, textAlign: "left", indent: 0 };
+      const el = dom as HTMLElement;
+      return {
+        level,
+        textAlign: normalizeTextAlign(el.style.textAlign),
+        indent: parseIndentFromDom(el),
+      };
+    },
+  })),
+  toDOM(node: PMNode) {
+    const level = node.attrs.level || 1;
+    const textAlign = normalizeTextAlign(node.attrs.textAlign);
+    const indent = normalizeIndent(node.attrs.indent);
+    const style: string[] = [];
+    if (textAlign !== "left") style.push(`text-align:${textAlign}`);
+    if (indent > 0) style.push(`margin-left:${indent * 24}px`);
+    const attrs: Record<string, string> = {};
+    if (style.length) attrs.style = style.join(";");
+    if (indent > 0) attrs["data-indent"] = String(indent);
+    return [`h${level}`, attrs, 0];
+  },
+};
+
 const imageNodeSpec = {
   inline: true,
   group: "inline",
@@ -80,7 +166,14 @@ const imageNodeSpec = {
 };
 
 const mySchema = new Schema({
-  nodes: (addListNodes(basicSchema.spec.nodes.update("image", imageNodeSpec as any), "paragraph block*", "block") as any)
+  nodes: (addListNodes(
+    basicSchema.spec.nodes
+      .update("paragraph", paragraphNodeSpec as any)
+      .update("heading", headingNodeSpec as any)
+      .update("image", imageNodeSpec as any),
+    "paragraph block*",
+    "block"
+  ) as any)
     .append(tableNodes({ tableGroup: "block", cellContent: "block+", cellAttributes: {} })),
   marks: basicSchema.spec.marks.append({
     underline:     { parseDOM: [{ tag: "u" }],                    toDOM: () => ["u", 0] },
@@ -144,6 +237,34 @@ export function insertTable(rows: number, cols: number) {
   };
 }
 
+function adjustBlockIndentByTab(direction: 1 | -1) {
+  return (state: EditorState, dispatch?: (tr: Transaction) => void): boolean => {
+    // List item içindeyse native list indent/outdent
+    const listCmd =
+      direction > 0
+        ? sinkListItem(mySchema.nodes.list_item)
+        : liftListItem(mySchema.nodes.list_item);
+    if (listCmd(state, dispatch)) return true;
+
+    const { from, to } = state.selection;
+    let tr = state.tr;
+    let changed = false;
+    state.doc.nodesBetween(from, to, (node, pos) => {
+      if (node.type === mySchema.nodes.paragraph || node.type === mySchema.nodes.heading) {
+        const current = normalizeIndent(node.attrs.indent);
+        const next = normalizeIndent(current + direction);
+        if (next !== current) {
+          tr = tr.setNodeMarkup(pos, undefined, { ...node.attrs, indent: next });
+          changed = true;
+        }
+      }
+    });
+    if (!changed) return false;
+    if (dispatch) dispatch(tr.scrollIntoView());
+    return true;
+  };
+}
+
 function buildPlugins() {
   return [
     history(),
@@ -172,8 +293,8 @@ function buildPlugins() {
         if (dispatch) dispatch(state.tr.setSelection(new AllSelection(state.doc)));
         return true;
       },
-      "Tab":       sinkListItem(mySchema.nodes.list_item),
-      "Shift-Tab": liftListItem(mySchema.nodes.list_item),
+      "Tab":       adjustBlockIndentByTab(1),
+      "Shift-Tab": adjustBlockIndentByTab(-1),
       "Enter":     splitListItem(mySchema.nodes.list_item),
     }),
     keymap(baseKeymap),
@@ -413,6 +534,7 @@ type SlashCommandId =
   | "numbered"
   | "quote"
   | "code"
+  | "divider"
   | "table"
   | "emoji";
 
@@ -448,6 +570,7 @@ const SLASH_COMMANDS: Array<{ id: SlashCommandId; title: string; hint: string; k
   { id: "numbered", title: "Numbered List", hint: "Create a numbered list", keywords: ["list", "numbered", "ol"] },
   { id: "quote", title: "Quote", hint: "Insert block quote", keywords: ["quote", "blockquote"] },
   { id: "code", title: "Code Block", hint: "Insert code block", keywords: ["code", "snippet"] },
+  { id: "divider", title: "Divider", hint: "Insert horizontal divider", keywords: ["divider", "line", "hr", "separator"] },
   { id: "table", title: "Table", hint: "Insert 3 × 3 table", keywords: ["table", "grid"] },
   { id: "emoji", title: "Emoji", hint: "Insert 😀 emoji", keywords: ["emoji", "smile", "icon"] },
 ];
@@ -695,6 +818,13 @@ export default function Editor() {
     else if (id === "numbered") wrapInList(mySchema.nodes.ordered_list)(v.state, v.dispatch);
     else if (id === "quote") wrapIn(mySchema.nodes.blockquote)(v.state, v.dispatch);
     else if (id === "code") setBlockType(mySchema.nodes.code_block)(v.state, v.dispatch);
+    else if (id === "divider") {
+      const hr = mySchema.nodes.horizontal_rule.create();
+      const paragraph = mySchema.nodes.paragraph.create();
+      const insertPos = v.state.selection.from;
+      const tr = v.state.tr.insert(insertPos, [hr, paragraph]);
+      v.dispatch(tr.scrollIntoView());
+    }
     else if (id === "table") insertTable(3, 3)(v.state, v.dispatch);
     else if (id === "emoji") v.dispatch(v.state.tr.insertText("😀"));
 
