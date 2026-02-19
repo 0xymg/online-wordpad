@@ -15,7 +15,7 @@ import {
   Undo2, Redo2, Bold, Italic, Underline, Strikethrough,
   AlignLeft, AlignCenter, AlignRight, AlignJustify,
   List, ListOrdered, Outdent, Indent, Link2, Quote,
-  Table, Type, Highlighter, Smile,
+  Table, Type, Highlighter, Smile, ImagePlus,
 } from "lucide-react";
 
 const GRID_ROWS = 8;
@@ -96,6 +96,7 @@ interface ToolbarProps {
   schema: any;
   onInsertTable: (rows: number, cols: number) => void;
   onLinkAdd: () => void;
+  onImageAdd: () => void;
   tick: number;
   pageMarginCm: number;
   onPageMarginChange: (margin: number) => void;
@@ -189,6 +190,7 @@ export default function Toolbar({
   schema,
   onInsertTable,
   onLinkAdd,
+  onImageAdd,
   tick,
   pageMarginCm,
   onPageMarginChange,
@@ -382,6 +384,7 @@ export default function Toolbar({
       content: (
         <>
           <TBtn onClick={onLinkAdd} tip="Link ekle"><Link2 size={15} /></TBtn>
+          <TBtn onClick={onImageAdd} tip="Resim ekle"><ImagePlus size={15} /></TBtn>
           <Popover>
             <Tooltip>
               <TooltipTrigger asChild>
@@ -438,7 +441,7 @@ export default function Toolbar({
 
   return (
     <div ref={toolbarRef} className="border-b border-border bg-background px-2 py-1">
-      <div className="flex items-center gap-2 overflow-hidden">
+      <div className="flex items-center justify-center gap-2 overflow-hidden">
         {visibleGroups.map((group) => (
           <ToolbarGroup key={group.id} className={group.className}>
             {group.content}
@@ -448,7 +451,7 @@ export default function Toolbar({
           <Popover>
             <PopoverTrigger asChild>
               <button
-                className="ml-auto inline-flex h-8 items-center justify-center rounded-md border border-input bg-background px-2 text-sm hover:bg-accent focus-visible:outline-none"
+                className="inline-flex h-8 items-center justify-center rounded-md border border-input bg-background px-2 text-sm hover:bg-accent focus-visible:outline-none"
                 title="More tools"
               >
                 ...

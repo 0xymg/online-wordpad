@@ -18,6 +18,7 @@ import { undo, redo } from "prosemirror-history";
 import { EditorState, Transaction } from "prosemirror-state";
 import { DOMSerializer } from "prosemirror-model";
 import { addColumnAfter, addRowAfter, deleteColumn, deleteRow, deleteTable } from "prosemirror-tables";
+import { Document, Packer, Paragraph, TextRun } from "docx";
 
 interface MenuBarProps {
   viewRef: React.MutableRefObject<EditorView | null>;
@@ -63,6 +64,32 @@ export default function MenuBar({ viewRef, schema }: MenuBarProps) {
     a.click();
   };
 
+  const saveAsDocx = async () => {
+    const v = viewRef.current;
+    if (!v) return;
+
+    const text = v.state.doc.textBetween(0, v.state.doc.content.size, "\n\n", "\n");
+    const lines = text.split("\n");
+
+    const doc = new Document({
+      sections: [
+        {
+          children: lines.length
+            ? lines.map((line) => new Paragraph({
+                children: [new TextRun(line)],
+              }))
+            : [new Paragraph("")],
+        },
+      ],
+    });
+
+    const blob = await Packer.toBlob(doc);
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = "belge.docx";
+    a.click();
+  };
+
   const print = () => {
     window.print();
   };
@@ -77,7 +104,10 @@ export default function MenuBar({ viewRef, schema }: MenuBarProps) {
   };
 
   return (
-    <Menubar className="rounded-none border-x-0 border-t-0 border-b border-border bg-background px-2 h-8">
+    <Menubar className="relative rounded-none border-x-0 border-t-0 border-b border-border bg-background px-2 h-8">
+      <div className="pointer-events-none absolute inset-x-0 top-1/2 -translate-y-1/2 text-center text-[11px] font-semibold tracking-[0.18em] text-muted-foreground/80">
+        EDTR
+      </div>
       {/* File */}
       <MenubarMenu>
         <MenubarTrigger className="text-sm font-normal px-3 py-1 h-7">File</MenubarTrigger>
@@ -91,6 +121,7 @@ export default function MenuBar({ viewRef, schema }: MenuBarProps) {
             <MenubarSubContent>
               <MenubarItem onClick={saveAsHtml}>Save as HTML</MenubarItem>
               <MenubarItem onClick={saveAsTxt}>Plain text (.txt)</MenubarItem>
+              <MenubarItem onClick={saveAsDocx}>Word (.docx)</MenubarItem>
             </MenubarSubContent>
           </MenubarSub>
           <MenubarSeparator />

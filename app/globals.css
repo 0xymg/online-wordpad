@@ -397,6 +397,54 @@ body {
   cursor: pointer;
 }
 
+.pm-page .ProseMirror img {
+  max-width: 100%;
+  height: auto;
+}
+
+.pm-page .ProseMirror img.ProseMirror-selectednode {
+  outline: 2px solid #3b82f6 !important;
+  outline-offset: 2px;
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
+}
+
+.pm-page .ProseMirror .pm-image-wrapper {
+  position: relative;
+  display: inline-block;
+  line-height: 0;
+  vertical-align: baseline;
+}
+
+.pm-page .ProseMirror .pm-image-wrapper.is-selected {
+  outline: 2px solid #3b82f6;
+  outline-offset: 2px;
+}
+
+.pm-page .ProseMirror .pm-image-wrapper .pm-image-handle {
+  position: absolute;
+  width: 8px;
+  height: 8px;
+  background: #3b82f6;
+  border: 1px solid #fff;
+  border-radius: 2px;
+  display: none;
+  z-index: 5;
+  pointer-events: auto;
+}
+
+.pm-page .ProseMirror .pm-image-wrapper.is-selected .pm-image-handle {
+  display: block;
+}
+
+.pm-page .ProseMirror .pm-image-wrapper .pm-image-handle-tl { top: -6px; left: -6px; }
+.pm-page .ProseMirror .pm-image-wrapper .pm-image-handle-tr { top: -6px; right: -6px; }
+.pm-page .ProseMirror .pm-image-wrapper .pm-image-handle-bl { bottom: -6px; left: -6px; }
+.pm-page .ProseMirror .pm-image-wrapper .pm-image-handle-br { bottom: -6px; right: -6px; }
+.pm-page .ProseMirror .pm-image-wrapper .pm-image-handle-tl,
+.pm-page .ProseMirror .pm-image-wrapper .pm-image-handle-br { cursor: nwse-resize !important; }
+.pm-page .ProseMirror .pm-image-wrapper .pm-image-handle-tr,
+.pm-page .ProseMirror .pm-image-wrapper .pm-image-handle-bl { cursor: nesw-resize !important; }
+
 /* ── Dropdown / Popover arkaplanları ── */
 [data-slot="menubar-content"],
 [data-slot="menubar-sub-content"],
