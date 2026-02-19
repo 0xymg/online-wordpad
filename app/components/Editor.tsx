@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useCallback, useState } from "react";
+import { useEffect, useRef, useCallback, useMemo, useState } from "react";
 import { Schema, DOMParser as PMParser, DOMSerializer, Node as PMNode, Mark } from "prosemirror-model";
 import { EditorState, Transaction, AllSelection, TextSelection } from "prosemirror-state";
 import { EditorView } from "prosemirror-view";
@@ -8,7 +8,7 @@ import { schema as basicSchema } from "prosemirror-schema-basic";
 import { addListNodes } from "prosemirror-schema-list";
 import { history, undo, redo } from "prosemirror-history";
 import { keymap } from "prosemirror-keymap";
-import { baseKeymap, toggleMark } from "prosemirror-commands";
+import { baseKeymap, toggleMark, setBlockType, wrapIn } from "prosemirror-commands";
 import { wrapInList, splitListItem, liftListItem, sinkListItem } from "prosemirror-schema-list";
 import { inputRules, wrappingInputRule, textblockTypeInputRule } from "prosemirror-inputrules";
 import { tableEditing, columnResizing, tableNodes, isInTable, findTable, CellSelection, TableMap, TableView } from "prosemirror-tables";
@@ -190,11 +190,160 @@ class TableNodeView {
 
 export { mySchema };
 
+type SlashCommandId =
+  | "text"
+  | "h1"
+  | "h2"
+  | "h3"
+  | "bullet"
+  | "numbered"
+  | "quote"
+  | "code"
+  | "table"
+  | "emoji";
+
+type SlashMenuState = {
+  from: number;
+  query: string;
+  left: number;
+  top: number;
+  selected: number;
+};
+
+const SLASH_MENU_OFFSET = 6;
+const SLASH_MENU_ESTIMATED_HEIGHT = 210;
+const SLASH_MENU_VIEWPORT_PADDING = 8;
+
+const SLASH_COMMANDS: Array<{ id: SlashCommandId; title: string; hint: string; keywords: string[] }> = [
+  { id: "text", title: "Text", hint: "Normal paragraph", keywords: ["paragraph", "normal", "text"] },
+  { id: "h1", title: "Heading 1", hint: "Large section heading", keywords: ["h1", "heading", "title"] },
+  { id: "h2", title: "Heading 2", hint: "Medium section heading", keywords: ["h2", "heading", "subtitle"] },
+  { id: "h3", title: "Heading 3", hint: "Small section heading", keywords: ["h3", "heading"] },
+  { id: "bullet", title: "Bullet List", hint: "Create a bulleted list", keywords: ["list", "bullet", "ul"] },
+  { id: "numbered", title: "Numbered List", hint: "Create a numbered list", keywords: ["list", "numbered", "ol"] },
+  { id: "quote", title: "Quote", hint: "Insert block quote", keywords: ["quote", "blockquote"] },
+  { id: "code", title: "Code Block", hint: "Insert code block", keywords: ["code", "snippet"] },
+  { id: "table", title: "Table", hint: "Insert 3 × 3 table", keywords: ["table", "grid"] },
+  { id: "emoji", title: "Emoji", hint: "Insert 😀 emoji", keywords: ["emoji", "smile", "icon"] },
+];
+
 export default function Editor() {
   const editorRef = useRef<HTMLDivElement>(null);
   const viewRef   = useRef<EditorView | null>(null);
   const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const slashMenuRef = useRef<HTMLDivElement>(null);
+  const slashListRef = useRef<HTMLDivElement>(null);
+  const slashSearchInputRef = useRef<HTMLInputElement>(null);
+  const slashMenuStateRef = useRef<SlashMenuState | null>(null);
+  const slashItemsRef = useRef(SLASH_COMMANDS);
   const [tick, setTick] = useState(0);
+  const [pageMarginCm, setPageMarginCm] = useState(1);
+  const [slashMenu, setSlashMenu] = useState<SlashMenuState | null>(null);
+
+  const slashItems = useMemo(() => {
+    const q = (slashMenu?.query || "").trim().toLowerCase();
+    if (!q) return SLASH_COMMANDS;
+    return SLASH_COMMANDS.filter((item) => {
+      if (item.title.toLowerCase().includes(q)) return true;
+      if (item.hint.toLowerCase().includes(q)) return true;
+      return item.keywords.some((k) => k.includes(q));
+    });
+  }, [slashMenu?.query]);
+
+  const getSlashMenuCoords = useCallback((view: EditorView, pos: number) => {
+    const coords = view.coordsAtPos(pos);
+    const openUp =
+      coords.bottom > (window.innerHeight - SLASH_MENU_ESTIMATED_HEIGHT);
+
+    let top = openUp
+      ? coords.top - SLASH_MENU_ESTIMATED_HEIGHT - SLASH_MENU_OFFSET
+      : coords.bottom + SLASH_MENU_OFFSET;
+
+    top = Math.max(
+      SLASH_MENU_VIEWPORT_PADDING,
+      Math.min(top, window.innerHeight - SLASH_MENU_ESTIMATED_HEIGHT - SLASH_MENU_VIEWPORT_PADDING)
+    );
+
+    const left = Math.max(
+      SLASH_MENU_VIEWPORT_PADDING,
+      Math.min(coords.left, window.innerWidth - 300 - SLASH_MENU_VIEWPORT_PADDING)
+    );
+
+    return { left, top };
+  }, []);
+
+  useEffect(() => {
+    slashMenuStateRef.current = slashMenu;
+  }, [slashMenu]);
+
+  useEffect(() => {
+    slashItemsRef.current = slashItems;
+  }, [slashItems]);
+
+  const refreshSlashMenu = useCallback((view: EditorView) => {
+    setSlashMenu((prev) => {
+      if (!prev) return null;
+      const sel = view.state.selection;
+      if (!sel.empty || sel.from < prev.from + 1) return null;
+
+      const slashText = view.state.doc.textBetween(prev.from, sel.from, "", "");
+      if (!slashText.startsWith("/")) return null;
+
+      const query = slashText.slice(1);
+      if (/\s/.test(query)) return null;
+
+      const coords = getSlashMenuCoords(view, sel.from);
+      return {
+        ...prev,
+        query,
+        left: coords.left,
+        top: coords.top,
+        selected: query === prev.query ? prev.selected : 0,
+      };
+    });
+  }, [getSlashMenuCoords]);
+
+  const openSlashMenu = useCallback((view: EditorView, fromPos: number) => {
+    const selPos = fromPos + 1;
+    const coords = getSlashMenuCoords(view, selPos);
+    setSlashMenu({
+      from: fromPos,
+      query: "",
+      left: coords.left,
+      top: coords.top,
+      selected: 0,
+    });
+  }, [getSlashMenuCoords]);
+
+  const closeSlashMenu = useCallback(() => setSlashMenu(null), []);
+
+  const runSlashCommand = useCallback((id: SlashCommandId) => {
+    const v = viewRef.current;
+    const activeSlashMenu = slashMenuStateRef.current;
+    if (!v || !activeSlashMenu) return;
+
+    const selTo = v.state.selection.from;
+    if (selTo < activeSlashMenu.from) {
+      setSlashMenu(null);
+      return;
+    }
+
+    v.dispatch(v.state.tr.delete(activeSlashMenu.from, selTo));
+
+    if (id === "text") setBlockType(mySchema.nodes.paragraph)(v.state, v.dispatch);
+    else if (id === "h1") setBlockType(mySchema.nodes.heading, { level: 1 })(v.state, v.dispatch);
+    else if (id === "h2") setBlockType(mySchema.nodes.heading, { level: 2 })(v.state, v.dispatch);
+    else if (id === "h3") setBlockType(mySchema.nodes.heading, { level: 3 })(v.state, v.dispatch);
+    else if (id === "bullet") wrapInList(mySchema.nodes.bullet_list)(v.state, v.dispatch);
+    else if (id === "numbered") wrapInList(mySchema.nodes.ordered_list)(v.state, v.dispatch);
+    else if (id === "quote") wrapIn(mySchema.nodes.blockquote)(v.state, v.dispatch);
+    else if (id === "code") setBlockType(mySchema.nodes.code_block)(v.state, v.dispatch);
+    else if (id === "table") insertTable(3, 3)(v.state, v.dispatch);
+    else if (id === "emoji") v.dispatch(v.state.tr.insertText("😀"));
+
+    setSlashMenu(null);
+    v.focus();
+  }, []);
 
   const save = useCallback((state: EditorState) => {
     if (saveTimer.current) clearTimeout(saveTimer.current);
@@ -251,10 +400,52 @@ export default function Editor() {
         dispatch(tr.scrollIntoView());
         return true;
       },
+      handleTextInput(v, from, _to, text) {
+        if (text !== "/") return false;
+        setTimeout(() => {
+          if (!viewRef.current) return;
+          openSlashMenu(viewRef.current, from);
+        }, 0);
+        return false;
+      },
+      handleKeyDown(v, event) {
+        const activeSlashMenu = slashMenuStateRef.current;
+        if (!activeSlashMenu) return false;
+        const activeItems = slashItemsRef.current;
+        if (event.key === "Escape") {
+          event.preventDefault();
+          closeSlashMenu();
+          return true;
+        }
+        if (event.key === "ArrowDown") {
+          event.preventDefault();
+          if (!activeItems.length) return true;
+          setSlashMenu((prev) => prev ? ({ ...prev, selected: (prev.selected + 1) % activeItems.length }) : prev);
+          return true;
+        }
+        if (event.key === "ArrowUp") {
+          event.preventDefault();
+          if (!activeItems.length) return true;
+          setSlashMenu((prev) => prev ? ({
+            ...prev,
+            selected: (prev.selected - 1 + activeItems.length) % activeItems.length,
+          }) : prev);
+          return true;
+        }
+        if (event.key === "Enter") {
+          if (!activeItems.length) return false;
+          event.preventDefault();
+          const picked = activeItems[Math.max(0, Math.min(activeSlashMenu.selected, activeItems.length - 1))];
+          if (picked) runSlashCommand(picked.id);
+          return true;
+        }
+        return false;
+      },
       dispatchTransaction(tr) {
         const next = view.state.apply(tr);
         view.updateState(next);
         setTick(n => n + 1);
+        refreshSlashMenu(view);
         if (tr.docChanged) save(next);
       },
     });
@@ -287,6 +478,29 @@ export default function Editor() {
     v.focus();
   }, []);
 
+  useEffect(() => {
+    if (!slashMenu) return;
+    requestAnimationFrame(() => slashSearchInputRef.current?.focus());
+  }, [slashMenu]);
+
+  useEffect(() => {
+    if (!slashMenu) return;
+    const list = slashListRef.current;
+    if (!list) return;
+    const activeItem = list.querySelector(`[data-slash-index="${slashMenu.selected}"]`) as HTMLElement | null;
+    activeItem?.scrollIntoView({ block: "nearest" });
+  }, [slashMenu?.selected, slashItems.length, slashMenu]);
+
+  useEffect(() => {
+    if (!slashMenu) return;
+    const onPointerDown = (event: MouseEvent) => {
+      if (slashMenuRef.current?.contains(event.target as Node)) return;
+      closeSlashMenu();
+    };
+    document.addEventListener("mousedown", onPointerDown);
+    return () => document.removeEventListener("mousedown", onPointerDown);
+  }, [slashMenu, closeSlashMenu]);
+
   return (
     <div className="flex flex-col h-screen">
       <MenuBar viewRef={viewRef} schema={mySchema} />
@@ -296,12 +510,78 @@ export default function Editor() {
         onInsertTable={handleInsertTable}
         onLinkAdd={handleLinkAdd}
         tick={tick}
+        pageMarginCm={pageMarginCm}
+        onPageMarginChange={setPageMarginCm}
       />
       <div className="editor-shell">
         <TableContextMenu viewRef={viewRef}>
-          <div className="pm-page" ref={editorRef} />
+          <div
+            className="pm-page"
+            ref={editorRef}
+            style={{ ["--page-margin" as any]: `${pageMarginCm}cm` }}
+          />
         </TableContextMenu>
       </div>
+      {slashMenu && (
+        <div
+          ref={slashMenuRef}
+          className="fixed z-[1200] w-[300px] rounded-md border border-border bg-white shadow-lg p-1"
+          style={{ left: slashMenu.left, top: slashMenu.top }}
+        >
+          <input
+            ref={slashSearchInputRef}
+            value={slashMenu.query}
+            onChange={(e) => setSlashMenu((prev) => prev ? ({ ...prev, query: e.target.value, selected: 0 }) : prev)}
+            onKeyDown={(e) => {
+              if (e.key === "ArrowDown") {
+                e.preventDefault();
+                setSlashMenu((prev) => {
+                  if (!prev || !slashItems.length) return prev;
+                  return { ...prev, selected: (prev.selected + 1) % slashItems.length };
+                });
+              } else if (e.key === "ArrowUp") {
+                e.preventDefault();
+                setSlashMenu((prev) => {
+                  if (!prev || !slashItems.length) return prev;
+                  return { ...prev, selected: (prev.selected - 1 + slashItems.length) % slashItems.length };
+                });
+              } else if (e.key === "Enter") {
+                e.preventDefault();
+                const picked = slashItems[Math.max(0, Math.min(slashMenu.selected, slashItems.length - 1))];
+                if (picked) runSlashCommand(picked.id);
+              } else if (e.key === "Escape") {
+                e.preventDefault();
+                closeSlashMenu();
+                viewRef.current?.focus();
+              }
+            }}
+            placeholder="Search commands..."
+            className="mb-1 w-full rounded border border-input bg-background px-2 py-1.5 text-sm outline-none focus:ring-1 focus:ring-ring"
+          />
+          {slashItems.length === 0 ? (
+            <div className="px-2 py-2 text-xs text-muted-foreground">No command found</div>
+          ) : (
+            <div ref={slashListRef} className="max-h-[132px] overflow-y-auto">
+              {slashItems.map((item, idx) => (
+                <button
+                  key={item.id}
+                  data-slash-index={idx}
+                  onMouseDown={(e) => {
+                    e.preventDefault();
+                    runSlashCommand(item.id);
+                  }}
+                  className={`w-full text-left rounded px-2 py-1.5 ${
+                    idx === slashMenu.selected ? "bg-accent text-accent-foreground" : "hover:bg-accent/60"
+                  }`}
+                >
+                  <div className="text-sm font-medium">{item.title}</div>
+                  <div className="text-xs text-muted-foreground">{item.hint}</div>
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 }

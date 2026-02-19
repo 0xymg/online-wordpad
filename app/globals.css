@@ -163,11 +163,12 @@ body {
 
 /* ── A4 beyaz sayfa ── */
 .pm-page {
+  --page-margin: 1cm;
   background: #ffffff;
   width: 794px;
   min-height: 1123px;
   margin: 0 auto;
-  padding: 96px;
+  padding: var(--page-margin);
   box-shadow: 0 2px 8px rgba(0,0,0,0.18);
   overflow: visible;
 }
@@ -175,7 +176,7 @@ body {
 /* ── ProseMirror içerik ── */
 .pm-page .ProseMirror {
   outline: none;
-  min-height: 931px;
+  min-height: calc(1123px - (var(--page-margin) * 2));
   font-family: Arial, sans-serif;
   font-size: 12pt;
   line-height: 1.5;
@@ -184,7 +185,7 @@ body {
 
 .pm-page.ProseMirror {
   outline: none;
-  min-height: 931px;
+  min-height: calc(1123px - (var(--page-margin) * 2));
   font-family: Arial, sans-serif;
   font-size: 12pt;
   line-height: 1.5;
@@ -201,6 +202,79 @@ body {
 .pm-page .ProseMirror ul,
 .pm-page .ProseMirror ol,
 .pm-page ul, .pm-page ol { padding-left: 2em; margin: 0.5em 0; }
+
+.pm-page .ProseMirror ul,
+.pm-page ul {
+  list-style-type: disc;
+  list-style-position: outside;
+}
+
+.pm-page .ProseMirror ol,
+.pm-page ol {
+  list-style-type: decimal;
+  list-style-position: outside;
+}
+
+.pm-page .ProseMirror li,
+.pm-page li {
+  display: list-item !important;
+}
+
+.pm-page .ProseMirror ul > li,
+.pm-page ul > li {
+  list-style-type: disc !important;
+}
+
+.pm-page .ProseMirror ol > li,
+.pm-page ol > li {
+  list-style-type: decimal !important;
+}
+
+/* Fallback markers (Tailwind/reset çatışmalarında da görünür kalsın) */
+.pm-page .ProseMirror ul,
+.pm-page ul {
+  list-style: none !important;
+}
+
+.pm-page .ProseMirror ul > li,
+.pm-page ul > li {
+  position: relative;
+}
+
+.pm-page .ProseMirror ul > li::before,
+.pm-page ul > li::before {
+  content: "•";
+  position: absolute;
+  left: -1.15em;
+  top: 0.05em;
+}
+
+.pm-page .ProseMirror ul ul > li::before,
+.pm-page ul ul > li::before {
+  content: "■";
+}
+
+.pm-page .ProseMirror ol,
+.pm-page ol {
+  list-style: none !important;
+  counter-reset: pm-ol-counter;
+}
+
+.pm-page .ProseMirror ol > li,
+.pm-page ol > li {
+  position: relative;
+  counter-increment: pm-ol-counter;
+}
+
+.pm-page .ProseMirror ol > li::before,
+.pm-page ol > li::before {
+  content: counter(pm-ol-counter) ".";
+  position: absolute;
+  left: -1.55em;
+  min-width: 1.2em;
+  text-align: right;
+  font-weight: 700;
+}
 
 .pm-page .ProseMirror blockquote,
 .pm-page blockquote {

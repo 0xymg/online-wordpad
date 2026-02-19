@@ -17,6 +17,7 @@ import { EditorView } from "prosemirror-view";
 import { undo, redo } from "prosemirror-history";
 import { EditorState, Transaction } from "prosemirror-state";
 import { DOMSerializer } from "prosemirror-model";
+import { addColumnAfter, addRowAfter, deleteColumn, deleteRow, deleteTable } from "prosemirror-tables";
 
 interface MenuBarProps {
   viewRef: React.MutableRefObject<EditorView | null>;
@@ -166,13 +167,29 @@ export default function MenuBar({ viewRef, schema }: MenuBarProps) {
           }}>
             Link
           </MenubarItem>
+        </MenubarContent>
+      </MenubarMenu>
+
+      {/* Table */}
+      <MenubarMenu>
+        <MenubarTrigger className="text-sm font-normal px-3 py-1 h-7">Table</MenubarTrigger>
+        <MenubarContent>
+          <MenubarItem onClick={() => cmd(addColumnAfter)}>
+            Add Column Right
+          </MenubarItem>
+          <MenubarItem onClick={() => cmd(addRowAfter)}>
+            Add Row Below
+          </MenubarItem>
           <MenubarSeparator />
-          <MenubarItem onClick={() => {
-            const r = parseInt(prompt("Rows:", "3") || "3");
-            const c = parseInt(prompt("Columns:", "3") || "3");
-            window.dispatchEvent(new CustomEvent("pm-insert-table", { detail: { rows: r, cols: c } }));
-          }}>
-            Table
+          <MenubarItem onClick={() => cmd(deleteColumn)}>
+            Delete Column
+          </MenubarItem>
+          <MenubarItem onClick={() => cmd(deleteRow)}>
+            Delete Row
+          </MenubarItem>
+          <MenubarSeparator />
+          <MenubarItem onClick={() => cmd(deleteTable)}>
+            Delete Table
           </MenubarItem>
         </MenubarContent>
       </MenubarMenu>
