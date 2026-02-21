@@ -31,7 +31,7 @@ export default function ColorPicker({ color, onChange, tip, icon }: ColorPickerP
             <button
               onMouseDown={(e) => e.preventDefault()}
               className={cn(
-                "inline-flex flex-col items-center justify-center w-8 h-8 rounded-md shrink-0",
+                "inline-flex flex-col items-center justify-center w-10 h-10 rounded shrink-0 cursor-pointer",
                 "hover:bg-accent hover:text-accent-foreground transition-colors",
                 "focus-visible:outline-none",
                 open && "bg-accent text-accent-foreground"
@@ -82,7 +82,7 @@ export default function ColorPicker({ color, onChange, tip, icon }: ColorPickerP
             <button
               key={p}
               onMouseDown={(e) => { e.preventDefault(); onChange(p); }}
-              className="w-5 h-5 rounded-sm border border-black/10 hover:scale-110 transition-transform shrink-0"
+              className="w-5 h-5 rounded-sm border border-black/10 hover:scale-110 transition-transform shrink-0 cursor-pointer"
               style={{ background: p }}
               title={p}
             />

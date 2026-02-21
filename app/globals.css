@@ -309,6 +309,40 @@ body {
   margin: 10px 0;
 }
 
+.pm-page .ProseMirror hr.pm-page-break {
+  border: 0;
+  border-top: 2px dashed #7aa2d8;
+  margin: 18px 0;
+  position: relative;
+  page-break-after: always;
+  break-after: page;
+}
+
+.pm-page .ProseMirror hr.pm-page-break::after {
+  content: "Page Break";
+  position: absolute;
+  right: 0;
+  top: -10px;
+  font-size: 10px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #6a7d95;
+  background: #ffffff;
+  padding: 0 6px;
+}
+
+@media print {
+  .pm-page .ProseMirror hr.pm-page-break {
+    border: 0;
+    margin: 0;
+    height: 0;
+  }
+
+  .pm-page .ProseMirror hr.pm-page-break::after {
+    content: "";
+  }
+}
+
 /* ── Tablo wrapper & drag handle ── */
 .pm-table-wrapper {
   position: relative;

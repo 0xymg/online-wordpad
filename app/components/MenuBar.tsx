@@ -104,10 +104,8 @@ export default function MenuBar({ viewRef, schema }: MenuBarProps) {
   };
 
   return (
-    <Menubar className="relative rounded-none border-x-0 border-t-0 border-b border-border bg-background px-2 h-8">
-      <div className="pointer-events-none absolute inset-x-0 top-1/2 -translate-y-1/2 text-center text-[11px] font-semibold tracking-[0.18em] text-muted-foreground/80">
-        EDTR
-      </div>
+    <Menubar className="relative rounded-none border-x-0 border-t-0 border-b border-border bg-background h-8 px-0 justify-center">
+      <div className="max-w-[850px] w-full mx-auto flex items-center px-3">
       {/* File */}
       <MenubarMenu>
         <MenubarTrigger className="text-sm font-normal px-3 py-1 h-7">File</MenubarTrigger>
@@ -275,6 +273,7 @@ export default function MenuBar({ viewRef, schema }: MenuBarProps) {
           </MenubarItem>
         </MenubarContent>
       </MenubarMenu>
+      </div>
     </Menubar>
   );
 }

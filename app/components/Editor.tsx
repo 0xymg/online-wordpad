@@ -19,6 +19,10 @@ import MenuBar from "./MenuBar";
 import Toolbar from "./Toolbar";
 import TableContextMenu from "./TableContextMenu";
 import { Popover, PopoverAnchor, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import {
+  ArrowClockwise, Crop, FlipHorizontal, FlipVertical,
+  TextAlignLeft, TextAlignCenter, TextAlignRight,
+} from "@phosphor-icons/react";
 
 // ── Schema ────────────────────────────────────────────────────────────────
 const normalizeTextAlign = (value: string | null | undefined) => {
@@ -165,6 +169,18 @@ const imageNodeSpec = {
   },
 };
 
+const pageBreakNodeSpec = {
+  group: "block",
+  atom: true,
+  selectable: true,
+  parseDOM: [{
+    tag: "hr[data-page-break]",
+  }],
+  toDOM() {
+    return ["hr", { "data-page-break": "true", class: "pm-page-break" }];
+  },
+};
+
 const mySchema = new Schema({
   nodes: (addListNodes(
     basicSchema.spec.nodes
@@ -174,7 +190,8 @@ const mySchema = new Schema({
     "paragraph block*",
     "block"
   ) as any)
-    .append(tableNodes({ tableGroup: "block", cellContent: "block+", cellAttributes: {} })),
+    .append(tableNodes({ tableGroup: "block", cellContent: "block+", cellAttributes: {} }))
+    .addToEnd("page_break", pageBreakNodeSpec as any),
   marks: basicSchema.spec.marks.append({
     underline:     { parseDOM: [{ tag: "u" }],                    toDOM: () => ["u", 0] },
     strikethrough: { parseDOM: [{ tag: "s" }, { tag: "strike" }],  toDOM: () => ["s", 0] },
@@ -304,6 +321,24 @@ function buildPlugins() {
       textblockTypeInputRule(/^(#{1,6})\s$/, mySchema.nodes.heading, m => ({ level: m[1].length })),
     ]}),
   ];
+}
+
+export function insertPageBreak() {
+  return (state: EditorState, dispatch?: (tr: Transaction) => void): boolean => {
+    const pageBreakType = mySchema.nodes.page_break;
+    const paragraphType = mySchema.nodes.paragraph;
+    if (!pageBreakType || !paragraphType) return false;
+    if (!dispatch) return true;
+
+    const pageBreak = pageBreakType.create();
+    const paragraph = paragraphType.create();
+    let tr = state.tr.replaceSelectionWith(pageBreak);
+    const insertPos = tr.selection.from;
+    tr = tr.insert(insertPos, paragraph);
+    tr = tr.setSelection(TextSelection.create(tr.doc, insertPos + 1));
+    dispatch(tr.scrollIntoView());
+    return true;
+  };
 }
 
 // ── Table NodeView with drag handle ───────────────────────────────────────
@@ -535,6 +570,7 @@ type SlashCommandId =
   | "quote"
   | "code"
   | "divider"
+  | "page_break"
   | "table"
   | "emoji";
 
@@ -571,6 +607,7 @@ const SLASH_COMMANDS: Array<{ id: SlashCommandId; title: string; hint: string; k
   { id: "quote", title: "Quote", hint: "Insert block quote", keywords: ["quote", "blockquote"] },
   { id: "code", title: "Code Block", hint: "Insert code block", keywords: ["code", "snippet"] },
   { id: "divider", title: "Divider", hint: "Insert horizontal divider", keywords: ["divider", "line", "hr", "separator"] },
+  { id: "page_break", title: "Page Break", hint: "Insert printable page break", keywords: ["page", "break", "new page"] },
   { id: "table", title: "Table", hint: "Insert 3 × 3 table", keywords: ["table", "grid"] },
   { id: "emoji", title: "Emoji", hint: "Insert 😀 emoji", keywords: ["emoji", "smile", "icon"] },
 ];
@@ -825,6 +862,7 @@ export default function Editor() {
       const tr = v.state.tr.insert(insertPos, [hr, paragraph]);
       v.dispatch(tr.scrollIntoView());
     }
+    else if (id === "page_break") insertPageBreak()(v.state, v.dispatch);
     else if (id === "table") insertTable(3, 3)(v.state, v.dispatch);
     else if (id === "emoji") v.dispatch(v.state.tr.insertText("😀"));
 
@@ -999,6 +1037,13 @@ export default function Editor() {
     v.focus();
   }, []);
 
+  const handleInsertPageBreak = useCallback(() => {
+    const v = viewRef.current;
+    if (!v) return;
+    insertPageBreak()(v.state, v.dispatch);
+    v.focus();
+  }, []);
+
   const handleLinkAdd = useCallback(() => {
     const v = viewRef.current;
     if (!v || v.state.selection.empty) { alert("Please select text first."); return; }
@@ -1152,11 +1197,10 @@ export default function Editor() {
         viewRef={viewRef}
         schema={mySchema}
         onInsertTable={handleInsertTable}
+        onPageBreakAdd={handleInsertPageBreak}
         onLinkAdd={handleLinkAdd}
         onImageAdd={handleImageAdd}
         tick={tick}
-        pageMarginCm={pageMarginCm}
-        onPageMarginChange={setPageMarginCm}
       />
       <div className="editor-shell" style={{ backgroundColor: paperBgColor }}>
         <TableContextMenu viewRef={viewRef}>
@@ -1188,26 +1232,26 @@ export default function Editor() {
           <PopoverContent side="bottom" align="center" sideOffset={8} className="w-auto p-1">
             <div className="flex items-center gap-1">
               <button type="button" className="h-8 w-8 rounded hover:bg-accent/70" title="Rotate" aria-label="Rotate" onMouseDown={(e) => e.preventDefault()} onClick={rotateImage}>
-                <svg viewBox="0 0 24 24" className="mx-auto h-4 w-4 fill-none stroke-current stroke-2"><path d="M4 12a8 8 0 1 0 8-8h-1" /><path d="M8 2v4H4" /></svg>
+                <ArrowClockwise className="mx-auto h-4 w-4" />
               </button>
               <button type="button" className="h-8 w-8 rounded hover:bg-accent/70" title="Crop" aria-label="Crop" onMouseDown={(e) => e.preventDefault()} onClick={openCropDialog}>
-                <svg viewBox="0 0 24 24" className="mx-auto h-4 w-4 fill-none stroke-current stroke-2"><path d="M6 2v14a2 2 0 0 0 2 2h14" /><path d="M2 6h14a2 2 0 0 1 2 2v14" /></svg>
+                <Crop className="mx-auto h-4 w-4" />
               </button>
               <button type="button" className="h-8 w-8 rounded hover:bg-accent/70" title="Flip" aria-label="Flip" onMouseDown={(e) => e.preventDefault()} onClick={flipImageHorizontal}>
-                <svg viewBox="0 0 24 24" className="mx-auto h-4 w-4 fill-none stroke-current stroke-2"><path d="M3 12h18" /><path d="M10 5 3 12l7 7" /><path d="M14 5l7 7-7 7" /></svg>
+                <FlipHorizontal className="mx-auto h-4 w-4" />
               </button>
               <button type="button" className="h-8 w-8 rounded hover:bg-accent/70" title="Flip Vertical" aria-label="Flip Vertical" onMouseDown={(e) => e.preventDefault()} onClick={flipImageVertical}>
-                <svg viewBox="0 0 24 24" className="mx-auto h-4 w-4 fill-none stroke-current stroke-2"><path d="M12 3v18" /><path d="m5 10 7-7 7 7" /><path d="m5 14 7 7 7-7" /></svg>
+                <FlipVertical className="mx-auto h-4 w-4" />
               </button>
               <div className="mx-1 h-5 w-px bg-border" />
               <button type="button" className="h-8 w-8 rounded hover:bg-accent/70" title="Align Left" aria-label="Align Left" onMouseDown={(e) => e.preventDefault()} onClick={() => setImageAlign("left")}>
-                <svg viewBox="0 0 24 24" className="mx-auto h-4 w-4 fill-none stroke-current stroke-2"><path d="M4 6h14" /><path d="M4 10h10" /><path d="M4 14h14" /><path d="M4 18h10" /></svg>
+                <TextAlignLeft className="mx-auto h-4 w-4" />
               </button>
               <button type="button" className="h-8 w-8 rounded hover:bg-accent/70" title="Align Center" aria-label="Align Center" onMouseDown={(e) => e.preventDefault()} onClick={() => setImageAlign("center")}>
-                <svg viewBox="0 0 24 24" className="mx-auto h-4 w-4 fill-none stroke-current stroke-2"><path d="M5 6h14" /><path d="M7 10h10" /><path d="M5 14h14" /><path d="M7 18h10" /></svg>
+                <TextAlignCenter className="mx-auto h-4 w-4" />
               </button>
               <button type="button" className="h-8 w-8 rounded hover:bg-accent/70" title="Align Right" aria-label="Align Right" onMouseDown={(e) => e.preventDefault()} onClick={() => setImageAlign("right")}>
-                <svg viewBox="0 0 24 24" className="mx-auto h-4 w-4 fill-none stroke-current stroke-2"><path d="M6 6h14" /><path d="M10 10h10" /><path d="M6 14h14" /><path d="M10 18h10" /></svg>
+                <TextAlignRight className="mx-auto h-4 w-4" />
               </button>
             </div>
           </PopoverContent>
@@ -1318,7 +1362,10 @@ export default function Editor() {
           )}
         </div>
       )}
-      <div className="border-t border-border bg-background/95 px-2 py-1 text-[11px] leading-none">
+      <div className="border-t border-border bg-background/95 px-2 py-1 text-[11px] leading-none relative">
+        <div className="pointer-events-none absolute inset-x-0 top-1/2 -translate-y-1/2 text-center text-[11px] font-semibold tracking-[0.18em] text-muted-foreground/50 select-none">
+          ONLINE WORDPAD
+        </div>
         <div className="flex items-center justify-between gap-2">
           <div className="flex items-center gap-2 text-muted-foreground">
             <span><span className="font-medium text-foreground">{docInfo.selectedType}</span></span>
