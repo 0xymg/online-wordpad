@@ -24,9 +24,10 @@ interface MenuBarProps {
   viewRef: React.MutableRefObject<EditorView | null>;
   schema: any;
   pageMarginCm?: number;
+  onPrint?: () => void;
 }
 
-export default function MenuBar({ viewRef, schema, pageMarginCm = 1 }: MenuBarProps) {
+export default function MenuBar({ viewRef, schema, pageMarginCm = 1, onPrint }: MenuBarProps) {
   const cmd = (command: (state: EditorState, dispatch?: (tr: Transaction) => void) => boolean) => {
     const v = viewRef.current;
     if (!v) return;
@@ -91,55 +92,7 @@ export default function MenuBar({ viewRef, schema, pageMarginCm = 1 }: MenuBarPr
     a.click();
   };
 
-  const print = () => {
-    const v = viewRef.current;
-    if (!v) return;
-    const s = DOMSerializer.fromSchema(schema);
-    const frag = s.serializeFragment(v.state.doc.content);
-    const tmp = document.createElement("div");
-    tmp.appendChild(frag);
-
-    // Sayfadaki tum <style> ve <link rel=stylesheet> taglarini topla
-    const styles = Array.from(document.querySelectorAll('style, link[rel="stylesheet"]'))
-      .map(el => el.outerHTML)
-      .join("\n");
-
-    // pageMarginCm degeri @page margin olarak kullanilir — gercek baski marjini
-    const marginVal = `${pageMarginCm}cm`;
-
-    const html = `<!DOCTYPE html>
-<html>
-<head>
-  <meta charset="utf-8">
-  <title>Print</title>
-  ${styles}
-  <style>
-    @page { margin: ${marginVal}; }
-    body { margin: 0; padding: 0; background: white; }
-    .pm-page {
-      --page-margin: ${marginVal};
-      box-shadow: none !important;
-      margin: 0 auto !important;
-      padding: 0 !important;
-      width: 100% !important;
-      min-height: unset !important;
-    }
-    .pm-page .ProseMirror { min-height: unset !important; }
-  </style>
-</head>
-<body>
-  <div class="pm-page"><div class="ProseMirror">${tmp.innerHTML}</div></div>
-</body>
-</html>`;
-
-    const iframe = document.createElement("iframe");
-    iframe.style.cssText = "position:fixed;top:-9999px;left:-9999px;width:0;height:0;border:0";
-    document.body.appendChild(iframe);
-    const doc = iframe.contentDocument!;
-    doc.open(); doc.write(html); doc.close();
-    iframe.contentWindow!.onafterprint = () => document.body.removeChild(iframe);
-    setTimeout(() => iframe.contentWindow!.print(), 300);
-  };
+  const print = () => onPrint?.();
 
   const selectAll = () => {
     const v = viewRef.current;

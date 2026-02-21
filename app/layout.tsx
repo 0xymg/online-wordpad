@@ -14,8 +14,17 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "WordPad - Online Metin Editörü",
-  description: "Hızlı ve basit online metin editörü",
+  title: {
+    default: "Online WordPad — Free Browser Word Processor",
+    template: "%s | Online WordPad",
+  },
+  description:
+    "Free browser-based word processor. Rich text, tables, images, export to DOCX/HTML/TXT, and print. No install, no login required.",
+  metadataBase: new URL("https://wordpad.online"),
+  robots: {
+    index: true,
+    follow: true,
+  },
 };
 
 export default function RootLayout({

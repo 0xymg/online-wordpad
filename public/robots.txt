@@ -1,0 +1,7 @@
+User-agent: *
+Allow: /
+Allow: /pad
+Allow: /llms.txt
+Allow: /llms.md
+
+Sitemap: https://wordpad.online/sitemap.xml

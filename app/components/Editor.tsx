@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useCallback, useMemo, useState } from "react";
+import { useReactToPrint } from "react-to-print";
 import { Schema, DOMParser as PMParser, DOMSerializer, Node as PMNode, Mark } from "prosemirror-model";
 import { EditorState, Transaction, AllSelection, TextSelection, NodeSelection } from "prosemirror-state";
 import { EditorView } from "prosemirror-view";
@@ -728,6 +729,30 @@ export default function Editor() {
   const [pageMarginCm, setPageMarginCm] = useState(1);
   const [zoomPercent, setZoomPercent] = useState(100);
   const [paperBgColor, setPaperBgColor] = useState("#ccd6e5");
+
+  const handlePrint = useReactToPrint({
+    contentRef: editorRef,
+    pageStyle: `
+      @page { size: A4; margin: ${pageMarginCm}cm; }
+      body { margin: 0 !important; padding: 0 !important; background: white !important; }
+      .pm-page {
+        zoom: 1 !important;
+        box-shadow: none !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        width: 100% !important;
+        min-height: unset !important;
+      }
+      hr.pm-page-break {
+        border: 0 !important;
+        margin: 0 !important;
+        height: 0 !important;
+        page-break-after: always !important;
+        break-after: page !important;
+      }
+      hr.pm-page-break::after { content: "" !important; display: none !important; }
+    `,
+  });
   const [slashMenu, setSlashMenu] = useState<SlashMenuState | null>(null);
   const [imagePopover, setImagePopover] = useState<ImagePopoverState | null>(null);
   const [cropDialogOpen, setCropDialogOpen] = useState(false);
@@ -1190,9 +1215,21 @@ export default function Editor() {
     return () => window.removeEventListener("keydown", onKeyDown);
   }, [cropDialogOpen]);
 
+  // Ctrl+P → menüdeki Print ile aynı şeyi çağır
+  useEffect(() => {
+    const onPrintKey = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === "p") {
+        e.preventDefault();
+        handlePrint();
+      }
+    };
+    window.addEventListener("keydown", onPrintKey);
+    return () => window.removeEventListener("keydown", onPrintKey);
+  }, [handlePrint]);
+
   return (
     <div className="flex flex-col h-screen">
-      <MenuBar viewRef={viewRef} schema={mySchema} />
+      <MenuBar viewRef={viewRef} schema={mySchema} pageMarginCm={pageMarginCm} onPrint={handlePrint} />
       <Toolbar
         viewRef={viewRef}
         schema={mySchema}

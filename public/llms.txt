@@ -1,0 +1,74 @@
+# Online WordPad
+
+> A free, browser-based word processor with rich text editing, tables, images, export, and printing. No install, no account required.
+
+## What is Online WordPad?
+
+Online WordPad is a fully client-side rich text editor that runs in the browser. It is built on ProseMirror and provides a word-processor experience comparable to Microsoft WordPad or Google Docs Lite — without requiring any server-side account or software installation.
+
+The editor is available at: /pad
+
+## Core Capabilities
+
+- Rich text formatting: bold, italic, underline, strikethrough
+- Font family selection (20+ fonts via Google Fonts)
+- Font size control
+- Text color and highlight color
+- Paragraph alignment: left, center, right, justify
+- Heading levels: H1–H4
+- Bullet lists and numbered lists
+- Indent / outdent
+- Blockquote
+- Inline code and code blocks
+- Emoji insertion (searchable picker)
+- Horizontal rule / divider
+- Page breaks (with correct print behavior)
+- Tables: insert via grid picker, add/remove rows and columns, resize cells
+- Image insertion: paste or upload; resize, crop, rotate, flip, align
+- Hyperlink insertion
+
+## Export & Print
+
+- Export as Word (.docx)
+- Export as HTML
+- Export as plain text (.txt)
+- Print with configurable page margins (0.5 / 1 / 1.5 / 2 cm)
+- Accurate page break rendering in print output
+
+## Technical Stack
+
+- Framework: Next.js 16 (App Router)
+- Editor engine: ProseMirror
+- Styling: Tailwind CSS v4
+- UI components: shadcn/ui (Radix UI)
+- Icons: Phosphor Icons
+- Print: react-to-print
+- DOCX export: docx.js
+- Image editing: react-advanced-cropper
+- Runtime: React 19, TypeScript
+
+## Privacy
+
+Online WordPad has no backend server and no user accounts. All document data is stored exclusively in the user's browser via localStorage. No content is transmitted to any server.
+
+## Keyboard Shortcuts
+
+- Ctrl+Z — Undo
+- Ctrl+Y — Redo
+- Ctrl+B — Bold
+- Ctrl+I — Italic
+- Ctrl+U — Underline
+- Ctrl+A — Select All
+- Ctrl+P — Print
+- Tab / Shift+Tab — Increase / decrease indent
+
+## Routes
+
+- / — Landing page
+- /pad — The editor application
+
+## SEO & Metadata
+
+- Canonical URL: https://wordpad.online
+- Language: English
+- Target queries: online word processor, browser word processor, free online wordpad, rich text editor online, no install word processor
