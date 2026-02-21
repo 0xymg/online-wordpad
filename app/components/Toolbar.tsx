@@ -89,8 +89,8 @@ function TBtn({ onClick, active, tip, children }: {
 }
 
 /* ── Row: a horizontal line of buttons inside a group ───────────────────── */
-function Row({ children }: { children: React.ReactNode }) {
-  return <div className="flex items-center gap-0.5">{children}</div>;
+function Row({ children, between }: { children: React.ReactNode; between?: boolean }) {
+  return <div className={`flex items-center gap-0.5${between ? " justify-between" : ""}`}>{children}</div>;
 }
 
 /* ── Group: stacks rows vertically, label pinned to bottom ──────────────── */
@@ -261,8 +261,8 @@ export default function Toolbar({
 
       {/* ── Font ── */}
       <Group label="Font">
-        {/* Row 1: font family + size */}
-        <Row>
+        {/* Row 1: font family + size + highlight */}
+        <Row between>
           <select className={cn(SEL, "w-[120px]")}
             onChange={(e) => applyMark("fontFamily", { family: e.target.value })}
             defaultValue="" title="Font family">
@@ -283,20 +283,20 @@ export default function Toolbar({
               {FONTS.slice(23).map(f => <option key={f.value} value={f.value}>{f.label}</option>)}
             </optgroup>
           </select>
-          <select className={cn(SEL, "w-[40px]")}
+          <select className={cn(SEL, "w-[54px]")}
             onChange={(e) => applyMark("fontSize", { size: e.target.value + "pt" })}
             defaultValue="12" title="Font size">
             {FONT_SIZES.map(s => <option key={s} value={s}>{s}</option>)}
           </select>
+          <ColorPicker color={bgColor}   onChange={(c) => { setBgColor(c);   applyMark("bgColor",   { color: c }); }} tip="Highlight color" icon={<Highlighter size={18} />} />
         </Row>
-        {/* Row 2: B I U S + colors */}
-        <Row>
+        {/* Row 2: B I U S + text color */}
+        <Row between>
           <TBtn onClick={() => cmd(toggleMark(schema.marks.strong))}        active={isActive("strong")}        tip="Bold (Ctrl+B)">      <TextB size={SZ} weight="bold" /></TBtn>
           <TBtn onClick={() => cmd(toggleMark(schema.marks.em))}            active={isActive("em")}            tip="Italic (Ctrl+I)">    <TextItalic size={SZ} /></TBtn>
           <TBtn onClick={() => cmd(toggleMark(schema.marks.underline))}     active={isActive("underline")}     tip="Underline (Ctrl+U)"> <TextUnderline size={SZ} /></TBtn>
           <TBtn onClick={() => cmd(toggleMark(schema.marks.strikethrough))} active={isActive("strikethrough")} tip="Strikethrough">       <TextStrikethrough size={SZ} /></TBtn>
           <ColorPicker color={textColor} onChange={(c) => { setTextColor(c); applyMark("textColor", { color: c }); }} tip="Text color"      icon={<TextT size={18} />} />
-          <ColorPicker color={bgColor}   onChange={(c) => { setBgColor(c);   applyMark("bgColor",   { color: c }); }} tip="Highlight color" icon={<Highlighter size={18} />} />
         </Row>
       </Group>
 

@@ -336,6 +336,8 @@ body {
     border: 0;
     margin: 0;
     height: 0;
+    page-break-after: always;
+    break-after: page;
   }
 
   .pm-page .ProseMirror hr.pm-page-break::after {
