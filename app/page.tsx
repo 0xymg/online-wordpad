@@ -167,41 +167,41 @@ export default function LandingPage() {
           </div>
 
           {/* ── Hero subtext ── */}
-          <div className="mx-auto max-w-3xl px-6 pb-12 text-center">
+          <div className="mx-auto max-w-3xl px-6 pb-10 text-center">
             <p className="text-gray-400 text-[15px] leading-relaxed">
               Online WordPad is a free browser-based rich text editor for everyday writing tasks: drafting documents, taking notes, writing reports, or composing letters. It is inspired by classic desktop editors like WordPad and requires no software installation.
             </p>
           </div>
-        </section>
 
-        {/* ── Editor Preview ── */}
-        <section className="mx-auto max-w-5xl px-6 pb-20">
-          <div className="rounded-2xl border border-gray-200 shadow-xl overflow-hidden">
-            {/* Browser chrome */}
-            <div className="bg-gray-100 px-4 py-2.5 flex items-center gap-2 border-b border-gray-200">
-              <span className="w-3 h-3 rounded-full bg-gray-300" />
-              <span className="w-3 h-3 rounded-full bg-gray-300" />
-              <span className="w-3 h-3 rounded-full bg-gray-300" />
-              <span className="ml-3 flex-1 bg-white rounded text-xs text-gray-400 px-3 py-1 max-w-xs">
-                wordpad.online/pad
-              </span>
-            </div>
-            {/* Real Toolbar — pointer-events-none, decorative */}
-            <ToolbarPreviewClient />
-            {/* Fake page */}
-            <div className="bg-gray-50 p-6 flex justify-center">
-              <div className="bg-white w-full max-w-lg rounded shadow-md p-8 space-y-3 text-sm text-gray-800 min-h-[220px]">
-                <h2 className="text-xl font-bold">Meeting Notes: Q3 Planning</h2>
-                <p className="text-gray-500 text-xs">September 2024 · Confidential</p>
-                <p>
-                  <strong>Attendees:</strong> Alice, Bob, Carol
-                </p>
-                <p>The team agreed on the following action items for the upcoming quarter:</p>
-                <ul className="list-disc pl-5 space-y-1 text-gray-700">
-                  <li>Finalize product roadmap by <u>Oct 1</u></li>
-                  <li>Schedule bi-weekly syncs with design team</li>
-                  <li>Complete migration to new infrastructure</li>
-                </ul>
+          {/* ── Editor Preview ── */}
+          <div className="mx-auto max-w-5xl px-6 pb-16">
+            <div className="preview-animated-shadow rounded-2xl border border-gray-200 overflow-hidden">
+              {/* Browser chrome */}
+              <div className="bg-gray-100 px-4 py-2.5 flex items-center gap-2 border-b border-gray-200">
+                <span className="w-3 h-3 rounded-full bg-gray-300" />
+                <span className="w-3 h-3 rounded-full bg-gray-300" />
+                <span className="w-3 h-3 rounded-full bg-gray-300" />
+                <span className="ml-3 flex-1 bg-white rounded text-xs text-gray-400 px-3 py-1 max-w-xs">
+                  wordpad.online/pad
+                </span>
+              </div>
+              {/* Real Toolbar — pointer-events-none, decorative */}
+              <ToolbarPreviewClient />
+              {/* Fake page */}
+              <div className="bg-gray-50 p-6 flex justify-center">
+                <div className="bg-white w-full max-w-lg rounded shadow-md p-8 space-y-3 text-sm text-gray-800 min-h-[220px]">
+                  <h2 className="text-xl font-bold">Meeting Notes: Q3 Planning</h2>
+                  <p className="text-gray-500 text-xs">September 2024 · Confidential</p>
+                  <p>
+                    <strong>Attendees:</strong> Alice, Bob, Carol
+                  </p>
+                  <p>The team agreed on the following action items for the upcoming quarter:</p>
+                  <ul className="list-disc pl-5 space-y-1 text-gray-700">
+                    <li>Finalize product roadmap by <u>Oct 1</u></li>
+                    <li>Schedule bi-weekly syncs with design team</li>
+                    <li>Complete migration to new infrastructure</li>
+                  </ul>
+                </div>
               </div>
             </div>
           </div>
