@@ -298,7 +298,7 @@ function buildPlugins() {
       "Mod-a": (state, dispatch) => {
         // Tablo içindeyse tüm tabloyu seç, değilse tüm belgeyi seç
         if (isInTable(state)) {
-          const table = findTable(state.selection);
+          const table = findTable(state.selection.$from);
           if (table && dispatch) {
             const map = TableMap.get(table.node);
             const anchorCell = table.start + map.map[0];

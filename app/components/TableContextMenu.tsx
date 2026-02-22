@@ -46,7 +46,7 @@ export default function TableContextMenu({ viewRef, children }: TableContextMenu
   const selectWholeTable = () => {
     const v = viewRef.current;
     if (!v) return;
-    const table = findTable(v.state.selection);
+    const table = findTable(v.state.selection.$from);
     if (!table) return;
     const map = TableMap.get(table.node);
     const { tr, doc } = v.state;
