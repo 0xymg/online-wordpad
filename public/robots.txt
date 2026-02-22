@@ -1,7 +1,9 @@
 User-agent: *
 Allow: /
-Allow: /pad
+
+# LLM-friendly context files
 Allow: /llms.txt
 Allow: /llms.md
 
+# Sitemap
 Sitemap: https://wordpad.online/sitemap.xml

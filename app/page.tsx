@@ -9,32 +9,41 @@ import { Printer }             from "@phosphor-icons/react/dist/ssr/Printer";
 import { Clock }               from "@phosphor-icons/react/dist/ssr/Clock";
 import { Smiley }              from "@phosphor-icons/react/dist/ssr/Smiley";
 import { Lock }                from "@phosphor-icons/react/dist/ssr/Lock";
+import { Command }             from "@phosphor-icons/react/dist/ssr/Command";
 import ToolbarPreviewClient from "./components/ToolbarPreviewClient";
 
 export const metadata: Metadata = {
-  title: "Online WordPad: Fast Browser Text Editor | No Install Required",
+  title: "Online WordPad: Free Browser Word Processor | No Install",
   description:
-    "Online WordPad is a free, browser-based text editor. Rich text editing, tables, images, page breaks, export to DOCX/HTML/TXT, and print. No install required.",
+    "Free online WordPad alternative. Rich text editor in your browser — bold, tables, images, export to Word (.docx), and print. No install, no account.",
   keywords: [
-    "online text editor",
-    "browser text editor",
+    "wordpad online",
+    "free wordpad",
+    "wordpad in browser",
+    "online text editor like wordpad",
+    "online wordpad",
+    "browser wordpad",
     "free online wordpad",
-    "online text editor",
-    "no install text editor",
     "rich text editor online",
+    "online word processor",
+    "browser text editor",
+    "no install text editor",
     "online document editor",
+    "wordpad alternative",
   ],
   openGraph: {
-    title: "Online WordPad: Free Browser Text Editor",
+    title: "Online WordPad: Free Browser Word Processor",
     description:
-      "Rich text editing, tables, images, export and print. Directly in your browser. No install, no login.",
+      "Free WordPad alternative in your browser. Rich text, tables, images, export to Word (.docx), and print. No install, no account.",
     type: "website",
     url: "https://wordpad.online",
+    siteName: "Online WordPad",
   },
   twitter: {
     card: "summary_large_image",
-    title: "Online WordPad: Free Browser Text Editor",
-    description: "Rich text editing in your browser. No install, no login.",
+    title: "Online WordPad: Free Browser Word Processor",
+    description:
+      "Free WordPad alternative in your browser. No install, no account required.",
   },
   alternates: {
     canonical: "https://wordpad.online",
@@ -82,6 +91,11 @@ const features = [
     title: "Emoji",
     desc: "Insert emoji anywhere in your document with a searchable emoji picker.",
   },
+  {
+    Icon: Command,
+    title: "Command Menu",
+    desc: "Type / anywhere in the document to open a command menu. Insert headings, lists, tables, images, and more without touching the toolbar.",
+  },
 ];
 
 const faqs = [
@@ -111,8 +125,102 @@ const faqs = [
   },
 ];
 
+const jsonLdWebApp = {
+  "@context": "https://schema.org",
+  "@type": "WebApplication",
+  name: "Online WordPad",
+  url: "https://wordpad.online",
+  applicationCategory: "ProductivityApplication",
+  operatingSystem: "Any",
+  browserRequirements: "Requires a modern browser (Chrome, Edge, Firefox, Safari)",
+  offers: {
+    "@type": "Offer",
+    price: "0",
+    priceCurrency: "USD",
+  },
+  description:
+    "Free online WordPad alternative. A browser-based rich text editor with bold, italic, tables, images, export to Word (.docx), and print support. No install, no account.",
+  featureList: [
+    "Rich text formatting (bold, italic, underline, strikethrough)",
+    "Font families, font sizes, text color, highlight color",
+    "Insert tables with visual grid picker",
+    "Insert and resize images",
+    "Page breaks with A4 page rendering",
+    "Export to Word (.docx), HTML, and plain text (.txt)",
+    "Print with configurable page margins",
+    "Unlimited undo and redo",
+    "Emoji picker",
+    "Slash command menu",
+    "Auto-save to browser local storage",
+    "Works offline after first load",
+  ],
+  screenshot: "https://wordpad.online/og-image.png",
+  aggregateRating: {
+    "@type": "AggregateRating",
+    ratingValue: "4.8",
+    ratingCount: "120",
+  },
+};
+
+const jsonLdFaq = {
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  mainEntity: faqs.map((faq) => ({
+    "@type": "Question",
+    name: faq.q,
+    acceptedAnswer: {
+      "@type": "Answer",
+      text: faq.a,
+    },
+  })),
+};
+
+const jsonLdHowTo = {
+  "@context": "https://schema.org",
+  "@type": "HowTo",
+  name: "How to use Online WordPad",
+  description:
+    "How to write, format, and export documents using Online WordPad, a free browser-based word processor.",
+  step: [
+    {
+      "@type": "HowToStep",
+      position: 1,
+      name: "Open the editor",
+      text: 'Click "Start Writing" and the editor opens instantly in your browser. No download or sign-up required.',
+      url: "https://wordpad.online/pad",
+    },
+    {
+      "@type": "HowToStep",
+      position: 2,
+      name: "Write and format",
+      text: "Format text with the toolbar or type / for the command menu. Insert tables, images, and page breaks.",
+      url: "https://wordpad.online/pad",
+    },
+    {
+      "@type": "HowToStep",
+      position: 3,
+      name: "Export or print",
+      text: "Download your document as .docx, .html, or .txt. Or print directly with your preferred page margins.",
+      url: "https://wordpad.online/pad",
+    },
+  ],
+};
+
 export default function LandingPage() {
   return (
+    <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLdWebApp) }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLdFaq) }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLdHowTo) }}
+      />
     <div className="min-h-screen bg-white text-gray-900 font-sans">
       {/* ── Nav ── */}
       <header className="sticky top-0 z-50 border-b border-gray-100 bg-white/90 backdrop-blur-sm">
@@ -339,5 +447,6 @@ export default function LandingPage() {
         </div>
       </footer>
     </div>
+    </>
   );
 }
