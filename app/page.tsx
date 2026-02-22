@@ -231,6 +231,7 @@ export default function LandingPage() {
           <nav className="hidden sm:flex items-center gap-6 text-sm text-gray-600">
             <a href="#features" className="hover:text-gray-900 transition-colors">Features</a>
             <a href="#faq" className="hover:text-gray-900 transition-colors">FAQ</a>
+            <Link href="/guides" className="hover:text-gray-900 transition-colors">Guides</Link>
           </nav>
           <Link
             href="/pad"
@@ -439,6 +440,7 @@ export default function LandingPage() {
           </span>
           <div className="flex items-center gap-6">
             <Link href="/pad" className="hover:text-gray-600 transition-colors">Editor</Link>
+            <Link href="/guides" className="hover:text-gray-600 transition-colors">Guides</Link>
             <a href="/llms.txt" className="hover:text-gray-600 transition-colors">llms.txt</a>
           </div>
         </div>
