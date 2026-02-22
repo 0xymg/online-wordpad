@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { MDXRemote } from "next-mdx-remote/rsc";
+import remarkGfm from "remark-gfm";
 import { getAllGuideSlugs, getGuide } from "@/lib/guides";
 
 export async function generateStaticParams() {
@@ -162,7 +163,11 @@ export default async function GuidePage({
         {/* Article */}
         <main className="mx-auto max-w-3xl px-6 py-10">
           <article className="prose-none">
-            <MDXRemote source={guide.content} components={components} />
+            <MDXRemote
+              source={guide.content}
+              components={components}
+              options={{ mdxOptions: { remarkPlugins: [remarkGfm] } }}
+            />
           </article>
 
           {/* CTA */}
