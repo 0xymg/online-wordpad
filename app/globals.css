@@ -583,3 +583,23 @@ body {
     @apply bg-background text-foreground;
   }
 }
+
+/* ── Landing Hero Gradient Animation ── */
+@keyframes hero-gradient {
+  0%   { background-position: 0% 50%; }
+  50%  { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+.hero-animated-bg {
+  background: linear-gradient(
+    135deg,
+    #ffffff 0%,
+    #f3f4f6 25%,
+    #e5e7eb 50%,
+    #f9fafb 75%,
+    #ffffff 100%
+  );
+  background-size: 400% 400%;
+  animation: hero-gradient 12s ease infinite;
+}
