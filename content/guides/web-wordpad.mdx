@@ -1,0 +1,75 @@
+---
+title: "Web WordPad: A Full Text Editor That Runs in Your Browser"
+description: "Web WordPad is what you get when you take the classic Windows editor and make it work online. Rich text, tables, images, export — all in a browser tab."
+keywords: ["web wordpad", "wordpad web", "wordpad in browser", "browser wordpad", "web based wordpad"]
+date: "2026-03-12"
+---
+
+A web WordPad is exactly what it sounds like: the simplicity and formatting capability of the classic Windows WordPad editor, running entirely in your browser. No download, no installation, no account. Open a tab and start writing.
+
+**[Online WordPad](/)** is that editor. This page explains how it works, what it can do, and which browsers support it best.
+
+## What Is a "Web WordPad"?
+
+The original Microsoft WordPad was a desktop application — a lightweight word processor built into Windows. It offered the middle ground between Notepad (plain text only) and Microsoft Word (full office suite): enough formatting to produce real documents without the complexity or cost of Word.
+
+A web WordPad brings that same concept to the browser. Instead of launching an application from your Start menu, you open a URL. The editor runs entirely in the browser tab. When you are done, you export your file and close the tab. Nothing is installed. Nothing is saved to a remote server unless you choose to export.
+
+This makes a web WordPad particularly useful when:
+
+- You are on a computer that is not yours
+- You need to write something quickly without logging into anything
+- You want to keep your document private and off cloud servers
+- You are using a Mac, Chromebook, or Linux machine where the original WordPad never ran
+
+## How It Works in the Browser
+
+[Online WordPad](/) is built on **ProseMirror**, a well-established open-source rich text editing framework used in production by many large applications. ProseMirror handles the document model, selection, formatting, and command system entirely in JavaScript — no browser plugins, no Flash, no server-side rendering of the document.
+
+What this means in practice:
+
+- **Formatting is immediate.** Clicking Bold or pressing `Ctrl+B` applies formatting visually and in the document model at the same time.
+- **The document lives in your browser tab.** It is stored in memory, not sent to a server. Your content is yours.
+- **Export is handled client-side.** When you export to .docx or .txt, the file is generated in the browser and downloaded directly to your device — the document content never touches a remote server.
+- **No plugins required.** Everything works through standard browser APIs available in all modern browsers since 2018.
+
+## What You Can Do
+
+[Online WordPad](/pad) supports a full set of document editing features:
+
+- **Text formatting** — bold, italic, underline, strikethrough, font family, font size, text color, background highlight
+- **Paragraph styles** — headings (H1–H3), normal text, aligned left/center/right/justified
+- **Lists** — bullet lists and numbered lists, with nested indentation
+- **Tables** — insert tables with any number of rows and columns, add or remove rows and columns after insertion
+- **Images** — insert images from your device, resize inline with drag handles
+- **Horizontal dividers** — visual section breaks
+- **Slash command menu** — type `/` anywhere in the document to open a quick-insert menu for any element
+- **Export to .docx** — download a Word-compatible file with formatting preserved
+- **Export to plain text** — strip all formatting and download a clean .txt file
+- **Print** — open the browser print dialog with a clean A4 layout and configurable margins
+- **Undo / redo** — full history throughout your session
+
+## Supported Browsers
+
+| Browser | Support | Notes |
+|---|---|---|
+| Google Chrome | Full | Best overall performance; recommended |
+| Microsoft Edge | Full | Chromium-based; identical to Chrome support |
+| Mozilla Firefox | Full | Excellent; all features work as expected |
+| Apple Safari | Full | Works on Mac, iPhone, and iPad |
+| Opera | Full | Chromium-based; no known issues |
+| Internet Explorer | Not supported | IE is end-of-life; use Edge instead |
+
+All modern desktop and mobile browsers released after 2019 are supported. The editor is tested regularly on Chrome, Firefox, Safari, and Edge. On mobile, the editor is functional but optimized primarily for desktop use.
+
+## Offline Capability
+
+[Online WordPad](/) works after the first load even without an active internet connection. The application uses a **service worker** to cache its assets — the JavaScript, styles, and editor code — on your first visit. After that, you can open the editor in a new tab even if your Wi-Fi drops.
+
+Your document is stored in browser memory for the duration of your session. If you close the tab without exporting, the document is gone — by design. There is no auto-save to a cloud account because there is no account. **Export before you close** if you want to keep your work.
+
+For users who want persistence, exporting to .docx takes one click and gives you a file you can store anywhere — your desktop, a USB drive, Google Drive, or Dropbox.
+
+---
+
+Ready to write? [Open Online WordPad](/pad) in your browser right now — no download, no sign-up, just a clean editor waiting for your words.
