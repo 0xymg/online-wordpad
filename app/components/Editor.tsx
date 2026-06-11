@@ -27,8 +27,14 @@ import { Popover, PopoverAnchor, PopoverContent, PopoverTrigger } from "@/compon
 import {
   ArrowClockwise, Crop, FlipHorizontal, FlipVertical,
   TextAlignLeft, TextAlignCenter, TextAlignRight,
-  Sun, Moon,
+  Sun, Moon, FileText, Trash, Plus, MagnifyingGlass, PencilSimple, DownloadSimple, SignIn, SignOut,
 } from "@phosphor-icons/react";
+import { Document, Packer, Paragraph, TextRun } from "docx";
+import {
+  ContextMenu, ContextMenuTrigger, ContextMenuContent, ContextMenuItem,
+  ContextMenuSeparator, ContextMenuSub, ContextMenuSubTrigger, ContextMenuSubContent,
+} from "@/components/ui/context-menu";
+import { cn } from "@/lib/utils";
 
 // ── Schema ────────────────────────────────────────────────────────────────
 const normalizeTextAlign = (value: string | null | undefined) => {
@@ -582,6 +588,43 @@ class ImageNodeView {
 
 export { mySchema };
 
+// ── File management ─────────────────────────────────────────────────────────
+type FileItem = { id: string; name: string; html: string };
+const FILES_KEY = "wordpad-files";
+const ACTIVE_KEY = "wordpad-active";
+
+function newId(): string {
+  try { return crypto.randomUUID(); } catch { return `f-${Date.now()}-${Math.floor(Math.random() * 1e6)}`; }
+}
+
+function serializeDoc(doc: PMNode): string {
+  const s = DOMSerializer.fromSchema(mySchema);
+  const frag = s.serializeFragment(doc.content);
+  const tmp = document.createElement("div");
+  tmp.appendChild(frag);
+  return tmp.innerHTML;
+}
+
+function loadFiles(): { list: FileItem[]; active: string } {
+  let list: FileItem[] = [];
+  try {
+    const raw = localStorage.getItem(FILES_KEY);
+    if (raw) list = JSON.parse(raw);
+  } catch { list = []; }
+  if (!Array.isArray(list) || list.length === 0) {
+    const legacy = localStorage.getItem("wordpad-content-pm");
+    const legacyTitle = localStorage.getItem("wordpad-title");
+    list = [{
+      id: newId(),
+      name: legacy ? (legacyTitle || "Untitled document") : "Welcome",
+      html: legacy || DEFAULT_REF_CONTENT,
+    }];
+  }
+  let active = localStorage.getItem(ACTIVE_KEY) || "";
+  if (!list.find((f) => f.id === active)) active = list[0].id;
+  return { list, active };
+}
+
 type SlashCommandId =
   | "text"
   | "h1"
@@ -754,6 +797,14 @@ export default function Editor() {
   const [showToolbar, setShowToolbar] = useState(true);
   const [showRuler, setShowRuler] = useState(false);
   const [isDark, setIsDark] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [files, setFiles] = useState<FileItem[]>([]);
+  const [activeId, setActiveId] = useState<string>("");
+  const filesRef = useRef<FileItem[]>([]);
+  const activeIdRef = useRef<string>("");
+  const [fileSearch, setFileSearch] = useState("");
+  const [renamingId, setRenamingId] = useState<string | null>(null);
+  const [user, setUser] = useState<{ name: string; initials: string } | null>(null);
   const [findOpen, setFindOpen] = useState(false);
   const [findQuery, setFindQuery] = useState("");
   const [replaceText, setReplaceText] = useState("");
@@ -925,34 +976,164 @@ export default function Editor() {
     v.focus();
   }, []);
 
-  const save = useCallback((state: EditorState) => {
-    if (saveTimer.current) clearTimeout(saveTimer.current);
-    saveTimer.current = setTimeout(() => {
-      const s = DOMSerializer.fromSchema(mySchema);
-      const frag = s.serializeFragment(state.doc.content);
-      const tmp = document.createElement("div");
-      tmp.appendChild(frag);
-      localStorage.setItem("wordpad-content-pm", tmp.innerHTML);
-    }, 800);
-  }, []);
-
   const refreshDocInfo = useCallback((state: EditorState) => {
     setDocInfo(computeDocInfo(state));
   }, []);
 
+  const save = useCallback((state: EditorState) => {
+    if (saveTimer.current) clearTimeout(saveTimer.current);
+    saveTimer.current = setTimeout(() => {
+      const html = serializeDoc(state.doc);
+      const id = activeIdRef.current;
+      const list = filesRef.current.map((f) => (f.id === id ? { ...f, html } : f));
+      filesRef.current = list;
+      setFiles(list);
+      try { localStorage.setItem(FILES_KEY, JSON.stringify(list)); } catch {}
+    }, 800);
+  }, []);
+
+  const setDocFromHtml = useCallback((html: string) => {
+    const v = viewRef.current;
+    if (!v) return;
+    const dom = new DOMParser().parseFromString(html || "<p></p>", "text/html");
+    const doc = PMParser.fromSchema(mySchema).parse(dom.body);
+    const state = EditorState.create({ schema: mySchema, doc, plugins: buildPlugins() });
+    v.updateState(state);
+    refreshDocInfo(state);
+    v.focus();
+  }, [refreshDocInfo]);
+
+  const commitActiveHtml = useCallback((list: FileItem[]): FileItem[] => {
+    const v = viewRef.current;
+    if (!v) return list;
+    const html = serializeDoc(v.state.doc);
+    const id = activeIdRef.current;
+    return list.map((f) => (f.id === id ? { ...f, html } : f));
+  }, []);
+
+  const persistFiles = useCallback((list: FileItem[], active?: string) => {
+    filesRef.current = list;
+    setFiles(list);
+    try {
+      localStorage.setItem(FILES_KEY, JSON.stringify(list));
+      if (active) localStorage.setItem(ACTIVE_KEY, active);
+    } catch {}
+  }, []);
+
+  const switchFile = useCallback((id: string) => {
+    if (id === activeIdRef.current) return;
+    const list = commitActiveHtml(filesRef.current);
+    const target = list.find((f) => f.id === id);
+    if (!target) return;
+    activeIdRef.current = id;
+    setActiveId(id);
+    persistFiles(list, id);
+    setDocFromHtml(target.html);
+    setDocTitle(target.name);
+  }, [commitActiveHtml, persistFiles, setDocFromHtml]);
+
+  const createFile = useCallback(() => {
+    const list = commitActiveHtml(filesRef.current);
+    const id = newId();
+    const name = `Untitled ${list.length + 1}`;
+    const next = [...list, { id, name, html: "<p></p>" }];
+    activeIdRef.current = id;
+    setActiveId(id);
+    persistFiles(next, id);
+    setDocFromHtml("<p></p>");
+    setDocTitle(name);
+  }, [commitActiveHtml, persistFiles, setDocFromHtml]);
+
+  const deleteFile = useCallback((id: string) => {
+    let list = filesRef.current.filter((f) => f.id !== id);
+    if (list.length === 0) list = [{ id: newId(), name: "Untitled 1", html: "<p></p>" }];
+    const wasActive = activeIdRef.current === id;
+    const nextActive = wasActive ? list[0].id : activeIdRef.current;
+    activeIdRef.current = nextActive;
+    setActiveId(nextActive);
+    persistFiles(list, nextActive);
+    if (wasActive) {
+      const t = list.find((f) => f.id === nextActive)!;
+      setDocFromHtml(t.html);
+      setDocTitle(t.name);
+    }
+  }, [persistFiles, setDocFromHtml]);
+
+  const renameFile = useCallback((id: string, name: string) => {
+    const clean = name.trim();
+    if (!clean) return;
+    if (id === activeIdRef.current) setDocTitle(clean);
+    const list = filesRef.current.map((f) => (f.id === id ? { ...f, name: clean } : f));
+    persistFiles(list);
+  }, [persistFiles]);
+
+  const renameActive = useCallback((name: string) => {
+    setDocTitle(name);
+    const id = activeIdRef.current;
+    const list = filesRef.current.map((f) => (f.id === id ? { ...f, name } : f));
+    persistFiles(list);
+  }, [persistFiles]);
+
+  const exportFile = useCallback((file: FileItem, fmt: "html" | "txt" | "docx") => {
+    const v = viewRef.current;
+    const html = (file.id === activeIdRef.current && v) ? serializeDoc(v.state.doc) : file.html;
+    const safe = (file.name || "document").replace(/[^\w.\- ]+/g, "").trim() || "document";
+    const download = (blob: Blob, ext: string) => {
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(blob);
+      a.download = `${safe}.${ext}`;
+      a.click();
+    };
+    if (fmt === "html") {
+      const blob = new Blob([`<!DOCTYPE html><html><head><meta charset="utf-8"><title>${file.name}</title></head><body style="font-family:Arial;max-width:800px;margin:40px auto;padding:20px">${html}</body></html>`], { type: "text/html" });
+      download(blob, "html");
+    } else if (fmt === "txt") {
+      const tmp = document.createElement("div");
+      tmp.innerHTML = html;
+      const blob = new Blob([tmp.innerText || tmp.textContent || ""], { type: "text/plain" });
+      download(blob, "txt");
+    } else {
+      const tmp = document.createElement("div");
+      tmp.innerHTML = html;
+      const lines = (tmp.innerText || tmp.textContent || "").split("\n");
+      const doc = new Document({
+        sections: [{ children: lines.length ? lines.map((l) => new Paragraph({ children: [new TextRun(l)] })) : [new Paragraph("")] }],
+      });
+      Packer.toBlob(doc).then((blob) => download(blob, "docx"));
+    }
+  }, []);
+
+  const logout = useCallback(() => {
+    setUser(null);
+    try { localStorage.removeItem("wordpad-user"); } catch {}
+  }, []);
+
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem("wordpad-user");
+      if (raw) setUser(JSON.parse(raw));
+    } catch {}
+  }, []);
+
+
   useEffect(() => {
     if (!editorRef.current) return;
-    const stored = localStorage.getItem("wordpad-content-pm");
+    const { list, active } = loadFiles();
+    const activeFile = list.find((f) => f.id === active) || list[0];
+    filesRef.current = list;
+    activeIdRef.current = active;
+    setFiles(list);
+    setActiveId(active);
+    setDocTitle(activeFile.name);
+    try {
+      localStorage.setItem(FILES_KEY, JSON.stringify(list));
+      localStorage.setItem(ACTIVE_KEY, active);
+    } catch {}
     let doc: PMNode | undefined;
-    if (stored) {
-      try {
-        const dom = new DOMParser().parseFromString(stored, "text/html");
-        doc = PMParser.fromSchema(mySchema).parse(dom.body);
-      } catch { doc = undefined; }
-    } else {
-      const dom = new DOMParser().parseFromString(DEFAULT_REF_CONTENT, "text/html");
+    try {
+      const dom = new DOMParser().parseFromString(activeFile.html || "<p></p>", "text/html");
       doc = PMParser.fromSchema(mySchema).parse(dom.body);
-    }
+    } catch { doc = undefined; }
     const state = EditorState.create({ schema: mySchema, doc, plugins: buildPlugins() });
     const view = new EditorView(editorRef.current, {
       state,
@@ -1208,14 +1389,21 @@ export default function Editor() {
     setIsDark(document.documentElement.classList.contains("dark"));
   }, []);
 
-  // Document title persistence + browser tab title
-  useEffect(() => {
-    const stored = localStorage.getItem("wordpad-title");
-    if (stored) setDocTitle(stored);
+  const toggleSidebar = useCallback(() => {
+    setSidebarOpen((prev) => {
+      const next = !prev;
+      try { localStorage.setItem("wordpad-sidebar", next ? "open" : "closed"); } catch {}
+      return next;
+    });
   }, []);
 
   useEffect(() => {
-    localStorage.setItem("wordpad-title", docTitle);
+    if (localStorage.getItem("wordpad-sidebar") === "closed") setSidebarOpen(false);
+  }, []);
+
+
+  // Browser tab title reflects the active document
+  useEffect(() => {
     document.title = `${docTitle || "Untitled document"} — EDTRpad`;
   }, [docTitle]);
 
@@ -1375,14 +1563,87 @@ export default function Editor() {
   const matchCurrent = matchTotal > 0 ? (searchInfo!.current + 1) : 0;
 
   return (
-    <div className="flex flex-col h-screen">
+    <div className="flex h-screen">
+      {/* Collapsible sidebar — document/file manager */}
+      <aside
+        className={cn(
+          "h-full shrink-0 overflow-hidden border-r border-sidebar-border bg-sidebar text-sidebar-foreground transition-[width] duration-200 ease-in-out",
+          sidebarOpen ? "w-64" : "w-0"
+        )}
+      >
+        <div className="flex h-full w-64 flex-col">
+          {/* New document */}
+          <div className="p-2">
+            <button
+              type="button"
+              onClick={createFile}
+              className="flex w-full items-center justify-center gap-2 rounded-md border border-sidebar-border px-2.5 py-2 text-sm font-medium hover:bg-sidebar-accent hover:text-sidebar-accent-foreground transition-colors"
+            >
+              <Plus size={16} weight="bold" /> New document
+            </button>
+          </div>
+
+          {/* Document list */}
+          <div className="flex-1 overflow-y-auto px-2 pb-2">
+            <p className="px-2.5 pt-1 pb-1.5 text-[11px] font-medium uppercase tracking-wide text-muted-foreground">Documents</p>
+            <div className="flex flex-col gap-0.5">
+              {files.map((f) => (
+                <div
+                  key={f.id}
+                  className={cn(
+                    "group flex items-center gap-2 rounded-md pl-2.5 pr-1.5 transition-colors",
+                    f.id === activeId ? "bg-sidebar-accent text-sidebar-accent-foreground" : "hover:bg-sidebar-accent/60"
+                  )}
+                >
+                  <button
+                    type="button"
+                    onClick={() => switchFile(f.id)}
+                    className="flex min-w-0 flex-1 items-center gap-2 py-1.5 text-left text-sm"
+                  >
+                    <FileText size={16} className="shrink-0 opacity-70" />
+                    <span className="truncate">{f.name || "Untitled"}</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => deleteFile(f.id)}
+                    title="Delete document"
+                    aria-label="Delete document"
+                    className="shrink-0 rounded p-1 opacity-0 group-hover:opacity-100 hover:bg-destructive/15 hover:text-destructive transition"
+                  >
+                    <Trash size={14} />
+                  </button>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Mock user — to be wired up later */}
+          <div className="border-t border-sidebar-border p-2">
+            <div className="flex items-center gap-2.5 rounded-md px-2 py-1.5">
+              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground text-xs font-semibold select-none">
+                YM
+              </div>
+              <div className="min-w-0 leading-tight">
+                <div className="truncate text-sm font-medium">Yunus Melih</div>
+                <div className="truncate text-[11px] text-muted-foreground">Free plan</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </aside>
+
+      {/* Main column */}
+      <div className="flex h-screen flex-1 min-w-0 flex-col overflow-hidden">
       <MenuBar
         viewRef={viewRef}
         schema={mySchema}
         pageMarginCm={pageMarginCm}
         onPrint={handlePrint}
+        sidebarOpen={sidebarOpen}
+        onToggleSidebar={toggleSidebar}
         docTitle={docTitle}
-        onTitleChange={setDocTitle}
+        onTitleChange={renameActive}
+        onNewDoc={createFile}
         onFind={openFind}
         onInsertTable={handleInsertTable}
         onPageBreakAdd={handleInsertPageBreak}
@@ -1642,22 +1903,18 @@ export default function Editor() {
         </div>
       )}
       <div className="border-t border-border bg-card/95 px-2 py-1 text-[11px] leading-none relative">
-        <div className="flex items-center justify-between gap-2">
+        {/* Brand watermark, centered — only on small screens where the header brand is hidden */}
+        <div className="font-brand pointer-events-none absolute inset-x-0 top-1/2 z-0 -translate-y-1/2 hidden max-[799px]:flex items-center justify-center select-none leading-none opacity-60">
+          <span className="text-sm font-bold tracking-tight text-muted-foreground">EDTR</span>
+          <span className="text-xs font-semibold tracking-wider text-muted-foreground">PAD</span>
+        </div>
+        <div className="relative z-10 flex items-center justify-between gap-2">
           <div className="flex items-center gap-2 text-muted-foreground">
             <span><span className="font-medium text-foreground">{docInfo.selectedType}</span></span>
             <span>Words: <span className="font-medium text-foreground">{docInfo.words}</span></span>
             <span>Chars: <span className="font-medium text-foreground">{docInfo.characters}</span></span>
           </div>
           <div className="flex items-center gap-2">
-            <button
-              type="button"
-              onClick={toggleDark}
-              title={isDark ? "Switch to light mode" : "Switch to dark mode"}
-              aria-label="Toggle dark mode"
-              className="inline-flex h-6 w-6 items-center justify-center rounded border border-input bg-background text-muted-foreground hover:bg-accent/70 hover:text-foreground transition-colors"
-            >
-              {isDark ? <Sun size={14} /> : <Moon size={14} />}
-            </button>
             <label className="flex items-center gap-1.5">
               <span className="text-muted-foreground">Zoom</span>
               <select
@@ -1674,7 +1931,7 @@ export default function Editor() {
                 <option value="150">150%</option>
               </select>
             </label>
-            <label className="flex items-center gap-1.5">
+            <label className="flex items-center gap-1.5 max-[799px]:hidden">
               <span className="text-muted-foreground">Page Margin</span>
               <select
                 className="h-6 rounded border border-input bg-background px-1.5 text-[11px]"
@@ -1687,7 +1944,8 @@ export default function Editor() {
                 <option value="2">2 cm</option>
               </select>
             </label>
-            <label className="flex items-center gap-1.5">
+            {!isDark && (
+            <label className="flex items-center gap-1.5 max-[799px]:hidden">
               <span className="text-muted-foreground">Background</span>
               <Popover>
                 <PopoverTrigger asChild>
@@ -1727,8 +1985,19 @@ export default function Editor() {
                 </PopoverContent>
               </Popover>
             </label>
+            )}
+            <button
+              type="button"
+              onClick={toggleDark}
+              title={isDark ? "Switch to light mode" : "Switch to dark mode"}
+              aria-label="Toggle dark mode"
+              className="inline-flex h-6 w-6 items-center justify-center rounded border border-input bg-background text-muted-foreground hover:bg-accent/70 hover:text-foreground transition-colors"
+            >
+              {isDark ? <Sun size={14} /> : <Moon size={14} />}
+            </button>
           </div>
         </div>
+      </div>
       </div>
     </div>
   );

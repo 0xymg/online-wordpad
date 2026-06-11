@@ -31,6 +31,7 @@ interface MenuBarProps {
   onPrint?: () => void;
   docTitle: string;
   onTitleChange: (title: string) => void;
+  onNewDoc: () => void;
   onFind: () => void;
   onInsertTable: (rows: number, cols: number) => void;
   onPageBreakAdd: () => void;
@@ -67,14 +68,14 @@ const LINE_SPACINGS: Array<{ label: string; value: number | null }> = [
 
 export default function MenuBar({
   viewRef, schema, pageMarginCm = 1, onPrint,
-  docTitle, onTitleChange, onFind,
+  docTitle, onTitleChange, onNewDoc, onFind,
   onInsertTable, onPageBreakAdd, onLinkAdd, onImageAdd,
   onInsertDivider, onInsertSymbol, onInsertDate,
   onLineSpacing, onClearFormatting,
   zoomPercent, onZoomChange,
   showToolbar, onToggleToolbar, showRuler, onToggleRuler,
   isDark, onToggleDark,
-  sidebarOpen, onToggleSidebar,
+  onToggleSidebar,
 }: MenuBarProps) {
   const SidebarBtn = ({ className }: { className?: string }) => (
     <button
@@ -121,11 +122,6 @@ export default function MenuBar({
   const safeName = (ext: string) =>
     `${(docTitle || "document").replace(/[^\w.\- ]+/g, "").trim() || "document"}.${ext}`;
 
-  const newDoc = () => {
-    if (!confirm("The current document will be deleted. Continue?")) return;
-    localStorage.removeItem("wordpad-content-pm");
-    window.location.reload();
-  };
 
   const saveAsHtml = () => {
     const v = viewRef.current;
@@ -188,7 +184,7 @@ export default function MenuBar({
         className="hidden min-[1180px]:flex absolute left-3 top-0 bottom-0 items-center gap-1 overflow-hidden"
         style={{ right: "calc(50% + 412px)" }}
       >
-        {sidebarOpen && <SidebarBtn />}
+        <SidebarBtn />
         <span className="font-brand shrink-0 select-none leading-none">
           <span className="text-lg font-bold tracking-tight text-foreground">EDTR</span>
           <span className="text-sm font-semibold tracking-wider text-muted-foreground">PAD</span>
@@ -202,15 +198,23 @@ export default function MenuBar({
           className="min-w-0 flex-1 rounded px-2 py-0.5 text-sm text-foreground/80 bg-transparent border border-transparent hover:border-border focus:border-border focus:bg-background outline-none truncate"
         />
       </div>
-      {/* Menus — left-aligned inside a centered 800px box, 5px gap, no side padding */}
-      <div className="max-w-[800px] w-full mx-auto flex items-center gap-[5px]">
-      {/* Sidebar toggle — left of File when collapsed (or when the gutter is hidden) */}
-      <SidebarBtn className={sidebarOpen ? "min-[1180px]:hidden" : undefined} />
+      {/* Menus — left-aligned inside a centered 800px box, 15px gap, no side padding */}
+      <div className="max-w-[800px] w-full mx-auto flex items-center gap-[15px]">
+      {/* 800–1179px: trigger + brand live inside the box (gutter too narrow, but brand still in header) */}
+      <div className="hidden min-[800px]:flex min-[1180px]:hidden items-center gap-1.5 shrink-0">
+        <SidebarBtn />
+        <span className="font-brand shrink-0 select-none leading-none">
+          <span className="text-lg font-bold tracking-tight text-foreground">EDTR</span>
+          <span className="text-sm font-semibold tracking-wider text-muted-foreground">PAD</span>
+        </span>
+      </div>
+      {/* <800px: trigger only — brand moves to the status bar */}
+      <SidebarBtn className="min-[800px]:hidden" />
       {/* File */}
       <MenubarMenu>
         <MenubarTrigger className={TRIGGER}>File</MenubarTrigger>
         <MenubarContent>
-          <MenubarItem onClick={newDoc}>
+          <MenubarItem onClick={onNewDoc}>
             New <MenubarShortcut>Ctrl+N</MenubarShortcut>
           </MenubarItem>
           <MenubarSeparator />

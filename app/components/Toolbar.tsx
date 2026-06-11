@@ -246,7 +246,7 @@ export default function Toolbar({
   const SEL = "h-10 text-xs border border-input rounded px-1.5 bg-background hover:bg-accent focus:outline-none focus:ring-1 focus:ring-ring shrink-0 cursor-pointer";
 
   return (
-    <div className="border-b border-border bg-card select-none">
+    <div className="border-b border-border bg-card select-none overflow-x-auto">
     <div className="max-w-[850px] mx-auto px-3 pt-1.5 pb-1 flex items-stretch justify-center gap-0">
 
       {/* ── History ── */}
