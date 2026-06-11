@@ -27,7 +27,7 @@ import { Popover, PopoverAnchor, PopoverContent, PopoverTrigger } from "@/compon
 import {
   ArrowClockwise, Crop, FlipHorizontal, FlipVertical,
   TextAlignLeft, TextAlignCenter, TextAlignRight,
-  Sun, Moon, FileText, Trash, Plus, MagnifyingGlass, PencilSimple, DownloadSimple, SignIn,
+  Sun, Moon, FileText, Trash, Plus, MagnifyingGlass, PencilSimple, DownloadSimple, SignIn, Warning, X,
 } from "@phosphor-icons/react";
 import { Document, Packer, Paragraph, TextRun } from "docx";
 import {
@@ -35,6 +35,12 @@ import {
   ContextMenuSeparator, ContextMenuSub, ContextMenuSubTrigger, ContextMenuSubContent,
 } from "@/components/ui/context-menu";
 import { cn } from "@/lib/utils";
+import { authClient, useSession } from "@/lib/auth-client";
+import AuthModal from "./AuthModal";
+import {
+  listDocuments, createDocument, updateDocument, renameDocument, deleteDocument,
+  getPreferences, savePreferences, type DocRow,
+} from "@/app/actions/user-data";
 
 // ── Schema ────────────────────────────────────────────────────────────────
 const normalizeTextAlign = (value: string | null | undefined) => {
@@ -783,6 +789,8 @@ export default function Editor() {
   const editorRef = useRef<HTMLDivElement>(null);
   const viewRef   = useRef<EditorView | null>(null);
   const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const renameTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const prefsSaveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const slashMenuRef = useRef<HTMLDivElement>(null);
   const slashListRef = useRef<HTMLDivElement>(null);
   const slashSearchInputRef = useRef<HTMLInputElement>(null);
@@ -804,7 +812,23 @@ export default function Editor() {
   const activeIdRef = useRef<string>("");
   const [fileSearch, setFileSearch] = useState("");
   const [renamingId, setRenamingId] = useState<string | null>(null);
-  const [user, setUser] = useState<{ name: string; initials: string } | null>(null);
+  const [authOpen, setAuthOpen] = useState(false);
+  const [verifyDismissed, setVerifyDismissed] = useState(false);
+  const { data: session, isPending: sessionPending } = useSession();
+  const authUser = session?.user;
+  const isAuthed = !!authUser;
+  const isAuthedRef = useRef(false);
+  const prefsLoadedRef = useRef(false);
+  const user = authUser
+    ? {
+        name: authUser.name || authUser.email,
+        email: authUser.email,
+        emailVerified: !!authUser.emailVerified,
+        initials: (authUser.name || authUser.email)
+          .trim().split(/\s+/).map((s) => s[0]).slice(0, 2).join("").toUpperCase(),
+      }
+    : null;
+  useEffect(() => { isAuthedRef.current = isAuthed; }, [isAuthed]);
   const [findOpen, setFindOpen] = useState(false);
   const [findQuery, setFindQuery] = useState("");
   const [replaceText, setReplaceText] = useState("");
@@ -980,6 +1004,19 @@ export default function Editor() {
     setDocInfo(computeDocInfo(state));
   }, []);
 
+  // Update in-memory file list; persist to localStorage only for guests (DB handled by callers).
+  const applyFiles = useCallback((list: FileItem[], active?: string) => {
+    filesRef.current = list;
+    setFiles(list);
+    if (active !== undefined) { activeIdRef.current = active; setActiveId(active); }
+    if (!isAuthedRef.current) {
+      try {
+        localStorage.setItem(FILES_KEY, JSON.stringify(list));
+        if (active) localStorage.setItem(ACTIVE_KEY, active);
+      } catch {}
+    }
+  }, []);
+
   const save = useCallback((state: EditorState) => {
     if (saveTimer.current) clearTimeout(saveTimer.current);
     saveTimer.current = setTimeout(() => {
@@ -988,7 +1025,11 @@ export default function Editor() {
       const list = filesRef.current.map((f) => (f.id === id ? { ...f, html } : f));
       filesRef.current = list;
       setFiles(list);
-      try { localStorage.setItem(FILES_KEY, JSON.stringify(list)); } catch {}
+      if (isAuthedRef.current) {
+        if (id) updateDocument(id, html).catch(() => {});
+      } else {
+        try { localStorage.setItem(FILES_KEY, JSON.stringify(list)); } catch {}
+      }
     }, 800);
   }, []);
 
@@ -1003,76 +1044,88 @@ export default function Editor() {
     v.focus();
   }, [refreshDocInfo]);
 
-  const commitActiveHtml = useCallback((list: FileItem[]): FileItem[] => {
+  // Snapshot the current editor html into the file list, persisting the previous doc if signed in.
+  const commitCurrent = useCallback((list: FileItem[]): FileItem[] => {
     const v = viewRef.current;
     if (!v) return list;
     const html = serializeDoc(v.state.doc);
     const id = activeIdRef.current;
+    if (isAuthedRef.current && id) updateDocument(id, html).catch(() => {});
     return list.map((f) => (f.id === id ? { ...f, html } : f));
-  }, []);
-
-  const persistFiles = useCallback((list: FileItem[], active?: string) => {
-    filesRef.current = list;
-    setFiles(list);
-    try {
-      localStorage.setItem(FILES_KEY, JSON.stringify(list));
-      if (active) localStorage.setItem(ACTIVE_KEY, active);
-    } catch {}
   }, []);
 
   const switchFile = useCallback((id: string) => {
     if (id === activeIdRef.current) return;
-    const list = commitActiveHtml(filesRef.current);
+    const list = commitCurrent(filesRef.current);
     const target = list.find((f) => f.id === id);
     if (!target) return;
-    activeIdRef.current = id;
-    setActiveId(id);
-    persistFiles(list, id);
+    applyFiles(list, id);
     setDocFromHtml(target.html);
     setDocTitle(target.name);
-  }, [commitActiveHtml, persistFiles, setDocFromHtml]);
+  }, [applyFiles, commitCurrent, setDocFromHtml]);
 
-  const createFile = useCallback(() => {
-    const list = commitActiveHtml(filesRef.current);
-    const id = newId();
-    const name = `Untitled ${list.length + 1}`;
-    const next = [...list, { id, name, html: "<p></p>" }];
-    activeIdRef.current = id;
-    setActiveId(id);
-    persistFiles(next, id);
-    setDocFromHtml("<p></p>");
-    setDocTitle(name);
-  }, [commitActiveHtml, persistFiles, setDocFromHtml]);
-
-  const deleteFile = useCallback((id: string) => {
-    let list = filesRef.current.filter((f) => f.id !== id);
-    if (list.length === 0) list = [{ id: newId(), name: "Untitled 1", html: "<p></p>" }];
-    const wasActive = activeIdRef.current === id;
-    const nextActive = wasActive ? list[0].id : activeIdRef.current;
-    activeIdRef.current = nextActive;
-    setActiveId(nextActive);
-    persistFiles(list, nextActive);
-    if (wasActive) {
-      const t = list.find((f) => f.id === nextActive)!;
-      setDocFromHtml(t.html);
-      setDocTitle(t.name);
+  const createFile = useCallback(async () => {
+    const list = commitCurrent(filesRef.current);
+    if (isAuthedRef.current) {
+      try {
+        const doc = await createDocument("Untitled document", "<p></p>");
+        applyFiles([doc, ...list], doc.id);
+        setDocFromHtml(doc.html);
+        setDocTitle(doc.name);
+      } catch {}
+    } else {
+      const id = newId();
+      const name = `Untitled ${list.length + 1}`;
+      applyFiles([...list, { id, name, html: "<p></p>" }], id);
+      setDocFromHtml("<p></p>");
+      setDocTitle(name);
     }
-  }, [persistFiles, setDocFromHtml]);
+  }, [applyFiles, commitCurrent, setDocFromHtml]);
+
+  const deleteFile = useCallback(async (id: string) => {
+    const wasActive = activeIdRef.current === id;
+    let list = filesRef.current.filter((f) => f.id !== id);
+    if (isAuthedRef.current) {
+      deleteDocument(id).catch(() => {});
+      if (list.length === 0) {
+        try {
+          const doc = await createDocument("Untitled document", "<p></p>");
+          applyFiles([doc], doc.id);
+          setDocFromHtml(doc.html);
+          setDocTitle(doc.name);
+        } catch {}
+        return;
+      }
+    } else if (list.length === 0) {
+      list = [{ id: newId(), name: "Untitled 1", html: "<p></p>" }];
+    }
+    const nextActive = wasActive ? list[0].id : activeIdRef.current;
+    applyFiles(list, nextActive);
+    if (wasActive) {
+      const t = list.find((f) => f.id === nextActive);
+      if (t) { setDocFromHtml(t.html); setDocTitle(t.name); }
+    }
+  }, [applyFiles, setDocFromHtml]);
 
   const renameFile = useCallback((id: string, name: string) => {
     const clean = name.trim();
     if (!clean) return;
     if (id === activeIdRef.current) setDocTitle(clean);
-    const list = filesRef.current.map((f) => (f.id === id ? { ...f, name: clean } : f));
-    persistFiles(list);
-  }, [persistFiles]);
+    applyFiles(filesRef.current.map((f) => (f.id === id ? { ...f, name: clean } : f)));
+    if (isAuthedRef.current) renameDocument(id, clean).catch(() => {});
+  }, [applyFiles]);
 
+  // Live title input: reflect typing immediately, debounce the persisted rename.
   const renameActive = useCallback((name: string) => {
     setDocTitle(name);
     const id = activeIdRef.current;
-    const list = filesRef.current.map((f) => (f.id === id ? { ...f, name } : f));
-    persistFiles(list);
-  }, [persistFiles]);
+    applyFiles(filesRef.current.map((f) => (f.id === id ? { ...f, name } : f)));
+    if (renameTimer.current) clearTimeout(renameTimer.current);
+    renameTimer.current = setTimeout(() => {
+      const clean = name.trim();
+      if (clean && isAuthedRef.current) renameDocument(id, clean).catch(() => {});
+    }, 600);
+  }, [applyFiles]);
 
   const exportFile = useCallback((file: FileItem, fmt: "html" | "txt" | "docx") => {
     const v = viewRef.current;
@@ -1103,38 +1156,29 @@ export default function Editor() {
     }
   }, []);
 
-  const logout = useCallback(() => {
-    setUser(null);
-    try { localStorage.removeItem("wordpad-user"); } catch {}
+  const logout = useCallback(async () => {
+    await authClient.signOut();
+    prefsLoadedRef.current = false;
   }, []);
 
-  useEffect(() => {
+  const openAuth = useCallback(() => setAuthOpen(true), []);
+
+  const resendVerification = useCallback(async () => {
+    if (!authUser?.email) return;
     try {
-      const raw = localStorage.getItem("wordpad-user");
-      if (raw) setUser(JSON.parse(raw));
-    } catch {}
-  }, []);
+      await authClient.sendVerificationEmail({ email: authUser.email, callbackURL: "/pad" });
+      alert("Verification email sent (check the server log if no email provider is configured).");
+    } catch {
+      alert("Could not send verification email.");
+    }
+  }, [authUser?.email]);
 
 
   useEffect(() => {
     if (!editorRef.current) return;
-    const { list, active } = loadFiles();
-    const activeFile = list.find((f) => f.id === active) || list[0];
-    filesRef.current = list;
-    activeIdRef.current = active;
-    setFiles(list);
-    setActiveId(active);
-    setDocTitle(activeFile.name);
-    try {
-      localStorage.setItem(FILES_KEY, JSON.stringify(list));
-      localStorage.setItem(ACTIVE_KEY, active);
-    } catch {}
-    let doc: PMNode | undefined;
-    try {
-      const dom = new DOMParser().parseFromString(activeFile.html || "<p></p>", "text/html");
-      doc = PMParser.fromSchema(mySchema).parse(dom.body);
-    } catch { doc = undefined; }
-    const state = EditorState.create({ schema: mySchema, doc, plugins: buildPlugins() });
+    // Start with an empty document; the session-driven effect below loads the
+    // real content (DB for signed-in users, localStorage for guests).
+    const state = EditorState.create({ schema: mySchema, plugins: buildPlugins() });
     const view = new EditorView(editorRef.current, {
       state,
       nodeViews: {
@@ -1265,6 +1309,67 @@ export default function Editor() {
     return () => { view.destroy(); };
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [refreshDocInfo, refreshImagePopover, refreshSlashMenu, save]);
+
+  const applyPreferences = useCallback((p: Record<string, unknown>) => {
+    if (p.theme === "dark" || p.theme === "light") {
+      const dark = p.theme === "dark";
+      setIsDark(dark);
+      document.documentElement.classList.toggle("dark", dark);
+    }
+    if (typeof p.zoom === "number") setZoomPercent(p.zoom);
+    if (typeof p.margin === "number") setPageMarginCm(p.margin);
+    if (typeof p.bg === "string") setPaperBgColor(p.bg);
+    if (p.sidebar === "open" || p.sidebar === "closed") setSidebarOpen(p.sidebar === "open");
+  }, []);
+
+  // Load documents + preferences once the session resolves (DB when signed in, localStorage for guests).
+  useEffect(() => {
+    if (sessionPending || !viewRef.current) return;
+    let cancelled = false;
+    (async () => {
+      if (authUser) {
+        let docs = await listDocuments().catch(() => [] as DocRow[]);
+        if (!docs.length) {
+          try { docs = [await createDocument("Welcome", DEFAULT_REF_CONTENT)]; } catch { docs = []; }
+        }
+        if (cancelled || !docs.length) return;
+        const active = docs[0];
+        filesRef.current = docs; activeIdRef.current = active.id;
+        setFiles(docs); setActiveId(active.id);
+        setDocFromHtml(active.html); setDocTitle(active.name);
+        try { const prefs = await getPreferences(); if (!cancelled) applyPreferences(prefs); } catch {}
+        prefsLoadedRef.current = true;
+      } else {
+        const { list, active } = loadFiles();
+        const activeFile = list.find((f) => f.id === active) || list[0];
+        filesRef.current = list; activeIdRef.current = active;
+        setFiles(list); setActiveId(active);
+        setDocFromHtml(activeFile.html); setDocTitle(activeFile.name);
+        try {
+          localStorage.setItem(FILES_KEY, JSON.stringify(list));
+          localStorage.setItem(ACTIVE_KEY, active);
+        } catch {}
+        prefsLoadedRef.current = true;
+      }
+    })();
+    return () => { cancelled = true; };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [authUser?.id, sessionPending]);
+
+  // Persist preferences to the user's metadata (signed-in only), debounced.
+  useEffect(() => {
+    if (!isAuthed || !prefsLoadedRef.current) return;
+    if (prefsSaveTimer.current) clearTimeout(prefsSaveTimer.current);
+    prefsSaveTimer.current = setTimeout(() => {
+      savePreferences({
+        theme: isDark ? "dark" : "light",
+        zoom: zoomPercent,
+        margin: pageMarginCm,
+        bg: paperBgColor,
+        sidebar: sidebarOpen ? "open" : "closed",
+      }).catch(() => {});
+    }, 700);
+  }, [isAuthed, isDark, zoomPercent, pageMarginCm, paperBgColor, sidebarOpen]);
 
   const handleInsertTable = useCallback((rows: number, cols: number) => {
     const v = viewRef.current;
@@ -1564,7 +1669,8 @@ export default function Editor() {
 
   return (
     <div className="flex h-screen">
-      {/* Collapsible sidebar — document/file manager */}
+      {/* Collapsible sidebar — members only */}
+      {isAuthed && (
       <aside
         className={cn(
           "h-full shrink-0 overflow-hidden border-r border-sidebar-border bg-sidebar text-sidebar-foreground transition-[width] duration-200 ease-in-out",
@@ -1693,6 +1799,7 @@ export default function Editor() {
             ) : (
               <button
                 type="button"
+                onClick={openAuth}
                 className="flex w-full items-center gap-2.5 rounded-md px-2 py-2 text-left text-sm hover:bg-sidebar-accent transition-colors"
               >
                 <SignIn size={18} className="shrink-0 opacity-80" />
@@ -1702,6 +1809,7 @@ export default function Editor() {
           </div>
         </div>
       </aside>
+      )}
 
       {/* Main column */}
       <div className="flex h-screen flex-1 min-w-0 flex-col overflow-hidden">
@@ -1735,7 +1843,21 @@ export default function Editor() {
         onToggleDark={toggleDark}
         user={user}
         onLogout={logout}
+        onLogin={openAuth}
+        canUseSidebar={isAuthed}
       />
+      {user && !user.emailVerified && !verifyDismissed && (
+        <div className="flex items-center gap-2 border-b border-amber-300/60 bg-amber-50 px-3 py-1.5 text-[12px] text-amber-900 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-200">
+          <Warning size={15} weight="fill" className="shrink-0" />
+          <span className="min-w-0 flex-1">Please verify your email address to secure your account.</span>
+          <button type="button" onClick={resendVerification} className="shrink-0 font-medium underline-offset-2 hover:underline">
+            Resend
+          </button>
+          <button type="button" onClick={() => setVerifyDismissed(true)} aria-label="Dismiss" className="shrink-0 rounded p-0.5 hover:bg-amber-500/20">
+            <X size={13} />
+          </button>
+        </div>
+      )}
       {showToolbar && (
         <Toolbar
           viewRef={viewRef}
@@ -2072,6 +2194,7 @@ export default function Editor() {
         </div>
       </div>
       </div>
+      <AuthModal open={authOpen} onClose={() => setAuthOpen(false)} />
     </div>
   );
 }

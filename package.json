@@ -11,6 +11,7 @@
   "dependencies": {
     "@phosphor-icons/react": "^2.1.10",
     "@vercel/analytics": "^1.6.1",
+    "better-auth": "^1.6.16",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "docx": "^9.5.3",
@@ -19,6 +20,7 @@
     "hugerte": "^1.0.10",
     "next": "16.1.6",
     "next-mdx-remote": "^6.0.0",
+    "pg": "^8.21.0",
     "prosemirror-commands": "^1.7.1",
     "prosemirror-example-setup": "^1.2.3",
     "prosemirror-gapcursor": "^1.4.0",
@@ -46,6 +48,7 @@
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
+    "@types/pg": "^8.20.0",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "eslint": "^9",

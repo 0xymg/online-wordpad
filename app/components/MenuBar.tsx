@@ -55,6 +55,8 @@ interface MenuBarProps {
   onToggleSidebar: () => void;
   user: { name: string; initials: string } | null;
   onLogout: () => void;
+  onLogin: () => void;
+  canUseSidebar: boolean;
 }
 
 const TEXT_COLORS = ["#000000", "#e11d48", "#ea580c", "#ca8a04", "#16a34a", "#2563eb", "#7c3aed", "#6b7280"];
@@ -79,7 +81,7 @@ export default function MenuBar({
   showToolbar, onToggleToolbar, showRuler, onToggleRuler,
   isDark, onToggleDark,
   onToggleSidebar,
-  user, onLogout,
+  user, onLogout, onLogin, canUseSidebar,
 }: MenuBarProps) {
   const SidebarBtn = ({ className }: { className?: string }) => (
     <button
@@ -188,7 +190,7 @@ export default function MenuBar({
         className="hidden min-[1180px]:flex absolute left-3 top-0 bottom-0 items-center gap-1 overflow-hidden"
         style={{ right: "calc(50% + 412px)" }}
       >
-        <SidebarBtn />
+        {canUseSidebar && <SidebarBtn />}
         <span className="font-brand shrink-0 select-none leading-none">
           <span className="text-lg font-bold tracking-tight text-foreground">EDTR</span>
           <span className="text-sm font-semibold tracking-wider text-muted-foreground">PAD</span>
@@ -206,14 +208,14 @@ export default function MenuBar({
       <div className="max-w-[800px] w-full mx-auto flex items-center gap-[15px]">
       {/* 800–1179px: trigger + brand live inside the box (gutter too narrow, but brand still in header) */}
       <div className="hidden min-[800px]:flex min-[1180px]:hidden items-center gap-1.5 shrink-0">
-        <SidebarBtn />
+        {canUseSidebar && <SidebarBtn />}
         <span className="font-brand shrink-0 select-none leading-none">
           <span className="text-lg font-bold tracking-tight text-foreground">EDTR</span>
           <span className="text-sm font-semibold tracking-wider text-muted-foreground">PAD</span>
         </span>
       </div>
       {/* <800px: trigger only — brand moves to the status bar */}
-      <SidebarBtn className="min-[800px]:hidden" />
+      {canUseSidebar && <SidebarBtn className="min-[800px]:hidden" />}
       {/* File */}
       <MenubarMenu>
         <MenubarTrigger className={TRIGGER}>File</MenubarTrigger>
@@ -468,6 +470,7 @@ export default function MenuBar({
         ) : (
           <button
             type="button"
+            onClick={onLogin}
             className="flex items-center gap-1.5 rounded-md border border-border px-2.5 py-1 text-sm hover:bg-accent hover:text-accent-foreground transition-colors"
           >
             <SignIn size={15} /> Log in
