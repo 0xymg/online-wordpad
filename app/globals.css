@@ -47,6 +47,40 @@
   --radius-4xl: calc(var(--radius) + 16px);
 }
 
+/* ── Author (brand font, self-hosted) ── */
+@font-face {
+  font-family: "Author";
+  src: url("/fonts/author-400.woff2") format("woff2");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Author";
+  src: url("/fonts/author-500.woff2") format("woff2");
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Author";
+  src: url("/fonts/author-600.woff2") format("woff2");
+  font-weight: 600;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Author";
+  src: url("/fonts/author-700.woff2") format("woff2");
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+.font-brand {
+  font-family: "Author", ui-sans-serif, system-ui, sans-serif;
+}
+
 * { box-sizing: border-box; }
 
 html, body {
@@ -183,6 +217,15 @@ body {
   color: #000;
 }
 
+/* Find & Replace highlights */
+.search-match {
+  background-color: rgba(250, 204, 21, 0.45);
+  border-radius: 2px;
+}
+.search-match-current {
+  background-color: rgba(249, 115, 22, 0.6);
+}
+
 .pm-page.ProseMirror {
   outline: none;
   min-height: calc(1123px - (var(--page-margin) * 2));
@@ -203,36 +246,19 @@ body {
 .pm-page .ProseMirror ol,
 .pm-page ul, .pm-page ol { padding-left: 2em; margin: 0.5em 0; }
 
-.pm-page .ProseMirror ul,
-.pm-page ul {
-  list-style-type: disc;
-  list-style-position: outside;
-}
-
-.pm-page .ProseMirror ol,
-.pm-page ol {
-  list-style-type: decimal;
-  list-style-position: outside;
-}
-
 .pm-page .ProseMirror li,
 .pm-page li {
   display: list-item !important;
 }
 
-.pm-page .ProseMirror ul > li,
-.pm-page ul > li {
-  list-style-type: disc !important;
-}
-
-.pm-page .ProseMirror ol > li,
-.pm-page ol > li {
-  list-style-type: decimal !important;
-}
-
-/* Fallback markers (Tailwind/reset çatışmalarında da görünür kalsın) */
+/* Native marker'ları kapat — markerlar ::before ile çiziliyor (çift bullet'ı önler) */
 .pm-page .ProseMirror ul,
-.pm-page ul {
+.pm-page .ProseMirror ol,
+.pm-page ul, .pm-page ol {
+  list-style: none !important;
+}
+.pm-page .ProseMirror li,
+.pm-page li {
   list-style: none !important;
 }
 
@@ -251,7 +277,9 @@ body {
 
 .pm-page .ProseMirror ul ul > li::before,
 .pm-page ul ul > li::before {
-  content: "■";
+  content: "▪";
+  font-size: 1.1em;
+  top: 0;
 }
 
 .pm-page .ProseMirror ol,
@@ -542,11 +570,11 @@ body {
 }
 
 .dark {
-  --background: oklch(0.145 0 0);
+  --background: #141414;
   --foreground: oklch(0.985 0 0);
-  --card: oklch(0.205 0 0);
+  --card: #262626;
   --card-foreground: oklch(0.985 0 0);
-  --popover: oklch(0.205 0 0);
+  --popover: #262626;
   --popover-foreground: oklch(0.985 0 0);
   --primary: oklch(0.922 0 0);
   --primary-foreground: oklch(0.205 0 0);
@@ -574,6 +602,31 @@ body {
   --sidebar-border: oklch(1 0 0 / 10%);
   --sidebar-ring: oklch(0.556 0 0);
 }
+
+/* ── Dark mode surfaces ── */
+.dark body { background: #141414; }
+.dark .editor-shell { background: #141414 !important; }
+.dark .pm-page {
+  background: #262626;
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.08), 0 8px 30px rgba(0, 0, 0, 0.6);
+}
+/* Inverse text colours on the dark page */
+.dark .pm-page,
+.dark .pm-page.ProseMirror,
+.dark .pm-page .ProseMirror,
+.dark .pm-page .ProseMirror h1,
+.dark .pm-page .ProseMirror h2,
+.dark .pm-page .ProseMirror h3,
+.dark .pm-page .ProseMirror h4 {
+  color: #e8e8e8;
+}
+.dark .pm-page .ProseMirror a { color: #7eb6ff; }
+.dark .pm-page .ProseMirror th,
+.dark .pm-page .ProseMirror td { border-color: rgba(255, 255, 255, 0.18); }
+.dark .pm-page .ProseMirror th { background: rgba(255, 255, 255, 0.06); }
+.dark .pm-page .ProseMirror pre,
+.dark .pm-page .ProseMirror code { background: rgba(255, 255, 255, 0.08); color: #e8e8e8; }
+.dark .pm-page .ProseMirror blockquote { border-color: rgba(255, 255, 255, 0.25); color: #c9c9c9; }
 
 @layer base {
   * {

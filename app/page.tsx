@@ -225,8 +225,9 @@ export default function LandingPage() {
       {/* ── Nav ── */}
       <header className="sticky top-0 z-50 border-b border-gray-100 bg-white/90 backdrop-blur-sm">
         <div className="mx-auto max-w-5xl px-6 flex items-center justify-between h-14">
-          <span className="text-lg font-bold tracking-tight">
-            Online <span className="text-gray-900">WordPad</span>
+          <span className="font-brand leading-none">
+            <span className="text-2xl font-bold tracking-tight text-gray-900">EDTR</span>
+            <span className="text-lg font-semibold tracking-wider text-gray-400">PAD</span>
           </span>
           <nav className="hidden sm:flex items-center gap-6 text-sm text-gray-600">
             <a href="#features" className="hover:text-gray-900 transition-colors">Features</a>

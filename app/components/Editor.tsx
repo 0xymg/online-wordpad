@@ -19,10 +19,15 @@ import { tableEditing, columnResizing, tableNodes, isInTable, findTable, CellSel
 import MenuBar from "./MenuBar";
 import Toolbar from "./Toolbar";
 import TableContextMenu from "./TableContextMenu";
+import {
+  searchPlugin, setSearch, findNext, findPrev,
+  replaceCurrent, replaceAll, clearSearch, getSearchState,
+} from "./searchPlugin";
 import { Popover, PopoverAnchor, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import {
   ArrowClockwise, Crop, FlipHorizontal, FlipVertical,
   TextAlignLeft, TextAlignCenter, TextAlignRight,
+  Sun, Moon,
 } from "@phosphor-icons/react";
 
 // ── Schema ────────────────────────────────────────────────────────────────
@@ -49,29 +54,40 @@ const parseIndentFromDom = (el: HTMLElement) => {
   return normalizeIndent(Math.round(px / 24));
 };
 
+const normalizeLineHeight = (value: unknown): string | null => {
+  if (value === null || value === undefined || value === "") return null;
+  const n = Number.parseFloat(String(value));
+  if (Number.isNaN(n) || n <= 0) return null;
+  return String(n);
+};
+
 const paragraphNodeSpec = {
   ...basicSchema.spec.nodes.get("paragraph"),
   attrs: {
     textAlign: { default: "left" },
     indent: { default: 0 },
+    lineHeight: { default: null },
   },
   parseDOM: [{
     tag: "p",
     getAttrs(dom: Node | string) {
-      if (typeof dom === "string") return { textAlign: "left", indent: 0 };
+      if (typeof dom === "string") return { textAlign: "left", indent: 0, lineHeight: null };
       const el = dom as HTMLElement;
       return {
         textAlign: normalizeTextAlign(el.style.textAlign),
         indent: parseIndentFromDom(el),
+        lineHeight: normalizeLineHeight(el.style.lineHeight),
       };
     },
   }],
   toDOM(node: PMNode) {
     const textAlign = normalizeTextAlign(node.attrs.textAlign);
     const indent = normalizeIndent(node.attrs.indent);
+    const lineHeight = normalizeLineHeight(node.attrs.lineHeight);
     const style: string[] = [];
     if (textAlign !== "left") style.push(`text-align:${textAlign}`);
     if (indent > 0) style.push(`margin-left:${indent * 24}px`);
+    if (lineHeight) style.push(`line-height:${lineHeight}`);
     const attrs: Record<string, string> = {};
     if (style.length) attrs.style = style.join(";");
     if (indent > 0) attrs["data-indent"] = String(indent);
@@ -85,16 +101,18 @@ const headingNodeSpec = {
     level: { default: 1 },
     textAlign: { default: "left" },
     indent: { default: 0 },
+    lineHeight: { default: null },
   },
   parseDOM: [1, 2, 3, 4, 5, 6].map((level) => ({
     tag: `h${level}`,
     getAttrs(dom: Node | string) {
-      if (typeof dom === "string") return { level, textAlign: "left", indent: 0 };
+      if (typeof dom === "string") return { level, textAlign: "left", indent: 0, lineHeight: null };
       const el = dom as HTMLElement;
       return {
         level,
         textAlign: normalizeTextAlign(el.style.textAlign),
         indent: parseIndentFromDom(el),
+        lineHeight: normalizeLineHeight(el.style.lineHeight),
       };
     },
   })),
@@ -102,9 +120,11 @@ const headingNodeSpec = {
     const level = node.attrs.level || 1;
     const textAlign = normalizeTextAlign(node.attrs.textAlign);
     const indent = normalizeIndent(node.attrs.indent);
+    const lineHeight = normalizeLineHeight(node.attrs.lineHeight);
     const style: string[] = [];
     if (textAlign !== "left") style.push(`text-align:${textAlign}`);
     if (indent > 0) style.push(`margin-left:${indent * 24}px`);
+    if (lineHeight) style.push(`line-height:${lineHeight}`);
     const attrs: Record<string, string> = {};
     if (style.length) attrs.style = style.join(";");
     if (indent > 0) attrs["data-indent"] = String(indent);
@@ -288,6 +308,7 @@ function buildPlugins() {
     history(),
     columnResizing(),
     tableEditing(),
+    searchPlugin(),
     keymap({
       "Mod-z":       undo,
       "Mod-y":       redo,
@@ -729,6 +750,15 @@ export default function Editor() {
   const [pageMarginCm, setPageMarginCm] = useState(1);
   const [zoomPercent, setZoomPercent] = useState(100);
   const [paperBgColor, setPaperBgColor] = useState("#ccd6e5");
+  const [docTitle, setDocTitle] = useState("Untitled document");
+  const [showToolbar, setShowToolbar] = useState(true);
+  const [showRuler, setShowRuler] = useState(false);
+  const [isDark, setIsDark] = useState(false);
+  const [findOpen, setFindOpen] = useState(false);
+  const [findQuery, setFindQuery] = useState("");
+  const [replaceText, setReplaceText] = useState("");
+  const [caseSensitive, setCaseSensitive] = useState(false);
+  const findInputRef = useRef<HTMLInputElement>(null);
 
   const handlePrint = useReactToPrint({
     contentRef: editorRef,
@@ -1096,6 +1126,118 @@ export default function Editor() {
     v.focus();
   }, []);
 
+  const handleInsertDivider = useCallback(() => {
+    const v = viewRef.current;
+    if (!v) return;
+    const hr = mySchema.nodes.horizontal_rule.create();
+    const paragraph = mySchema.nodes.paragraph.create();
+    const pos = v.state.selection.from;
+    v.dispatch(v.state.tr.insert(pos, [hr, paragraph]).scrollIntoView());
+    v.focus();
+  }, []);
+
+  const handleInsertText = useCallback((text: string) => {
+    const v = viewRef.current;
+    if (!v) return;
+    v.dispatch(v.state.tr.insertText(text).scrollIntoView());
+    v.focus();
+  }, []);
+
+  const handleInsertDate = useCallback(() => {
+    const stamp = new Date().toLocaleDateString(undefined, {
+      year: "numeric", month: "long", day: "numeric",
+    });
+    handleInsertText(stamp);
+  }, [handleInsertText]);
+
+  const openFind = useCallback(() => {
+    setFindOpen(true);
+    requestAnimationFrame(() => {
+      findInputRef.current?.focus();
+      findInputRef.current?.select();
+    });
+  }, []);
+
+  const closeFind = useCallback(() => {
+    setFindOpen(false);
+    const v = viewRef.current;
+    if (v) { clearSearch(v); v.focus(); }
+  }, []);
+
+  const setLineSpacing = useCallback((lineHeight: number | null) => {
+    const v = viewRef.current;
+    if (!v) return;
+    const { from, to } = v.state.selection;
+    const tr = v.state.tr;
+    v.state.doc.nodesBetween(from, to, (node, pos) => {
+      if (node.type === mySchema.nodes.paragraph || node.type === mySchema.nodes.heading) {
+        tr.setNodeMarkup(pos, undefined, { ...node.attrs, lineHeight });
+      }
+    });
+    v.dispatch(tr); v.focus();
+  }, []);
+
+  const clearFormatting = useCallback(() => {
+    const v = viewRef.current;
+    if (!v) return;
+    const { from, to, empty } = v.state.selection;
+    if (empty) return;
+    const tr = v.state.tr;
+    Object.values(mySchema.marks).forEach((markType) => tr.removeMark(from, to, markType));
+    v.state.doc.nodesBetween(from, to, (node, pos) => {
+      if (node.type === mySchema.nodes.heading || node.type === mySchema.nodes.code_block) {
+        tr.setNodeMarkup(pos, mySchema.nodes.paragraph, {
+          textAlign: node.attrs.textAlign ?? "left", indent: node.attrs.indent ?? 0, lineHeight: null,
+        });
+      }
+    });
+    v.dispatch(tr); v.focus();
+  }, []);
+
+  const toggleDark = useCallback(() => {
+    setIsDark((prev) => {
+      const next = !prev;
+      document.documentElement.classList.toggle("dark", next);
+      try { localStorage.setItem("wordpad-theme", next ? "dark" : "light"); } catch {}
+      return next;
+    });
+  }, []);
+
+  // Sync dark-mode state with the class applied pre-paint by the layout script
+  useEffect(() => {
+    setIsDark(document.documentElement.classList.contains("dark"));
+  }, []);
+
+  // Document title persistence + browser tab title
+  useEffect(() => {
+    const stored = localStorage.getItem("wordpad-title");
+    if (stored) setDocTitle(stored);
+  }, []);
+
+  useEffect(() => {
+    localStorage.setItem("wordpad-title", docTitle);
+    document.title = `${docTitle || "Untitled document"} — EDTRpad`;
+  }, [docTitle]);
+
+  // Keep the search plugin in sync with the find panel inputs
+  useEffect(() => {
+    const v = viewRef.current;
+    if (!v) return;
+    if (findOpen) setSearch(v, findQuery, caseSensitive);
+  }, [findQuery, caseSensitive, findOpen]);
+
+  // Ctrl+F / Ctrl+H open the find panel
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && (e.key === "f" || e.key === "h")) {
+        e.preventDefault();
+        openFind();
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [openFind]);
+
   const updateSelectedImageAttrs = useCallback((patch: Record<string, unknown>) => {
     const v = viewRef.current;
     if (!v) return;
@@ -1227,18 +1369,64 @@ export default function Editor() {
     return () => window.removeEventListener("keydown", onPrintKey);
   }, [handlePrint]);
 
+  void tick; // re-render on every transaction so the match counter stays fresh
+  const searchInfo = findOpen && viewRef.current ? getSearchState(viewRef.current) : undefined;
+  const matchTotal = searchInfo?.matches.length ?? 0;
+  const matchCurrent = matchTotal > 0 ? (searchInfo!.current + 1) : 0;
+
   return (
     <div className="flex flex-col h-screen">
-      <MenuBar viewRef={viewRef} schema={mySchema} pageMarginCm={pageMarginCm} onPrint={handlePrint} />
-      <Toolbar
+      <MenuBar
         viewRef={viewRef}
         schema={mySchema}
+        pageMarginCm={pageMarginCm}
+        onPrint={handlePrint}
+        docTitle={docTitle}
+        onTitleChange={setDocTitle}
+        onFind={openFind}
         onInsertTable={handleInsertTable}
         onPageBreakAdd={handleInsertPageBreak}
         onLinkAdd={handleLinkAdd}
         onImageAdd={handleImageAdd}
-        tick={tick}
+        onInsertDivider={handleInsertDivider}
+        onInsertSymbol={handleInsertText}
+        onInsertDate={handleInsertDate}
+        onLineSpacing={setLineSpacing}
+        onClearFormatting={clearFormatting}
+        zoomPercent={zoomPercent}
+        onZoomChange={setZoomPercent}
+        showToolbar={showToolbar}
+        onToggleToolbar={() => setShowToolbar((s) => !s)}
+        showRuler={showRuler}
+        onToggleRuler={() => setShowRuler((s) => !s)}
+        isDark={isDark}
+        onToggleDark={toggleDark}
       />
+      {showToolbar && (
+        <Toolbar
+          viewRef={viewRef}
+          schema={mySchema}
+          onInsertTable={handleInsertTable}
+          onPageBreakAdd={handleInsertPageBreak}
+          onLinkAdd={handleLinkAdd}
+          onImageAdd={handleImageAdd}
+          tick={tick}
+        />
+      )}
+      {showRuler && (
+        <div className="border-b border-border bg-card select-none overflow-hidden">
+          <div className="mx-auto h-5 relative" style={{ width: 794 * (zoomPercent / 100) }}>
+            <div className="absolute inset-0 flex">
+              {Array.from({ length: 21 }, (_, i) => (
+                <div key={i} className="relative shrink-0 border-l border-border/60"
+                  style={{ width: (794 / 21) * (zoomPercent / 100) }}>
+                  <span className="absolute left-0.5 top-0 text-[8px] leading-none text-muted-foreground/70">{i}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
       <div className="editor-shell" style={{ backgroundColor: paperBgColor }}>
         <TableContextMenu viewRef={viewRef}>
           <div
@@ -1339,6 +1527,60 @@ export default function Editor() {
           </div>
         </div>
       )}
+      {findOpen && (
+        <div className="fixed right-4 top-20 z-[1250] w-[330px] rounded-md border border-border bg-white shadow-lg p-2.5 space-y-2">
+          <div className="flex items-center gap-1.5">
+            <input
+              ref={findInputRef}
+              value={findQuery}
+              onChange={(e) => setFindQuery(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  e.preventDefault();
+                  const v = viewRef.current;
+                  if (v) (e.shiftKey ? findPrev : findNext)(v);
+                } else if (e.key === "Escape") {
+                  e.preventDefault();
+                  closeFind();
+                }
+              }}
+              placeholder="Find"
+              className="flex-1 rounded border border-input bg-background px-2 py-1 text-sm outline-none focus:ring-1 focus:ring-ring"
+            />
+            <span className="text-[11px] tabular-nums text-muted-foreground w-12 text-center shrink-0">
+              {matchTotal ? `${matchCurrent}/${matchTotal}` : findQuery ? "0/0" : ""}
+            </span>
+            <button type="button" title="Previous (Shift+Enter)"
+              className="h-7 w-7 rounded hover:bg-accent/70 text-sm shrink-0"
+              onClick={() => { const v = viewRef.current; if (v) findPrev(v); }}>↑</button>
+            <button type="button" title="Next (Enter)"
+              className="h-7 w-7 rounded hover:bg-accent/70 text-sm shrink-0"
+              onClick={() => { const v = viewRef.current; if (v) findNext(v); }}>↓</button>
+            <button type="button" title="Close (Esc)"
+              className="h-7 w-7 rounded hover:bg-accent/70 text-sm shrink-0"
+              onClick={closeFind}>✕</button>
+          </div>
+          <div className="flex items-center gap-1.5">
+            <input
+              value={replaceText}
+              onChange={(e) => setReplaceText(e.target.value)}
+              placeholder="Replace with"
+              className="flex-1 rounded border border-input bg-background px-2 py-1 text-sm outline-none focus:ring-1 focus:ring-ring"
+            />
+            <button type="button"
+              className="h-7 rounded border border-input bg-background px-2 text-xs hover:bg-accent/70 shrink-0"
+              onClick={() => { const v = viewRef.current; if (v) replaceCurrent(v, replaceText); }}>Replace</button>
+            <button type="button"
+              className="h-7 rounded border border-input bg-background px-2 text-xs hover:bg-accent/70 shrink-0"
+              onClick={() => { const v = viewRef.current; if (v) replaceAll(v, replaceText); }}>All</button>
+          </div>
+          <label className="flex items-center gap-1.5 text-[11px] text-muted-foreground select-none">
+            <input type="checkbox" checked={caseSensitive}
+              onChange={(e) => setCaseSensitive(e.target.checked)} />
+            Match case
+          </label>
+        </div>
+      )}
       {slashMenu && (
         <div
           ref={slashMenuRef}
@@ -1399,10 +1641,7 @@ export default function Editor() {
           )}
         </div>
       )}
-      <div className="border-t border-border bg-background/95 px-2 py-1 text-[11px] leading-none relative">
-        <div className="pointer-events-none absolute inset-x-0 top-1/2 -translate-y-1/2 text-center text-[11px] font-semibold tracking-[0.18em] text-muted-foreground/50 select-none">
-          ONLINE WORDPAD
-        </div>
+      <div className="border-t border-border bg-card/95 px-2 py-1 text-[11px] leading-none relative">
         <div className="flex items-center justify-between gap-2">
           <div className="flex items-center gap-2 text-muted-foreground">
             <span><span className="font-medium text-foreground">{docInfo.selectedType}</span></span>
@@ -1410,6 +1649,15 @@ export default function Editor() {
             <span>Chars: <span className="font-medium text-foreground">{docInfo.characters}</span></span>
           </div>
           <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={toggleDark}
+              title={isDark ? "Switch to light mode" : "Switch to dark mode"}
+              aria-label="Toggle dark mode"
+              className="inline-flex h-6 w-6 items-center justify-center rounded border border-input bg-background text-muted-foreground hover:bg-accent/70 hover:text-foreground transition-colors"
+            >
+              {isDark ? <Sun size={14} /> : <Moon size={14} />}
+            </button>
             <label className="flex items-center gap-1.5">
               <span className="text-muted-foreground">Zoom</span>
               <select
