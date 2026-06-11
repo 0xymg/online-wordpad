@@ -27,7 +27,7 @@ import { Popover, PopoverAnchor, PopoverContent, PopoverTrigger } from "@/compon
 import {
   ArrowClockwise, Crop, FlipHorizontal, FlipVertical,
   TextAlignLeft, TextAlignCenter, TextAlignRight,
-  Sun, Moon, FileText, Trash, Plus, MagnifyingGlass, PencilSimple, DownloadSimple, SignIn, SignOut,
+  Sun, Moon, FileText, Trash, Plus, MagnifyingGlass, PencilSimple, DownloadSimple, SignIn,
 } from "@phosphor-icons/react";
 import { Document, Packer, Paragraph, TextRun } from "docx";
 import {
@@ -1573,7 +1573,7 @@ export default function Editor() {
       >
         <div className="flex h-full w-64 flex-col">
           {/* New document */}
-          <div className="p-2">
+          <div className="p-2 pb-1">
             <button
               type="button"
               onClick={createFile}
@@ -1583,51 +1583,122 @@ export default function Editor() {
             </button>
           </div>
 
+          {/* Search */}
+          <div className="px-2 pb-1">
+            <div className="flex items-center gap-2 rounded-md border border-sidebar-border px-2.5">
+              <MagnifyingGlass size={15} className="shrink-0 opacity-60" />
+              <input
+                value={fileSearch}
+                onChange={(e) => setFileSearch(e.target.value)}
+                placeholder="Search documents"
+                className="min-w-0 flex-1 bg-transparent py-1.5 text-sm outline-none placeholder:text-muted-foreground"
+              />
+            </div>
+          </div>
+
           {/* Document list */}
           <div className="flex-1 overflow-y-auto px-2 pb-2">
             <p className="px-2.5 pt-1 pb-1.5 text-[11px] font-medium uppercase tracking-wide text-muted-foreground">Documents</p>
             <div className="flex flex-col gap-0.5">
-              {files.map((f) => (
-                <div
-                  key={f.id}
-                  className={cn(
-                    "group flex items-center gap-2 rounded-md pl-2.5 pr-1.5 transition-colors",
-                    f.id === activeId ? "bg-sidebar-accent text-sidebar-accent-foreground" : "hover:bg-sidebar-accent/60"
-                  )}
-                >
-                  <button
-                    type="button"
-                    onClick={() => switchFile(f.id)}
-                    className="flex min-w-0 flex-1 items-center gap-2 py-1.5 text-left text-sm"
-                  >
-                    <FileText size={16} className="shrink-0 opacity-70" />
-                    <span className="truncate">{f.name || "Untitled"}</span>
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => deleteFile(f.id)}
-                    title="Delete document"
-                    aria-label="Delete document"
-                    className="shrink-0 rounded p-1 opacity-0 group-hover:opacity-100 hover:bg-destructive/15 hover:text-destructive transition"
-                  >
-                    <Trash size={14} />
-                  </button>
-                </div>
+              {files
+                .filter((f) => (f.name || "").toLowerCase().includes(fileSearch.trim().toLowerCase()))
+                .map((f) => (
+                <ContextMenu key={f.id}>
+                  <ContextMenuTrigger asChild>
+                    <div
+                      className={cn(
+                        "group flex items-center gap-2 rounded-md pl-2.5 pr-1.5 transition-colors",
+                        f.id === activeId ? "bg-sidebar-accent text-sidebar-accent-foreground" : "hover:bg-sidebar-accent/60"
+                      )}
+                    >
+                      {renamingId === f.id ? (
+                        <input
+                          autoFocus
+                          defaultValue={f.name}
+                          onKeyDown={(e) => {
+                            if (e.key === "Enter") { renameFile(f.id, e.currentTarget.value); setRenamingId(null); }
+                            else if (e.key === "Escape") setRenamingId(null);
+                          }}
+                          onBlur={(e) => { renameFile(f.id, e.currentTarget.value); setRenamingId(null); }}
+                          className="my-1 min-w-0 flex-1 rounded border border-input bg-background px-1.5 py-1 text-sm outline-none focus:ring-1 focus:ring-ring"
+                        />
+                      ) : (
+                        <>
+                          <button
+                            type="button"
+                            onClick={() => switchFile(f.id)}
+                            onDoubleClick={() => setRenamingId(f.id)}
+                            className="flex min-w-0 flex-1 items-center gap-2 py-1.5 text-left text-sm"
+                          >
+                            <FileText size={16} className="shrink-0 opacity-70" />
+                            <span className="truncate">{f.name || "Untitled"}</span>
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => deleteFile(f.id)}
+                            title="Delete document"
+                            aria-label="Delete document"
+                            className="shrink-0 rounded p-1 opacity-0 group-hover:opacity-100 hover:bg-destructive/15 hover:text-destructive transition"
+                          >
+                            <Trash size={14} />
+                          </button>
+                        </>
+                      )}
+                    </div>
+                  </ContextMenuTrigger>
+                  <ContextMenuContent className="w-44">
+                    <ContextMenuItem onClick={() => { switchFile(f.id); setRenamingId(f.id); }}>
+                      <PencilSimple size={15} /> Rename
+                    </ContextMenuItem>
+                    <ContextMenuSub>
+                      <ContextMenuSubTrigger>
+                        <DownloadSimple size={15} /> Export
+                      </ContextMenuSubTrigger>
+                      <ContextMenuSubContent>
+                        <ContextMenuItem onClick={() => exportFile(f, "html")}>HTML (.html)</ContextMenuItem>
+                        <ContextMenuItem onClick={() => exportFile(f, "txt")}>Plain text (.txt)</ContextMenuItem>
+                        <ContextMenuItem onClick={() => exportFile(f, "docx")}>Word (.docx)</ContextMenuItem>
+                      </ContextMenuSubContent>
+                    </ContextMenuSub>
+                    <ContextMenuSeparator />
+                    <ContextMenuItem variant="destructive" onClick={() => deleteFile(f.id)}>
+                      <Trash size={15} /> Delete
+                    </ContextMenuItem>
+                  </ContextMenuContent>
+                </ContextMenu>
               ))}
+              {files.filter((f) => (f.name || "").toLowerCase().includes(fileSearch.trim().toLowerCase())).length === 0 && (
+                <p className="px-2.5 py-2 text-xs text-muted-foreground">No documents</p>
+              )}
             </div>
           </div>
 
-          {/* Mock user — to be wired up later */}
+          {/* User / auth */}
           <div className="border-t border-sidebar-border p-2">
-            <div className="flex items-center gap-2.5 rounded-md px-2 py-1.5">
-              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground text-xs font-semibold select-none">
-                YM
-              </div>
-              <div className="min-w-0 leading-tight">
-                <div className="truncate text-sm font-medium">Yunus Melih</div>
-                <div className="truncate text-[11px] text-muted-foreground">Free plan</div>
-              </div>
-            </div>
+            {user ? (
+              <button
+                type="button"
+                onClick={logout}
+                title="Log out"
+                className="flex w-full items-center gap-2.5 rounded-md px-2 py-1.5 text-left hover:bg-sidebar-accent transition-colors"
+              >
+                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground text-xs font-semibold select-none">
+                  {user.initials}
+                </div>
+                <div className="min-w-0 leading-tight">
+                  <div className="truncate text-sm font-medium">{user.name}</div>
+                  <div className="truncate text-[11px] text-muted-foreground">Free plan</div>
+                </div>
+              </button>
+            ) : (
+              <button
+                type="button"
+                className="flex w-full items-center gap-2.5 rounded-md px-2 py-2 text-left text-sm hover:bg-sidebar-accent transition-colors"
+              >
+                <SignIn size={18} className="shrink-0 opacity-80" />
+                <span>Log in</span>
+              </button>
+            )}
           </div>
         </div>
       </aside>
@@ -1662,6 +1733,8 @@ export default function Editor() {
         onToggleRuler={() => setShowRuler((s) => !s)}
         isDark={isDark}
         onToggleDark={toggleDark}
+        user={user}
+        onLogout={logout}
       />
       {showToolbar && (
         <Toolbar
