@@ -178,7 +178,7 @@ export default function MenuBar({
 
   const print = () => onPrint?.();
 
-  const TRIGGER = "text-sm font-normal px-3 py-1 h-7";
+  const TRIGGER = "text-sm font-normal px-0 py-1 h-7";
 
   return (
     <Menubar className="relative rounded-none border-x-0 border-t-0 border-b border-border bg-card h-8 px-0">
