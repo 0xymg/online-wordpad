@@ -10,6 +10,10 @@ import { Clock }               from "@phosphor-icons/react/dist/ssr/Clock";
 import { Smiley }              from "@phosphor-icons/react/dist/ssr/Smiley";
 import { Lock }                from "@phosphor-icons/react/dist/ssr/Lock";
 import { Command }             from "@phosphor-icons/react/dist/ssr/Command";
+import { CloudArrowUp }        from "@phosphor-icons/react/dist/ssr/CloudArrowUp";
+import { Files }               from "@phosphor-icons/react/dist/ssr/Files";
+import { Moon }                from "@phosphor-icons/react/dist/ssr/Moon";
+import { MagnifyingGlass }     from "@phosphor-icons/react/dist/ssr/MagnifyingGlass";
 import ToolbarPreviewClient from "./components/ToolbarPreviewClient";
 
 export const metadata: Metadata = {
@@ -52,6 +56,21 @@ export const metadata: Metadata = {
 
 const features = [
   {
+    Icon: CloudArrowUp,
+    title: "Accounts & Cloud Sync",
+    desc: "Create a free account to save your documents to the cloud and pick up where you left off on any device. No account needed to start.",
+  },
+  {
+    Icon: Files,
+    title: "Multiple Documents",
+    desc: "Manage all your work from a built-in sidebar — create, rename, search, switch, and export documents without leaving the editor.",
+  },
+  {
+    Icon: Moon,
+    title: "Dark Mode",
+    desc: "Switch between light and dark themes for comfortable writing day or night. Your theme and layout preferences sync with your account.",
+  },
+  {
     Icon: TextB,
     title: "Rich Text Editing",
     desc: "Bold, italic, underline, strikethrough, font families, sizes, text and highlight colors. Everything you expect from a text editor.",
@@ -65,6 +84,11 @@ const features = [
     Icon: ImageSquare,
     title: "Images",
     desc: "Paste or upload images. Resize, crop, rotate, flip and align them within the document.",
+  },
+  {
+    Icon: MagnifyingGlass,
+    title: "Find & Replace",
+    desc: "Search your document and replace text in one place. Highlights every match — press Ctrl+F to open.",
   },
   {
     Icon: Article,
@@ -101,11 +125,11 @@ const features = [
 const faqs = [
   {
     q: "Do I need to create an account?",
-    a: "No. Online WordPad works without any registration or login. Open the editor and start typing immediately.",
+    a: "No. You can open the editor and start typing immediately, no registration required. Creating a free account is optional — it lets you save multiple documents to the cloud and sync them across your devices.",
   },
   {
     q: "Are my documents saved?",
-    a: "Your document is automatically saved to your browser's local storage. It persists across page refreshes on the same device. No data is sent to any server.",
+    a: "Yes. Without an account, your document is automatically saved to your browser's local storage on the current device. When you sign in, your documents and preferences are saved to your account and synced across devices.",
   },
   {
     q: "Can I export to Microsoft Word format?",
