@@ -222,6 +222,20 @@ export default function LandingPage() {
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLdHowTo) }}
       />
     <div className="min-h-screen bg-white text-gray-900 font-sans">
+      {/* ── Announcement banner ── */}
+      <div className="bg-gray-900 text-white text-sm">
+        <div className="mx-auto max-w-5xl px-6 py-2 flex items-center justify-center gap-2 text-center">
+          <span className="inline-flex items-center gap-1.5">
+            <span aria-hidden className="hidden sm:inline">🎉</span>
+            <span className="text-gray-300">New:</span>
+            <span className="font-medium">User accounts are here — save &amp; sync your documents across devices.</span>
+          </span>
+          <Link href="/pad" className="font-semibold underline underline-offset-2 decoration-gray-500 hover:decoration-white whitespace-nowrap">
+            Sign up free →
+          </Link>
+        </div>
+      </div>
+
       {/* ── Nav ── */}
       <header className="sticky top-0 z-50 border-b border-gray-100 bg-white/90 backdrop-blur-sm">
         <div className="mx-auto max-w-5xl px-6 flex items-center justify-between h-14">

@@ -1163,6 +1163,16 @@ export default function Editor() {
 
   const openAuth = useCallback(() => setAuthOpen(true), []);
 
+  // Auto-open the auth dialog on first load for logged-out visitors (once per browser session).
+  useEffect(() => {
+    if (sessionPending || isAuthed) return;
+    try {
+      if (sessionStorage.getItem("wordpad-auth-prompted")) return;
+      sessionStorage.setItem("wordpad-auth-prompted", "1");
+    } catch {}
+    setAuthOpen(true);
+  }, [sessionPending, isAuthed]);
+
   const resendVerification = useCallback(async () => {
     if (!authUser?.email) return;
     try {
