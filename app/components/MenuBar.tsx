@@ -21,6 +21,8 @@ import { EditorState, Transaction, AllSelection } from "prosemirror-state";
 import { DOMSerializer } from "prosemirror-model";
 import { addColumnAfter, addRowAfter, deleteColumn, deleteRow, deleteTable } from "prosemirror-tables";
 import { Document, Packer, Paragraph, TextRun } from "docx";
+import { SidebarSimple } from "@phosphor-icons/react";
+import { cn } from "@/lib/utils";
 
 interface MenuBarProps {
   viewRef: React.MutableRefObject<EditorView | null>;
@@ -47,6 +49,8 @@ interface MenuBarProps {
   onToggleRuler: () => void;
   isDark: boolean;
   onToggleDark: () => void;
+  sidebarOpen: boolean;
+  onToggleSidebar: () => void;
 }
 
 const TEXT_COLORS = ["#000000", "#e11d48", "#ea580c", "#ca8a04", "#16a34a", "#2563eb", "#7c3aed", "#6b7280"];
@@ -70,7 +74,22 @@ export default function MenuBar({
   zoomPercent, onZoomChange,
   showToolbar, onToggleToolbar, showRuler, onToggleRuler,
   isDark, onToggleDark,
+  sidebarOpen, onToggleSidebar,
 }: MenuBarProps) {
+  const SidebarBtn = ({ className }: { className?: string }) => (
+    <button
+      type="button"
+      onClick={onToggleSidebar}
+      title="Toggle sidebar"
+      aria-label="Toggle sidebar"
+      className={cn(
+        "inline-flex h-7 w-7 items-center justify-center rounded shrink-0 text-foreground/70 hover:bg-accent hover:text-accent-foreground transition-colors",
+        className
+      )}
+    >
+      <SidebarSimple size={18} />
+    </button>
+  );
   const cmd = (command: (state: EditorState, dispatch?: (tr: Transaction) => void) => boolean) => {
     const v = viewRef.current;
     if (!v) return;
@@ -166,9 +185,10 @@ export default function MenuBar({
       {/* Brand + document title — sits in the left gutter beside the centered 800px menu box.
           Shown only when the gutter is wide enough to fit it without overlapping the menus. */}
       <div
-        className="hidden min-[1180px]:flex absolute left-3 top-0 bottom-0 items-center gap-2 overflow-hidden"
+        className="hidden min-[1180px]:flex absolute left-3 top-0 bottom-0 items-center gap-1 overflow-hidden"
         style={{ right: "calc(50% + 412px)" }}
       >
+        {sidebarOpen && <SidebarBtn />}
         <span className="font-brand shrink-0 select-none leading-none">
           <span className="text-lg font-bold tracking-tight text-foreground">EDTR</span>
           <span className="text-sm font-semibold tracking-wider text-muted-foreground">PAD</span>
@@ -182,8 +202,10 @@ export default function MenuBar({
           className="min-w-0 flex-1 rounded px-2 py-0.5 text-sm text-foreground/80 bg-transparent border border-transparent hover:border-border focus:border-border focus:bg-background outline-none truncate"
         />
       </div>
-      {/* Menus — left-aligned inside a centered 800px box */}
-      <div className="max-w-[800px] w-full mx-auto flex items-center px-3">
+      {/* Menus — left-aligned inside a centered 800px box, 5px gap, no side padding */}
+      <div className="max-w-[800px] w-full mx-auto flex items-center gap-[5px]">
+      {/* Sidebar toggle — left of File when collapsed (or when the gutter is hidden) */}
+      <SidebarBtn className={sidebarOpen ? "min-[1180px]:hidden" : undefined} />
       {/* File */}
       <MenubarMenu>
         <MenubarTrigger className={TRIGGER}>File</MenubarTrigger>
