@@ -30,7 +30,7 @@ export default function AuthModal({
     setLoading(true);
     try {
       if (mode === "forgot") {
-        const { error } = await authClient.forgetPassword({
+        const { error } = await authClient.requestPasswordReset({
           email,
           redirectTo: "/reset-password",
         });

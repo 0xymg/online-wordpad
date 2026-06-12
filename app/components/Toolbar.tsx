@@ -7,7 +7,6 @@ import { toggleMark, setBlockType, wrapIn } from "prosemirror-commands";
 import { wrapInList, sinkListItem, liftListItem } from "prosemirror-schema-list";
 import { undo, redo } from "prosemirror-history";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
 import ColorPicker from "./ColorPicker";
 import EmojiPicker, { EmojiClickData } from "emoji-picker-react";
