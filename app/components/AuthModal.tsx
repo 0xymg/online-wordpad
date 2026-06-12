@@ -56,7 +56,10 @@ export default function AuthModal({
     setError(null);
     await authClient.signIn.social({
       provider: "google",
-      callbackURL: `${window.location.origin}/pad`,
+      // Relative path → always trusted, resolved against the auth baseURL.
+      // (A full URL would be rejected unless its origin is in trustedOrigins,
+      //  silently falling back to "/" — that was sending users to the landing page.)
+      callbackURL: "/pad",
     });
   };
 
