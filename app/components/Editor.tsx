@@ -2067,7 +2067,7 @@ export default function Editor() {
       {slashMenu && (
         <div
           ref={slashMenuRef}
-          className="fixed z-[1200] w-[300px] rounded-md border border-border bg-white shadow-lg p-1"
+          className="fixed z-[1200] w-[300px] rounded-md border border-border bg-popover text-popover-foreground shadow-lg p-1"
           style={{ left: slashMenu.left, top: slashMenu.top }}
         >
           <input
@@ -2091,6 +2091,15 @@ export default function Editor() {
                 e.preventDefault();
                 const picked = slashItems[Math.max(0, Math.min(slashMenu.selected, slashItems.length - 1))];
                 if (picked) runSlashCommand(picked.id);
+              } else if (e.key === "Backspace" && slashMenu.query.length === 0) {
+                // Backspacing over the "/" cancels the command menu and removes it from the doc.
+                e.preventDefault();
+                const v = viewRef.current;
+                if (v) {
+                  v.dispatch(v.state.tr.delete(slashMenu.from, slashMenu.from + 1));
+                  v.focus();
+                }
+                closeSlashMenu();
               } else if (e.key === "Escape") {
                 e.preventDefault();
                 closeSlashMenu();
