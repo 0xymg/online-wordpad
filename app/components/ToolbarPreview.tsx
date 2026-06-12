@@ -18,9 +18,6 @@ export default function ToolbarPreview() {
         onLinkAdd={() => {}}
         onImageAdd={() => {}}
         tick={0}
-        user={null}
-        onLogin={() => {}}
-        onLogout={() => {}}
       />
     </div>
   );

@@ -1869,6 +1869,9 @@ export default function Editor() {
         isDark={isDark}
         onToggleDark={toggleDark}
         canUseSidebar={isAuthed}
+        user={user}
+        onLogin={openAuth}
+        onLogout={logout}
       />
       {user && !user.emailVerified && !verifyDismissed && (
         <div className="flex items-center gap-2 border-b border-amber-300/60 bg-amber-50 px-3 py-1.5 text-[12px] text-amber-900 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-200">
@@ -1891,9 +1894,6 @@ export default function Editor() {
           onLinkAdd={handleLinkAdd}
           onImageAdd={handleImageAdd}
           tick={tick}
-          user={user}
-          onLogin={openAuth}
-          onLogout={logout}
         />
       )}
       {showRuler && (
