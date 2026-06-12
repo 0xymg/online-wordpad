@@ -54,7 +54,10 @@ export default function AuthModal({
 
   const googleSignIn = async () => {
     setError(null);
-    await authClient.signIn.social({ provider: "google", callbackURL: "/pad" });
+    await authClient.signIn.social({
+      provider: "google",
+      callbackURL: `${window.location.origin}/pad`,
+    });
   };
 
   const INPUT =

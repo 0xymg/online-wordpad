@@ -15,6 +15,14 @@ export const auth = betterAuth({
   baseURL: process.env.BETTER_AUTH_URL,
   trustedOrigins,
   database: pool,
+  session: {
+    expiresIn: 60 * 60 * 24 * 30,   // 30 gün
+    updateAge: 60 * 60 * 24,         // her 24 saatte cookie yenile
+    cookieCache: {
+      enabled: true,
+      maxAge: 5 * 60,
+    },
+  },
   emailAndPassword: {
     enabled: true,
     requireEmailVerification: false,
