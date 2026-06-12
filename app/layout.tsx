@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { Analytics } from "@vercel/analytics/next";
@@ -22,10 +22,31 @@ export const metadata: Metadata = {
   description:
     "Free browser-based word processor. Rich text, tables, images, export to DOCX/HTML/TXT, and print. No install, no login required.",
   metadataBase: new URL("https://wordpad.online"),
-  robots: {
-    index: true,
-    follow: true,
+  robots: { index: true, follow: true },
+  openGraph: {
+    siteName: "Online WordPad",
+    type: "website",
+    images: [{ url: "/og-image.png", width: 1200, height: 630 }],
   },
+  twitter: {
+    card: "summary_large_image",
+    images: ["/og-image.png"],
+  },
+};
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  themeColor: "#ffffff",
+};
+
+const jsonLdOrganization = {
+  "@context": "https://schema.org",
+  "@type": "Organization",
+  name: "Online WordPad",
+  url: "https://wordpad.online",
+  logo: "https://wordpad.online/logo.png",
+  sameAs: ["https://wordpad.online"],
 };
 
 export default function RootLayout({
@@ -40,6 +61,10 @@ export default function RootLayout({
           dangerouslySetInnerHTML={{
             __html: `try{if(localStorage.getItem('wordpad-theme')==='dark')document.documentElement.classList.add('dark')}catch(e){}`,
           }}
+        />
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLdOrganization) }}
         />
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />

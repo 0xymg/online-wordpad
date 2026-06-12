@@ -6,9 +6,29 @@ export const metadata: Metadata = {
   title: "Guides: WordPad Online, Alternatives & Tips",
   description:
     "Guides about using an online WordPad, free WordPad alternatives, and browser-based text editing. No install required.",
-  alternates: {
-    canonical: "https://wordpad.online/guides",
+  keywords: ["wordpad guides", "online word processor tips", "wordpad alternative guide", "online word editor help"],
+  alternates: { canonical: "https://wordpad.online/guides" },
+  openGraph: {
+    title: "Guides: WordPad Online, Alternatives & Tips",
+    description: "Guides about using an online WordPad, free WordPad alternatives, and browser-based text editing.",
+    url: "https://wordpad.online/guides",
+    type: "website",
+    siteName: "Online WordPad",
   },
+  twitter: {
+    card: "summary_large_image",
+    title: "Guides: WordPad Online, Alternatives & Tips",
+    description: "Guides about using an online WordPad and free browser-based text editing.",
+  },
+};
+
+const jsonLdBreadcrumb = {
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  itemListElement: [
+    { "@type": "ListItem", position: 1, name: "Home", item: "https://wordpad.online" },
+    { "@type": "ListItem", position: 2, name: "Guides", item: "https://wordpad.online/guides" },
+  ],
 };
 
 export default function GuidesIndexPage() {
@@ -16,6 +36,7 @@ export default function GuidesIndexPage() {
 
   return (
     <div className="min-h-screen bg-white text-gray-900 font-sans">
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLdBreadcrumb) }} />
       {/* Nav */}
       <header className="sticky top-0 z-50 border-b border-gray-100 bg-white/90 backdrop-blur-sm">
         <div className="mx-auto max-w-3xl px-6 flex items-center justify-between h-14">

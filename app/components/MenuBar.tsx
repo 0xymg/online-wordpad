@@ -193,8 +193,8 @@ export default function MenuBar({
       >
         {canUseSidebar && <SidebarBtn />}
         <span className="font-brand shrink-0 select-none leading-none">
-          <span className="text-lg font-bold tracking-tight text-foreground">EDTR</span>
-          <span className="text-sm font-semibold tracking-wider text-muted-foreground">PAD</span>
+          <span className="text-lg font-bold tracking-tight text-foreground dark:text-[#FFFFE3]">EDTR</span>
+          <span className="text-sm font-semibold tracking-wider text-muted-foreground dark:text-[#FFFFE3]/70">PAD</span>
         </span>
         <input
           value={docTitle}
@@ -211,8 +211,8 @@ export default function MenuBar({
       <div className="hidden min-[800px]:flex min-[1180px]:hidden items-center gap-1.5 shrink-0">
         {canUseSidebar && <SidebarBtn />}
         <span className="font-brand shrink-0 select-none leading-none">
-          <span className="text-lg font-bold tracking-tight text-foreground">EDTR</span>
-          <span className="text-sm font-semibold tracking-wider text-muted-foreground">PAD</span>
+          <span className="text-lg font-bold tracking-tight text-foreground dark:text-[#FFFFE3]">EDTR</span>
+          <span className="text-sm font-semibold tracking-wider text-muted-foreground dark:text-[#FFFFE3]/70">PAD</span>
         </span>
       </div>
       {/* <800px: trigger only — brand moves to the status bar */}

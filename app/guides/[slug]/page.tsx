@@ -119,17 +119,29 @@ export default async function GuidePage({
       "@type": "Organization",
       name: "Online WordPad",
       url: "https://wordpad.online",
+      logo: { "@type": "ImageObject", url: "https://wordpad.online/logo.png" },
     },
+    author: { "@type": "Organization", name: "Online WordPad" },
     datePublished: guide.date,
     dateModified: guide.date,
+    mainEntityOfPage: { "@type": "WebPage", "@id": `https://wordpad.online/guides/${slug}` },
+    image: "https://wordpad.online/og-image.png",
+  };
+
+  const jsonLdBreadcrumb = {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: [
+      { "@type": "ListItem", position: 1, name: "Home", item: "https://wordpad.online" },
+      { "@type": "ListItem", position: 2, name: "Guides", item: "https://wordpad.online/guides" },
+      { "@type": "ListItem", position: 3, name: guide.title, item: `https://wordpad.online/guides/${slug}` },
+    ],
   };
 
   return (
     <>
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLdArticle) }}
-      />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLdArticle) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLdBreadcrumb) }} />
       <div className="min-h-screen bg-white text-gray-900 font-sans">
         {/* Nav */}
         <header className="sticky top-0 z-50 border-b border-gray-100 bg-white/90 backdrop-blur-sm">
