@@ -17,7 +17,9 @@ import {
   TextAlignLeft, TextAlignCenter, TextAlignRight, TextAlignJustify,
   ListBullets, ListNumbers, TextOutdent, TextIndent,
   Link, Quotes, Table, TextT, Highlighter, Smiley, ImageSquare, Minus, Code,
+  SignIn, SignOut,
 } from "@phosphor-icons/react";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 
 /* ── Constants ─────────────────────────────────────────────────────────── */
 const GRID_ROWS = 8;
@@ -163,11 +165,15 @@ interface ToolbarProps {
   onLinkAdd: () => void;
   onImageAdd: () => void;
   tick: number;
+  user: { name: string; initials: string } | null;
+  onLogin: () => void;
+  onLogout: () => void;
 }
 
 /* ── Main ────────────────────────────────────────────────────────────────── */
 export default function Toolbar({
   viewRef, schema, onInsertTable, onPageBreakAdd, onLinkAdd, onImageAdd, tick,
+  user, onLogin, onLogout,
 }: ToolbarProps) {
   void tick;
   const [textColor, setTextColor] = useState("#000000");
@@ -246,7 +252,7 @@ export default function Toolbar({
   const SEL = "h-10 text-xs border border-input rounded px-1.5 bg-background hover:bg-accent focus:outline-none focus:ring-1 focus:ring-ring shrink-0 cursor-pointer";
 
   return (
-    <div className="border-b border-border bg-card select-none overflow-x-auto">
+    <div className="relative border-b border-border bg-card select-none overflow-x-auto">
     <div className="max-w-[850px] mx-auto px-3 pt-1.5 pb-1 flex items-stretch justify-center gap-0">
 
       {/* ── History ── */}
@@ -366,6 +372,46 @@ export default function Toolbar({
         </Row>
       </Group>
 
+    </div>
+
+    {/* Auth — right side of toolbar bar */}
+    <div className="absolute right-3 top-0 bottom-0 flex items-center">
+      {user ? (
+        <Popover>
+          <PopoverTrigger asChild>
+            <button
+              type="button"
+              title={user.name}
+              aria-label="Account"
+              className="flex h-7 w-7 items-center justify-center rounded-full bg-primary text-primary-foreground text-[11px] font-semibold select-none"
+            >
+              {user.initials}
+            </button>
+          </PopoverTrigger>
+          <PopoverContent align="end" sideOffset={6} className="w-48 p-1">
+            <div className="px-2 py-1.5">
+              <div className="truncate text-sm font-medium">{user.name}</div>
+              <div className="truncate text-[11px] text-muted-foreground">Free plan</div>
+            </div>
+            <div className="my-1 h-px bg-border" />
+            <button
+              type="button"
+              onClick={onLogout}
+              className="flex w-full items-center gap-2 rounded-sm px-2 py-1.5 text-sm hover:bg-accent hover:text-accent-foreground"
+            >
+              <SignOut size={15} /> Log out
+            </button>
+          </PopoverContent>
+        </Popover>
+      ) : (
+        <button
+          type="button"
+          onClick={onLogin}
+          className="flex items-center gap-1.5 rounded-md border border-border px-2.5 py-1 text-sm hover:bg-accent hover:text-accent-foreground transition-colors"
+        >
+          <SignIn size={15} /> Log in
+        </button>
+      )}
     </div>
     </div>
   );

@@ -1868,9 +1868,6 @@ export default function Editor() {
         onToggleRuler={() => setShowRuler((s) => !s)}
         isDark={isDark}
         onToggleDark={toggleDark}
-        user={user}
-        onLogout={logout}
-        onLogin={openAuth}
         canUseSidebar={isAuthed}
       />
       {user && !user.emailVerified && !verifyDismissed && (
@@ -1894,6 +1891,9 @@ export default function Editor() {
           onLinkAdd={handleLinkAdd}
           onImageAdd={handleImageAdd}
           tick={tick}
+          user={user}
+          onLogin={openAuth}
+          onLogout={logout}
         />
       )}
       {showRuler && (

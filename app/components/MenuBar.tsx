@@ -21,8 +21,7 @@ import { EditorState, Transaction, AllSelection } from "prosemirror-state";
 import { DOMSerializer } from "prosemirror-model";
 import { addColumnAfter, addRowAfter, deleteColumn, deleteRow, deleteTable } from "prosemirror-tables";
 import { Document, Packer, Paragraph, TextRun } from "docx";
-import { SidebarSimple, SignIn, SignOut } from "@phosphor-icons/react";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { SidebarSimple } from "@phosphor-icons/react";
 import { cn } from "@/lib/utils";
 
 interface MenuBarProps {
@@ -53,9 +52,6 @@ interface MenuBarProps {
   onToggleDark: () => void;
   sidebarOpen: boolean;
   onToggleSidebar: () => void;
-  user: { name: string; initials: string } | null;
-  onLogout: () => void;
-  onLogin: () => void;
   canUseSidebar: boolean;
 }
 
@@ -81,7 +77,7 @@ export default function MenuBar({
   showToolbar, onToggleToolbar, showRuler, onToggleRuler,
   isDark, onToggleDark,
   onToggleSidebar,
-  user, onLogout, onLogin, canUseSidebar,
+  canUseSidebar,
 }: MenuBarProps) {
   const SidebarBtn = ({ className }: { className?: string }) => (
     <button
@@ -201,7 +197,7 @@ export default function MenuBar({
           onFocus={(e) => e.target.select()}
           spellCheck={false}
           aria-label="Document title"
-          className="min-w-0 flex-1 rounded px-2 py-0.5 text-sm text-foreground/80 bg-transparent border border-transparent hover:border-border focus:border-border focus:bg-background outline-none truncate"
+          className="min-w-0 w-[160px] rounded px-1.5 py-0.5 text-xs text-foreground/70 bg-transparent border border-transparent hover:border-border focus:border-border focus:bg-background outline-none truncate"
         />
       </div>
       {/* Menus — left-aligned inside a centered 800px box, 15px gap, no side padding */}
@@ -438,45 +434,6 @@ export default function MenuBar({
       </MenubarMenu>
       </div>
 
-      {/* Auth — right side of the bar */}
-      <div className="absolute right-3 top-0 bottom-0 flex items-center">
-        {user ? (
-          <Popover>
-            <PopoverTrigger asChild>
-              <button
-                type="button"
-                title={user.name}
-                aria-label="Account"
-                className="flex h-7 w-7 items-center justify-center rounded-full bg-primary text-primary-foreground text-[11px] font-semibold select-none"
-              >
-                {user.initials}
-              </button>
-            </PopoverTrigger>
-            <PopoverContent align="end" sideOffset={6} className="w-48 p-1">
-              <div className="px-2 py-1.5">
-                <div className="truncate text-sm font-medium">{user.name}</div>
-                <div className="truncate text-[11px] text-muted-foreground">Free plan</div>
-              </div>
-              <div className="my-1 h-px bg-border" />
-              <button
-                type="button"
-                onClick={onLogout}
-                className="flex w-full items-center gap-2 rounded-sm px-2 py-1.5 text-sm hover:bg-accent hover:text-accent-foreground"
-              >
-                <SignOut size={15} /> Log out
-              </button>
-            </PopoverContent>
-          </Popover>
-        ) : (
-          <button
-            type="button"
-            onClick={onLogin}
-            className="flex items-center gap-1.5 rounded-md border border-border px-2.5 py-1 text-sm hover:bg-accent hover:text-accent-foreground transition-colors"
-          >
-            <SignIn size={15} /> Log in
-          </button>
-        )}
-      </div>
     </Menubar>
   );
 }
