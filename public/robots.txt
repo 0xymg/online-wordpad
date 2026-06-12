@@ -6,4 +6,4 @@ Allow: /llms.txt
 Allow: /llms.md
 
 # Sitemap
-Sitemap: https://wordpad.online/sitemap.xml
+Sitemap: https://wordpad.info/sitemap.xml

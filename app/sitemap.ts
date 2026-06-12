@@ -6,7 +6,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
 
   const guideSlugs = getAllGuideSlugs();
   const guideEntries: MetadataRoute.Sitemap = guideSlugs.map((slug) => ({
-    url: `https://wordpad.online/guides/${slug}`,
+    url: `https://wordpad.info/guides/${slug}`,
     lastModified: now,
     changeFrequency: "monthly",
     priority: 0.7,
@@ -14,19 +14,19 @@ export default function sitemap(): MetadataRoute.Sitemap {
 
   return [
     {
-      url: "https://wordpad.online",
+      url: "https://wordpad.info",
       lastModified: now,
       changeFrequency: "weekly",
       priority: 1,
     },
     {
-      url: "https://wordpad.online/pad",
+      url: "https://wordpad.info/pad",
       lastModified: now,
       changeFrequency: "monthly",
       priority: 0.9,
     },
     {
-      url: "https://wordpad.online/guides",
+      url: "https://wordpad.info/guides",
       lastModified: now,
       changeFrequency: "weekly",
       priority: 0.8,

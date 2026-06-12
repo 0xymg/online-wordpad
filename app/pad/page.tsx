@@ -13,12 +13,12 @@ export const metadata = {
     "browser word editor",
   ],
   alternates: {
-    canonical: "https://wordpad.online/pad",
+    canonical: "https://wordpad.info/pad",
   },
   openGraph: {
     title: "Online WordPad Editor — Free Word Processor",
     description: "Write and format documents in your browser. Export to Word (.docx), HTML, or TXT. No install.",
-    url: "https://wordpad.online/pad",
+    url: "https://wordpad.info/pad",
     type: "website" as const,
     siteName: "Online WordPad",
     images: [{ url: "/og-image.png", width: 1200, height: 630 }],

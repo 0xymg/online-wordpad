@@ -45,7 +45,7 @@ export const metadata: Metadata = {
     description:
       "Free online WordPad & Microsoft Word alternative. Rich text, tables, images, export to Word (.docx). No install, no account.",
     type: "website",
-    url: "https://wordpad.online",
+    url: "https://wordpad.info",
     siteName: "Online WordPad",
     images: [{ url: "/og-image.png", width: 1200, height: 630 }],
   },
@@ -57,7 +57,7 @@ export const metadata: Metadata = {
     images: ["/og-image.png"],
   },
   alternates: {
-    canonical: "https://wordpad.online",
+    canonical: "https://wordpad.info",
   },
 };
 
@@ -160,7 +160,7 @@ const jsonLdWebApp = {
   "@context": "https://schema.org",
   "@type": "WebApplication",
   name: "Online WordPad",
-  url: "https://wordpad.online",
+  url: "https://wordpad.info",
   applicationCategory: "ProductivityApplication",
   operatingSystem: "Any",
   browserRequirements: "Requires a modern browser (Chrome, Edge, Firefox, Safari)",
@@ -186,7 +186,7 @@ const jsonLdWebApp = {
     "Auto-save to browser local storage",
     "Works offline after first load",
   ],
-  screenshot: "https://wordpad.online/og-image.png",
+  screenshot: "https://wordpad.info/og-image.png",
   aggregateRating: {
     "@type": "AggregateRating",
     ratingValue: "4.8",
@@ -219,21 +219,21 @@ const jsonLdHowTo = {
       position: 1,
       name: "Open the editor",
       text: 'Click "Start Writing" and the editor opens instantly in your browser. No download or sign-up required.',
-      url: "https://wordpad.online/pad",
+      url: "https://wordpad.info/pad",
     },
     {
       "@type": "HowToStep",
       position: 2,
       name: "Write and format",
       text: "Format text with the toolbar or type / for the command menu. Insert tables, images, and page breaks.",
-      url: "https://wordpad.online/pad",
+      url: "https://wordpad.info/pad",
     },
     {
       "@type": "HowToStep",
       position: 3,
       name: "Export or print",
       text: "Download your document as .docx, .html, or .txt. Or print directly with your preferred page margins.",
-      url: "https://wordpad.online/pad",
+      url: "https://wordpad.info/pad",
     },
   ],
 };
@@ -338,7 +338,7 @@ export default function LandingPage() {
                 <span className="w-3 h-3 rounded-full bg-gray-300" />
                 <span className="w-3 h-3 rounded-full bg-gray-300" />
                 <span className="ml-3 flex-1 bg-white rounded text-xs text-gray-400 px-3 py-1 max-w-xs">
-                  wordpad.online/pad
+                  wordpad.info/pad
                 </span>
               </div>
               {/* Real Toolbar — pointer-events-none, decorative */}

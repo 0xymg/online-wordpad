@@ -1,7 +1,7 @@
 # Online WordPad — LLM Context Document
 
-**URL:** https://wordpad.online
-**Editor:** https://wordpad.online/pad
+**URL:** https://wordpad.info
+**Editor:** https://wordpad.info/pad
 **Category:** Online Productivity / Word Processor
 **License:** Open Source
 

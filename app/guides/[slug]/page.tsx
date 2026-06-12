@@ -23,12 +23,12 @@ export async function generateMetadata({
     description: guide.description,
     keywords: guide.keywords,
     alternates: {
-      canonical: `https://wordpad.online/guides/${slug}`,
+      canonical: `https://wordpad.info/guides/${slug}`,
     },
     openGraph: {
       title: guide.title,
       description: guide.description,
-      url: `https://wordpad.online/guides/${slug}`,
+      url: `https://wordpad.info/guides/${slug}`,
       type: "article",
       siteName: "Online WordPad",
     },
@@ -114,27 +114,27 @@ export default async function GuidePage({
     "@type": "Article",
     headline: guide.title,
     description: guide.description,
-    url: `https://wordpad.online/guides/${slug}`,
+    url: `https://wordpad.info/guides/${slug}`,
     publisher: {
       "@type": "Organization",
       name: "Online WordPad",
-      url: "https://wordpad.online",
-      logo: { "@type": "ImageObject", url: "https://wordpad.online/logo.png" },
+      url: "https://wordpad.info",
+      logo: { "@type": "ImageObject", url: "https://wordpad.info/logo.png" },
     },
     author: { "@type": "Organization", name: "Online WordPad" },
     datePublished: guide.date,
     dateModified: guide.date,
-    mainEntityOfPage: { "@type": "WebPage", "@id": `https://wordpad.online/guides/${slug}` },
-    image: "https://wordpad.online/og-image.png",
+    mainEntityOfPage: { "@type": "WebPage", "@id": `https://wordpad.info/guides/${slug}` },
+    image: "https://wordpad.info/og-image.png",
   };
 
   const jsonLdBreadcrumb = {
     "@context": "https://schema.org",
     "@type": "BreadcrumbList",
     itemListElement: [
-      { "@type": "ListItem", position: 1, name: "Home", item: "https://wordpad.online" },
-      { "@type": "ListItem", position: 2, name: "Guides", item: "https://wordpad.online/guides" },
-      { "@type": "ListItem", position: 3, name: guide.title, item: `https://wordpad.online/guides/${slug}` },
+      { "@type": "ListItem", position: 1, name: "Home", item: "https://wordpad.info" },
+      { "@type": "ListItem", position: 2, name: "Guides", item: "https://wordpad.info/guides" },
+      { "@type": "ListItem", position: 3, name: guide.title, item: `https://wordpad.info/guides/${slug}` },
     ],
   };
 

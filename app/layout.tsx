@@ -21,7 +21,7 @@ export const metadata: Metadata = {
   },
   description:
     "Free browser-based word processor. Rich text, tables, images, export to DOCX/HTML/TXT, and print. No install, no login required.",
-  metadataBase: new URL("https://wordpad.online"),
+  metadataBase: new URL("https://wordpad.info"),
   robots: { index: true, follow: true },
   openGraph: {
     siteName: "Online WordPad",
@@ -44,9 +44,9 @@ const jsonLdOrganization = {
   "@context": "https://schema.org",
   "@type": "Organization",
   name: "Online WordPad",
-  url: "https://wordpad.online",
-  logo: "https://wordpad.online/logo.png",
-  sameAs: ["https://wordpad.online"],
+  url: "https://wordpad.info",
+  logo: "https://wordpad.info/logo.png",
+  sameAs: ["https://wordpad.info"],
 };
 
 export default function RootLayout({

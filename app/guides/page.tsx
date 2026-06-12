@@ -7,11 +7,11 @@ export const metadata: Metadata = {
   description:
     "Guides about using an online WordPad, free WordPad alternatives, and browser-based text editing. No install required.",
   keywords: ["wordpad guides", "online word processor tips", "wordpad alternative guide", "online word editor help"],
-  alternates: { canonical: "https://wordpad.online/guides" },
+  alternates: { canonical: "https://wordpad.info/guides" },
   openGraph: {
     title: "Guides: WordPad Online, Alternatives & Tips",
     description: "Guides about using an online WordPad, free WordPad alternatives, and browser-based text editing.",
-    url: "https://wordpad.online/guides",
+    url: "https://wordpad.info/guides",
     type: "website",
     siteName: "Online WordPad",
   },
@@ -26,8 +26,8 @@ const jsonLdBreadcrumb = {
   "@context": "https://schema.org",
   "@type": "BreadcrumbList",
   itemListElement: [
-    { "@type": "ListItem", position: 1, name: "Home", item: "https://wordpad.online" },
-    { "@type": "ListItem", position: 2, name: "Guides", item: "https://wordpad.online/guides" },
+    { "@type": "ListItem", position: 1, name: "Home", item: "https://wordpad.info" },
+    { "@type": "ListItem", position: 2, name: "Guides", item: "https://wordpad.info/guides" },
   ],
 };
 

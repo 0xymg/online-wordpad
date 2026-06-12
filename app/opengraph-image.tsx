@@ -77,7 +77,7 @@ export default function Image() {
 
         {/* URL */}
         <div style={{ position: "absolute", bottom: "36px", fontSize: 22, color: "#9ca3af", letterSpacing: "0.5px" }}>
-          wordpad.online
+          wordpad.info
         </div>
       </div>
     ),

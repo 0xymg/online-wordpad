@@ -69,6 +69,6 @@ Online WordPad has no backend server and no user accounts. All document data is 
 
 ## SEO & Metadata
 
-- Canonical URL: https://wordpad.online
+- Canonical URL: https://wordpad.info
 - Language: English
 - Target queries: online word processor, browser word processor, free online wordpad, rich text editor online, no install word processor

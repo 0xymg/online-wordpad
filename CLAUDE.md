@@ -6,10 +6,10 @@ Bu dosya, projeyle çalışan Claude için bağlam ve yönergeler içerir.
 
 ## Proje Özeti
 
-**wordpad.online** — Tarayıcı tabanlı, ücretsiz, kayıt gerektirmeyen bir online metin editörü.
+**wordpad.info** — Tarayıcı tabanlı, ücretsiz, kayıt gerektirmeyen bir online metin editörü.
 Hedef: WordPad'i arayan, Windows 11'de kaldırılmış bulan veya kurulum yapmak istemeyen kullanıcılara hitap etmek.
 
-- **URL:** https://wordpad.online
+- **URL:** https://wordpad.info
 - **Stack:** Next.js 16 · TypeScript · Tailwind v4 · ProseMirror · MDX
 - **Deploy:** Vercel
 
@@ -106,7 +106,7 @@ npm run lint   # ESLint
 - Her sayfa için `export const metadata` tanımlanmalı.
 - Her sayfada `alternates.canonical` olmalı.
 - Guide sayfaları `Article` JSON-LD, landing page `WebApplication + FAQPage + HowTo` JSON-LD içerir.
-- Ana domain: `https://wordpad.online`
+- Ana domain: `https://wordpad.info`
 
 ---
 
