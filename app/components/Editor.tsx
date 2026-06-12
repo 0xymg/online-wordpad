@@ -1340,7 +1340,24 @@ export default function Editor() {
       if (authUser) {
         let docs = await listDocuments().catch(() => [] as DocRow[]);
         if (!docs.length) {
-          try { docs = [await createDocument("Welcome", DEFAULT_REF_CONTENT)]; } catch { docs = []; }
+          // Migrate guest files from localStorage; fall back to a Welcome doc if nothing there.
+          const { list: localFiles } = loadFiles();
+          const hasRealContent =
+            localFiles.length > 1 ||
+            (localFiles.length === 1 && localFiles[0].name !== "Welcome" && localFiles[0].html !== DEFAULT_REF_CONTENT);
+          if (hasRealContent) {
+            const created = await Promise.all(
+              localFiles.map((f) => createDocument(f.name, f.html).catch(() => null))
+            );
+            docs = created.filter(Boolean) as DocRow[];
+            try {
+              localStorage.removeItem(FILES_KEY);
+              localStorage.removeItem(ACTIVE_KEY);
+            } catch {}
+          }
+          if (!docs.length) {
+            try { docs = [await createDocument("Welcome", DEFAULT_REF_CONTENT)]; } catch { docs = []; }
+          }
         }
         if (cancelled || !docs.length) return;
         const active = docs[0];

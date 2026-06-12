@@ -13,28 +13,38 @@ export default function AuthModal({
   open: boolean;
   onClose: () => void;
 }) {
-  const [mode, setMode] = useState<"login" | "signup">("login");
+  const [mode, setMode] = useState<"login" | "signup" | "forgot">("login");
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState<string | null>(null);
 
   if (!open) return null;
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
+    setSuccess(null);
     setLoading(true);
     try {
-      if (mode === "signup") {
+      if (mode === "forgot") {
+        const { error } = await authClient.forgetPassword({
+          email,
+          redirectTo: "/reset-password",
+        });
+        if (error) throw new Error(error.message || "Failed to send reset email");
+        setSuccess("Check your inbox — we've sent a password reset link.");
+      } else if (mode === "signup") {
         const { error } = await authClient.signUp.email({ email, password, name: name || email.split("@")[0] });
         if (error) throw new Error(error.message || "Sign up failed");
+        onClose();
       } else {
         const { error } = await authClient.signIn.email({ email, password });
         if (error) throw new Error(error.message || "Sign in failed");
+        onClose();
       }
-      onClose();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Something went wrong");
     } finally {
@@ -66,12 +76,18 @@ export default function AuthModal({
           </button>
         </div>
 
-        <h2 className="mb-1 text-lg font-semibold">{mode === "login" ? "Welcome back" : "Create your account"}</h2>
+        <h2 className="mb-1 text-lg font-semibold">
+          {mode === "login" ? "Welcome back" : mode === "signup" ? "Create your account" : "Reset your password"}
+        </h2>
         <p className="mb-4 text-sm text-muted-foreground">
-          {mode === "login" ? "Sign in to access your documents." : "Sign up to save and sync your documents."}
+          {mode === "login"
+            ? "Sign in to access your documents."
+            : mode === "signup"
+            ? "Sign up to save and sync your documents."
+            : "Enter your email and we'll send you a reset link."}
         </p>
 
-        {GOOGLE_ENABLED && (
+        {GOOGLE_ENABLED && mode !== "forgot" && (
           <>
             <button
               type="button"
@@ -99,35 +115,66 @@ export default function AuthModal({
             required
             autoComplete="email"
           />
-          <input
-            className={INPUT}
-            type="password"
-            placeholder="Password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            required
-            minLength={8}
-            autoComplete={mode === "login" ? "current-password" : "new-password"}
-          />
+          {mode !== "forgot" && (
+            <div className="space-y-1">
+              <input
+                className={INPUT}
+                type="password"
+                placeholder="Password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+                minLength={8}
+                autoComplete={mode === "login" ? "current-password" : "new-password"}
+              />
+              {mode === "login" && (
+                <div className="text-right">
+                  <button
+                    type="button"
+                    onClick={() => { setMode("forgot"); setError(null); setSuccess(null); }}
+                    className="text-xs text-muted-foreground underline-offset-2 hover:underline"
+                  >
+                    Forgot password?
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
           {error && <p className="text-sm text-destructive">{error}</p>}
+          {success && <p className="text-sm text-green-600 dark:text-green-400">{success}</p>}
           <button
             type="submit"
             disabled={loading}
             className="w-full rounded-md bg-primary px-3 py-2 text-sm font-medium text-primary-foreground hover:opacity-90 disabled:opacity-60"
           >
-            {loading ? "Please wait…" : mode === "login" ? "Log in" : "Sign up"}
+            {loading ? "Please wait…" : mode === "login" ? "Log in" : mode === "signup" ? "Sign up" : "Send reset link"}
           </button>
         </form>
 
         <p className="mt-4 text-center text-sm text-muted-foreground">
-          {mode === "login" ? "Don't have an account? " : "Already have an account? "}
-          <button
-            type="button"
-            onClick={() => { setMode(mode === "login" ? "signup" : "login"); setError(null); }}
-            className="font-medium text-foreground underline-offset-2 hover:underline"
-          >
-            {mode === "login" ? "Sign up" : "Log in"}
-          </button>
+          {mode === "forgot" ? (
+            <>
+              Remember your password?{" "}
+              <button
+                type="button"
+                onClick={() => { setMode("login"); setError(null); setSuccess(null); }}
+                className="font-medium text-foreground underline-offset-2 hover:underline"
+              >
+                Log in
+              </button>
+            </>
+          ) : (
+            <>
+              {mode === "login" ? "Don't have an account? " : "Already have an account? "}
+              <button
+                type="button"
+                onClick={() => { setMode(mode === "login" ? "signup" : "login"); setError(null); setSuccess(null); }}
+                className="font-medium text-foreground underline-offset-2 hover:underline"
+              >
+                {mode === "login" ? "Sign up" : "Log in"}
+              </button>
+            </>
+          )}
         </p>
       </div>
     </div>

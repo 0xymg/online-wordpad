@@ -7,8 +7,30 @@ export const auth = betterAuth({
   database: pool,
   emailAndPassword: {
     enabled: true,
-    // Do not block login on unverified email — we only warn the user.
     requireEmailVerification: false,
+    sendResetPassword: async ({ user, url }) => {
+      if (process.env.RESEND_API_KEY) {
+        try {
+          await fetch("https://api.resend.com/emails", {
+            method: "POST",
+            headers: {
+              Authorization: `Bearer ${process.env.RESEND_API_KEY}`,
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              from: process.env.EMAIL_FROM || "EDTRpad <onboarding@resend.dev>",
+              to: user.email,
+              subject: "Reset your EDTRpad password",
+              html: `<p>Click the link below to reset your password. This link expires in 1 hour.</p><p><a href="${url}">Reset password</a></p><p>If you didn't request this, you can ignore this email.</p>`,
+            }),
+          });
+        } catch (e) {
+          console.error("[EDTRpad] reset password email failed:", e);
+        }
+      } else {
+        console.log(`[EDTRpad] Password reset link for ${user.email}: ${url}`);
+      }
+    },
   },
   emailVerification: {
     sendOnSignUp: true,
