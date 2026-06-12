@@ -69,12 +69,12 @@ export default function AuthModal({
         className="w-full max-w-sm rounded-xl border border-border bg-background p-6 shadow-2xl"
         onMouseDown={(e) => e.stopPropagation()}
       >
-        <div className="mb-4 flex items-center justify-between">
+        <div className="mb-4 flex items-center justify-center relative">
           <div className="font-brand leading-none">
             <span className="text-xl font-bold tracking-tight text-foreground">EDTR</span>
             <span className="text-base font-semibold tracking-wider text-muted-foreground">PAD</span>
           </div>
-          <button type="button" onClick={onClose} aria-label="Close" className="rounded p-1 hover:bg-accent">
+          <button type="button" onClick={onClose} aria-label="Close" className="absolute right-0 rounded p-1 hover:bg-accent">
             <X size={16} />
           </button>
         </div>
