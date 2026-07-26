@@ -19,7 +19,6 @@ import {
   TextAlignLeft, TextAlignCenter, TextAlignRight, TextAlignJustify,
   ListBullets, ListNumbers, TextOutdent, TextIndent,
   Link, Quotes, Table, TextT, Highlighter, Smiley, ImageSquare, Minus, Code,
-  PaintBrush,
 } from "@phosphor-icons/react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 
@@ -166,15 +165,12 @@ interface ToolbarProps {
   onPageBreakAdd: () => void;
   onLinkAdd: () => void;
   onImageAdd: () => void;
-  painterActive: boolean;
-  onFormatPainter: () => void;
   tick: number;
 }
 
 /* ── Main ────────────────────────────────────────────────────────────────── */
 export default function Toolbar({
-  viewRef, schema, onInsertTable, onPageBreakAdd, onLinkAdd, onImageAdd,
-  painterActive, onFormatPainter, tick,
+  viewRef, schema, onInsertTable, onPageBreakAdd, onLinkAdd, onImageAdd, tick,
 }: ToolbarProps) {
   void tick;
   const [textColor, setTextColor] = useState("#000000");
@@ -261,13 +257,6 @@ export default function Toolbar({
         <Row>
           <TBtn onClick={() => cmd(undo)} tip="Undo (Ctrl+Z)"><ArrowCounterClockwise size={SZ} /></TBtn>
           <TBtn onClick={() => cmd(redo)} tip="Redo (Ctrl+Y)"><ArrowClockwise size={SZ} /></TBtn>
-          <TBtn
-            onClick={onFormatPainter}
-            active={painterActive}
-            tip={painterActive ? "Format painter armed — select target text (Esc to cancel)" : "Format painter: copy formatting, then select target text"}
-          >
-            <PaintBrush size={SZ} />
-          </TBtn>
         </Row>
       </Group>
 

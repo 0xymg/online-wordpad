@@ -17,8 +17,6 @@ export default function ToolbarPreview() {
         onPageBreakAdd={() => {}}
         onLinkAdd={() => {}}
         onImageAdd={() => {}}
-        painterActive={false}
-        onFormatPainter={() => {}}
         tick={0}
       />
     </div>

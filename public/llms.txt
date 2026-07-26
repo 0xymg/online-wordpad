@@ -34,8 +34,8 @@ The editor is available at: /pad
 - Read aloud (browser speech synthesis)
 - Document templates (letter, resume, meeting notes, invoice, report, to-do)
 - Version history with restore (auto-snapshots while editing)
-- Folders in the document sidebar; focus mode; spellcheck language picker
-- Multiple documents with a sidebar (localStorage for guests, cloud for members)
+- Focus mode; spellcheck language picker
+- Multiple documents with a sidebar and folders (free account); guests work on a single document saved locally
 
 ## Import, Export & Print
 

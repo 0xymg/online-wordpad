@@ -683,9 +683,3 @@ body {
 .pm-print-footer {
   display: none;
 }
-
-/* Format painter armed: brush cursor over the page */
-.pm-page.format-painter-active,
-.pm-page.format-painter-active .ProseMirror {
-  cursor: cell;
-}

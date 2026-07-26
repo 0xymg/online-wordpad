@@ -817,12 +817,6 @@ function computeDocInfo(state: EditorState): DocInfo {
   };
 }
 
-const CHARACTER_MARK_NAMES = [
-  "strong", "em", "underline", "strikethrough",
-  "textColor", "bgColor", "fontSize", "fontFamily",
-  "superscript", "subscript",
-] as const;
-
 type CaseKind = "upper" | "lower" | "title" | "sentence";
 
 function transformCase(text: string, kind: CaseKind): string {
@@ -1016,8 +1010,6 @@ export default function Editor() {
   const [focusMode, setFocusMode] = useState(false);
   const [printHeaderFooter, setPrintHeaderFooter] = useState(false);
   const lastAutoNameRef = useRef<string | null>(null);
-  const [painterActive, setPainterActive] = useState(false);
-  const painterMarksRef = useRef<readonly Mark[]>([]);
   const [readingAloud, setReadingAloud] = useState(false);
   const [wholeWord, setWholeWord] = useState(false);
 
@@ -1329,10 +1321,12 @@ export default function Editor() {
   }, [applyFiles, commitCurrent, setDocFromHtml]);
 
   // Shared path for new blank documents, templates, and opened files.
+  // Members get a new document in their list; guests have exactly ONE document,
+  // so this replaces it (confirm + a safety snapshot into version history first).
   const addNewDocument = useCallback(async (name: string, html: string) => {
-    const list = commitCurrent(filesRef.current);
-    lastAutoNameRef.current = null;
     if (isAuthedRef.current) {
+      const list = commitCurrent(filesRef.current);
+      lastAutoNameRef.current = null;
       try {
         const doc = await createDocument(name, html);
         applyFiles([doc, ...list], doc.id);
@@ -1340,16 +1334,30 @@ export default function Editor() {
         setDocTitle(doc.name);
       } catch {}
     } else {
-      const id = newId();
-      applyFiles([...list, { id, name, html }], id);
+      const v = viewRef.current;
+      const active = filesRef.current.find((f) => f.id === activeIdRef.current);
+      const hasContent =
+        !!v && active?.html !== DEFAULT_REF_CONTENT && v.state.doc.textContent.trim().length > 0;
+      if (hasContent && !window.confirm(
+        "This will replace your current document. Export it first if you want to keep a copy. Continue?"
+      )) return;
+      if (saveTimer.current) { clearTimeout(saveTimer.current); saveTimer.current = null; }
+      pendingSaveRef.current = null;
+      lastAutoNameRef.current = null;
+      const id = activeIdRef.current || newId();
+      if (v && hasContent) {
+        saveGuestVersion(id, serializeDoc(v.state.doc));
+        lastSnapAtRef.current[id] = Date.now();
+      }
+      applyFiles([{ id, name, html }], id);
       setDocFromHtml(html);
       setDocTitle(name);
+      try { localStorage.setItem(ACTIVE_KEY, id); } catch {}
     }
   }, [applyFiles, commitCurrent, setDocFromHtml]);
 
   const createFile = useCallback(() => {
-    const name = isAuthedRef.current ? "Untitled document" : `Untitled ${filesRef.current.length + 1}`;
-    return addNewDocument(name, "<p></p>");
+    return addNewDocument("Untitled document", "<p></p>");
   }, [addNewDocument]);
 
   const createFromTemplate = useCallback((t: { name: string; html: string }) => {
@@ -1938,51 +1946,6 @@ export default function Editor() {
     v.dispatch(tr); v.focus();
   }, []);
 
-  // ── Format painter ───────────────────────────────────────────────────────
-  const toggleFormatPainter = useCallback(() => {
-    if (painterActive) { setPainterActive(false); return; }
-    const v = viewRef.current;
-    if (!v) return;
-    const { $from, empty } = v.state.selection;
-    const marks = empty
-      ? (v.state.storedMarks || $from.marks())
-      : ($from.nodeAfter?.marks ?? $from.marks());
-    painterMarksRef.current = marks.filter((m) => m.type.name !== "link");
-    setPainterActive(true);
-  }, [painterActive]);
-
-  // While the painter is armed, the next selection receives the copied marks.
-  useEffect(() => {
-    if (!painterActive) return;
-    const dom = viewRef.current?.dom;
-    const page = editorRef.current;
-    page?.classList.add("format-painter-active");
-    const onMouseUp = () => {
-      setTimeout(() => {
-        const v = viewRef.current;
-        if (!v) return;
-        const { from, to, empty } = v.state.selection;
-        if (empty) return;
-        const tr = v.state.tr;
-        for (const name of CHARACTER_MARK_NAMES) {
-          const mt = mySchema.marks[name];
-          if (mt) tr.removeMark(from, to, mt);
-        }
-        painterMarksRef.current.forEach((m) => tr.addMark(from, to, m));
-        v.dispatch(tr);
-        setPainterActive(false);
-      }, 0);
-    };
-    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") setPainterActive(false); };
-    dom?.addEventListener("mouseup", onMouseUp);
-    window.addEventListener("keydown", onKey);
-    return () => {
-      page?.classList.remove("format-painter-active");
-      dom?.removeEventListener("mouseup", onMouseUp);
-      window.removeEventListener("keydown", onKey);
-    };
-  }, [painterActive]);
-
   // ── Change case ──────────────────────────────────────────────────────────
   const changeCase = useCallback((kind: CaseKind) => {
     const v = viewRef.current;
@@ -2354,7 +2317,8 @@ export default function Editor() {
           if (f) handleOpenFile(f);
         }}
       />
-      {/* Collapsible sidebar — documents live in localStorage for guests, DB for members */}
+      {/* Collapsible sidebar — members only; guests work on a single document */}
+      {isAuthed && (
       <aside
         className={cn(
           "h-full shrink-0 overflow-hidden border-r border-sidebar-border bg-sidebar text-sidebar-foreground transition-[width] duration-200 ease-in-out",
@@ -2551,6 +2515,7 @@ export default function Editor() {
           </div>
         </div>
       </aside>
+      )}
 
       {/* Main column */}
       <div className="flex h-screen flex-1 min-w-0 flex-col overflow-hidden">
@@ -2601,7 +2566,7 @@ export default function Editor() {
         onTogglePrintHeaderFooter={togglePrintHeaderFooter}
         isDark={isDark}
         onToggleDark={toggleDark}
-        canUseSidebar={true}
+        canUseSidebar={isAuthed}
         user={user}
         onLogin={openAuth}
         onLogout={logout}
@@ -2627,8 +2592,6 @@ export default function Editor() {
           onPageBreakAdd={handleInsertPageBreak}
           onLinkAdd={handleLinkAdd}
           onImageAdd={handleImageAdd}
-          painterActive={painterActive}
-          onFormatPainter={toggleFormatPainter}
           tick={tick}
         />
       )}

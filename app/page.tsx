@@ -68,7 +68,7 @@ const features = [
   {
     Icon: Files,
     title: "Multiple Documents",
-    desc: "Manage all your work from a built-in sidebar — create, rename, search, switch, and export documents without leaving the editor.",
+    desc: "With a free account, manage all your work from a built-in sidebar — create, rename, organize into folders, and switch documents without leaving the editor.",
   },
   {
     Icon: Moon,
