@@ -1,4 +1,4 @@
-# CLAUDE.md — Online WordPad
+# CLAUDE.md — EDTRpad (Online WordPad)
 
 Bu dosya, projeyle çalışan Claude için bağlam ve yönergeler içerir.
 
@@ -8,6 +8,9 @@ Bu dosya, projeyle çalışan Claude için bağlam ve yönergeler içerir.
 
 **wordpad.info** — Tarayıcı tabanlı, ücretsiz, kayıt gerektirmeyen bir online metin editörü.
 Hedef: WordPad'i arayan, Windows 11'de kaldırılmış bulan veya kurulum yapmak istemeyen kullanıcılara hitap etmek.
+
+**Marka:** EDTRpad · **İşlev/SEO konumlandırması:** "online wordpad". UI ve ürün adı EDTRpad'dir;
+metadata/içerik "online wordpad" anahtar kelimesini hedefler.
 
 - **URL:** https://wordpad.info
 - **Stack:** Next.js 16 · TypeScript · Tailwind v4 · ProseMirror · MDX
@@ -33,7 +36,17 @@ components/                 → Paylaşılan UI componentleri (shadcn tabanlı)
 content/guides/             → MDX guide yazıları (SEO içeriği)
 lib/
   guides.ts                 → MDX okuma yardımcıları (gray-matter)
-public/                     → Statik dosyalar (og-image, favicon vb.)
+  doc-export.ts             → DOCX (biçimlendirmeli, docx.js) + RTF exporter — dynamic import ile yüklenir
+  doc-import.ts             → .txt/.md/.html/.docx (mammoth) → HTML import
+  image-util.ts             → Görsel sıkıştırma/yeniden boyutlandırma (canvas)
+  auth.ts / auth-client.ts  → better-auth (opsiyonel hesaplar, Google OAuth)
+  db.ts                     → Postgres pool
+public/
+  sw.js                     → PWA service worker (/pad offline shell)
+  icon-192.png, icon-512.png→ PWA ikonları
+proxy.ts                    → Next 16 proxy (eski middleware): girişli kullanıcıyı / → /pad yönlendirir
+app/manifest.ts             → PWA manifest
+app/pad/layout.tsx          → Editör fontları (Google Fonts) sadece /pad'de yüklenir
 ```
 
 ---
@@ -112,9 +125,13 @@ npm run lint   # ESLint
 
 ## Önemli Notlar
 
-- Editör tamamen client-side çalışır; localStorage'a yazar, hiçbir veri sunucuya gönderilmez.
+- Editör client-side çalışır; misafirlerde localStorage'a, üyelerde Postgres'e (server actions: `app/actions/user-data.ts`) kaydeder.
+- Autosave 800ms debounce'lu; id schedule anında yakalanır ve dosya değiştirme/kapatma anında flush edilir (`flushSave`). Bu davranışı bozacak değişikliklerden kaçın.
+- Görseller eklenirken client-side sıkıştırılır (`lib/image-util.ts`) — localStorage 5MB kotası için kritik.
+- Export'lar (`lib/doc-export.ts`) ve mammoth dynamic import ile yüklenir; ana bundle'a statik olarak import ETME.
 - Guide sayfaları Next.js `generateStaticParams` ile statik olarak oluşturulur (SSG).
 - MDX bileşen override'ları `app/guides/[slug]/page.tsx` içindeki `components` objesinde tanımlı.
+- Sitemap guide tarihlerini frontmatter `date` alanından okur — guide güncellerken tarihi de güncelle.
 
 ---
 

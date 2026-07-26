@@ -1,15 +1,15 @@
-# Online WordPad — LLM Context Document
+# EDTRpad (Online WordPad) — LLM Context Document
 
+**Brand:** EDTRpad
 **URL:** https://wordpad.info
 **Editor:** https://wordpad.info/pad
 **Category:** Online Productivity / Word Processor
-**License:** Open Source
 
 ---
 
 ## Summary
 
-**Online WordPad** is a free, browser-based rich text editor (word processor) built with Next.js and ProseMirror. It requires no installation, no user account, and no backend server. All data is stored locally in the browser (localStorage). It targets users who need a quick, capable word processor accessible from any device with a modern browser.
+**EDTRpad** is a free, browser-based rich text editor (word processor) built with Next.js and ProseMirror — an online alternative to Microsoft WordPad. It requires no installation and no account to start. Creating a free account is optional and enables cloud sync of documents across devices. For guests, all data is stored locally in the browser (localStorage).
 
 ---
 
@@ -22,100 +22,46 @@
 | Italic | Ctrl+I |
 | Underline | Ctrl+U |
 | Strikethrough | — |
-| Text Color | Toolbar |
-| Highlight Color | Toolbar |
-| Font Family | Toolbar dropdown |
-| Font Size | Toolbar dropdown |
+| Superscript / Subscript | Ctrl+. / Ctrl+, |
+| Text / Highlight Color | Toolbar |
+| Font Family & Size | Toolbar dropdowns |
 
 ### Paragraph & Structure
-- Alignment: Left / Center / Right / Justify
-- Heading levels: H1, H2, H3, H4
-- Normal paragraph
-- Code block
-- Blockquote
-- Bullet list (unordered)
-- Numbered list (ordered)
-- Indent / Outdent (Tab / Shift+Tab)
-- Horizontal rule
-- Page break (renders on screen + in print)
+- Alignment: Left / Center / Right / Justify (Ctrl+Shift+L/E/R/J)
+- Headings H1–H4, paragraph, code block, blockquote
+- Bullet and numbered lists, indent/outdent (Tab / Shift+Tab)
+- Horizontal rule, page break (renders on screen + in print)
+- Slash command menu ("/")
 
 ### Tables
-- Visual grid picker (up to 8×8 on hover)
-- Add column right
-- Add row below
-- Delete column / row / entire table
-- Column resizing by drag
+- Visual grid picker, add/delete rows & columns, column resizing, drag to move
 
 ### Images
-- Insert via toolbar (file picker) or paste from clipboard
-- Resize by dragging corner handles
-- Crop (react-advanced-cropper)
-- Rotate 90°
-- Flip horizontal / vertical
-- Align: left / center / right
+- Insert via file picker, paste, or drag & drop (auto-compressed client-side)
+- Resize, crop, rotate, flip, align
 
-### Emoji
-- Searchable emoji picker
-- Skin tone disabled (simple mode)
-- Lazy loading for performance
+### Documents
+- Multiple documents in a sidebar (guests: localStorage; members: cloud)
+- Find & replace (Ctrl+F), word/character count, autosave with status indicator
 
-### Export
-| Format | Menu Path |
+### Import & Export
+| Format | Direction |
 |---|---|
-| Word (.docx) | File → Export → Word (.docx) |
-| HTML | File → Export → Save as HTML |
-| Plain Text | File → Export → Plain text (.txt) |
+| Word (.docx) | Open + Export (formatting preserved) |
+| Rich Text (.rtf) | Export |
+| HTML | Open + Export |
+| Plain text (.txt / .md) | Open + Export |
 
 ### Print
-- Triggered via: File → Print, View → Print Preview, or Ctrl+P
-- Uses react-to-print (iframe-based isolation)
-- Page margins: 0.5 / 1.0 / 1.5 / 2.0 cm (user-selectable in status bar)
-- Page breaks honored in print output
-- Paper size: A4
-
----
-
-## Architecture
-
-```
-app/
-├── page.tsx              # Landing page (/)
-├── pad/
-│   └── page.tsx          # Editor route (/pad)
-├── components/
-│   ├── Editor.tsx         # Main ProseMirror editor component
-│   ├── MenuBar.tsx        # Top menu bar (File, Edit, View, Insert, Table, Format, Help)
-│   ├── Toolbar.tsx        # Ribbon toolbar with formatting controls
-│   ├── ColorPicker.tsx    # Reusable color picker (text/highlight)
-│   └── TableContextMenu.tsx
-├── globals.css            # Global styles, A4 page layout, ProseMirror styles
-└── layout.tsx             # Root layout with font loading and metadata
-```
-
-### Key Technology Choices
-
-| Concern | Solution |
-|---|---|
-| Editor engine | ProseMirror (prosemirror-state, prosemirror-view, prosemirror-model) |
-| History | prosemirror-history |
-| Tables | prosemirror-tables |
-| Schema | prosemirror-schema-basic + prosemirror-schema-list + custom extensions |
-| Print | react-to-print v3 |
-| DOCX export | docx.js (Packer.toBlob) |
-| Image editing | react-advanced-cropper |
-| UI components | shadcn/ui (Radix UI primitives) |
-| Icons | @phosphor-icons/react |
-| Styling | Tailwind CSS v4 |
-| Framework | Next.js 16 (App Router, React 19) |
+- File → Print or Ctrl+P; A4; margins 0.5–2 cm; page breaks honored; save as PDF via print dialog
 
 ---
 
 ## Data & Privacy
 
-- **No backend:** The application has no API routes and no server-side data handling.
-- **No accounts:** Users do not register or log in.
-- **Local storage:** Document content is persisted in `localStorage` under the key `wordpad-content-pm` as a ProseMirror JSON document.
-- **No telemetry:** No analytics, tracking pixels, or data collection of any kind.
+- **Guests:** documents persist only in the browser's localStorage; content is not uploaded.
+- **Members (optional):** documents sync to the user's private account (Postgres via better-auth sessions); never shared.
+- **Analytics:** anonymous page analytics (Vercel Analytics); no document content is collected.
 
 ---
 
@@ -125,6 +71,7 @@ app/
 |---|---|
 | `/` | Marketing landing page |
 | `/pad` | The word processor editor |
+| `/guides` | How-to guides and articles |
 | `/llms.txt` | Plain-text LLM context file |
 | `/llms.md` | Markdown LLM context file (this file) |
 
@@ -133,9 +80,9 @@ app/
 ## Target Use Cases
 
 - Quick document drafting without opening a desktop application
-- Writing on a shared/public computer without leaving traces (no server data)
+- Replacing WordPad after its removal from Windows 11
 - Producing formatted documents for printing (letters, reports, notes)
-- Exporting content to Word format for further editing in Microsoft Word
+- Opening and exporting Word (.docx) files in the browser
 - Teachers and students needing a lightweight in-browser editor
 
 ---
@@ -143,16 +90,16 @@ app/
 ## Frequently Asked Questions
 
 **Q: Does it work offline?**
-A: Once loaded, the editor works offline. Fonts (Google Fonts) require internet on first load and are then cached by the browser.
+A: Yes — the editor is a PWA; after the first load, /pad opens and works offline.
 
 **Q: Can I use it on mobile?**
-A: The editor is optimized for desktop. Mobile may work but is not the primary target.
+A: Yes. The page automatically fits the A4 canvas to small screens.
 
 **Q: Where is my document stored?**
-A: Exclusively in your browser's localStorage. It is not uploaded anywhere.
+A: In your browser's localStorage as a guest, or in your private cloud space if you sign in.
 
 **Q: Is there a file size limit?**
-A: No artificial limit. Browser localStorage is typically limited to ~5 MB by the browser.
+A: Browser localStorage is typically limited to ~5 MB for guests; images are compressed automatically to stay small.
 
 **Q: Can I collaborate in real time?**
-A: No. Online WordPad is a single-user editor. There is no real-time collaboration feature.
+A: No. EDTRpad is a single-user editor.

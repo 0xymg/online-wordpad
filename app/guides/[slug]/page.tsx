@@ -117,15 +117,15 @@ export default async function GuidePage({
     url: `https://wordpad.info/guides/${slug}`,
     publisher: {
       "@type": "Organization",
-      name: "Online WordPad",
+      name: "EDTRpad",
       url: "https://wordpad.info",
       logo: { "@type": "ImageObject", url: "https://wordpad.info/logo.png" },
     },
-    author: { "@type": "Organization", name: "Online WordPad" },
+    author: { "@type": "Organization", name: "EDTRpad" },
     datePublished: guide.date,
     dateModified: guide.date,
     mainEntityOfPage: { "@type": "WebPage", "@id": `https://wordpad.info/guides/${slug}` },
-    image: "https://wordpad.info/og-image.png",
+    image: "https://wordpad.info/opengraph-image",
   };
 
   const jsonLdBreadcrumb = {
@@ -146,8 +146,9 @@ export default async function GuidePage({
         {/* Nav */}
         <header className="sticky top-0 z-50 border-b border-gray-100 bg-white/90 backdrop-blur-sm">
           <div className="mx-auto max-w-3xl px-6 flex items-center justify-between h-14">
-            <Link href="/" className="text-lg font-bold tracking-tight hover:opacity-80 transition-opacity">
-              Online <span className="text-gray-900">WordPad</span>
+            <Link href="/" className="font-brand leading-none hover:opacity-80 transition-opacity">
+              <span className="text-xl font-bold tracking-tight text-gray-900">EDTR</span>
+              <span className="text-base font-semibold tracking-wider text-gray-400">PAD</span>
             </Link>
             <nav className="flex items-center gap-4 text-sm text-gray-500">
               <Link href="/guides" className="hover:text-gray-900 transition-colors">Guides</Link>

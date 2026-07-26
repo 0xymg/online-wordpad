@@ -18,9 +18,7 @@ import { undo, redo } from "prosemirror-history";
 import { toggleMark } from "prosemirror-commands";
 import { wrapInList } from "prosemirror-schema-list";
 import { EditorState, Transaction, AllSelection } from "prosemirror-state";
-import { DOMSerializer } from "prosemirror-model";
 import { addColumnAfter, addRowAfter, deleteColumn, deleteRow, deleteTable } from "prosemirror-tables";
-import { Document, Packer, Paragraph, TextRun } from "docx";
 import { SidebarSimple, SignIn, SignOut } from "@phosphor-icons/react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
@@ -33,11 +31,14 @@ interface MenuBarProps {
   docTitle: string;
   onTitleChange: (title: string) => void;
   onNewDoc: () => void;
+  onOpenFile: () => void;
+  onExport: (fmt: "html" | "txt" | "docx" | "rtf") => void;
   onFind: () => void;
   onInsertTable: (rows: number, cols: number) => void;
   onPageBreakAdd: () => void;
   onLinkAdd: () => void;
   onImageAdd: () => void;
+  onImageUrlAdd: () => void;
   onInsertDivider: () => void;
   onInsertSymbol: (text: string) => void;
   onInsertDate: () => void;
@@ -49,6 +50,8 @@ interface MenuBarProps {
   onToggleToolbar: () => void;
   showRuler: boolean;
   onToggleRuler: () => void;
+  spellcheckOn: boolean;
+  onToggleSpellcheck: () => void;
   isDark: boolean;
   onToggleDark: () => void;
   sidebarOpen: boolean;
@@ -71,23 +74,11 @@ const LINE_SPACINGS: Array<{ label: string; value: number | null }> = [
   { label: "Reset", value: null },
 ];
 
-export default function MenuBar({
-  viewRef, schema, pageMarginCm = 1, onPrint,
-  docTitle, onTitleChange, onNewDoc, onFind,
-  onInsertTable, onPageBreakAdd, onLinkAdd, onImageAdd,
-  onInsertDivider, onInsertSymbol, onInsertDate,
-  onLineSpacing, onClearFormatting,
-  zoomPercent, onZoomChange,
-  showToolbar, onToggleToolbar, showRuler, onToggleRuler,
-  isDark, onToggleDark,
-  onToggleSidebar,
-  canUseSidebar,
-  user, onLogin, onLogout,
-}: MenuBarProps) {
-  const SidebarBtn = ({ className }: { className?: string }) => (
+function SidebarBtn({ onClick, className }: { onClick: () => void; className?: string }) {
+  return (
     <button
       type="button"
-      onClick={onToggleSidebar}
+      onClick={onClick}
       title="Toggle sidebar"
       aria-label="Toggle sidebar"
       className={cn(
@@ -98,6 +89,22 @@ export default function MenuBar({
       <SidebarSimple size={18} />
     </button>
   );
+}
+
+export default function MenuBar({
+  viewRef, schema, onPrint,
+  docTitle, onTitleChange, onNewDoc, onOpenFile, onExport, onFind,
+  onInsertTable, onPageBreakAdd, onLinkAdd, onImageAdd, onImageUrlAdd,
+  onInsertDivider, onInsertSymbol, onInsertDate,
+  onLineSpacing, onClearFormatting,
+  zoomPercent, onZoomChange,
+  showToolbar, onToggleToolbar, showRuler, onToggleRuler,
+  spellcheckOn, onToggleSpellcheck,
+  isDark, onToggleDark,
+  onToggleSidebar,
+  canUseSidebar,
+  user, onLogin, onLogout,
+}: MenuBarProps) {
   const cmd = (command: (state: EditorState, dispatch?: (tr: Transaction) => void) => boolean) => {
     const v = viewRef.current;
     if (!v) return;
@@ -126,57 +133,35 @@ export default function MenuBar({
     v.dispatch(tr); v.focus();
   };
 
-  const safeName = (ext: string) =>
-    `${(docTitle || "document").replace(/[^\w.\- ]+/g, "").trim() || "document"}.${ext}`;
-
-
-  const saveAsHtml = () => {
+  // Programmatic paste via the async Clipboard API (execCommand("paste") is
+  // blocked in modern browsers). Falls back to a hint when permission is denied.
+  const pasteFromClipboard = async () => {
     const v = viewRef.current;
     if (!v) return;
-    const s = DOMSerializer.fromSchema(schema);
-    const frag = s.serializeFragment(v.state.doc.content);
-    const tmp = document.createElement("div");
-    tmp.appendChild(frag);
-    const blob = new Blob([`<!DOCTYPE html><html><head><meta charset="utf-8"><title>${docTitle}</title></head><body style="font-family:Arial;max-width:800px;margin:40px auto;padding:20px">${tmp.innerHTML}</body></html>`], { type: "text/html" });
-    const a = document.createElement("a");
-    a.href = URL.createObjectURL(blob);
-    a.download = safeName("html");
-    a.click();
+    v.focus();
+    try {
+      if (navigator.clipboard?.read) {
+        const items = await navigator.clipboard.read();
+        for (const item of items) {
+          if (item.types.includes("text/html")) {
+            const html = await (await item.getType("text/html")).text();
+            v.pasteHTML(html);
+            return;
+          }
+        }
+      }
+      const text = await navigator.clipboard.readText();
+      if (text) v.pasteText(text);
+    } catch {
+      alert("Your browser blocked programmatic paste. Press Ctrl+V (⌘V) instead.");
+    }
   };
 
-  const saveAsTxt = () => {
+  const cutOrCopy = (command: "cut" | "copy") => {
     const v = viewRef.current;
     if (!v) return;
-    const text = v.state.doc.textContent;
-    const blob = new Blob([text], { type: "text/plain" });
-    const a = document.createElement("a");
-    a.href = URL.createObjectURL(blob);
-    a.download = safeName("txt");
-    a.click();
-  };
-
-  const saveAsDocx = async () => {
-    const v = viewRef.current;
-    if (!v) return;
-
-    const text = v.state.doc.textBetween(0, v.state.doc.content.size, "\n\n", "\n");
-    const lines = text.split("\n");
-
-    const doc = new Document({
-      sections: [
-        {
-          children: lines.length
-            ? lines.map((line) => new Paragraph({ children: [new TextRun(line)] }))
-            : [new Paragraph("")],
-        },
-      ],
-    });
-
-    const blob = await Packer.toBlob(doc);
-    const a = document.createElement("a");
-    a.href = URL.createObjectURL(blob);
-    a.download = safeName("docx");
-    a.click();
+    v.focus();
+    document.execCommand(command);
   };
 
   const print = () => onPrint?.();
@@ -191,7 +176,7 @@ export default function MenuBar({
         className="hidden min-[1180px]:flex absolute left-3 top-0 bottom-0 items-center gap-1 overflow-hidden"
         style={{ right: "calc(50% + 412px)" }}
       >
-        {canUseSidebar && <SidebarBtn />}
+        {canUseSidebar && <SidebarBtn onClick={onToggleSidebar} />}
         <span className="font-brand shrink-0 select-none leading-none">
           <span className="text-lg font-bold tracking-tight text-foreground dark:text-[#FFFFE3]">EDTR</span>
           <span className="text-sm font-semibold tracking-wider text-muted-foreground dark:text-[#FFFFE3]/70">PAD</span>
@@ -209,34 +194,37 @@ export default function MenuBar({
       <div className="max-w-[800px] w-full mx-auto flex items-center gap-[15px]">
       {/* 800–1179px: trigger + brand live inside the box (gutter too narrow, but brand still in header) */}
       <div className="hidden min-[800px]:flex min-[1180px]:hidden items-center gap-1.5 shrink-0">
-        {canUseSidebar && <SidebarBtn />}
+        {canUseSidebar && <SidebarBtn onClick={onToggleSidebar} />}
         <span className="font-brand shrink-0 select-none leading-none">
           <span className="text-lg font-bold tracking-tight text-foreground dark:text-[#FFFFE3]">EDTR</span>
           <span className="text-sm font-semibold tracking-wider text-muted-foreground dark:text-[#FFFFE3]/70">PAD</span>
         </span>
       </div>
       {/* <800px: trigger only — brand moves to the status bar */}
-      {canUseSidebar && <SidebarBtn className="min-[800px]:hidden" />}
+      {canUseSidebar && <SidebarBtn onClick={onToggleSidebar} className="min-[800px]:hidden" />}
       {/* File */}
       <MenubarMenu>
         <MenubarTrigger className={TRIGGER}>File</MenubarTrigger>
         <MenubarContent>
-          <MenubarItem onClick={onNewDoc}>
-            New <MenubarShortcut>Ctrl+N</MenubarShortcut>
+          <MenubarItem onClick={onNewDoc}>New</MenubarItem>
+          <MenubarItem onClick={onOpenFile}>
+            Open… <MenubarShortcut>Ctrl+O</MenubarShortcut>
           </MenubarItem>
           <MenubarSeparator />
           <MenubarSub>
             <MenubarSubTrigger>Export</MenubarSubTrigger>
             <MenubarSubContent>
-              <MenubarItem onClick={saveAsHtml}>Save as HTML</MenubarItem>
-              <MenubarItem onClick={saveAsTxt}>Plain text (.txt)</MenubarItem>
-              <MenubarItem onClick={saveAsDocx}>Word (.docx)</MenubarItem>
+              <MenubarItem onClick={() => onExport("docx")}>Word (.docx)</MenubarItem>
+              <MenubarItem onClick={() => onExport("rtf")}>Rich Text (.rtf)</MenubarItem>
+              <MenubarItem onClick={() => onExport("html")}>Web page (.html)</MenubarItem>
+              <MenubarItem onClick={() => onExport("txt")}>Plain text (.txt)</MenubarItem>
             </MenubarSubContent>
           </MenubarSub>
           <MenubarSeparator />
           <MenubarItem onClick={print}>
             Print <MenubarShortcut>Ctrl+P</MenubarShortcut>
           </MenubarItem>
+          <MenubarItem onClick={print}>Save as PDF…</MenubarItem>
         </MenubarContent>
       </MenubarMenu>
 
@@ -251,13 +239,13 @@ export default function MenuBar({
             Redo <MenubarShortcut>Ctrl+Y</MenubarShortcut>
           </MenubarItem>
           <MenubarSeparator />
-          <MenubarItem onClick={() => document.execCommand("cut")}>
+          <MenubarItem onClick={() => cutOrCopy("cut")}>
             Cut <MenubarShortcut>Ctrl+X</MenubarShortcut>
           </MenubarItem>
-          <MenubarItem onClick={() => document.execCommand("copy")}>
+          <MenubarItem onClick={() => cutOrCopy("copy")}>
             Copy <MenubarShortcut>Ctrl+C</MenubarShortcut>
           </MenubarItem>
-          <MenubarItem onClick={() => document.execCommand("paste")}>
+          <MenubarItem onClick={pasteFromClipboard}>
             Paste <MenubarShortcut>Ctrl+V</MenubarShortcut>
           </MenubarItem>
           <MenubarSeparator />
@@ -301,6 +289,9 @@ export default function MenuBar({
           <MenubarCheckboxItem checked={showRuler} onClick={onToggleRuler}>
             Ruler
           </MenubarCheckboxItem>
+          <MenubarCheckboxItem checked={spellcheckOn} onClick={onToggleSpellcheck}>
+            Spellcheck
+          </MenubarCheckboxItem>
           <MenubarCheckboxItem checked={isDark} onClick={onToggleDark}>
             Dark mode
           </MenubarCheckboxItem>
@@ -316,8 +307,11 @@ export default function MenuBar({
       <MenubarMenu>
         <MenubarTrigger className={TRIGGER}>Insert</MenubarTrigger>
         <MenubarContent>
-          <MenubarItem onClick={onLinkAdd}>Link</MenubarItem>
-          <MenubarItem onClick={onImageAdd}>Picture</MenubarItem>
+          <MenubarItem onClick={onLinkAdd}>
+            Link <MenubarShortcut>Ctrl+K</MenubarShortcut>
+          </MenubarItem>
+          <MenubarItem onClick={onImageAdd}>Picture from file…</MenubarItem>
+          <MenubarItem onClick={onImageUrlAdd}>Picture from URL…</MenubarItem>
           <MenubarItem onClick={() => onInsertTable(3, 3)}>Table (3 × 3)</MenubarItem>
           <MenubarSeparator />
           <MenubarItem onClick={onInsertDivider}>Horizontal line</MenubarItem>
@@ -356,6 +350,12 @@ export default function MenuBar({
           </MenubarItem>
           <MenubarItem onClick={() => cmd(toggleMark(schema.marks.strikethrough))}>
             Strikethrough
+          </MenubarItem>
+          <MenubarItem onClick={() => cmd(toggleMark(schema.marks.superscript))}>
+            Superscript <MenubarShortcut>Ctrl+.</MenubarShortcut>
+          </MenubarItem>
+          <MenubarItem onClick={() => cmd(toggleMark(schema.marks.subscript))}>
+            Subscript <MenubarShortcut>Ctrl+,</MenubarShortcut>
           </MenubarItem>
           <MenubarSeparator />
           <MenubarSub>
@@ -432,7 +432,7 @@ export default function MenuBar({
       <MenubarMenu>
         <MenubarTrigger className={TRIGGER}>Help</MenubarTrigger>
         <MenubarContent>
-          <MenubarItem onClick={() => alert("EDTRpad\nProseMirror-based web editor")}>
+          <MenubarItem onClick={() => alert("EDTRpad — Online WordPad\nFree word processor in your browser.\nhttps://wordpad.info")}>
             About
           </MenubarItem>
         </MenubarContent>

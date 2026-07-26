@@ -1,13 +1,14 @@
 import type { MetadataRoute } from "next";
-import { getAllGuideSlugs } from "@/lib/guides";
+import { getAllGuides } from "@/lib/guides";
 
 export default function sitemap(): MetadataRoute.Sitemap {
   const now = new Date();
 
-  const guideSlugs = getAllGuideSlugs();
-  const guideEntries: MetadataRoute.Sitemap = guideSlugs.map((slug) => ({
-    url: `https://wordpad.info/guides/${slug}`,
-    lastModified: now,
+  const guides = getAllGuides();
+  // Use each guide's frontmatter date so lastModified doesn't churn on every deploy.
+  const guideEntries: MetadataRoute.Sitemap = guides.map((guide) => ({
+    url: `https://wordpad.info/guides/${guide.slug}`,
+    lastModified: guide.date ? new Date(guide.date) : now,
     changeFrequency: "monthly",
     priority: 0.7,
   }));

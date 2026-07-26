@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, lazy, Suspense } from "react";
 import { EditorView } from "prosemirror-view";
 import { EditorState, Transaction, TextSelection } from "prosemirror-state";
 import { toggleMark, setBlockType, wrapIn } from "prosemirror-commands";
@@ -9,7 +9,10 @@ import { undo, redo } from "prosemirror-history";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 import ColorPicker from "./ColorPicker";
-import EmojiPicker, { EmojiClickData } from "emoji-picker-react";
+import type { EmojiClickData } from "emoji-picker-react";
+
+// Emoji picker is a large chunk — load it only when the popover opens.
+const EmojiPicker = lazy(() => import("emoji-picker-react"));
 import {
   ArrowCounterClockwise, ArrowClockwise,
   TextB, TextItalic, TextUnderline, TextStrikethrough,
@@ -359,7 +362,9 @@ export default function Toolbar({
               <TooltipContent side="bottom" className="text-xs">Insert emoji</TooltipContent>
             </Tooltip>
             <PopoverContent side="bottom" align="start" className="w-auto p-0">
-              <EmojiPicker onEmojiClick={insertEmoji} autoFocusSearch={false} skinTonesDisabled lazyLoadEmojis />
+              <Suspense fallback={<div className="flex h-[300px] w-[300px] items-center justify-center text-sm text-muted-foreground">Loading…</div>}>
+                <EmojiPicker onEmojiClick={insertEmoji} autoFocusSearch={false} skinTonesDisabled lazyLoadEmojis />
+              </Suspense>
             </PopoverContent>
           </Popover>
           <TablePicker onPick={(r, c) => onInsertTable(r, c)} />

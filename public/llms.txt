@@ -1,16 +1,16 @@
-# Online WordPad
+# EDTRpad (Online WordPad)
 
-> A free, browser-based word processor with rich text editing, tables, images, export, and printing. No install, no account required.
+> EDTRpad is a free, browser-based word processor — an online WordPad — with rich text editing, tables, images, file import/export, and printing. No install required; accounts are optional.
 
-## What is Online WordPad?
+## What is EDTRpad?
 
-Online WordPad is a fully client-side rich text editor that runs in the browser. It is built on ProseMirror and provides a word-processor experience comparable to Microsoft WordPad or Google Docs Lite — without requiring any server-side account or software installation.
+EDTRpad is a client-side rich text editor that runs in the browser. It is built on ProseMirror and provides a word-processor experience comparable to Microsoft WordPad — without requiring any software installation. Creating an account is optional and enables cloud sync of documents across devices.
 
 The editor is available at: /pad
 
 ## Core Capabilities
 
-- Rich text formatting: bold, italic, underline, strikethrough
+- Rich text formatting: bold, italic, underline, strikethrough, superscript, subscript
 - Font family selection (20+ fonts via Google Fonts)
 - Font size control
 - Text color and highlight color
@@ -24,15 +24,19 @@ The editor is available at: /pad
 - Horizontal rule / divider
 - Page breaks (with correct print behavior)
 - Tables: insert via grid picker, add/remove rows and columns, resize cells
-- Image insertion: paste or upload; resize, crop, rotate, flip, align
-- Hyperlink insertion
+- Image insertion: upload, paste, or drag & drop; resize, crop, rotate, flip, align
+- Hyperlink insertion (Ctrl+K)
+- Find & replace (Ctrl+F)
+- Multiple documents with a sidebar (localStorage for guests, cloud for members)
 
-## Export & Print
+## Import, Export & Print
 
-- Export as Word (.docx)
+- Open files: .docx, .txt, .md, .html
+- Export as Word (.docx) with formatting preserved
+- Export as Rich Text (.rtf)
 - Export as HTML
 - Export as plain text (.txt)
-- Print with configurable page margins (0.5 / 1 / 1.5 / 2 cm)
+- Print or save as PDF with configurable page margins (0.5 / 1 / 1.5 / 2 cm)
 - Accurate page break rendering in print output
 
 ## Technical Stack
@@ -43,13 +47,13 @@ The editor is available at: /pad
 - UI components: shadcn/ui (Radix UI)
 - Icons: Phosphor Icons
 - Print: react-to-print
-- DOCX export: docx.js
+- DOCX export: docx.js — DOCX import: mammoth
 - Image editing: react-advanced-cropper
 - Runtime: React 19, TypeScript
 
 ## Privacy
 
-Online WordPad has no backend server and no user accounts. All document data is stored exclusively in the user's browser via localStorage. No content is transmitted to any server.
+Without an account, all document data stays in the user's browser via localStorage and no content is transmitted to any server. With an optional free account, documents sync to the user's private cloud space and are never shared.
 
 ## Keyboard Shortcuts
 
@@ -58,6 +62,12 @@ Online WordPad has no backend server and no user accounts. All document data is 
 - Ctrl+B — Bold
 - Ctrl+I — Italic
 - Ctrl+U — Underline
+- Ctrl+. / Ctrl+, — Superscript / Subscript
+- Ctrl+Shift+L / E / R / J — Align left / center / right / justify
+- Ctrl+K — Insert link
+- Ctrl+F — Find & replace
+- Ctrl+O — Open file
+- Ctrl+S — Save now
 - Ctrl+A — Select All
 - Ctrl+P — Print
 - Tab / Shift+Tab — Increase / decrease indent
@@ -66,9 +76,11 @@ Online WordPad has no backend server and no user accounts. All document data is 
 
 - / — Landing page
 - /pad — The editor application
+- /guides — How-to guides and articles
 
 ## SEO & Metadata
 
+- Brand: EDTRpad
 - Canonical URL: https://wordpad.info
 - Language: English
-- Target queries: online word processor, browser word processor, free online wordpad, rich text editor online, no install word processor
+- Target queries: online wordpad, online word processor, browser word processor, free online wordpad, rich text editor online, no install word processor

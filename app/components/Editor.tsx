@@ -1,13 +1,19 @@
 "use client";
 
-import { useEffect, useRef, useCallback, useMemo, useState } from "react";
+import { useEffect, useRef, useCallback, useMemo, useState, lazy, Suspense } from "react";
 import { useReactToPrint } from "react-to-print";
 import { Schema, DOMParser as PMParser, DOMSerializer, Node as PMNode, Mark } from "prosemirror-model";
 import { EditorState, Transaction, AllSelection, TextSelection, NodeSelection } from "prosemirror-state";
 import { EditorView } from "prosemirror-view";
-import { Cropper, type CropperRef } from "react-advanced-cropper";
+import type { CropperRef } from "react-advanced-cropper";
 import { HexColorPicker, HexColorInput } from "react-colorful";
 import "react-advanced-cropper/dist/style.css";
+
+// Heavy and rarely used — load only when the crop dialog opens.
+const Cropper = lazy(async () => {
+  const m = await import("react-advanced-cropper");
+  return { default: m.Cropper };
+});
 import { schema as basicSchema } from "prosemirror-schema-basic";
 import { addListNodes } from "prosemirror-schema-list";
 import { history, undo, redo } from "prosemirror-history";
@@ -29,13 +35,14 @@ import {
   TextAlignLeft, TextAlignCenter, TextAlignRight,
   Sun, Moon, FileText, Trash, Plus, MagnifyingGlass, PencilSimple, DownloadSimple, SignIn, Warning, X,
 } from "@phosphor-icons/react";
-import { Document, Packer, Paragraph, TextRun } from "docx";
 import {
   ContextMenu, ContextMenuTrigger, ContextMenuContent, ContextMenuItem,
   ContextMenuSeparator, ContextMenuSub, ContextMenuSubTrigger, ContextMenuSubContent,
 } from "@/components/ui/context-menu";
 import { cn } from "@/lib/utils";
 import { authClient, useSession } from "@/lib/auth-client";
+import { prepareImageFile, insertWidth } from "@/lib/image-util";
+import { OPEN_ACCEPT } from "@/lib/doc-import";
 import AuthModal from "./AuthModal";
 import {
   listDocuments, createDocument, updateDocument, renameDocument, deleteDocument,
@@ -248,17 +255,36 @@ const mySchema = new Schema({
       parseDOM: [{ style: "font-family", getAttrs: (v) => ({ family: v }) }],
       toDOM: (mark: Mark) => ["span", { style: `font-family:${mark.attrs.family}` }, 0],
     },
+    superscript: {
+      parseDOM: [{ tag: "sup" }],
+      toDOM: () => ["sup", 0],
+      excludes: "superscript subscript",
+    },
+    subscript: {
+      parseDOM: [{ tag: "sub" }],
+      toDOM: () => ["sub", 0],
+      excludes: "superscript subscript",
+    },
     link: {
       attrs: { href: {}, title: { default: null } },
       inclusive: false,
-      parseDOM: [{ tag: "a[href]", getAttrs: (dom) => ({
-        href: (dom as HTMLElement).getAttribute("href"),
-        title: (dom as HTMLElement).getAttribute("title"),
-      })}],
-      toDOM: (mark: Mark) => ["a", { href: mark.attrs.href, title: mark.attrs.title }, 0],
+      parseDOM: [{ tag: "a[href]", getAttrs: (dom) => {
+        const href = sanitizeHref((dom as HTMLElement).getAttribute("href"));
+        if (!href) return false;
+        return { href, title: (dom as HTMLElement).getAttribute("title") };
+      }}],
+      toDOM: (mark: Mark) => ["a", { href: mark.attrs.href, title: mark.attrs.title, rel: "noopener noreferrer" }, 0],
     },
   }),
 });
+
+/** Reject javascript:/data:/vbscript: URLs so pasted HTML can't smuggle scripts. */
+function sanitizeHref(href: string | null | undefined): string | null {
+  if (!href) return null;
+  const trimmed = href.trim();
+  if (/^(javascript|data|vbscript|file):/i.test(trimmed)) return null;
+  return trimmed;
+}
 
 export function insertTable(rows: number, cols: number) {
   return (state: EditorState, dispatch?: (tr: Transaction) => void): boolean => {
@@ -315,6 +341,35 @@ function adjustBlockIndentByTab(direction: 1 | -1) {
   };
 }
 
+// Bridge between the ProseMirror keymap (module scope) and React callbacks.
+// Single-editor app, so a module-level mutable ref is safe.
+const editorHandlers: {
+  openLinkDialog?: () => void;
+  flushSave?: () => void;
+} = {};
+
+function setTextAlignCmd(align: "left" | "center" | "right" | "justify") {
+  return (state: EditorState, dispatch?: (tr: Transaction) => void): boolean => {
+    const { from, to } = state.selection;
+    let found = false;
+    const tr = state.tr;
+    state.doc.nodesBetween(from, to, (node, pos) => {
+      if (node.type === mySchema.nodes.paragraph || node.type === mySchema.nodes.heading) {
+        found = true;
+        tr.setNodeMarkup(pos, undefined, { ...node.attrs, textAlign: align });
+      }
+    });
+    if (!found) return false;
+    if (dispatch) dispatch(tr);
+    return true;
+  };
+}
+
+function parseHtmlToDoc(html: string): PMNode {
+  const dom = new DOMParser().parseFromString(html || "<p></p>", "text/html");
+  return PMParser.fromSchema(mySchema).parse(dom.body);
+}
+
 function buildPlugins() {
   return [
     history(),
@@ -328,6 +383,14 @@ function buildPlugins() {
       "Mod-b":       toggleMark(mySchema.marks.strong),
       "Mod-i":       toggleMark(mySchema.marks.em),
       "Mod-u":       toggleMark(mySchema.marks.underline),
+      "Mod-.":       toggleMark(mySchema.marks.superscript),
+      "Mod-,":       toggleMark(mySchema.marks.subscript),
+      "Mod-Shift-l": setTextAlignCmd("left"),
+      "Mod-Shift-e": setTextAlignCmd("center"),
+      "Mod-Shift-r": setTextAlignCmd("right"),
+      "Mod-Shift-j": setTextAlignCmd("justify"),
+      "Mod-k": () => { editorHandlers.openLinkDialog?.(); return true; },
+      "Mod-s": () => { editorHandlers.flushSave?.(); return true; },
       "Mod-a": (state, dispatch) => {
         // Tablo içindeyse tüm tabloyu seç, değilse tüm belgeyi seç
         if (isInTable(state)) {
@@ -834,6 +897,13 @@ export default function Editor() {
   const [replaceText, setReplaceText] = useState("");
   const [caseSensitive, setCaseSensitive] = useState(false);
   const findInputRef = useRef<HTMLInputElement>(null);
+  const [saveStatus, setSaveStatus] = useState<"idle" | "saving" | "saved" | "error">("idle");
+  const pendingSaveRef = useRef<{ id: string; state: EditorState } | null>(null);
+  const [linkDialog, setLinkDialog] = useState<{ mode: "link" | "image"; value: string } | null>(null);
+  const [spellcheckOn, setSpellcheckOn] = useState(true);
+  const imageInputRef = useRef<HTMLInputElement>(null);
+  const openInputRef = useRef<HTMLInputElement>(null);
+  const docInfoTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const handlePrint = useReactToPrint({
     contentRef: editorRef,
@@ -1000,8 +1070,15 @@ export default function Editor() {
     v.focus();
   }, []);
 
+  // Selection type updates instantly (cheap); word/char counts are debounced so
+  // large documents aren't re-scanned on every keystroke.
   const refreshDocInfo = useCallback((state: EditorState) => {
-    setDocInfo(computeDocInfo(state));
+    setDocInfo((prev) => ({ ...prev, selectedType: prettySelectionType(state) }));
+    if (docInfoTimer.current) clearTimeout(docInfoTimer.current);
+    docInfoTimer.current = setTimeout(() => {
+      const v = viewRef.current;
+      if (v) setDocInfo(computeDocInfo(v.state));
+    }, 300);
   }, []);
 
   // Update in-memory file list; persist to localStorage only for guests (DB handled by callers).
@@ -1017,21 +1094,65 @@ export default function Editor() {
     }
   }, []);
 
+  // Persist one document's current editor state (id captured at schedule time,
+  // so a pending save can never write into a different document after a switch).
+  const persistDoc = useCallback((id: string, state: EditorState) => {
+    if (!id) return;
+    const html = serializeDoc(state.doc);
+    const list = filesRef.current.map((f) => (f.id === id ? { ...f, html } : f));
+    filesRef.current = list;
+    setFiles(list);
+    if (isAuthedRef.current) {
+      setSaveStatus("saving");
+      updateDocument(id, html)
+        .then(() => setSaveStatus("saved"))
+        .catch(() => setSaveStatus("error"));
+    } else {
+      try {
+        localStorage.setItem(FILES_KEY, JSON.stringify(list));
+        setSaveStatus("saved");
+      } catch {
+        setSaveStatus("error");
+      }
+    }
+  }, []);
+
+  const flushSave = useCallback(() => {
+    if (saveTimer.current) { clearTimeout(saveTimer.current); saveTimer.current = null; }
+    const pending = pendingSaveRef.current;
+    if (!pending) return;
+    pendingSaveRef.current = null;
+    persistDoc(pending.id, pending.state);
+  }, [persistDoc]);
+
   const save = useCallback((state: EditorState) => {
+    pendingSaveRef.current = { id: activeIdRef.current, state };
+    setSaveStatus("saving");
     if (saveTimer.current) clearTimeout(saveTimer.current);
     saveTimer.current = setTimeout(() => {
-      const html = serializeDoc(state.doc);
-      const id = activeIdRef.current;
-      const list = filesRef.current.map((f) => (f.id === id ? { ...f, html } : f));
-      filesRef.current = list;
-      setFiles(list);
-      if (isAuthedRef.current) {
-        if (id) updateDocument(id, html).catch(() => {});
-      } else {
-        try { localStorage.setItem(FILES_KEY, JSON.stringify(list)); } catch {}
-      }
+      saveTimer.current = null;
+      flushSave();
     }, 800);
-  }, []);
+  }, [flushSave]);
+
+  // Flush pending edits when the tab is hidden or closed so nothing is lost.
+  useEffect(() => {
+    const flush = () => flushSave();
+    const onVisibility = () => { if (document.visibilityState === "hidden") flushSave(); };
+    window.addEventListener("pagehide", flush);
+    window.addEventListener("beforeunload", flush);
+    document.addEventListener("visibilitychange", onVisibility);
+    return () => {
+      window.removeEventListener("pagehide", flush);
+      window.removeEventListener("beforeunload", flush);
+      document.removeEventListener("visibilitychange", onVisibility);
+    };
+  }, [flushSave]);
+
+  useEffect(() => {
+    editorHandlers.flushSave = flushSave;
+    return () => { editorHandlers.flushSave = undefined; };
+  }, [flushSave]);
 
   const setDocFromHtml = useCallback((html: string) => {
     const v = viewRef.current;
@@ -1045,12 +1166,15 @@ export default function Editor() {
   }, [refreshDocInfo]);
 
   // Snapshot the current editor html into the file list, persisting the previous doc if signed in.
+  // Cancels any pending debounced save first — this snapshot supersedes it.
   const commitCurrent = useCallback((list: FileItem[]): FileItem[] => {
     const v = viewRef.current;
     if (!v) return list;
+    if (saveTimer.current) { clearTimeout(saveTimer.current); saveTimer.current = null; }
+    pendingSaveRef.current = null;
     const html = serializeDoc(v.state.doc);
     const id = activeIdRef.current;
-    if (isAuthedRef.current && id) updateDocument(id, html).catch(() => {});
+    if (isAuthedRef.current && id) updateDocument(id, html).catch(() => setSaveStatus("error"));
     return list.map((f) => (f.id === id ? { ...f, html } : f));
   }, []);
 
@@ -1083,6 +1207,12 @@ export default function Editor() {
   }, [applyFiles, commitCurrent, setDocFromHtml]);
 
   const deleteFile = useCallback(async (id: string) => {
+    const target = filesRef.current.find((f) => f.id === id);
+    if (target && !window.confirm(`Delete "${target.name || "Untitled"}"? This cannot be undone.`)) return;
+    if (pendingSaveRef.current?.id === id) {
+      if (saveTimer.current) { clearTimeout(saveTimer.current); saveTimer.current = null; }
+      pendingSaveRef.current = null;
+    }
     const wasActive = activeIdRef.current === id;
     let list = filesRef.current.filter((f) => f.id !== id);
     if (isAuthedRef.current) {
@@ -1127,33 +1257,76 @@ export default function Editor() {
     }, 600);
   }, [applyFiles]);
 
-  const exportFile = useCallback((file: FileItem, fmt: "html" | "txt" | "docx") => {
+  const exportFile = useCallback(async (file: FileItem, fmt: "html" | "txt" | "docx" | "rtf") => {
     const v = viewRef.current;
-    const html = (file.id === activeIdRef.current && v) ? serializeDoc(v.state.doc) : file.html;
+    const isActiveDoc = file.id === activeIdRef.current && !!v;
+    const html = isActiveDoc ? serializeDoc(v!.state.doc) : file.html;
     const safe = (file.name || "document").replace(/[^\w.\- ]+/g, "").trim() || "document";
-    const download = (blob: Blob, ext: string) => {
-      const a = document.createElement("a");
-      a.href = URL.createObjectURL(blob);
-      a.download = `${safe}.${ext}`;
-      a.click();
-    };
+    const { docToDocxBlob, docToRtf, downloadBlob } = await import("@/lib/doc-export");
     if (fmt === "html") {
       const blob = new Blob([`<!DOCTYPE html><html><head><meta charset="utf-8"><title>${file.name}</title></head><body style="font-family:Arial;max-width:800px;margin:40px auto;padding:20px">${html}</body></html>`], { type: "text/html" });
-      download(blob, "html");
+      downloadBlob(blob, `${safe}.html`);
     } else if (fmt === "txt") {
       const tmp = document.createElement("div");
       tmp.innerHTML = html;
-      const blob = new Blob([tmp.innerText || tmp.textContent || ""], { type: "text/plain" });
-      download(blob, "txt");
+      downloadBlob(new Blob([tmp.innerText || tmp.textContent || ""], { type: "text/plain" }), `${safe}.txt`);
     } else {
-      const tmp = document.createElement("div");
-      tmp.innerHTML = html;
-      const lines = (tmp.innerText || tmp.textContent || "").split("\n");
-      const doc = new Document({
-        sections: [{ children: lines.length ? lines.map((l) => new Paragraph({ children: [new TextRun(l)] })) : [new Paragraph("")] }],
-      });
-      Packer.toBlob(doc).then((blob) => download(blob, "docx"));
+      const doc = isActiveDoc ? v!.state.doc : parseHtmlToDoc(file.html);
+      if (fmt === "docx") {
+        downloadBlob(await docToDocxBlob(doc, file.name || "Document"), `${safe}.docx`);
+      } else {
+        downloadBlob(new Blob([docToRtf(doc)], { type: "application/rtf" }), `${safe}.rtf`);
+      }
     }
+  }, []);
+
+  // Export the document currently open in the editor (used by the File menu).
+  const exportActive = useCallback((fmt: "html" | "txt" | "docx" | "rtf") => {
+    const id = activeIdRef.current;
+    const file = filesRef.current.find((f) => f.id === id) || { id, name: docTitle, html: "" };
+    exportFile({ ...file, name: docTitle || file.name }, fmt);
+  }, [exportFile, docTitle]);
+
+  // ── File open (.txt / .md / .html / .docx) ────────────────────────────────
+  const openFileDialog = useCallback(() => openInputRef.current?.click(), []);
+
+  const handleOpenFile = useCallback(async (file: File) => {
+    try {
+      const { fileToHtml } = await import("@/lib/doc-import");
+      const { html, name } = await fileToHtml(file);
+      const list = commitCurrent(filesRef.current);
+      if (isAuthedRef.current) {
+        const doc = await createDocument(name, html);
+        applyFiles([doc, ...list], doc.id);
+        setDocFromHtml(doc.html);
+        setDocTitle(doc.name);
+      } else {
+        const id = newId();
+        applyFiles([...list, { id, name, html }], id);
+        setDocFromHtml(html);
+        setDocTitle(name);
+      }
+    } catch {
+      alert("Could not open this file. Supported formats: .txt, .md, .html, .docx");
+    }
+  }, [applyFiles, commitCurrent, setDocFromHtml]);
+
+  // ── Image insert (file picker, paste, drag-drop share this path) ─────────
+  const insertImageFromFile = useCallback(async (imageFile: File) => {
+    const v = viewRef.current;
+    if (!v) return;
+    try {
+      const prepared = await prepareImageFile(imageFile);
+      if (!prepared.src) return;
+      const node = mySchema.nodes.image.create({
+        src: prepared.src,
+        alt: imageFile.name || "image",
+        title: "",
+        width: insertWidth(prepared.widthPx),
+      });
+      v.dispatch(v.state.tr.replaceSelectionWith(node).scrollIntoView());
+      v.focus();
+    } catch {}
   }, []);
 
   const logout = useCallback(async () => {
@@ -1205,6 +1378,20 @@ export default function Editor() {
       handleDrop(v, event, _slice, moved) {
         const e = event as DragEvent;
         if (!e.dataTransfer) return false;
+
+        // Dropped image files → insert at drop position
+        const droppedImages = Array.from(e.dataTransfer.files || []).filter((f) => f.type.startsWith("image/"));
+        if (droppedImages.length) {
+          e.preventDefault();
+          const dropCoords = v.posAtCoords({ left: e.clientX, top: e.clientY });
+          if (dropCoords) {
+            const $pos = v.state.doc.resolve(dropCoords.pos);
+            v.dispatch(v.state.tr.setSelection(TextSelection.near($pos)));
+          }
+          droppedImages.forEach((f) => insertImageFromFile(f));
+          return true;
+        }
+
         const posStr = e.dataTransfer.getData("application/pm-table-pos");
         if (!posStr) return false;
 
@@ -1217,7 +1404,7 @@ export default function Editor() {
         const tableNode = $from.nodeAfter;
         if (!tableNode || tableNode.type !== mySchema.nodes.table) return false;
 
-        let toPos = dropCoords.pos;
+        const toPos = dropCoords.pos;
         // Tablo kendi üzerine bırakılıyorsa iptal
         if (toPos >= fromPos && toPos <= fromPos + tableNode.nodeSize) return false;
 
@@ -1232,6 +1419,8 @@ export default function Editor() {
       },
       handleTextInput(v, from, _to, text) {
         if (text !== "/") return false;
+        // "/" inside a code block is just code — no command menu there.
+        if (v.state.doc.resolve(from).parent.type === mySchema.nodes.code_block) return false;
         setTimeout(() => {
           if (!viewRef.current) return;
           openSlashMenu(viewRef.current, from);
@@ -1253,20 +1442,7 @@ export default function Editor() {
         if (!imageFile) return false;
 
         e.preventDefault();
-        const reader = new FileReader();
-        reader.onload = () => {
-          const src = typeof reader.result === "string" ? reader.result : "";
-          if (!src) return;
-          const imageNode = mySchema.nodes.image.create({
-            src,
-            alt: imageFile.name || "pasted-image",
-            title: "",
-            width: "100%",
-          });
-          v.dispatch(v.state.tr.replaceSelectionWith(imageNode).scrollIntoView());
-          v.focus();
-        };
-        reader.readAsDataURL(imageFile);
+        insertImageFromFile(imageFile);
         return true;
       },
       handleKeyDown(v, event) {
@@ -1318,7 +1494,7 @@ export default function Editor() {
     view.focus();
     return () => { view.destroy(); };
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [refreshDocInfo, refreshImagePopover, refreshSlashMenu, save]);
+  }, [refreshDocInfo, refreshImagePopover, refreshSlashMenu, save, insertImageFromFile]);
 
   const applyPreferences = useCallback((p: Record<string, unknown>) => {
     if (p.theme === "dark" || p.theme === "light") {
@@ -1414,29 +1590,70 @@ export default function Editor() {
 
   const handleLinkAdd = useCallback(() => {
     const v = viewRef.current;
-    if (!v || v.state.selection.empty) { alert("Please select text first."); return; }
-    const url = prompt("Link URL:");
-    if (!url) return;
-    const mt = mySchema.marks.link;
-    const { ranges } = v.state.selection;
-    const tr = v.state.tr;
-    ranges.forEach(({ $from, $to }) => {
-      tr.removeMark($from.pos, $to.pos, mt);
-      tr.addMark($from.pos, $to.pos, mt.create({ href: url, title: "" }));
+    if (!v) return;
+    if (v.state.selection.empty) {
+      alert("Select the text you want to link first.");
+      return;
+    }
+    // Prefill with an existing link's href when editing.
+    let existing = "";
+    const linkMark = mySchema.marks.link;
+    v.state.doc.nodesBetween(v.state.selection.from, v.state.selection.to, (node) => {
+      if (!existing) {
+        const mk = linkMark.isInSet(node.marks);
+        if (mk) existing = String(mk.attrs.href || "");
+      }
+      return true;
     });
-    v.dispatch(tr);
+    setLinkDialog({ mode: "link", value: existing });
+  }, []);
+
+  useEffect(() => {
+    editorHandlers.openLinkDialog = handleLinkAdd;
+    return () => { editorHandlers.openLinkDialog = undefined; };
+  }, [handleLinkAdd]);
+
+  const removeLink = useCallback(() => {
+    const v = viewRef.current;
+    if (!v) return;
+    const { from, to } = v.state.selection;
+    v.dispatch(v.state.tr.removeMark(from, to, mySchema.marks.link));
+    setLinkDialog(null);
     v.focus();
   }, []);
 
-  const handleImageAdd = useCallback(() => {
+  const applyLinkDialog = useCallback(() => {
     const v = viewRef.current;
-    if (!v) return;
-    const src = prompt("Image URL:");
-    if (!src) return;
-    const alt = prompt("Alt text (optional):") || "";
-    const node = mySchema.nodes.image.create({ src, alt, title: "", width: "100%" });
-    v.dispatch(v.state.tr.replaceSelectionWith(node).scrollIntoView());
+    const dialog = linkDialog;
+    if (!v || !dialog) return;
+    const raw = dialog.value.trim();
+    if (!raw) { setLinkDialog(null); return; }
+    const withScheme = /^[a-z][a-z0-9+.-]*:/i.test(raw) ? raw : `https://${raw}`;
+    const href = sanitizeHref(withScheme);
+    if (!href) { setLinkDialog(null); return; }
+
+    if (dialog.mode === "image") {
+      const node = mySchema.nodes.image.create({ src: href, alt: "", title: "", width: "480px" });
+      v.dispatch(v.state.tr.replaceSelectionWith(node).scrollIntoView());
+    } else {
+      const mt = mySchema.marks.link;
+      const tr = v.state.tr;
+      v.state.selection.ranges.forEach(({ $from, $to }) => {
+        tr.removeMark($from.pos, $to.pos, mt);
+        tr.addMark($from.pos, $to.pos, mt.create({ href, title: "" }));
+      });
+      v.dispatch(tr);
+    }
+    setLinkDialog(null);
     v.focus();
+  }, [linkDialog]);
+
+  const handleImageAdd = useCallback(() => {
+    imageInputRef.current?.click();
+  }, []);
+
+  const handleImageUrlAdd = useCallback(() => {
+    setLinkDialog({ mode: "image", value: "" });
   }, []);
 
   const handleInsertDivider = useCallback(() => {
@@ -1677,17 +1894,38 @@ export default function Editor() {
     return () => window.removeEventListener("keydown", onKeyDown);
   }, [cropDialogOpen]);
 
-  // Ctrl+P → menüdeki Print ile aynı şeyi çağır
+  // Global shortcuts: Ctrl+P print, Ctrl+S flush save, Ctrl+O open file
   useEffect(() => {
-    const onPrintKey = (e: KeyboardEvent) => {
-      if ((e.ctrlKey || e.metaKey) && e.key === "p") {
-        e.preventDefault();
-        handlePrint();
-      }
+    const onKey = (e: KeyboardEvent) => {
+      if (!(e.ctrlKey || e.metaKey)) return;
+      if (e.key === "p") { e.preventDefault(); handlePrint(); }
+      else if (e.key === "s") { e.preventDefault(); flushSave(); }
+      else if (e.key === "o") { e.preventDefault(); openFileDialog(); }
     };
-    window.addEventListener("keydown", onPrintKey);
-    return () => window.removeEventListener("keydown", onPrintKey);
-  }, [handlePrint]);
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [handlePrint, flushSave, openFileDialog]);
+
+  // Spellcheck toggle applies directly to the contenteditable element
+  useEffect(() => {
+    const el = editorRef.current?.querySelector(".ProseMirror");
+    el?.setAttribute("spellcheck", spellcheckOn ? "true" : "false");
+  }, [spellcheckOn]);
+
+  // Small screens: fit the A4 page to the viewport once on load
+  useEffect(() => {
+    if (window.innerWidth < 834) {
+      setZoomPercent(Math.max(50, Math.floor(((window.innerWidth - 16) / 794) * 100)));
+    }
+  }, []);
+
+  // Installable/offline shell (production only)
+  useEffect(() => {
+    if (process.env.NODE_ENV !== "production") return;
+    if ("serviceWorker" in navigator) {
+      navigator.serviceWorker.register("/sw.js").catch(() => {});
+    }
+  }, []);
 
   void tick; // re-render on every transaction so the match counter stays fresh
   const searchInfo = findOpen && viewRef.current ? getSearchState(viewRef.current) : undefined;
@@ -1696,8 +1934,30 @@ export default function Editor() {
 
   return (
     <div className="flex h-screen">
-      {/* Collapsible sidebar — members only */}
-      {isAuthed && (
+      {/* Hidden inputs for image insert and file open */}
+      <input
+        ref={imageInputRef}
+        type="file"
+        accept="image/*"
+        className="hidden"
+        onChange={(e) => {
+          const f = e.target.files?.[0];
+          e.target.value = "";
+          if (f) insertImageFromFile(f);
+        }}
+      />
+      <input
+        ref={openInputRef}
+        type="file"
+        accept={OPEN_ACCEPT}
+        className="hidden"
+        onChange={(e) => {
+          const f = e.target.files?.[0];
+          e.target.value = "";
+          if (f) handleOpenFile(f);
+        }}
+      />
+      {/* Collapsible sidebar — documents live in localStorage for guests, DB for members */}
       <aside
         className={cn(
           "h-full shrink-0 overflow-hidden border-r border-sidebar-border bg-sidebar text-sidebar-foreground transition-[width] duration-200 ease-in-out",
@@ -1788,9 +2048,10 @@ export default function Editor() {
                         <DownloadSimple size={15} /> Export
                       </ContextMenuSubTrigger>
                       <ContextMenuSubContent>
+                        <ContextMenuItem onClick={() => exportFile(f, "docx")}>Word (.docx)</ContextMenuItem>
+                        <ContextMenuItem onClick={() => exportFile(f, "rtf")}>Rich Text (.rtf)</ContextMenuItem>
                         <ContextMenuItem onClick={() => exportFile(f, "html")}>HTML (.html)</ContextMenuItem>
                         <ContextMenuItem onClick={() => exportFile(f, "txt")}>Plain text (.txt)</ContextMenuItem>
-                        <ContextMenuItem onClick={() => exportFile(f, "docx")}>Word (.docx)</ContextMenuItem>
                       </ContextMenuSubContent>
                     </ContextMenuSub>
                     <ContextMenuSeparator />
@@ -1836,7 +2097,6 @@ export default function Editor() {
           </div>
         </div>
       </aside>
-      )}
 
       {/* Main column */}
       <div className="flex h-screen flex-1 min-w-0 flex-col overflow-hidden">
@@ -1850,11 +2110,14 @@ export default function Editor() {
         docTitle={docTitle}
         onTitleChange={renameActive}
         onNewDoc={createFile}
+        onOpenFile={openFileDialog}
+        onExport={exportActive}
         onFind={openFind}
         onInsertTable={handleInsertTable}
         onPageBreakAdd={handleInsertPageBreak}
         onLinkAdd={handleLinkAdd}
         onImageAdd={handleImageAdd}
+        onImageUrlAdd={handleImageUrlAdd}
         onInsertDivider={handleInsertDivider}
         onInsertSymbol={handleInsertText}
         onInsertDate={handleInsertDate}
@@ -1866,9 +2129,11 @@ export default function Editor() {
         onToggleToolbar={() => setShowToolbar((s) => !s)}
         showRuler={showRuler}
         onToggleRuler={() => setShowRuler((s) => !s)}
+        spellcheckOn={spellcheckOn}
+        onToggleSpellcheck={() => setSpellcheckOn((s) => !s)}
         isDark={isDark}
         onToggleDark={toggleDark}
-        canUseSidebar={isAuthed}
+        canUseSidebar={true}
         user={user}
         onLogin={openAuth}
         onLogout={logout}
@@ -1967,12 +2232,12 @@ export default function Editor() {
       )}
       {cropDialogOpen && cropSource && (
         <div className="fixed inset-0 z-[1300] flex items-center justify-center bg-black/40 p-4">
-          <div className="w-full max-w-4xl rounded-lg border bg-white p-4 shadow-2xl">
+          <div className="w-full max-w-4xl rounded-lg border border-border bg-card text-card-foreground p-4 shadow-2xl">
             <div className="mb-3 flex items-center justify-between">
               <h3 className="text-sm font-semibold">Crop Image</h3>
               <button
                 type="button"
-                className="rounded border px-2 py-1 text-xs hover:bg-accent/70"
+                className="rounded border border-input px-2 py-1 text-xs hover:bg-accent/70"
                 onClick={() => {
                   setCropDialogOpen(false);
                   setCropSource(null);
@@ -1981,17 +2246,19 @@ export default function Editor() {
                 Close
               </button>
             </div>
-            <div className="h-[520px] w-full overflow-hidden rounded border bg-slate-50">
-              <Cropper
-                ref={cropperRef}
-                src={cropSource}
-                className="h-full w-full"
-              />
+            <div className="h-[520px] w-full overflow-hidden rounded border border-border bg-muted">
+              <Suspense fallback={<div className="flex h-full items-center justify-center text-sm text-muted-foreground">Loading cropper…</div>}>
+                <Cropper
+                  ref={cropperRef}
+                  src={cropSource}
+                  className="h-full w-full"
+                />
+              </Suspense>
             </div>
             <div className="mt-3 flex justify-end gap-2">
               <button
                 type="button"
-                className="rounded border px-3 py-1.5 text-sm hover:bg-accent/70"
+                className="rounded border border-input px-3 py-1.5 text-sm hover:bg-accent/70"
                 onClick={() => {
                   setCropDialogOpen(false);
                   setCropSource(null);
@@ -2001,7 +2268,7 @@ export default function Editor() {
               </button>
               <button
                 type="button"
-                className="rounded border border-blue-600 bg-blue-600 px-3 py-1.5 text-sm text-white hover:bg-blue-700"
+                className="rounded bg-primary px-3 py-1.5 text-sm text-primary-foreground hover:opacity-90"
                 onClick={applyCrop}
               >
                 Apply Crop
@@ -2010,8 +2277,56 @@ export default function Editor() {
           </div>
         </div>
       )}
+      {linkDialog && (
+        <div
+          className="fixed inset-0 z-[1300] flex items-center justify-center bg-black/40 p-4"
+          onMouseDown={(e) => { if (e.target === e.currentTarget) setLinkDialog(null); }}
+        >
+          <div className="w-full max-w-sm rounded-lg border border-border bg-popover text-popover-foreground p-4 shadow-2xl">
+            <h3 className="mb-2 text-sm font-semibold">
+              {linkDialog.mode === "link" ? "Insert link" : "Insert image from URL"}
+            </h3>
+            <input
+              autoFocus
+              value={linkDialog.value}
+              onChange={(e) => setLinkDialog((prev) => prev ? { ...prev, value: e.target.value } : prev)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") { e.preventDefault(); applyLinkDialog(); }
+                else if (e.key === "Escape") { e.preventDefault(); setLinkDialog(null); }
+              }}
+              placeholder={linkDialog.mode === "link" ? "https://example.com" : "https://example.com/image.png"}
+              className="w-full rounded border border-input bg-background px-2 py-1.5 text-sm outline-none focus:ring-1 focus:ring-ring"
+            />
+            <div className="mt-3 flex items-center justify-end gap-2">
+              {linkDialog.mode === "link" && (
+                <button
+                  type="button"
+                  onClick={removeLink}
+                  className="mr-auto rounded px-2 py-1.5 text-xs text-destructive hover:bg-destructive/10"
+                >
+                  Remove link
+                </button>
+              )}
+              <button
+                type="button"
+                onClick={() => setLinkDialog(null)}
+                className="rounded border border-input px-3 py-1.5 text-sm hover:bg-accent/70"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={applyLinkDialog}
+                className="rounded bg-primary px-3 py-1.5 text-sm text-primary-foreground hover:opacity-90"
+              >
+                Apply
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
       {findOpen && (
-        <div className="fixed right-4 top-20 z-[1250] w-[330px] rounded-md border border-border bg-white shadow-lg p-2.5 space-y-2">
+        <div className="fixed right-4 top-20 z-[1250] w-[330px] rounded-md border border-border bg-popover text-popover-foreground shadow-lg p-2.5 space-y-2">
           <div className="flex items-center gap-1.5">
             <input
               ref={findInputRef}
@@ -2144,6 +2459,18 @@ export default function Editor() {
             <span><span className="font-medium text-foreground">{docInfo.selectedType}</span></span>
             <span>Words: <span className="font-medium text-foreground">{docInfo.words}</span></span>
             <span>Chars: <span className="font-medium text-foreground">{docInfo.characters}</span></span>
+            {saveStatus !== "idle" && (
+              <span
+                className={cn(
+                  "max-[520px]:hidden",
+                  saveStatus === "error" ? "font-medium text-destructive" : "text-muted-foreground"
+                )}
+              >
+                {saveStatus === "saving" && "Saving…"}
+                {saveStatus === "saved" && "Saved"}
+                {saveStatus === "error" && (isAuthed ? "Not saved — check your connection" : "Not saved — storage is full, export your work")}
+              </span>
+            )}
           </div>
           <div className="flex items-center gap-2">
             <label className="flex items-center gap-1.5">
@@ -2153,6 +2480,9 @@ export default function Editor() {
                 value={String(zoomPercent)}
                 onChange={(e) => setZoomPercent(Number(e.target.value))}
               >
+                {![50, 75, 90, 100, 110, 125, 150].includes(zoomPercent) && (
+                  <option value={String(zoomPercent)}>{zoomPercent}%</option>
+                )}
                 <option value="50">50%</option>
                 <option value="75">75%</option>
                 <option value="90">90%</option>

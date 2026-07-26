@@ -17,7 +17,7 @@ import { MagnifyingGlass }     from "@phosphor-icons/react/dist/ssr/MagnifyingGl
 import ToolbarPreviewClient from "./components/ToolbarPreviewClient";
 
 export const metadata: Metadata = {
-  title: "Online WordPad: Free Browser Word Processor | No Install",
+  title: "EDTRpad — Online WordPad: Free Browser Word Processor | No Install",
   description:
     "Free online WordPad alternative. Rich text editor in your browser — bold, tables, images, export to Word (.docx), and print. No install, no account.",
   keywords: [
@@ -41,20 +41,18 @@ export const metadata: Metadata = {
     "word editor online no download",
   ],
   openGraph: {
-    title: "Online WordPad: Free Word Processor — No Install",
+    title: "EDTRpad — Online WordPad: Free Word Processor, No Install",
     description:
       "Free online WordPad & Microsoft Word alternative. Rich text, tables, images, export to Word (.docx). No install, no account.",
     type: "website",
     url: "https://wordpad.info",
-    siteName: "Online WordPad",
-    images: [{ url: "/og-image.png", width: 1200, height: 630 }],
+    siteName: "EDTRpad",
   },
   twitter: {
     card: "summary_large_image",
-    title: "Online WordPad: Free Word Processor — No Install",
+    title: "EDTRpad — Online WordPad: Free Word Processor, No Install",
     description:
       "Free online WordPad & Microsoft Word alternative. No install, no account required.",
-    images: ["/og-image.png"],
   },
   alternates: {
     canonical: "https://wordpad.info",
@@ -104,8 +102,8 @@ const features = [
   },
   {
     Icon: Export,
-    title: "Export",
-    desc: "Save as Word (.docx), HTML, or plain text (.txt). Your document, your format.",
+    title: "Import & Export",
+    desc: "Open .docx, .txt, and .html files. Save as Word (.docx), Rich Text (.rtf), HTML, or plain text (.txt) — formatting included.",
   },
   {
     Icon: Printer,
@@ -144,7 +142,11 @@ const faqs = [
   },
   {
     q: "Does it work offline?",
-    a: "Once the page is loaded, editing works completely offline. Fonts and some resources may require an internet connection on first load.",
+    a: "Yes. The editor is a Progressive Web App: after your first visit it opens and works fully offline, and you can install it from your browser like a desktop app.",
+  },
+  {
+    q: "Can I open my existing Word or text files?",
+    a: "Yes. Use File → Open (or Ctrl+O) to open .docx, .txt, and .html files directly in the editor, then export them back to Word (.docx) or Rich Text (.rtf) when you're done.",
   },
   {
     q: "Is it free?",
@@ -159,7 +161,8 @@ const faqs = [
 const jsonLdWebApp = {
   "@context": "https://schema.org",
   "@type": "WebApplication",
-  name: "Online WordPad",
+  name: "EDTRpad",
+  alternateName: ["Online WordPad", "Online Word Editor", "Free Word Processor Online"],
   url: "https://wordpad.info",
   applicationCategory: "ProductivityApplication",
   operatingSystem: "Any",
@@ -170,28 +173,22 @@ const jsonLdWebApp = {
     priceCurrency: "USD",
   },
   description:
-    "Free online WordPad and Microsoft Word alternative. A browser-based word processor with bold, italic, tables, images, export to Word (.docx), and print support. No install, no account required.",
-  alternateName: ["Online Word", "Online Word Editor", "Free Word Processor Online"],
+    "Free online WordPad and Microsoft Word alternative. A browser-based word processor with bold, italic, tables, images, export to Word (.docx) and RTF, and print support. No install, no account required.",
   featureList: [
-    "Rich text formatting (bold, italic, underline, strikethrough)",
+    "Rich text formatting (bold, italic, underline, strikethrough, superscript, subscript)",
     "Font families, font sizes, text color, highlight color",
     "Insert tables with visual grid picker",
-    "Insert and resize images",
+    "Insert, upload, resize, crop and rotate images",
+    "Open .docx, .txt and .html files",
     "Page breaks with A4 page rendering",
-    "Export to Word (.docx), HTML, and plain text (.txt)",
+    "Export to Word (.docx), Rich Text (.rtf), HTML, and plain text (.txt)",
     "Print with configurable page margins",
     "Unlimited undo and redo",
     "Emoji picker",
     "Slash command menu",
-    "Auto-save to browser local storage",
-    "Works offline after first load",
+    "Auto-save to browser local storage or your free account",
   ],
-  screenshot: "https://wordpad.info/og-image.png",
-  aggregateRating: {
-    "@type": "AggregateRating",
-    ratingValue: "4.8",
-    ratingCount: "120",
-  },
+  screenshot: "https://wordpad.info/opengraph-image",
 };
 
 const jsonLdFaq = {
@@ -426,13 +423,15 @@ export default function LandingPage() {
         <section className="bg-gray-900 py-16">
           <div className="mx-auto max-w-5xl px-6 text-center flex flex-col items-center gap-4">
             <Lock size={36} weight="duotone" className="text-gray-400" />
-            <h2 className="text-3xl font-bold text-white">Your data never leaves your device</h2>
+            <h2 className="text-3xl font-bold text-white">Private by default</h2>
             <p className="text-gray-300 text-lg max-w-2xl mx-auto">
-              Online WordPad has no backend server, no database, and no user accounts.
-              Your document is stored in your browser&apos;s local storage. We never see your content.
+              No account needed: your documents are stored in your browser&apos;s local storage and never
+              leave your device. We don&apos;t see your content.
             </p>
             <p className="text-gray-400 text-sm max-w-2xl mx-auto">
-              There is no account to create and no sign-up process. You open the website, start typing, and your work is automatically saved. If you close the tab or shut down your computer, your document will still be there when you come back.
+              Open the website, start typing, and your work is saved automatically on your device. If you
+              choose to create a free account, your documents sync to your private cloud space so you can
+              continue on any device — they are never shared or used for anything else.
             </p>
           </div>
         </section>
@@ -483,7 +482,7 @@ export default function LandingPage() {
       <footer className="border-t border-gray-100 py-10">
         <div className="mx-auto max-w-5xl px-6 flex flex-col sm:flex-row items-center justify-between gap-4 text-sm text-gray-400">
           <span>
-            © {new Date().getFullYear()} Online WordPad · Free &amp; Open Source
+            © {new Date().getFullYear()} EDTRpad · Free Online WordPad
           </span>
           <div className="flex items-center gap-6">
             <Link href="/pad" className="hover:text-gray-600 transition-colors">Editor</Link>
@@ -492,7 +491,7 @@ export default function LandingPage() {
           </div>
         </div>
         <div className="mx-auto max-w-5xl px-6 mt-4 text-xs text-gray-300 leading-relaxed">
-          Disclaimer: Online WordPad stores your document in your browser local storage. If you clear your browser cache or storage, your document will be lost. Please export important files regularly. Online WordPad is not affiliated with Microsoft or the Microsoft WordPad application. This is an independent, open source project.
+          Disclaimer: without an account, EDTRpad stores your document in your browser local storage. If you clear your browser cache or storage, your document will be lost. Please export important files regularly. EDTRpad is an independent project and is not affiliated with Microsoft or the Microsoft WordPad application.
         </div>
       </footer>
     </div>

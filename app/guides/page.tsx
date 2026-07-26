@@ -13,7 +13,7 @@ export const metadata: Metadata = {
     description: "Guides about using an online WordPad, free WordPad alternatives, and browser-based text editing.",
     url: "https://wordpad.info/guides",
     type: "website",
-    siteName: "Online WordPad",
+    siteName: "EDTRpad",
   },
   twitter: {
     card: "summary_large_image",
@@ -40,8 +40,9 @@ export default function GuidesIndexPage() {
       {/* Nav */}
       <header className="sticky top-0 z-50 border-b border-gray-100 bg-white/90 backdrop-blur-sm">
         <div className="mx-auto max-w-3xl px-6 flex items-center justify-between h-14">
-          <Link href="/" className="text-lg font-bold tracking-tight hover:opacity-80 transition-opacity">
-            Online <span className="text-gray-900">WordPad</span>
+          <Link href="/" className="font-brand leading-none hover:opacity-80 transition-opacity">
+            <span className="text-xl font-bold tracking-tight text-gray-900">EDTR</span>
+            <span className="text-base font-semibold tracking-wider text-gray-400">PAD</span>
           </Link>
           <Link
             href="/pad"
@@ -86,7 +87,7 @@ export default function GuidesIndexPage() {
       <footer className="border-t border-gray-100 py-8">
         <div className="mx-auto max-w-3xl px-6 flex items-center justify-between text-sm text-gray-400">
           <Link href="/" className="hover:text-gray-600 transition-colors">
-            © {new Date().getFullYear()} Online WordPad
+            © {new Date().getFullYear()} EDTRpad · Free Online WordPad
           </Link>
           <Link href="/pad" className="hover:text-gray-600 transition-colors">Open Editor</Link>
         </div>
