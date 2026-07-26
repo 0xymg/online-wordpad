@@ -25,8 +25,16 @@ The editor is available at: /pad
 - Page breaks (with correct print behavior)
 - Tables: insert via grid picker, add/remove rows and columns, resize cells
 - Image insertion: upload, paste, or drag & drop; resize, crop, rotate, flip, align
-- Hyperlink insertion (Ctrl+K)
-- Find & replace (Ctrl+F)
+- Hyperlink insertion (Ctrl+K); URLs typed with a trailing space auto-link
+- Find & replace (Ctrl+F) with match-case and whole-word options
+- Format painter (copy formatting to another selection)
+- Change case (Sentence / lower / UPPER / Title)
+- AutoCorrect: smart quotes, -- → em dash, ... → …, (c) © (r) ® (tm) ™
+- Table of contents generated from headings
+- Read aloud (browser speech synthesis)
+- Document templates (letter, resume, meeting notes, invoice, report, to-do)
+- Version history with restore (auto-snapshots while editing)
+- Folders in the document sidebar; focus mode; spellcheck language picker
 - Multiple documents with a sidebar (localStorage for guests, cloud for members)
 
 ## Import, Export & Print

@@ -514,3 +514,102 @@ export function downloadBlob(blob: Blob, filename: string): void {
   a.click();
   setTimeout(() => URL.revokeObjectURL(url), 10_000);
 }
+
+/* ── Markdown conversion ───────────────────────────────────────────────── */
+
+function mdEscape(text: string): string {
+  return text.replace(/([\\`*_[\]])/g, "\\$1");
+}
+
+function inlineToMd(node: PMNode): string {
+  let out = "";
+  node.forEach((child) => {
+    if (child.isText) {
+      const marks = child.marks;
+      const has = (name: string) => marks.some((m) => m.type.name === name);
+      const link = marks.find((m) => m.type.name === "link");
+      let t = has("code") ? "`" + (child.text || "") + "`" : mdEscape(child.text || "");
+      if (has("strong")) t = `**${t}**`;
+      if (has("em")) t = `*${t}*`;
+      if (has("strikethrough")) t = `~~${t}~~`;
+      if (has("underline")) t = `<u>${t}</u>`;
+      if (has("superscript")) t = `<sup>${t}</sup>`;
+      if (has("subscript")) t = `<sub>${t}</sub>`;
+      if (link) t = `[${t}](${link.attrs.href})`;
+      out += t;
+    } else if (child.type.name === "image") {
+      out += `![${child.attrs.alt || ""}](${child.attrs.src})`;
+    } else if (child.type.name === "hard_break") {
+      out += "  \n";
+    }
+  });
+  return out;
+}
+
+function listToMd(list: PMNode, ordered: boolean, indent: string): string {
+  let out = "";
+  let n = Number(list.attrs?.order || 1);
+  list.forEach((item) => {
+    const marker = ordered ? `${n++}. ` : "- ";
+    let first = true;
+    item.forEach((block) => {
+      if (block.type.name === "bullet_list") out += listToMd(block, false, indent + "  ");
+      else if (block.type.name === "ordered_list") out += listToMd(block, true, indent + "  ");
+      else if (block.type.name === "paragraph") {
+        out += indent + (first ? marker : " ".repeat(marker.length)) + inlineToMd(block) + "\n";
+        first = false;
+      } else {
+        out += blockToMd(block);
+      }
+    });
+  });
+  return out;
+}
+
+function tableToMd(table: PMNode): string {
+  const rows: string[][] = [];
+  table.forEach((row) => {
+    const cells: string[] = [];
+    row.forEach((cell) => {
+      let text = "";
+      cell.forEach((block) => { text += inlineToMd(block) + " "; });
+      cells.push(text.trim().replace(/\|/g, "\\|"));
+    });
+    rows.push(cells);
+  });
+  if (!rows.length) return "";
+  const cols = Math.max(...rows.map((r) => r.length));
+  const line = (r: string[]) => "| " + Array.from({ length: cols }, (_, i) => r[i] || "").join(" | ") + " |";
+  return [
+    line(rows[0]),
+    "| " + Array(cols).fill("---").join(" | ") + " |",
+    ...rows.slice(1).map(line),
+  ].join("\n") + "\n\n";
+}
+
+function blockToMd(node: PMNode): string {
+  const name = node.type.name;
+  if (name === "paragraph") return inlineToMd(node) + "\n\n";
+  if (name === "heading") {
+    const level = Math.max(1, Math.min(6, Number(node.attrs.level || 1)));
+    return "#".repeat(level) + " " + inlineToMd(node) + "\n\n";
+  }
+  if (name === "code_block") return "```\n" + (node.textContent || "") + "\n```\n\n";
+  if (name === "blockquote") {
+    let inner = "";
+    node.forEach((child) => { inner += blockToMd(child); });
+    return inner.trimEnd().split("\n").map((l) => "> " + l).join("\n") + "\n\n";
+  }
+  if (name === "bullet_list") return listToMd(node, false, "") + "\n";
+  if (name === "ordered_list") return listToMd(node, true, "") + "\n";
+  if (name === "table") return tableToMd(node);
+  if (name === "horizontal_rule") return "---\n\n";
+  if (name === "page_break") return "<!-- page break -->\n\n";
+  return node.textContent ? node.textContent + "\n\n" : "";
+}
+
+export function docToMarkdown(doc: PMNode): string {
+  let out = "";
+  doc.forEach((block) => { out += blockToMd(block); });
+  return out.replace(/\n{3,}/g, "\n\n").trimEnd() + "\n";
+}

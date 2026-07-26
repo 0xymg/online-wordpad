@@ -22,6 +22,7 @@ import { addColumnAfter, addRowAfter, deleteColumn, deleteRow, deleteTable } fro
 import { SidebarSimple, SignIn, SignOut } from "@phosphor-icons/react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
+import { TEMPLATES } from "@/lib/templates";
 
 interface MenuBarProps {
   viewRef: React.MutableRefObject<EditorView | null>;
@@ -31,8 +32,11 @@ interface MenuBarProps {
   docTitle: string;
   onTitleChange: (title: string) => void;
   onNewDoc: () => void;
+  onNewFromTemplate: (t: { name: string; html: string }) => void;
   onOpenFile: () => void;
-  onExport: (fmt: "html" | "txt" | "docx" | "rtf") => void;
+  onExport: (fmt: "html" | "txt" | "docx" | "rtf" | "md") => void;
+  onShowVersions: () => void;
+  onShowShortcuts: () => void;
   onFind: () => void;
   onInsertTable: (rows: number, cols: number) => void;
   onPageBreakAdd: () => void;
@@ -52,6 +56,16 @@ interface MenuBarProps {
   onToggleRuler: () => void;
   spellcheckOn: boolean;
   onToggleSpellcheck: () => void;
+  spellLang: string;
+  onSpellLangChange: (lang: string) => void;
+  onChangeCase: (kind: "upper" | "lower" | "title" | "sentence") => void;
+  onInsertTOC: () => void;
+  readingAloud: boolean;
+  onToggleReadAloud: () => void;
+  focusMode: boolean;
+  onToggleFocusMode: () => void;
+  printHeaderFooter: boolean;
+  onTogglePrintHeaderFooter: () => void;
   isDark: boolean;
   onToggleDark: () => void;
   sidebarOpen: boolean;
@@ -91,15 +105,32 @@ function SidebarBtn({ onClick, className }: { onClick: () => void; className?: s
   );
 }
 
+const SPELL_LANGS: Array<{ value: string; label: string }> = [
+  { value: "auto", label: "Automatic" },
+  { value: "en", label: "English" },
+  { value: "tr", label: "Türkçe" },
+  { value: "de", label: "Deutsch" },
+  { value: "fr", label: "Français" },
+  { value: "es", label: "Español" },
+  { value: "pt", label: "Português" },
+  { value: "it", label: "Italiano" },
+];
+
 export default function MenuBar({
   viewRef, schema, onPrint,
-  docTitle, onTitleChange, onNewDoc, onOpenFile, onExport, onFind,
+  docTitle, onTitleChange, onNewDoc, onNewFromTemplate, onOpenFile, onExport,
+  onShowVersions, onShowShortcuts, onFind,
   onInsertTable, onPageBreakAdd, onLinkAdd, onImageAdd, onImageUrlAdd,
   onInsertDivider, onInsertSymbol, onInsertDate,
   onLineSpacing, onClearFormatting,
   zoomPercent, onZoomChange,
   showToolbar, onToggleToolbar, showRuler, onToggleRuler,
   spellcheckOn, onToggleSpellcheck,
+  spellLang, onSpellLangChange,
+  onChangeCase, onInsertTOC,
+  readingAloud, onToggleReadAloud,
+  focusMode, onToggleFocusMode,
+  printHeaderFooter, onTogglePrintHeaderFooter,
   isDark, onToggleDark,
   onToggleSidebar,
   canUseSidebar,
@@ -164,6 +195,18 @@ export default function MenuBar({
     document.execCommand(command);
   };
 
+  const pastePlainFromClipboard = async () => {
+    const v = viewRef.current;
+    if (!v) return;
+    v.focus();
+    try {
+      const text = await navigator.clipboard.readText();
+      if (text) v.pasteText(text);
+    } catch {
+      alert("Your browser blocked programmatic paste. Press Ctrl+Shift+V (⇧⌘V) instead.");
+    }
+  };
+
   const print = () => onPrint?.();
 
   const TRIGGER = "text-sm font-normal px-0 py-1 h-7";
@@ -207,9 +250,24 @@ export default function MenuBar({
         <MenubarTrigger className={TRIGGER}>File</MenubarTrigger>
         <MenubarContent>
           <MenubarItem onClick={onNewDoc}>New</MenubarItem>
+          <MenubarSub>
+            <MenubarSubTrigger>New from template</MenubarSubTrigger>
+            <MenubarSubContent>
+              {TEMPLATES.map((t) => (
+                <MenubarItem key={t.id} onClick={() => onNewFromTemplate({ name: t.name, html: t.html })}>
+                  <div>
+                    <div>{t.name}</div>
+                    <div className="text-xs text-muted-foreground">{t.description}</div>
+                  </div>
+                </MenubarItem>
+              ))}
+            </MenubarSubContent>
+          </MenubarSub>
           <MenubarItem onClick={onOpenFile}>
             Open… <MenubarShortcut>Ctrl+O</MenubarShortcut>
           </MenubarItem>
+          <MenubarSeparator />
+          <MenubarItem onClick={onShowVersions}>Version history…</MenubarItem>
           <MenubarSeparator />
           <MenubarSub>
             <MenubarSubTrigger>Export</MenubarSubTrigger>
@@ -217,10 +275,14 @@ export default function MenuBar({
               <MenubarItem onClick={() => onExport("docx")}>Word (.docx)</MenubarItem>
               <MenubarItem onClick={() => onExport("rtf")}>Rich Text (.rtf)</MenubarItem>
               <MenubarItem onClick={() => onExport("html")}>Web page (.html)</MenubarItem>
+              <MenubarItem onClick={() => onExport("md")}>Markdown (.md)</MenubarItem>
               <MenubarItem onClick={() => onExport("txt")}>Plain text (.txt)</MenubarItem>
             </MenubarSubContent>
           </MenubarSub>
           <MenubarSeparator />
+          <MenubarCheckboxItem checked={printHeaderFooter} onClick={onTogglePrintHeaderFooter}>
+            Print header &amp; footer
+          </MenubarCheckboxItem>
           <MenubarItem onClick={print}>
             Print <MenubarShortcut>Ctrl+P</MenubarShortcut>
           </MenubarItem>
@@ -247,6 +309,9 @@ export default function MenuBar({
           </MenubarItem>
           <MenubarItem onClick={pasteFromClipboard}>
             Paste <MenubarShortcut>Ctrl+V</MenubarShortcut>
+          </MenubarItem>
+          <MenubarItem onClick={pastePlainFromClipboard}>
+            Paste without formatting <MenubarShortcut>Ctrl+Shift+V</MenubarShortcut>
           </MenubarItem>
           <MenubarSeparator />
           <MenubarItem onClick={onFind}>
@@ -292,8 +357,25 @@ export default function MenuBar({
           <MenubarCheckboxItem checked={spellcheckOn} onClick={onToggleSpellcheck}>
             Spellcheck
           </MenubarCheckboxItem>
+          <MenubarSub>
+            <MenubarSubTrigger>Spellcheck language</MenubarSubTrigger>
+            <MenubarSubContent>
+              {SPELL_LANGS.map((l) => (
+                <MenubarCheckboxItem key={l.value} checked={spellLang === l.value} onClick={() => onSpellLangChange(l.value)}>
+                  {l.label}
+                </MenubarCheckboxItem>
+              ))}
+            </MenubarSubContent>
+          </MenubarSub>
           <MenubarCheckboxItem checked={isDark} onClick={onToggleDark}>
             Dark mode
+          </MenubarCheckboxItem>
+          <MenubarCheckboxItem checked={focusMode} onClick={onToggleFocusMode}>
+            Focus mode
+          </MenubarCheckboxItem>
+          <MenubarSeparator />
+          <MenubarCheckboxItem checked={readingAloud} onClick={onToggleReadAloud}>
+            Read aloud
           </MenubarCheckboxItem>
           <MenubarSeparator />
           <MenubarItem onClick={() => document.documentElement.requestFullscreen?.()}>
@@ -313,6 +395,7 @@ export default function MenuBar({
           <MenubarItem onClick={onImageAdd}>Picture from file…</MenubarItem>
           <MenubarItem onClick={onImageUrlAdd}>Picture from URL…</MenubarItem>
           <MenubarItem onClick={() => onInsertTable(3, 3)}>Table (3 × 3)</MenubarItem>
+          <MenubarItem onClick={onInsertTOC}>Table of contents</MenubarItem>
           <MenubarSeparator />
           <MenubarItem onClick={onInsertDivider}>Horizontal line</MenubarItem>
           <MenubarItem onClick={onPageBreakAdd}>Page break</MenubarItem>
@@ -357,6 +440,15 @@ export default function MenuBar({
           <MenubarItem onClick={() => cmd(toggleMark(schema.marks.subscript))}>
             Subscript <MenubarShortcut>Ctrl+,</MenubarShortcut>
           </MenubarItem>
+          <MenubarSub>
+            <MenubarSubTrigger>Change case</MenubarSubTrigger>
+            <MenubarSubContent>
+              <MenubarItem onClick={() => onChangeCase("sentence")}>Sentence case</MenubarItem>
+              <MenubarItem onClick={() => onChangeCase("lower")}>lowercase</MenubarItem>
+              <MenubarItem onClick={() => onChangeCase("upper")}>UPPERCASE</MenubarItem>
+              <MenubarItem onClick={() => onChangeCase("title")}>Title Case</MenubarItem>
+            </MenubarSubContent>
+          </MenubarSub>
           <MenubarSeparator />
           <MenubarSub>
             <MenubarSubTrigger>Text color</MenubarSubTrigger>
@@ -432,6 +524,8 @@ export default function MenuBar({
       <MenubarMenu>
         <MenubarTrigger className={TRIGGER}>Help</MenubarTrigger>
         <MenubarContent>
+          <MenubarItem onClick={onShowShortcuts}>Keyboard shortcuts</MenubarItem>
+          <MenubarSeparator />
           <MenubarItem onClick={() => alert("EDTRpad — Online WordPad\nFree word processor in your browser.\nhttps://wordpad.info")}>
             About
           </MenubarItem>

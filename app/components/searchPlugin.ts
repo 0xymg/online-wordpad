@@ -10,6 +10,7 @@ export interface SearchMatch {
 export interface SearchPluginState {
   query: string;
   caseSensitive: boolean;
+  wholeWord: boolean;
   matches: SearchMatch[];
   current: number; // index into matches, -1 when none
   decorations: DecorationSet;
@@ -17,7 +18,9 @@ export interface SearchPluginState {
 
 export const searchKey = new PluginKey<SearchPluginState>("wordpad-search");
 
-function findMatches(doc: PMNode, query: string, caseSensitive: boolean): SearchMatch[] {
+const WORD_CHAR = /[\p{L}\p{N}_]/u;
+
+function findMatches(doc: PMNode, query: string, caseSensitive: boolean, wholeWord: boolean): SearchMatch[] {
   const matches: SearchMatch[] = [];
   if (!query) return matches;
   const needle = caseSensitive ? query : query.toLowerCase();
@@ -27,6 +30,14 @@ function findMatches(doc: PMNode, query: string, caseSensitive: boolean): Search
     const haystack = caseSensitive ? node.text : node.text.toLowerCase();
     let idx = 0;
     while ((idx = haystack.indexOf(needle, idx)) !== -1) {
+      if (wholeWord) {
+        const before = idx > 0 ? node.text![idx - 1] : "";
+        const after = idx + query.length < node.text!.length ? node.text![idx + query.length] : "";
+        if ((before && WORD_CHAR.test(before)) || (after && WORD_CHAR.test(after))) {
+          idx += 1;
+          continue;
+        }
+      }
       matches.push({ from: pos + idx, to: pos + idx + query.length });
       idx += query.length;
     }
@@ -52,6 +63,7 @@ export function searchPlugin(): Plugin<SearchPluginState> {
         return {
           query: "",
           caseSensitive: false,
+          wholeWord: false,
           matches: [],
           current: -1,
           decorations: DecorationSet.empty,
@@ -59,14 +71,16 @@ export function searchPlugin(): Plugin<SearchPluginState> {
       },
       apply(tr, value, _oldState, newState) {
         const meta = tr.getMeta(searchKey) as
-          | { query?: string; caseSensitive?: boolean; current?: number }
+          | { query?: string; caseSensitive?: boolean; wholeWord?: boolean; current?: number }
           | undefined;
 
         if (meta) {
           const query = meta.query !== undefined ? meta.query : value.query;
           const caseSensitive =
             meta.caseSensitive !== undefined ? meta.caseSensitive : value.caseSensitive;
-          const matches = findMatches(newState.doc, query, caseSensitive);
+          const wholeWord =
+            meta.wholeWord !== undefined ? meta.wholeWord : value.wholeWord;
+          const matches = findMatches(newState.doc, query, caseSensitive, wholeWord);
           let current =
             meta.current !== undefined ? meta.current : matches.length ? 0 : -1;
           if (current >= matches.length) current = matches.length ? 0 : -1;
@@ -74,6 +88,7 @@ export function searchPlugin(): Plugin<SearchPluginState> {
           return {
             query,
             caseSensitive,
+            wholeWord,
             matches,
             current,
             decorations: buildDecorations(newState.doc, matches, current),
@@ -81,7 +96,7 @@ export function searchPlugin(): Plugin<SearchPluginState> {
         }
 
         if (tr.docChanged && value.query) {
-          const matches = findMatches(newState.doc, value.query, value.caseSensitive);
+          const matches = findMatches(newState.doc, value.query, value.caseSensitive, value.wholeWord);
           let current = value.current;
           if (current >= matches.length) current = matches.length ? matches.length - 1 : -1;
           if (current < 0 && matches.length) current = 0;
@@ -118,8 +133,8 @@ function scrollToCurrent(view: EditorView, focusEditor = false) {
   if (focusEditor) view.focus();
 }
 
-export function setSearch(view: EditorView, query: string, caseSensitive: boolean) {
-  view.dispatch(view.state.tr.setMeta(searchKey, { query, caseSensitive, current: 0 }));
+export function setSearch(view: EditorView, query: string, caseSensitive: boolean, wholeWord = false) {
+  view.dispatch(view.state.tr.setMeta(searchKey, { query, caseSensitive, wholeWord, current: 0 }));
 }
 
 export function getSearchState(view: EditorView): SearchPluginState | undefined {
