@@ -20,6 +20,8 @@ interface WelcomeScreenProps {
   onOpenDocument: (id: string) => void;
   onCopyLink: (id: string) => void;
   onDeleteDocument: (id: string) => void;
+  /** True while the document list is still being fetched. */
+  loading?: boolean;
   /** Shareable/bookmarkable URL for a document, used as the row's href. */
   docHref: (id: string) => string;
   onSignIn: () => void;
@@ -116,10 +118,20 @@ function DocRow({
     );
 }
 
+/** Shimmer rows shown while the document list is on its way. */
+function DocRowSkeleton() {
+  return (
+    <div className="flex animate-pulse items-center gap-3 px-4 py-2.5" aria-hidden="true">
+      <div className="h-[18px] w-[18px] shrink-0 bg-accent" />
+      <div className="h-3.5 w-48 max-w-[50%] bg-accent" />
+    </div>
+  );
+}
+
 export default function WelcomeScreen({
   open, onClose, isAuthed, userName, files, activeId,
   onNewDocument, onOpenFile, onPickTemplate, onOpenDocument, onCopyLink, onDeleteDocument,
-  docHref, onSignIn,
+  docHref, onSignIn, loading = false,
 }: WelcomeScreenProps) {
   const t = useT();
   // Stay mounted through the closing animation so the editor fades in behind
@@ -239,7 +251,13 @@ export default function WelcomeScreen({
           <h2 className="mb-2 mt-10 text-sm font-medium text-muted-foreground">
             {isAuthed ? t.welcome.lastUsed : t.welcome.continueWhereLeftOff}
           </h2>
-          {files.length === 0 ? (
+          {loading ? (
+            <div className="divide-y divide-border overflow-hidden rounded-md border border-border">
+              <DocRowSkeleton />
+              <DocRowSkeleton />
+              <DocRowSkeleton />
+            </div>
+          ) : files.length === 0 ? (
             <p className="rounded-md border border-dashed border-border px-4 py-6 text-center text-sm text-muted-foreground">
               {t.welcome.noDocuments}
             </p>
@@ -250,7 +268,15 @@ export default function WelcomeScreen({
           )}
 
           {/* The full library, always available below the recent few */}
-          {files.length > 0 && (
+          {loading ? (
+            <>
+              <h2 className="mb-2 mt-8 text-sm font-medium text-muted-foreground">{t.welcome.allDocuments}</h2>
+              <div className="divide-y divide-border overflow-hidden rounded-md border border-border">
+                <DocRowSkeleton />
+                <DocRowSkeleton />
+              </div>
+            </>
+          ) : files.length > 0 && (
             <>
               <h2 className="mb-2 mt-8 text-sm font-medium text-muted-foreground">
                 {t.welcome.allDocuments} <span className="text-xs font-normal">({files.length})</span>

@@ -1,7 +1,4 @@
 import { en, type Dictionary } from "./en";
-import { tr } from "./tr";
-import { zh } from "./zh";
-import { fr } from "./fr";
 
 export type { Dictionary };
 
@@ -10,7 +7,53 @@ export type Locale = (typeof LOCALES)[number];
 
 export const DEFAULT_LOCALE: Locale = "en";
 
-export const DICTIONARIES: Record<Locale, Dictionary> = { en, zh, tr, fr };
+// Only English ships in the initial bundle — it is the default locale and the
+// synchronous fallback, so `getDictionary` never returns undefined. The other
+// dictionaries (~20 KB each) are code-split behind dynamic import() and fetched
+// on demand when the locale is, or becomes, one of them.
+const DICTIONARY_LOADERS: Record<Locale, () => Promise<Dictionary>> = {
+  en: () => Promise.resolve(en),
+  tr: () => import("./tr").then((m) => m.tr),
+  zh: () => import("./zh").then((m) => m.zh),
+  fr: () => import("./fr").then((m) => m.fr),
+};
+
+const loadedDictionaries: Partial<Record<Locale, Dictionary>> = { en };
+const pendingLoads: Partial<Record<Locale, Promise<Dictionary>>> = {};
+const dictionaryListeners = new Set<() => void>();
+
+/** Notifies when a lazily loaded dictionary becomes available. */
+export function subscribeDictionaries(listener: () => void): () => void {
+  dictionaryListeners.add(listener);
+  return () => { dictionaryListeners.delete(listener); };
+}
+
+/**
+ * Kick off (or join) the load of a locale's dictionary. Resolves with the
+ * dictionary once cached; a failed chunk load rejects and clears the pending
+ * slot so a later attempt can retry.
+ */
+export function loadDictionary(locale: Locale): Promise<Dictionary> {
+  const loaded = loadedDictionaries[locale];
+  if (loaded) return Promise.resolve(loaded);
+  let pending = pendingLoads[locale];
+  if (!pending) {
+    pending = DICTIONARY_LOADERS[locale]().then(
+      (dict) => {
+        loadedDictionaries[locale] = dict;
+        delete pendingLoads[locale];
+        for (const listener of dictionaryListeners) listener();
+        return dict;
+      },
+      (err) => {
+        delete pendingLoads[locale];
+        throw err;
+      }
+    );
+    pendingLoads[locale] = pending;
+  }
+  return pending;
+}
 
 /** Native language names, for the language picker. */
 export const LOCALE_NAMES: Record<Locale, string> = {
@@ -68,6 +111,11 @@ export function detectLocale(stored?: string | null): Locale {
   return DEFAULT_LOCALE;
 }
 
+/**
+ * Synchronous read of the active dictionary. Falls back to English while a
+ * lazily loaded dictionary is still in flight, so callers never see undefined;
+ * subscribe via `subscribeDictionaries` to re-read once the real one arrives.
+ */
 export function getDictionary(locale: Locale): Dictionary {
-  return DICTIONARIES[locale] ?? DICTIONARIES[DEFAULT_LOCALE];
+  return loadedDictionaries[locale] ?? en;
 }

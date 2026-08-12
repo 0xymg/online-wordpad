@@ -3,7 +3,7 @@
 import { useRef } from "react";
 import { EditorView } from "prosemirror-view";
 import Toolbar from "./Toolbar";
-import { mySchema } from "./Editor";
+import { mySchema } from "./editor-schema";
 
 export default function ToolbarPreview() {
   const viewRef = useRef<EditorView | null>(null);

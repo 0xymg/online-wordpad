@@ -10,6 +10,7 @@ import { undo, redo } from "prosemirror-history";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 import ColorPicker from "./ColorPicker";
+import { ensureEditorFont } from "@/lib/editor-fonts";
 import { useT } from "./I18nProvider";
 import type { EmojiClickData } from "emoji-picker-react";
 
@@ -389,7 +390,7 @@ function Toolbar({
         <Row between>
           <Select
             value={FONTS.some(f => f.value === currentFontFamily) ? currentFontFamily : ""}
-            onValueChange={(val) => applyMark("fontFamily", { family: val })}
+            onValueChange={(val) => { ensureEditorFont(val); applyMark("fontFamily", { family: val }); }}
           >
             <SelectTrigger
               className={cn(SEL, "w-[120px] justify-between")}

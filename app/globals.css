@@ -223,6 +223,16 @@ body {
   color: #000;
 }
 
+/* ── İmza tasarım: hiçbir köşe yuvarlanmaz (edtr.md ile aynı) ──
+   Tek kaynaklı kural: Tailwind'in düz `rounded-*` sınıflarını, shadcn
+   token'larını ve üçüncü parti bileşenleri (react-colorful vb.) tek yerden
+   sıfırlar. Yeni bileşenlerde radius sınıfı eklemeye gerek yok. */
+*,
+*::before,
+*::after {
+  border-radius: 0 !important;
+}
+
 /* ── Menüler: tüm tıklanabilir öğeler el imleci göstersin ── */
 [role="menubar"] button,
 [role="menuitem"]:not([data-disabled]),
@@ -603,7 +613,8 @@ body {
 .pm-page .ProseMirror p[style*="text-align:justify"] { text-align: justify; }
 
 :root {
-  --radius: 0.625rem;
+  /* İmza tasarım: köşe yuvarlaklığı yok (edtr.md ile aynı çizgi). */
+  --radius: 0rem;
   --background: oklch(1 0 0);
   --foreground: oklch(0.145 0 0);
   --card: oklch(1 0 0);

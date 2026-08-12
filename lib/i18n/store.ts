@@ -1,4 +1,6 @@
-import { DEFAULT_LOCALE, LOCALE_KEY, LOCALE_TAGS, detectLocale, type Locale } from "./index";
+import {
+  DEFAULT_LOCALE, LOCALE_KEY, LOCALE_TAGS, detectLocale, loadDictionary, type Locale,
+} from "./index";
 
 // The active locale lives outside React so components can read it with
 // useSyncExternalStore: the server snapshot is always English (which is what
@@ -65,10 +67,26 @@ export function getServerLocaleSnapshot(): Locale {
   return DEFAULT_LOCALE;
 }
 
+// The most recent locale the user asked for — guards against a slow dictionary
+// chunk applying an older choice over a newer one when switching rapidly.
+let requested: Locale | null = null;
+
 export function setStoredLocale(next: Locale): void {
   if (current === next) return;
-  current = next;
+  requested = next;
+  // Persist the choice immediately; only the visible swap waits for the
+  // dictionary chunk, so a reload during the load still lands on `next`.
   try { writeCookie(next); } catch {}
-  document.documentElement.lang = LOCALE_TAGS[next];
-  for (const listener of listeners) listener();
+
+  const apply = () => {
+    if (requested !== next || current === next) return;
+    current = next;
+    document.documentElement.lang = LOCALE_TAGS[next];
+    for (const listener of listeners) listener();
+  };
+
+  // Load-then-swap: the UI keeps its current language until the dictionary is
+  // ready, instead of flashing the English fallback. If the chunk fails to
+  // load (offline, deploy skew), swap anyway — English is the safe fallback.
+  loadDictionary(next).then(apply, apply);
 }

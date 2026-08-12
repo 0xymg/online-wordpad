@@ -25,7 +25,7 @@ import {
   mergeCells, splitCell, toggleHeaderRow, toggleHeaderColumn,
 } from "prosemirror-tables";
 import { setTextAlign, adjustIndent } from "@/lib/editor-commands";
-import { SignIn, SignOut, House, PencilSimple, UserCircle } from "@phosphor-icons/react/dist/ssr";
+import { SignIn, SignOut, House, PencilSimple, UserCircle, Check } from "@phosphor-icons/react/dist/ssr";
 import { toast } from "./toast";
 import { useT, useLocale } from "./I18nProvider";
 import { LOCALES, LOCALE_NAMES } from "@/lib/i18n";
@@ -409,9 +409,12 @@ function MenuBar({
               ))}
             </MenubarSubContent>
           </MenubarSub>
-          <MenubarCheckboxItem checked={printHeaderFooter} onClick={onTogglePrintHeaderFooter}>
+          {/* Plain item + trailing check: keeps the label flush-left with its
+              sibling items (checkbox items reserve leading indicator space). */}
+          <MenubarItem onClick={onTogglePrintHeaderFooter} aria-checked={printHeaderFooter} role="menuitemcheckbox">
             {t.file.printHeaderFooter}
-          </MenubarCheckboxItem>
+            {printHeaderFooter && <MenubarShortcut><Check size={14} /></MenubarShortcut>}
+          </MenubarItem>
           <MenubarItem onClick={print}>
             {t.file.print} <MenubarShortcut>Ctrl+P</MenubarShortcut>
           </MenubarItem>

@@ -2,23 +2,29 @@
 
 import { useEffect, useRef, useCallback, useMemo, useState, lazy, Suspense } from "react";
 import { useReactToPrint } from "react-to-print";
-import { Schema, DOMParser as PMParser, DOMSerializer, Node as PMNode, Mark } from "prosemirror-model";
+import { DOMParser as PMParser, DOMSerializer, Node as PMNode } from "prosemirror-model";
 import { EditorState, Transaction, AllSelection, TextSelection, NodeSelection } from "prosemirror-state";
 import { EditorView } from "prosemirror-view";
 import type { CropperRef } from "react-advanced-cropper";
-import { HexColorPicker, HexColorInput } from "react-colorful";
+
+// react-colorful ships only when the paper-background popover is opened.
+const HexColorPicker = lazy(() =>
+  import("react-colorful").then((m) => ({ default: m.HexColorPicker }))
+);
+const HexColorInput = lazy(() =>
+  import("react-colorful").then((m) => ({ default: m.HexColorInput }))
+);
 
 // Heavy and rarely used — LazyCropper pulls in react-advanced-cropper AND its
 // stylesheet, so neither loads until the crop dialog opens.
 const Cropper = lazy(() => import("./LazyCropper"));
-import { schema as basicSchema } from "prosemirror-schema-basic";
-import { addListNodes } from "prosemirror-schema-list";
 import { history, undo, redo } from "prosemirror-history";
 import { keymap } from "prosemirror-keymap";
 import { baseKeymap, toggleMark, setBlockType, wrapIn } from "prosemirror-commands";
 import { wrapInList, splitListItem, liftListItem, sinkListItem } from "prosemirror-schema-list";
 import { inputRules, wrappingInputRule, textblockTypeInputRule, InputRule } from "prosemirror-inputrules";
-import { tableEditing, columnResizing, tableNodes, isInTable, findTable, CellSelection, TableMap, TableView } from "prosemirror-tables";
+import { tableEditing, columnResizing, isInTable, findTable, CellSelection, TableMap, TableView } from "prosemirror-tables";
+import { mySchema, sanitizeHref, normalizeIndent } from "./editor-schema";
 import MenuBar from "./MenuBar";
 import Toolbar from "./Toolbar";
 import TableContextMenu from "./TableContextMenu";
@@ -56,243 +62,8 @@ import {
   saveVersion, listVersions, getVersionHtml, type DocRow,
 } from "@/app/actions/user-data";
 import { saveGuestVersion, listGuestVersions, removeGuestVersions } from "@/lib/versions";
+import { ensureFontsInHtml } from "@/lib/editor-fonts";
 
-// ── Schema ────────────────────────────────────────────────────────────────
-const normalizeTextAlign = (value: string | null | undefined) => {
-  if (!value) return "left";
-  const v = value.trim().toLowerCase();
-  if (v === "left" || v === "center" || v === "right" || v === "justify") return v;
-  return "left";
-};
-
-const normalizeIndent = (value: unknown) => {
-  const n = typeof value === "number" ? value : Number.parseInt(String(value ?? "0"), 10);
-  if (Number.isNaN(n)) return 0;
-  return Math.max(0, Math.min(12, n));
-};
-
-const parseIndentFromDom = (el: HTMLElement) => {
-  const dataIndent = el.getAttribute("data-indent");
-  if (dataIndent !== null) return normalizeIndent(dataIndent);
-  const marginLeft = el.style.marginLeft || "";
-  if (!marginLeft) return 0;
-  const px = Number.parseFloat(marginLeft);
-  if (Number.isNaN(px)) return 0;
-  return normalizeIndent(Math.round(px / 24));
-};
-
-const normalizeLineHeight = (value: unknown): string | null => {
-  if (value === null || value === undefined || value === "") return null;
-  const n = Number.parseFloat(String(value));
-  if (Number.isNaN(n) || n <= 0) return null;
-  return String(n);
-};
-
-const paragraphNodeSpec = {
-  ...basicSchema.spec.nodes.get("paragraph"),
-  attrs: {
-    textAlign: { default: "left" },
-    indent: { default: 0 },
-    lineHeight: { default: null },
-  },
-  parseDOM: [{
-    tag: "p",
-    getAttrs(dom: Node | string) {
-      if (typeof dom === "string") return { textAlign: "left", indent: 0, lineHeight: null };
-      const el = dom as HTMLElement;
-      return {
-        textAlign: normalizeTextAlign(el.style.textAlign),
-        indent: parseIndentFromDom(el),
-        lineHeight: normalizeLineHeight(el.style.lineHeight),
-      };
-    },
-  }],
-  toDOM(node: PMNode) {
-    const textAlign = normalizeTextAlign(node.attrs.textAlign);
-    const indent = normalizeIndent(node.attrs.indent);
-    const lineHeight = normalizeLineHeight(node.attrs.lineHeight);
-    const style: string[] = [];
-    if (textAlign !== "left") style.push(`text-align:${textAlign}`);
-    if (indent > 0) style.push(`margin-left:${indent * 24}px`);
-    if (lineHeight) style.push(`line-height:${lineHeight}`);
-    const attrs: Record<string, string> = {};
-    if (style.length) attrs.style = style.join(";");
-    if (indent > 0) attrs["data-indent"] = String(indent);
-    return ["p", attrs, 0];
-  },
-};
-
-const headingNodeSpec = {
-  ...basicSchema.spec.nodes.get("heading"),
-  attrs: {
-    level: { default: 1 },
-    textAlign: { default: "left" },
-    indent: { default: 0 },
-    lineHeight: { default: null },
-  },
-  parseDOM: [1, 2, 3, 4, 5, 6].map((level) => ({
-    tag: `h${level}`,
-    getAttrs(dom: Node | string) {
-      if (typeof dom === "string") return { level, textAlign: "left", indent: 0, lineHeight: null };
-      const el = dom as HTMLElement;
-      return {
-        level,
-        textAlign: normalizeTextAlign(el.style.textAlign),
-        indent: parseIndentFromDom(el),
-        lineHeight: normalizeLineHeight(el.style.lineHeight),
-      };
-    },
-  })),
-  toDOM(node: PMNode) {
-    const level = node.attrs.level || 1;
-    const textAlign = normalizeTextAlign(node.attrs.textAlign);
-    const indent = normalizeIndent(node.attrs.indent);
-    const lineHeight = normalizeLineHeight(node.attrs.lineHeight);
-    const style: string[] = [];
-    if (textAlign !== "left") style.push(`text-align:${textAlign}`);
-    if (indent > 0) style.push(`margin-left:${indent * 24}px`);
-    if (lineHeight) style.push(`line-height:${lineHeight}`);
-    const attrs: Record<string, string> = {};
-    if (style.length) attrs.style = style.join(";");
-    if (indent > 0) attrs["data-indent"] = String(indent);
-    return [`h${level}`, attrs, 0];
-  },
-};
-
-const imageNodeSpec = {
-  inline: true,
-  group: "inline",
-  draggable: true,
-  attrs: {
-    src: {},
-    alt: { default: null },
-    title: { default: null },
-    width: { default: "100%" },
-    rotate: { default: 0 },
-    flipX: { default: false },
-    flipY: { default: false },
-    align: { default: "left" },
-  },
-  parseDOM: [{
-    tag: "img[src]",
-    getAttrs(dom: Node | string) {
-      const img = dom as HTMLImageElement;
-      return {
-        src: img.getAttribute("src"),
-        alt: img.getAttribute("alt"),
-        title: img.getAttribute("title"),
-        width: img.getAttribute("data-width") || img.style.width || "100%",
-        rotate: Number(img.getAttribute("data-rotate") || "0") || 0,
-        flipX: img.getAttribute("data-flip-x") === "true",
-        flipY: img.getAttribute("data-flip-y") === "true",
-        align: img.getAttribute("data-align") || "left",
-      };
-    },
-  }],
-  toDOM(node: PMNode) {
-    const a = node.attrs;
-    const sx = a.flipX ? -1 : 1;
-    const sy = a.flipY ? -1 : 1;
-    const transform = `rotate(${Number(a.rotate || 0)}deg) scale(${sx}, ${sy})`;
-    const align = String(a.align || "left");
-    const alignStyle =
-      align === "center"
-        ? "display:block;margin:0 auto;"
-        : align === "right"
-          ? "display:block;margin-left:auto;margin-right:0;"
-          : align === "justify"
-            ? "display:block;width:100%;"
-            : "display:block;margin:0;";
-    return ["img", {
-      src: a.src,
-      alt: a.alt || "",
-      title: a.title || "",
-      "data-width": a.width || "100%",
-      "data-rotate": String(Number(a.rotate || 0)),
-      "data-flip-x": a.flipX ? "true" : "false",
-      "data-flip-y": a.flipY ? "true" : "false",
-      "data-align": align,
-      style: `width:${a.width || "100%"};height:auto;max-width:100%;transform:${transform};transform-origin:center center;${alignStyle}`,
-    }];
-  },
-};
-
-const pageBreakNodeSpec = {
-  group: "block",
-  atom: true,
-  selectable: true,
-  parseDOM: [{
-    tag: "hr[data-page-break]",
-  }],
-  toDOM() {
-    return ["hr", { "data-page-break": "true", class: "pm-page-break" }];
-  },
-};
-
-const mySchema = new Schema({
-  nodes: (addListNodes(
-    basicSchema.spec.nodes
-      .update("paragraph", paragraphNodeSpec as any)
-      .update("heading", headingNodeSpec as any)
-      .update("image", imageNodeSpec as any),
-    "paragraph block*",
-    "block"
-  ) as any)
-    .append(tableNodes({ tableGroup: "block", cellContent: "block+", cellAttributes: {} }))
-    .addToEnd("page_break", pageBreakNodeSpec as any),
-  marks: basicSchema.spec.marks.append({
-    underline:     { parseDOM: [{ tag: "u" }],                    toDOM: () => ["u", 0] },
-    strikethrough: { parseDOM: [{ tag: "s" }, { tag: "strike" }],  toDOM: () => ["s", 0] },
-    textColor: {
-      attrs: { color: {} },
-      parseDOM: [{ style: "color", getAttrs: (v) => ({ color: v }) }],
-      toDOM: (mark: Mark) => ["span", { style: `color:${mark.attrs.color}` }, 0],
-    },
-    bgColor: {
-      attrs: { color: {} },
-      parseDOM: [{ style: "background-color", getAttrs: (v) => ({ color: v }) }],
-      toDOM: (mark: Mark) => ["span", { style: `background-color:${mark.attrs.color}` }, 0],
-    },
-    fontSize: {
-      attrs: { size: {} },
-      parseDOM: [{ style: "font-size", getAttrs: (v) => ({ size: v }) }],
-      toDOM: (mark: Mark) => ["span", { style: `font-size:${mark.attrs.size}` }, 0],
-    },
-    fontFamily: {
-      attrs: { family: {} },
-      parseDOM: [{ style: "font-family", getAttrs: (v) => ({ family: v }) }],
-      toDOM: (mark: Mark) => ["span", { style: `font-family:${mark.attrs.family}` }, 0],
-    },
-    superscript: {
-      parseDOM: [{ tag: "sup" }],
-      toDOM: () => ["sup", 0],
-      excludes: "superscript subscript",
-    },
-    subscript: {
-      parseDOM: [{ tag: "sub" }],
-      toDOM: () => ["sub", 0],
-      excludes: "superscript subscript",
-    },
-    link: {
-      attrs: { href: {}, title: { default: null } },
-      inclusive: false,
-      parseDOM: [{ tag: "a[href]", getAttrs: (dom) => {
-        const href = sanitizeHref((dom as HTMLElement).getAttribute("href"));
-        if (!href) return false;
-        return { href, title: (dom as HTMLElement).getAttribute("title") };
-      }}],
-      toDOM: (mark: Mark) => ["a", { href: mark.attrs.href, title: mark.attrs.title, rel: "noopener noreferrer" }, 0],
-    },
-  }),
-});
-
-/** Reject javascript:/data:/vbscript: URLs so pasted HTML can't smuggle scripts. */
-function sanitizeHref(href: string | null | undefined): string | null {
-  if (!href) return null;
-  const trimmed = href.trim();
-  if (/^(javascript|data|vbscript|file):/i.test(trimmed)) return null;
-  return trimmed;
-}
 
 export function insertTable(rows: number, cols: number) {
   return (state: EditorState, dispatch?: (tr: Transaction) => void): boolean => {
@@ -1422,6 +1193,8 @@ export default function Editor({ googleEnabled = false }: { googleEnabled?: bool
   const setDocFromHtml = useCallback((html: string) => {
     const v = viewRef.current;
     if (!v) return;
+    // Google fonts load on demand — fetch the ones this document uses.
+    ensureFontsInHtml(html);
     const dom = new DOMParser().parseFromString(html || "<p></p>", "text/html");
     const doc = PMParser.fromSchema(mySchema).parse(dom.body);
     const state = EditorState.create({ schema: mySchema, doc, plugins: buildPlugins() });
@@ -3215,17 +2988,26 @@ export default function Editor({ googleEnabled = false }: { googleEnabled?: bool
                   </button>
                 </PopoverTrigger>
                 <PopoverContent side="top" align="end" className="w-auto p-2 space-y-2">
-                  <HexColorPicker
-                    color={paperBgColor}
-                    onChange={setPaperBgColor}
-                    style={{ width: 180, height: 130 }}
-                  />
-                  <HexColorInput
-                    color={paperBgColor}
-                    onChange={setPaperBgColor}
-                    prefixed
-                    className="h-7 w-full rounded border border-input bg-background px-2 text-[11px] uppercase focus:outline-none"
-                  />
+                  <Suspense
+                    fallback={
+                      <>
+                        <div className="rounded bg-muted" style={{ width: 180, height: 130 }} />
+                        <div className="h-7 w-full rounded border border-input bg-background" />
+                      </>
+                    }
+                  >
+                    <HexColorPicker
+                      color={paperBgColor}
+                      onChange={setPaperBgColor}
+                      style={{ width: 180, height: 130 }}
+                    />
+                    <HexColorInput
+                      color={paperBgColor}
+                      onChange={setPaperBgColor}
+                      prefixed
+                      className="h-7 w-full rounded border border-input bg-background px-2 text-[11px] uppercase focus:outline-none"
+                    />
+                  </Suspense>
                   <div className="flex justify-end">
                     <button
                       type="button"
@@ -3392,6 +3174,7 @@ export default function Editor({ googleEnabled = false }: { googleEnabled?: bool
         onOpenDocument={switchFile}
         onCopyLink={copyDocLink}
         onDeleteDocument={deleteFile}
+        loading={initialLoading}
         docHref={docUrl}
         onSignIn={openAuth}
       />

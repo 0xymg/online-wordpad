@@ -1,7 +1,14 @@
 "use client";
 
-import { useState } from "react";
-import { HexColorPicker, HexColorInput } from "react-colorful";
+import { useState, lazy, Suspense } from "react";
+
+// react-colorful ships only when a color popover is first opened.
+const HexColorPicker = lazy(() =>
+  import("react-colorful").then((m) => ({ default: m.HexColorPicker }))
+);
+const HexColorInput = lazy(() =>
+  import("react-colorful").then((m) => ({ default: m.HexColorInput }))
+);
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
@@ -57,21 +64,25 @@ export default function ColorPicker({ color, onChange, tip, icon }: ColorPickerP
         onOpenAutoFocus={(e) => e.preventDefault()}
       >
         {/* react-colorful picker */}
-        <HexColorPicker
-          color={color}
-          onChange={onChange}
-          style={{ width: "200px", height: "160px" }}
-        />
+        <Suspense fallback={<div className="rounded bg-muted" style={{ width: "200px", height: "160px" }} />}>
+          <HexColorPicker
+            color={color}
+            onChange={onChange}
+            style={{ width: "200px", height: "160px" }}
+          />
+        </Suspense>
 
         {/* Hex input */}
         <div className="flex items-center gap-2">
           <span className="text-xs text-muted-foreground font-mono">#</span>
-          <HexColorInput
-            color={color}
-            onChange={onChange}
-            prefixed={false}
-            className="flex-1 h-7 text-xs font-mono border border-input rounded px-2 bg-background focus:outline-none focus:ring-1 focus:ring-ring uppercase"
-          />
+          <Suspense fallback={<div className="flex-1 h-7 rounded border border-input bg-background" />}>
+            <HexColorInput
+              color={color}
+              onChange={onChange}
+              prefixed={false}
+              className="flex-1 h-7 text-xs font-mono border border-input rounded px-2 bg-background focus:outline-none focus:ring-1 focus:ring-ring uppercase"
+            />
+          </Suspense>
           <span
             className="w-7 h-7 rounded border border-input shrink-0"
             style={{ background: color }}

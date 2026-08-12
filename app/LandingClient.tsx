@@ -356,8 +356,9 @@ export default function LandingClient() {
 
       {/* ── Footer ── */}
       <footer className="border-t border-[var(--pad-border)] px-6 py-12">
-        <div className="mx-auto grid max-w-6xl gap-8 sm:grid-cols-3">
-          <div>
+        {/* Two blocks: brand on the left, both link groups together on the right. */}
+        <div className="mx-auto flex max-w-6xl flex-col gap-10 sm:flex-row sm:justify-between">
+          <div className="max-w-xs">
             <span className="font-brand leading-none">
               <span className="text-lg font-bold tracking-tight text-[var(--pad-ink)]">EDTR</span>
               <span className="text-sm font-semibold tracking-wider text-[var(--pad-ink-50)]">PAD</span>
@@ -384,6 +385,7 @@ export default function LandingClient() {
               </Select>
             </div>
           </div>
+          <div className="flex flex-col gap-10 sm:flex-row sm:gap-20">
           <div>
             <h3 className="text-xs font-semibold uppercase tracking-wide text-[var(--pad-ink-50)]">
               EDTRpad
@@ -416,6 +418,7 @@ export default function LandingClient() {
                 {t.landing.footerPlus}
               </a>
             </div>
+          </div>
           </div>
         </div>
         <div className="mx-auto mt-10 max-w-6xl border-t border-[var(--pad-border)] pt-6 text-sm text-[var(--pad-ink-50)]">
