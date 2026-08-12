@@ -375,7 +375,7 @@ export const tr: Dictionary = {
     heroTitleLine1: "Sadece yazın.",
     heroTitleLine2: "Doğrudan tarayıcınızda.",
     heroSubtitle:
-      "Ücretsiz online WordPad ve Word alternatifi. Zengin metin, tablolar, görseller ve yazdırma; kurulum yok, hesap açmak yok.",
+      "Anında açılan, ücretsiz online WordPad ve Word alternatifi. Zengin metin, tablolar, görseller ve yazdırma; kurulum yok, hesap açmak yok.",
     heroCtaPrimary: "Yazmaya başla →",
     heroCtaSecondary: "Özellikleri gör",
     heroSeoText:
@@ -427,6 +427,9 @@ export const tr: Dictionary = {
   },
 
   features: {
+    speedTitle: "Anında açılır",
+    speedDesc:
+      "Editör göz açıp kapayıncaya kadar açılır; uzun belgelerde bile yazarken takılma olmaz. Bir kez yüklendiğinde çevrimdışı da çalışmaya devam eder.",
     accountsTitle: "Hesaplar ve bulut senkronizasyonu",
     accountsDesc: "Ücretsiz bir hesap açın, belgelerinizi buluta kaydedin ve hangi cihazda olursanız olun kaldığınız yerden devam edin. Başlamak için hesap gerekmez.",
     multiDocTitle: "Birden fazla belge",

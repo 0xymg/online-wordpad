@@ -376,7 +376,7 @@ export const fr: Dictionary = {
     heroTitleLine1: "Écrivez, tout simplement.",
     heroTitleLine2: "Directement dans votre navigateur.",
     heroSubtitle:
-      "Une alternative gratuite à WordPad et à Word, en ligne. Texte enrichi, tableaux, images et impression, sans rien installer ni créer de compte.",
+      "Une alternative gratuite à WordPad et à Word, en ligne, qui s'ouvre instantanément. Texte enrichi, tableaux, images et impression, sans rien installer ni créer de compte.",
     heroCtaPrimary: "Commencer à écrire →",
     heroCtaSecondary: "Voir les fonctionnalités",
     heroSeoText:
@@ -433,6 +433,9 @@ export const fr: Dictionary = {
   },
 
   features: {
+    speedTitle: "Instantané et léger",
+    speedDesc:
+      "L'éditeur s'ouvre en un clin d'œil et suit votre frappe sans ralentir, même dans les longs documents. Une fois chargé, il continue de fonctionner hors ligne.",
     accountsTitle: "Comptes et synchronisation",
     accountsDesc:
       "Créez un compte gratuit pour enregistrer vos documents dans le cloud et reprendre votre travail sur n'importe quel appareil. Aucun compte n'est nécessaire pour commencer.",

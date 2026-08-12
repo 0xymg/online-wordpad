@@ -373,7 +373,7 @@ export const zh: Dictionary = {
     heroTitleLine1: "只管写。",
     heroTitleLine2: "打开浏览器就行。",
     heroSubtitle:
-      "免费的在线 WordPad，也是 Word 的替代选择。富文本、表格、图片、打印一应俱全，无需安装，也无需注册。",
+      "免费的在线 WordPad，也是 Word 的替代选择，瞬间打开。富文本、表格、图片、打印一应俱全，无需安装，也无需注册。",
     heroCtaPrimary: "开始写作 →",
     heroCtaSecondary: "查看功能",
     heroSeoText:
@@ -425,6 +425,8 @@ export const zh: Dictionary = {
   },
 
   features: {
+    speedTitle: "极速轻量",
+    speedDesc: "编辑器瞬间打开，长文档输入也毫无卡顿。加载一次后即可离线继续使用。",
     accountsTitle: "账户与云同步",
     accountsDesc:
       "注册免费账户，即可把文档保存到云端，在任何设备上接着上次的进度继续写。不注册也能直接开始使用。",

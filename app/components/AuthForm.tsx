@@ -6,7 +6,7 @@ import { useT } from "./I18nProvider";
 import type { Dictionary } from "@/lib/i18n";
 import {
   GoogleLogo, Eye, EyeSlash, CloudArrowUp, Files, ShieldCheck, CircleNotch,
-} from "@phosphor-icons/react/dist/ssr";
+} from "./icons";
 
 export type AuthMode = "login" | "signup" | "forgot";
 

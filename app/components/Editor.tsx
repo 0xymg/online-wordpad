@@ -41,7 +41,7 @@ import {
   Sun, Moon, PencilSimple, Warning, X,
   ArrowSquareOut, LinkBreak,
   ArrowsInSimple,
-} from "@phosphor-icons/react/dist/ssr";
+} from "./icons";
 import { cn } from "@/lib/utils";
 import { authClient, useSession } from "@/lib/auth-client";
 import { prepareImageFile, insertWidth } from "@/lib/image-util";

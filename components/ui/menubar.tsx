@@ -1,7 +1,7 @@
 "use client"
 
 import * as React from "react"
-import { Check, CaretRight, Circle } from "@phosphor-icons/react/dist/ssr"
+import { Check, CaretRight, Circle } from "@/app/components/icons"
 import { Menubar as MenubarPrimitive } from "radix-ui"
 
 import { cn } from "@/lib/utils"

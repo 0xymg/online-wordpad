@@ -2,19 +2,10 @@
 
 import Link from "next/link";
 import { Fragment, type ReactNode } from "react";
-import { TextB }               from "@phosphor-icons/react/dist/ssr/TextB";
-import { Table }               from "@phosphor-icons/react/dist/ssr/Table";
-import { ImageSquare }         from "@phosphor-icons/react/dist/ssr/ImageSquare";
-import { Article }             from "@phosphor-icons/react/dist/ssr/Article";
-import { Export }              from "@phosphor-icons/react/dist/ssr/Export";
-import { Printer }             from "@phosphor-icons/react/dist/ssr/Printer";
-import { Clock }               from "@phosphor-icons/react/dist/ssr/Clock";
-import { Lock }                from "@phosphor-icons/react/dist/ssr/Lock";
-import { Command }             from "@phosphor-icons/react/dist/ssr/Command";
-import { CloudArrowUp }        from "@phosphor-icons/react/dist/ssr/CloudArrowUp";
-import { Files }               from "@phosphor-icons/react/dist/ssr/Files";
-import { Moon }                from "@phosphor-icons/react/dist/ssr/Moon";
-import { MagnifyingGlass }     from "@phosphor-icons/react/dist/ssr/MagnifyingGlass";
+import {
+  TextB, Table, ImageSquare, Article, Export, Printer, Clock, Lock,
+  Command, CloudArrowUp, Files, Moon, MagnifyingGlass,
+} from "./components/icons";
 import ToolbarPreviewClient from "./components/ToolbarPreviewClient";
 import { useT, useLocale } from "./components/I18nProvider";
 import { LOCALES, LOCALE_NAMES, type Dictionary } from "@/lib/i18n";

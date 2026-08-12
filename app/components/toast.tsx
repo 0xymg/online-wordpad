@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { CheckCircle, Info, Warning, XCircle, X } from "@phosphor-icons/react/dist/ssr";
+import { CheckCircle, Info, Warning, XCircle, X } from "./icons";
 import { cn } from "@/lib/utils";
 
 export type ToastVariant = "info" | "success" | "error" | "warning";

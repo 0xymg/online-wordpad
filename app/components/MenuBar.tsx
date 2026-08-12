@@ -25,7 +25,7 @@ import {
   mergeCells, splitCell, toggleHeaderRow, toggleHeaderColumn,
 } from "prosemirror-tables";
 import { setTextAlign, adjustIndent } from "@/lib/editor-commands";
-import { SignIn, SignOut, House, PencilSimple, UserCircle, Check } from "@phosphor-icons/react/dist/ssr";
+import { SignIn, SignOut, House, PencilSimple, UserCircle, Check } from "./icons";
 import { toast } from "./toast";
 import { useT, useLocale } from "./I18nProvider";
 import { LOCALES, LOCALE_NAMES } from "@/lib/i18n";

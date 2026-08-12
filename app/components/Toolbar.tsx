@@ -22,7 +22,7 @@ import {
   TextAlignLeft, TextAlignCenter, TextAlignRight, TextAlignJustify,
   ListBullets, ListNumbers, TextOutdent, TextIndent,
   Link, Quotes, Table, TextT, Highlighter, Smiley, ImageSquare, Minus, Code,
-} from "@phosphor-icons/react/dist/ssr";
+} from "./icons";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import {
   Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue,

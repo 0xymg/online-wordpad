@@ -377,7 +377,7 @@ export const en = {
     heroTitleLine1: "Just write.",
     heroTitleLine2: "Right in your browser.",
     heroSubtitle:
-      "A free online WordPad and Word alternative. Rich text, tables, images, and printing, without installing anything or creating an account.",
+      "A free online WordPad and Word alternative that opens instantly. Rich text, tables, images, and printing, without installing anything or creating an account.",
     heroCtaPrimary: "Start writing →",
     heroCtaSecondary: "See features",
     heroSeoText:
@@ -429,6 +429,9 @@ export const en = {
   },
 
   features: {
+    speedTitle: "Instant & Lightweight",
+    speedDesc:
+      "The editor opens in a blink and typing stays lag-free even in long documents. Once loaded, it keeps working offline.",
     accountsTitle: "Accounts & Cloud Sync",
     accountsDesc: "Create a free account to save your documents to the cloud and pick up where you left off on any device. No account needed to start.",
     multiDocTitle: "Multiple Documents",
