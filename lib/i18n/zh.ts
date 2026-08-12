@@ -164,7 +164,6 @@ export const zh: Dictionary = {
   },
 
   header: {
-    toggleSidebar: "显示或隐藏侧边栏",
     home: "主页，文档与模板",
     documentTitle: "文档标题",
     renameDocument: "重命名文档",
@@ -175,18 +174,7 @@ export const zh: Dictionary = {
   },
 
   sidebar: {
-    newDocument: "新建文档",
-    search: "搜索文档",
-    noDocuments: "暂无文档",
-    rename: "重命名",
-    versionHistory: "版本历史",
     copyLink: "复制链接",
-    moveToFolder: "移动到文件夹",
-    newFolder: "新建文件夹…",
-    removeFromFolder: "移出文件夹",
-    export: "导出",
-    delete: "删除",
-    deleteDocument: "删除文档",
     untitled: "无标题",
   },
 
@@ -265,9 +253,6 @@ export const zh: Dictionary = {
     renameTitle: "重命名文档",
     renameLabel: "文档名称",
     renameConfirm: "重命名",
-    newFolderTitle: "新建文件夹",
-    newFolderLabel: "文件夹名称",
-    newFolderPlaceholder: "例如：工作",
   },
 
   welcome: {
@@ -305,8 +290,6 @@ export const zh: Dictionary = {
     versionRestored: "版本已恢复，之前的内容已保存到版本历史中。",
     versionLoadFailed: "无法加载此版本。",
     createFailed: "无法创建文档，请检查网络连接后重试。",
-    renameFailed: "无法保存新名称，请检查网络连接。",
-    moveFailed: "无法移动文档，请检查网络连接。",
     deleteFailed: "服务器上删除失败，刷新后文档可能重新出现。",
     restoreFailed: "无法恢复文档，请检查网络连接。",
     openFailed: "无法打开此文件。支持的格式：.txt、.md、.html、.docx",
@@ -411,7 +394,7 @@ export const zh: Dictionary = {
       "注册免费账户，即可把文档保存到云端，在任何设备上接着上次的进度继续写。不注册也能直接开始使用。",
     multiDocTitle: "多文档管理",
     multiDocDesc:
-      "拥有免费账户后，可在内置侧边栏中管理全部文稿：新建、重命名、用文件夹归类，无需离开编辑器即可切换文档。",
+      "拥有免费账户后，想存多少文稿都可以。起始页会列出最近的文件，一键新建，或接着上次的文稿继续写。",
     darkTitle: "深色模式",
     darkDesc: "在浅色和深色主题之间自由切换，白天夜里都写得舒服。主题与布局偏好会随账户同步。",
     richTextTitle: "富文本编辑",

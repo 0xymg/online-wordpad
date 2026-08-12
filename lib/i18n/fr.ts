@@ -164,7 +164,6 @@ export const fr: Dictionary = {
   },
 
   header: {
-    toggleSidebar: "Afficher/masquer le panneau latéral",
     home: "Accueil — documents et modèles",
     documentTitle: "Titre du document",
     renameDocument: "Renommer le document",
@@ -175,18 +174,7 @@ export const fr: Dictionary = {
   },
 
   sidebar: {
-    newDocument: "Nouveau document",
-    search: "Rechercher des documents",
-    noDocuments: "Aucun document",
-    rename: "Renommer",
-    versionHistory: "Historique des versions",
     copyLink: "Copier le lien",
-    moveToFolder: "Déplacer vers un dossier",
-    newFolder: "Nouveau dossier…",
-    removeFromFolder: "Retirer du dossier",
-    export: "Exporter",
-    delete: "Supprimer",
-    deleteDocument: "Supprimer le document",
     untitled: "Sans titre",
   },
 
@@ -265,9 +253,6 @@ export const fr: Dictionary = {
     renameTitle: "Renommer le document",
     renameLabel: "Nom du document",
     renameConfirm: "Renommer",
-    newFolderTitle: "Nouveau dossier",
-    newFolderLabel: "Nom du dossier",
-    newFolderPlaceholder: "ex. Travail",
   },
 
   welcome: {
@@ -305,8 +290,6 @@ export const fr: Dictionary = {
     versionRestored: "Version restaurée — l'état précédent a été enregistré dans l'historique.",
     versionLoadFailed: "Impossible de charger cette version.",
     createFailed: "Impossible de créer le document — vérifiez votre connexion et réessayez.",
-    renameFailed: "Impossible d'enregistrer le nouveau nom — vérifiez votre connexion.",
-    moveFailed: "Impossible de déplacer le document — vérifiez votre connexion.",
     deleteFailed: "Impossible de supprimer le document sur le serveur — il pourrait réapparaître après le rechargement.",
     restoreFailed: "Impossible de restaurer le document — vérifiez votre connexion.",
     openFailed: "Impossible d'ouvrir ce fichier. Formats pris en charge : .txt, .md, .html, .docx",
@@ -417,7 +400,7 @@ export const fr: Dictionary = {
       "Créez un compte gratuit pour enregistrer vos documents dans le cloud et reprendre votre travail sur n'importe quel appareil. Aucun compte n'est nécessaire pour commencer.",
     multiDocTitle: "Plusieurs documents",
     multiDocDesc:
-      "Avec un compte gratuit, gérez tout votre travail depuis une barre latérale intégrée : créez, renommez, classez dans des dossiers et passez d'un document à l'autre sans quitter l'éditeur.",
+      "Avec un compte gratuit, conservez autant de documents que vous voulez. L'écran d'accueil liste vos fichiers récents : créez-en un nouveau ou reprenez un ancien en un clic.",
     darkTitle: "Mode sombre",
     darkDesc:
       "Basculez entre thème clair et thème sombre pour écrire confortablement de jour comme de nuit. Vos préférences de thème et de mise en page suivent votre compte.",

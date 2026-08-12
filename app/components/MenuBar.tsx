@@ -25,13 +25,12 @@ import {
   mergeCells, splitCell, toggleHeaderRow, toggleHeaderColumn,
 } from "prosemirror-tables";
 import { setTextAlign, adjustIndent } from "@/lib/editor-commands";
-import { SidebarSimple, SignIn, SignOut, House, PencilSimple } from "@phosphor-icons/react";
+import { SignIn, SignOut, House, PencilSimple } from "@phosphor-icons/react";
 import { toast } from "./toast";
 import { useT, useLocale } from "./I18nProvider";
 import { LOCALES, LOCALE_NAMES } from "@/lib/i18n";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { cn } from "@/lib/utils";
 import { TEMPLATES } from "@/lib/templates";
 
 interface MenuBarProps {
@@ -84,9 +83,6 @@ interface MenuBarProps {
   onTogglePrintHeaderFooter: () => void;
   isDark: boolean;
   onToggleDark: () => void;
-  sidebarOpen: boolean;
-  onToggleSidebar: () => void;
-  canUseSidebar: boolean;
   user: { name: string; initials: string } | null;
   onLogin: () => void;
   onLogout: () => void;
@@ -103,23 +99,6 @@ const LINE_SPACINGS: Array<{ key: "single" | "num" | "double" | "reset"; num?: s
   { key: "double", value: 2 },
   { key: "reset", value: null },
 ];
-
-function SidebarBtn({ onClick, className, label }: { onClick: () => void; className?: string; label: string }) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      title={label}
-      aria-label={label}
-      className={cn(
-        "inline-flex h-7 w-7 items-center justify-center rounded shrink-0 text-foreground/70 hover:bg-accent hover:text-accent-foreground transition-colors",
-        className
-      )}
-    >
-      <SidebarSimple size={18} />
-    </button>
-  );
-}
 
 /** Back to the start screen — documents, templates, and recent files. */
 function HomeBtn({ onClick, label }: { onClick: () => void; label: string }) {
@@ -164,8 +143,6 @@ export default function MenuBar({
   focusMode, onToggleFocusMode,
   printHeaderFooter, onTogglePrintHeaderFooter,
   isDark, onToggleDark,
-  onToggleSidebar,
-  canUseSidebar,
   user, onLogin, onLogout,
 }: MenuBarProps) {
   const t = useT();
@@ -259,7 +236,6 @@ export default function MenuBar({
       {/* Top bar: brand on the left, document title centered, account on the right */}
       <div className="relative flex h-9 items-center border-b border-border/60 px-3">
         <div className="flex min-w-0 items-center gap-1.5">
-          {canUseSidebar && <SidebarBtn onClick={onToggleSidebar} label={t.header.toggleSidebar} />}
           <span className="font-brand shrink-0 select-none leading-none">
             <span className="text-lg font-bold tracking-tight text-foreground dark:text-[#FFFFE3]">EDTR</span>
             <span className="text-sm font-semibold tracking-wider text-muted-foreground dark:text-[#FFFFE3]/70">PAD</span>

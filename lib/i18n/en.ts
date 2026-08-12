@@ -166,7 +166,6 @@ export const en = {
   },
 
   header: {
-    toggleSidebar: "Toggle sidebar",
     home: "Home — documents and templates",
     documentTitle: "Document title",
     renameDocument: "Rename document",
@@ -177,18 +176,7 @@ export const en = {
   },
 
   sidebar: {
-    newDocument: "New document",
-    search: "Search documents",
-    noDocuments: "No documents",
-    rename: "Rename",
-    versionHistory: "Version history",
     copyLink: "Copy link",
-    moveToFolder: "Move to folder",
-    newFolder: "New folder…",
-    removeFromFolder: "Remove from folder",
-    export: "Export",
-    delete: "Delete",
-    deleteDocument: "Delete document",
     untitled: "Untitled",
   },
 
@@ -267,9 +255,6 @@ export const en = {
     renameTitle: "Rename document",
     renameLabel: "Document name",
     renameConfirm: "Rename",
-    newFolderTitle: "New folder",
-    newFolderLabel: "Folder name",
-    newFolderPlaceholder: "e.g. Work",
   },
 
   welcome: {
@@ -307,8 +292,6 @@ export const en = {
     versionRestored: "Version restored — the previous state was saved to history.",
     versionLoadFailed: "Could not load this version.",
     createFailed: "Could not create the document — check your connection and try again.",
-    renameFailed: "Could not save the new name — check your connection.",
-    moveFailed: "Could not move the document — check your connection.",
     deleteFailed: "Could not delete on the server — the document may reappear after reload.",
     restoreFailed: "Could not restore the document — check your connection.",
     openFailed: "Could not open this file. Supported formats: .txt, .md, .html, .docx",
@@ -411,7 +394,7 @@ export const en = {
     accountsTitle: "Accounts & Cloud Sync",
     accountsDesc: "Create a free account to save your documents to the cloud and pick up where you left off on any device. No account needed to start.",
     multiDocTitle: "Multiple Documents",
-    multiDocDesc: "With a free account, manage all your work from a built-in sidebar: create, rename, organize into folders, and switch documents without leaving the editor.",
+    multiDocDesc: "With a free account, keep as many documents as you like. The start screen lists your recent files, so you can create a new one or pick up an old one in a click.",
     darkTitle: "Dark Mode",
     darkDesc: "Switch between light and dark themes for comfortable writing day or night. Your theme and layout preferences sync with your account.",
     richTextTitle: "Rich Text Editing",

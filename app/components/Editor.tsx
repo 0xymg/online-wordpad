@@ -34,14 +34,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import {
   ArrowClockwise, Crop, FlipHorizontal, FlipVertical,
   TextAlignLeft, TextAlignCenter, TextAlignRight,
-  Sun, Moon, FileText, Trash, Plus, MagnifyingGlass, PencilSimple, DownloadSimple, SignIn, Warning, X,
-  ArrowSquareOut, LinkBreak, LinkSimple,
-  FolderSimple, ClockCounterClockwise, CaretRight, ArrowsInSimple,
+  Sun, Moon, PencilSimple, Warning, X,
+  ArrowSquareOut, LinkBreak,
+  ArrowsInSimple,
 } from "@phosphor-icons/react";
-import {
-  ContextMenu, ContextMenuTrigger, ContextMenuContent, ContextMenuItem,
-  ContextMenuSeparator, ContextMenuSub, ContextMenuSubTrigger, ContextMenuSubContent,
-} from "@/components/ui/context-menu";
 import { cn } from "@/lib/utils";
 import { authClient, useSession } from "@/lib/auth-client";
 import { prepareImageFile, insertWidth } from "@/lib/image-util";
@@ -1007,13 +1003,10 @@ export default function Editor() {
   const [showToolbar, setShowToolbar] = useState(true);
   const [showRuler, setShowRuler] = useState(false);
   const [isDark, setIsDark] = useState(false);
-  const [sidebarOpen, setSidebarOpen] = useState(true);
   const [files, setFiles] = useState<FileItem[]>([]);
   const [activeId, setActiveId] = useState<string>("");
   const filesRef = useRef<FileItem[]>([]);
   const activeIdRef = useRef<string>("");
-  const [fileSearch, setFileSearch] = useState("");
-  const [renamingId, setRenamingId] = useState<string | null>(null);
   const [authOpen, setAuthOpen] = useState(false);
   const [welcomeOpen, setWelcomeOpen] = useState(false);
   const { confirm: confirmDialog, prompt: promptDialog, dialogs: askDialogs } = useAskDialogs();
@@ -1542,16 +1535,6 @@ export default function Editor() {
     notifyDeleted();
   }, [applyFiles, restoreDeleted, setDocFromHtml, syncUrlToDoc]);
 
-  const renameFile = useCallback((id: string, name: string) => {
-    const clean = name.trim();
-    if (!clean) return;
-    if (id === activeIdRef.current) setDocTitle(clean);
-    applyFiles(filesRef.current.map((f) => (f.id === id ? { ...f, name: clean } : f)));
-    if (isAuthedRef.current) renameDocument(id, clean).catch(() => {
-      toast.error(t.toast.renameFailed);
-    });
-  }, [applyFiles]);
-
   // Live title input: reflect typing immediately, debounce the persisted rename.
   const renameActive = useCallback((name: string) => {
     setDocTitle(name);
@@ -1586,14 +1569,6 @@ export default function Editor() {
     lastAutoNameRef.current = name;
     renameActive(name);
   }, [renameActive]);
-
-  // Move a document into a folder (null = ungrouped). Folder is a flat label.
-  const moveToFolder = useCallback((id: string, folder: string | null) => {
-    applyFiles(filesRef.current.map((f) => (f.id === id ? { ...f, folder } : f)));
-    if (isAuthedRef.current) setDocumentFolder(id, folder).catch(() => {
-      toast.error(t.toast.moveFailed);
-    });
-  }, [applyFiles]);
 
   // ── Version history ──────────────────────────────────────────────────────
   const openVersions = useCallback(async () => {
@@ -1901,7 +1876,6 @@ export default function Editor() {
     if (typeof p.zoom === "number") setZoomPercent(p.zoom);
     if (typeof p.margin === "number") setPageMarginCm(p.margin);
     if (typeof p.bg === "string") setPaperBgColor(p.bg);
-    if (p.sidebar === "open" || p.sidebar === "closed") setSidebarOpen(p.sidebar === "open");
     if (typeof p.spellLang === "string") setSpellLang(p.spellLang);
     if (typeof p.printHeader === "boolean") setPrintHeaderFooter(p.printHeader);
     if (typeof p.spellcheck === "boolean") setSpellcheckOn(p.spellcheck);
@@ -1997,7 +1971,6 @@ export default function Editor() {
         zoom: zoomPercent,
         margin: pageMarginCm,
         bg: paperBgColor,
-        sidebar: sidebarOpen ? "open" : "closed",
         spellLang,
         printHeader: printHeaderFooter,
         spellcheck: spellcheckOn,
@@ -2012,7 +1985,7 @@ export default function Editor() {
       });
     }, 700);
   }, [
-    isAuthed, isDark, zoomPercent, pageMarginCm, paperBgColor, sidebarOpen,
+    isAuthed, isDark, zoomPercent, pageMarginCm, paperBgColor,
     spellLang, printHeaderFooter, spellcheckOn, showToolbar, showRuler, locale,
   ]);
 
@@ -2337,19 +2310,6 @@ export default function Editor() {
     setIsDark(document.documentElement.classList.contains("dark"));
   }, []);
 
-  const toggleSidebar = useCallback(() => {
-    setSidebarOpen((prev) => {
-      const next = !prev;
-      try { localStorage.setItem("wordpad-sidebar", next ? "open" : "closed"); } catch {}
-      return next;
-    });
-  }, []);
-
-  useEffect(() => {
-    if (localStorage.getItem("wordpad-sidebar") === "closed") setSidebarOpen(false);
-  }, []);
-
-
   // Browser tab title reflects the active document
   useEffect(() => {
     document.title = `${docTitle || "Untitled document"} — EDTRpad`;
@@ -2601,214 +2561,6 @@ export default function Editor() {
           if (f) handleOpenFile(f);
         }}
       />
-      {/* Collapsible sidebar — members only; guests work on a single document */}
-      {isAuthed && (
-      <aside
-        className={cn(
-          "h-full shrink-0 overflow-hidden border-r border-sidebar-border bg-sidebar text-sidebar-foreground transition-[width] duration-200 ease-in-out",
-          sidebarOpen && !focusMode ? "w-64" : "w-0"
-        )}
-      >
-        <div className="flex h-full w-64 flex-col">
-          {/* New document */}
-          <div className="p-2 pb-1">
-            <button
-              type="button"
-              onClick={createFile}
-              className="flex w-full items-center justify-center gap-2 rounded-md border border-sidebar-border px-2.5 py-2 text-sm font-medium hover:bg-sidebar-accent hover:text-sidebar-accent-foreground transition-colors"
-            >
-              <Plus size={16} weight="bold" /> {t.sidebar.newDocument}
-            </button>
-          </div>
-
-          {/* Search */}
-          <div className="px-2 pb-1">
-            <div className="flex items-center gap-2 rounded-md border border-sidebar-border px-2.5">
-              <MagnifyingGlass size={15} className="shrink-0 opacity-60" />
-              <input
-                value={fileSearch}
-                onChange={(e) => setFileSearch(e.target.value)}
-                placeholder={t.sidebar.search}
-                className="min-w-0 flex-1 bg-transparent py-1.5 text-sm outline-none placeholder:text-muted-foreground"
-              />
-            </div>
-          </div>
-
-          {/* Document list, grouped by folder */}
-          <div className="flex-1 overflow-y-auto px-2 pb-2">
-            {(() => {
-              const q = fileSearch.trim().toLowerCase();
-              const visible = files.filter((f) => (f.name || "").toLowerCase().includes(q));
-              const folders = Array.from(
-                new Set(visible.map((f) => f.folder).filter(Boolean) as string[])
-              ).sort((a, b) => a.localeCompare(b));
-              const allFolders = Array.from(
-                new Set(files.map((f) => f.folder).filter(Boolean) as string[])
-              ).sort((a, b) => a.localeCompare(b));
-
-              const renderItem = (f: FileItem) => (
-                <ContextMenu key={f.id}>
-                  <ContextMenuTrigger asChild>
-                    <div
-                      className={cn(
-                        "group flex items-center gap-2 rounded-md pl-2.5 pr-1.5 transition-colors",
-                        f.id === activeId ? "bg-sidebar-accent text-sidebar-accent-foreground" : "hover:bg-sidebar-accent/60"
-                      )}
-                    >
-                      {renamingId === f.id ? (
-                        <input
-                          autoFocus
-                          defaultValue={f.name}
-                          onKeyDown={(e) => {
-                            if (e.key === "Enter") { renameFile(f.id, e.currentTarget.value); setRenamingId(null); }
-                            else if (e.key === "Escape") setRenamingId(null);
-                          }}
-                          onBlur={(e) => { renameFile(f.id, e.currentTarget.value); setRenamingId(null); }}
-                          className="my-1 min-w-0 flex-1 rounded border border-input bg-background px-1.5 py-1 text-sm outline-none focus:ring-1 focus:ring-ring"
-                        />
-                      ) : (
-                        <>
-                          <button
-                            type="button"
-                            onClick={() => switchFile(f.id)}
-                            onDoubleClick={() => setRenamingId(f.id)}
-                            className="flex min-w-0 flex-1 items-center gap-2 py-1.5 text-left text-sm"
-                          >
-                            <FileText size={16} className="shrink-0 opacity-70" />
-                            <span className="truncate">{f.name || t.sidebar.untitled}</span>
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => deleteFile(f.id)}
-                            title={t.sidebar.deleteDocument}
-                            aria-label={t.sidebar.deleteDocument}
-                            className="shrink-0 rounded p-1 opacity-0 group-hover:opacity-100 focus-visible:opacity-100 focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-ring hover:bg-destructive/15 hover:text-destructive transition"
-                          >
-                            <Trash size={14} />
-                          </button>
-                        </>
-                      )}
-                    </div>
-                  </ContextMenuTrigger>
-                  <ContextMenuContent className="w-48">
-                    <ContextMenuItem onClick={() => { switchFile(f.id); setRenamingId(f.id); }}>
-                      <PencilSimple size={15} /> {t.sidebar.rename}
-                    </ContextMenuItem>
-                    <ContextMenuItem onClick={() => { switchFile(f.id); openVersions(); }}>
-                      <ClockCounterClockwise size={15} /> {t.sidebar.versionHistory}
-                    </ContextMenuItem>
-                    <ContextMenuItem onClick={() => copyDocLink(f.id)}>
-                      <LinkSimple size={15} /> {t.sidebar.copyLink}
-                    </ContextMenuItem>
-                    <ContextMenuSub>
-                      <ContextMenuSubTrigger>
-                        <FolderSimple size={15} /> {t.sidebar.moveToFolder}
-                      </ContextMenuSubTrigger>
-                      <ContextMenuSubContent>
-                        {allFolders.map((folder) => (
-                          <ContextMenuItem key={folder} onClick={() => moveToFolder(f.id, folder)}>
-                            {folder}
-                          </ContextMenuItem>
-                        ))}
-                        {allFolders.length > 0 && <ContextMenuSeparator />}
-                        <ContextMenuItem
-                          onClick={async () => {
-                            const name = await promptDialog({
-                              title: t.dialog.newFolderTitle,
-                              label: t.dialog.newFolderLabel,
-                              placeholder: t.dialog.newFolderPlaceholder,
-                              confirmLabel: t.dialog.create,
-                            });
-                            if (name) moveToFolder(f.id, name);
-                          }}
-                        >
-                          {t.sidebar.newFolder}
-                        </ContextMenuItem>
-                        {f.folder && (
-                          <ContextMenuItem onClick={() => moveToFolder(f.id, null)}>
-                            {t.sidebar.removeFromFolder}
-                          </ContextMenuItem>
-                        )}
-                      </ContextMenuSubContent>
-                    </ContextMenuSub>
-                    <ContextMenuSub>
-                      <ContextMenuSubTrigger>
-                        <DownloadSimple size={15} /> {t.sidebar.export}
-                      </ContextMenuSubTrigger>
-                      <ContextMenuSubContent>
-                        <ContextMenuItem onClick={() => exportFile(f, "docx")}>Word (.docx)</ContextMenuItem>
-                        <ContextMenuItem onClick={() => exportFile(f, "rtf")}>Rich Text (.rtf)</ContextMenuItem>
-                        <ContextMenuItem onClick={() => exportFile(f, "html")}>HTML (.html)</ContextMenuItem>
-                        <ContextMenuItem onClick={() => exportFile(f, "md")}>Markdown (.md)</ContextMenuItem>
-                        <ContextMenuItem onClick={() => exportFile(f, "txt")}>Plain text (.txt)</ContextMenuItem>
-                      </ContextMenuSubContent>
-                    </ContextMenuSub>
-                    <ContextMenuSeparator />
-                    <ContextMenuItem variant="destructive" onClick={() => deleteFile(f.id)}>
-                      <Trash size={15} /> {t.sidebar.delete}
-                    </ContextMenuItem>
-                  </ContextMenuContent>
-                </ContextMenu>
-              );
-
-              return (
-                <>
-                  {folders.map((folder) => (
-                    <details key={folder} open>
-                      <summary className="flex cursor-pointer list-none items-center gap-1 px-2.5 pt-1 pb-1.5 text-[11px] font-medium uppercase tracking-wide text-muted-foreground select-none [&::-webkit-details-marker]:hidden">
-                        <CaretRight size={10} className="transition-transform [details[open]>summary>&]:rotate-90" />
-                        <FolderSimple size={12} />
-                        <span className="truncate">{folder}</span>
-                      </summary>
-                      <div className="flex flex-col gap-0.5 pb-1">
-                        {visible.filter((f) => f.folder === folder).map(renderItem)}
-                      </div>
-                    </details>
-                  ))}
-                  <p className="px-2.5 pt-1 pb-1.5 text-[11px] font-medium uppercase tracking-wide text-muted-foreground">Documents</p>
-                  <div className="flex flex-col gap-0.5">
-                    {visible.filter((f) => !f.folder).map(renderItem)}
-                    {visible.length === 0 && (
-                      <p className="px-2.5 py-2 text-xs text-muted-foreground">{t.sidebar.noDocuments}</p>
-                    )}
-                  </div>
-                </>
-              );
-            })()}
-          </div>
-
-          {/* User / auth */}
-          <div className="border-t border-sidebar-border p-2">
-            {user ? (
-              <button
-                type="button"
-                onClick={logout}
-                title="Log out"
-                className="flex w-full items-center gap-2.5 rounded-md px-2 py-1.5 text-left hover:bg-sidebar-accent transition-colors"
-              >
-                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground text-xs font-semibold select-none">
-                  {user.initials}
-                </div>
-                <div className="min-w-0 leading-tight">
-                  <div className="truncate text-sm font-medium">{user.name}</div>
-                  <div className="truncate text-[11px] text-muted-foreground">Free plan</div>
-                </div>
-              </button>
-            ) : (
-              <button
-                type="button"
-                onClick={openAuth}
-                className="flex w-full items-center gap-2.5 rounded-md px-2 py-2 text-left text-sm hover:bg-sidebar-accent transition-colors"
-              >
-                <SignIn size={18} className="shrink-0 opacity-80" />
-                <span>Log in</span>
-              </button>
-            )}
-          </div>
-        </div>
-      </aside>
-      )}
-
       {/* Main column */}
       <div className="flex h-screen flex-1 min-w-0 flex-col overflow-hidden">
       {!focusMode && (
@@ -2817,8 +2569,6 @@ export default function Editor() {
         schema={mySchema}
         pageMarginCm={pageMarginCm}
         onPrint={handlePrint}
-        sidebarOpen={sidebarOpen}
-        onToggleSidebar={toggleSidebar}
         docTitle={docTitle}
         onTitleChange={renameActive}
         onNewDoc={createFile}
@@ -2864,7 +2614,6 @@ export default function Editor() {
         onTogglePrintHeaderFooter={togglePrintHeaderFooter}
         isDark={isDark}
         onToggleDark={toggleDark}
-        canUseSidebar={isAuthed}
         user={user}
         onLogin={openAuth}
         onLogout={logout}

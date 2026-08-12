@@ -164,7 +164,6 @@ export const tr: Dictionary = {
   },
 
   header: {
-    toggleSidebar: "Kenar çubuğunu aç/kapat",
     home: "Ana sayfa — belgeler ve şablonlar",
     documentTitle: "Belge başlığı",
     renameDocument: "Belgeyi yeniden adlandır",
@@ -175,18 +174,7 @@ export const tr: Dictionary = {
   },
 
   sidebar: {
-    newDocument: "Yeni belge",
-    search: "Belgelerde ara",
-    noDocuments: "Belge yok",
-    rename: "Yeniden adlandır",
-    versionHistory: "Sürüm geçmişi",
     copyLink: "Bağlantıyı kopyala",
-    moveToFolder: "Klasöre taşı",
-    newFolder: "Yeni klasör…",
-    removeFromFolder: "Klasörden çıkar",
-    export: "Dışa aktar",
-    delete: "Sil",
-    deleteDocument: "Belgeyi sil",
     untitled: "Adsız",
   },
 
@@ -265,9 +253,6 @@ export const tr: Dictionary = {
     renameTitle: "Belgeyi yeniden adlandır",
     renameLabel: "Belge adı",
     renameConfirm: "Yeniden adlandır",
-    newFolderTitle: "Yeni klasör",
-    newFolderLabel: "Klasör adı",
-    newFolderPlaceholder: "örn. İş",
   },
 
   welcome: {
@@ -305,8 +290,6 @@ export const tr: Dictionary = {
     versionRestored: "Sürüm geri yüklendi — önceki durum geçmişe kaydedildi.",
     versionLoadFailed: "Bu sürüm yüklenemedi.",
     createFailed: "Belge oluşturulamadı — bağlantınızı kontrol edip tekrar deneyin.",
-    renameFailed: "Yeni ad kaydedilemedi — bağlantınızı kontrol edin.",
-    moveFailed: "Belge taşınamadı — bağlantınızı kontrol edin.",
     deleteFailed: "Sunucuda silinemedi — belge sayfayı yenilediğinizde yeniden görünebilir.",
     restoreFailed: "Belge geri yüklenemedi — bağlantınızı kontrol edin.",
     openFailed: "Bu dosya açılamadı. Desteklenen biçimler: .txt, .md, .html, .docx",
@@ -409,7 +392,7 @@ export const tr: Dictionary = {
     accountsTitle: "Hesaplar ve bulut senkronizasyonu",
     accountsDesc: "Ücretsiz bir hesap açın, belgelerinizi buluta kaydedin ve hangi cihazda olursanız olun kaldığınız yerden devam edin. Başlamak için hesap gerekmez.",
     multiDocTitle: "Birden fazla belge",
-    multiDocDesc: "Ücretsiz hesapla tüm çalışmalarınızı yerleşik kenar çubuğundan yönetin: belge oluşturun, yeniden adlandırın, klasörlerde düzenleyin ve editörden çıkmadan belgeler arasında geçin.",
+    multiDocDesc: "Ücretsiz hesapla istediğiniz kadar belge tutun. Başlangıç ekranı son belgelerinizi listeler; tek tıkla yeni bir belge açar ya da eskisine dönersiniz.",
     darkTitle: "Koyu tema",
     darkDesc: "Gündüz de gece de rahat yazabilmek için açık ve koyu tema arasında geçiş yapın. Tema ve düzen tercihleriniz hesabınızla senkronize olur.",
     richTextTitle: "Zengin metin düzenleme",
