@@ -6,6 +6,9 @@ import { auth } from "@/lib/auth";
 import { pool } from "@/lib/db";
 
 export type DocRow = { id: string; name: string; html: string; folder?: string | null };
+// List rows carry metadata only — html is fetched per document (getDocumentHtml)
+// so startup doesn't ship the whole library over the wire.
+export type DocListItem = { id: string; name: string; html?: string; folder?: string | null };
 
 async function requireUserId(): Promise<string> {
   const session = await auth.api.getSession({ headers: await headers() });
@@ -13,12 +16,16 @@ async function requireUserId(): Promise<string> {
   return session.user.id;
 }
 
-/* ── Lazy migrations (run once per server process) ─────────────────────── */
+/* ── Lazy migrations (memoized once per lambda instance) ───────────────── */
+// The resolved promise is cached so the DDL round-trip happens once per
+// instance, not on every action call. A rejection resets the cache to null so
+// a transient DB failure can retry on the next call instead of poisoning the
+// instance forever.
 
-let versionsTableReady: Promise<unknown> | null = null;
-function ensureVersionsTable() {
-  if (!versionsTableReady) {
-    versionsTableReady = pool.query(`
+let versionsTableReady: Promise<void> | null = null;
+function ensureVersionsTable(): Promise<void> {
+  versionsTableReady ??= pool
+    .query(`
       CREATE TABLE IF NOT EXISTS "document_version" (
         id text PRIMARY KEY,
         document_id text NOT NULL,
@@ -26,31 +33,46 @@ function ensureVersionsTable() {
         html text NOT NULL,
         created_at timestamptz NOT NULL DEFAULT now()
       )
-    `);
-  }
+    `)
+    .then(() => undefined)
+    .catch((err) => {
+      versionsTableReady = null;
+      throw err;
+    });
   return versionsTableReady;
 }
 
-let folderColumnReady: Promise<unknown> | null = null;
-function ensureFolderColumn() {
-  if (!folderColumnReady) {
-    folderColumnReady = pool.query(
-      `ALTER TABLE "document" ADD COLUMN IF NOT EXISTS folder text`
-    );
-  }
+let folderColumnReady: Promise<void> | null = null;
+function ensureFolderColumn(): Promise<void> {
+  folderColumnReady ??= pool
+    .query(`ALTER TABLE "document" ADD COLUMN IF NOT EXISTS folder text`)
+    .then(() => undefined)
+    .catch((err) => {
+      folderColumnReady = null;
+      throw err;
+    });
   return folderColumnReady;
 }
 
 /* ── Documents ─────────────────────────────────────────────────────────── */
 
-export async function listDocuments(): Promise<DocRow[]> {
+export async function listDocuments(): Promise<DocListItem[]> {
   const userId = await requireUserId();
   await ensureFolderColumn();
-  const { rows } = await pool.query<DocRow>(
-    `SELECT id, name, html, folder FROM "document" WHERE user_id = $1 ORDER BY updated_at DESC`,
+  const { rows } = await pool.query<DocListItem>(
+    `SELECT id, name, folder FROM "document" WHERE user_id = $1 ORDER BY updated_at DESC`,
     [userId]
   );
   return rows;
+}
+
+export async function getDocumentHtml(id: string): Promise<string | null> {
+  const userId = await requireUserId();
+  const { rows } = await pool.query<{ html: string }>(
+    `SELECT html FROM "document" WHERE id = $1 AND user_id = $2`,
+    [id, userId]
+  );
+  return rows[0]?.html ?? null;
 }
 
 export async function createDocument(name: string, html: string): Promise<DocRow> {

@@ -14,9 +14,17 @@ export function proxy(request: NextRequest) {
     }
   }
 
+  // The start screen is for signed-in users; guests go to the landing page.
+  if (pathname === "/welcome") {
+    const sessionCookie = getSessionCookie(request);
+    if (!sessionCookie) {
+      return NextResponse.redirect(new URL("/", request.url));
+    }
+  }
+
   return NextResponse.next();
 }
 
 export const config = {
-  matcher: ["/"],
+  matcher: ["/", "/welcome"],
 };

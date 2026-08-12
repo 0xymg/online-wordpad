@@ -58,8 +58,8 @@ import { useT, useLocale } from "./I18nProvider";
 import { isLocale, type Dictionary } from "@/lib/i18n";
 import {
   listDocuments, createDocument, updateDocument, renameDocument, deleteDocument,
-  getPreferences, savePreferences,
-  saveVersion, listVersions, getVersionHtml, type DocRow,
+  getDocumentHtml, getPreferences, savePreferences,
+  saveVersion, listVersions, getVersionHtml, type DocListItem,
 } from "@/app/actions/user-data";
 import { saveGuestVersion, listGuestVersions, removeGuestVersions } from "@/lib/versions";
 import { ensureFontsInHtml } from "@/lib/editor-fonts";
@@ -511,7 +511,10 @@ class ImageNodeView {
 export { mySchema };
 
 // ── File management ─────────────────────────────────────────────────────────
-type FileItem = { id: string; name: string; html: string; folder?: string | null };
+// `html` is always present for guests (localStorage keeps full documents) but
+// optional for members: the DB list ships metadata only and each document's
+// html is fetched on demand, then cached here.
+type FileItem = { id: string; name: string; html?: string; folder?: string | null };
 const ZOOM_PRESETS = [50, 75, 90, 100, 110, 125, 150];
 const MARGIN_PRESETS = [0.5, 1, 1.5, 2];
 
@@ -801,6 +804,13 @@ export default function Editor({
   const [activeId, setActiveId] = useState<string>("");
   const filesRef = useRef<FileItem[]>([]);
   const activeIdRef = useRef<string>("");
+  // Id of the document whose content is currently inside the editor view.
+  // Equals activeIdRef except during the short window where a member switch is
+  // still fetching html — saves/commits always target the doc the content
+  // actually belongs to, so a slow fetch can never cross-write documents.
+  const loadedIdRef = useRef<string>("");
+  // Id whose html fetch is in flight (member doc switch), null otherwise.
+  const htmlFetchRef = useRef<string | null>(null);
   const [authOpen, setAuthOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
   const [hasPassword, setHasPassword] = useState(false);
@@ -1184,7 +1194,7 @@ export default function Editor({
   }, [persistDoc]);
 
   const save = useCallback((state: EditorState) => {
-    pendingSaveRef.current = { id: activeIdRef.current, state };
+    pendingSaveRef.current = { id: loadedIdRef.current, state };
     setSaveStatus("saving");
     if (saveTimer.current) clearTimeout(saveTimer.current);
     saveTimer.current = setTimeout(() => {
@@ -1240,25 +1250,75 @@ export default function Editor({
     if (saveTimer.current) { clearTimeout(saveTimer.current); saveTimer.current = null; }
     pendingSaveRef.current = null;
     const html = serializeDoc(v.state.doc);
-    const id = activeIdRef.current;
+    // The editor may briefly hold a different doc than the active one (while a
+    // switch fetches html) — commit to the doc the content belongs to.
+    const id = loadedIdRef.current;
     if (isAuthedRef.current && id) updateDocument(id, html).catch(() => setSaveStatus("error"));
     return list.map((f) => (f.id === id ? { ...f, html } : f));
   }, []);
+
+  // Put a document's content into the editor. Guests (and already-visited
+  // member docs) have html in the list and swap synchronously; a member doc
+  // opened for the first time fetches its html, shows the paper skeleton
+  // meanwhile, and caches the result so re-opening is instant.
+  const loadIntoEditor = useCallback((target: FileItem) => {
+    setDocTitle(target.name);
+    if (target.html !== undefined) {
+      htmlFetchRef.current = null; // supersedes any in-flight fetch
+      loadedIdRef.current = target.id;
+      setDocFromHtml(target.html);
+      setInitialLoading(false);
+      return;
+    }
+    const id = target.id;
+    htmlFetchRef.current = id;
+    setInitialLoading(true);
+    getDocumentHtml(id)
+      .then((html) => {
+        if (htmlFetchRef.current !== id || activeIdRef.current !== id) return;
+        const resolved = html ?? "<p></p>";
+        const list = filesRef.current.map((f) => (f.id === id ? { ...f, html: resolved } : f));
+        filesRef.current = list;
+        setFiles(list);
+        // Anything typed into the (hidden) previous document while the fetch
+        // was in flight still belongs to it — flush before swapping.
+        flushSave();
+        loadedIdRef.current = id;
+        setDocFromHtml(resolved);
+      })
+      .catch(() => {
+        toast.error(tRef.current.toast.openFailed);
+      })
+      .finally(() => {
+        if (htmlFetchRef.current === id) {
+          htmlFetchRef.current = null;
+          setInitialLoading(false);
+        }
+      });
+  }, [flushSave, setDocFromHtml]);
 
   // `history` = false when the switch itself came from a browser back/forward event.
   const switchFile = useCallback((id: string, history = true) => {
     // Re-opening the document that's already active still stamps the URL, so
     // picking it from the start screen leaves a shareable address behind.
-    if (id === activeIdRef.current) { if (history) syncUrlToDoc(id); return; }
+    if (id === activeIdRef.current) {
+      if (history) syncUrlToDoc(id);
+      // A failed html fetch can leave the active document unloaded — selecting
+      // it again retries.
+      if (loadedIdRef.current !== id && htmlFetchRef.current !== id) {
+        const target = filesRef.current.find((f) => f.id === id);
+        if (target) loadIntoEditor(target);
+      }
+      return;
+    }
     const list = commitCurrent(filesRef.current);
     const target = list.find((f) => f.id === id);
     if (!target) return;
     lastAutoNameRef.current = null;
     applyFiles(list, id);
-    setDocFromHtml(target.html);
-    setDocTitle(target.name);
+    loadIntoEditor(target);
     if (history) syncUrlToDoc(id, true);
-  }, [applyFiles, commitCurrent, setDocFromHtml, syncUrlToDoc]);
+  }, [applyFiles, commitCurrent, loadIntoEditor, syncUrlToDoc]);
 
   // Browser back/forward moves between documents opened in this tab, and in
   // and out of the start screen (/welcome).
@@ -1282,6 +1342,7 @@ export default function Editor({
       try {
         const doc = await createDocument(name, html);
         applyFiles([doc, ...list], doc.id);
+        loadedIdRef.current = doc.id;
         setDocFromHtml(doc.html);
         setDocTitle(doc.name);
         syncUrlToDoc(doc.id);
@@ -1308,6 +1369,7 @@ export default function Editor({
         lastSnapAtRef.current[id] = Date.now();
       }
       applyFiles([{ id, name, html }], id);
+      loadedIdRef.current = id;
       setDocFromHtml(html);
       setDocTitle(name);
       syncUrlToDoc(id);
@@ -1361,11 +1423,11 @@ export default function Editor({
     if (wasActive) {
       const next = list.find((f) => f.id === nextActive);
       if (next) {
-        setDocFromHtml(next.html);
-        setDocTitle(next.name);
+        loadIntoEditor(next); // fetches html first if this doc was never opened
         syncUrlToDoc(next.id);
       } else {
         // Nothing left to show — clear the editor and hand over to the start screen.
+        loadedIdRef.current = "";
         setDocFromHtml("<p></p>");
         setDocTitle("");
         clearDocUrl();
@@ -1373,7 +1435,7 @@ export default function Editor({
       }
     }
     toast.success(t.toast.deleted(label));
-  }, [applyFiles, clearDocUrl, confirmDialog, openHome, setDocFromHtml, syncUrlToDoc, t]);
+  }, [applyFiles, clearDocUrl, confirmDialog, loadIntoEditor, openHome, setDocFromHtml, syncUrlToDoc, t]);
 
   // Live title input: reflect typing immediately, debounce the persisted rename.
   const renameActive = useCallback((name: string) => {
@@ -1458,6 +1520,10 @@ export default function Editor({
     if (isAuthedRef.current) saveVersion(id, currentHtml).catch(() => {});
     else saveGuestVersion(id, currentHtml);
     lastSnapAtRef.current[id] = Date.now();
+    // The restored content belongs to the active doc — supersede any pending
+    // html fetch and point saves at it.
+    htmlFetchRef.current = null;
+    loadedIdRef.current = id;
     setDocFromHtml(html);
     if (viewRef.current) persistDoc(id, viewRef.current.state);
     setVersionsOpen(false);
@@ -1466,8 +1532,26 @@ export default function Editor({
 
   const exportFile = useCallback(async (file: FileItem, fmt: "html" | "txt" | "docx" | "rtf" | "md") => {
     const v = viewRef.current;
-    const isActiveDoc = file.id === activeIdRef.current && !!v;
-    const html = isActiveDoc ? serializeDoc(v!.state.doc) : file.html;
+    // Compare against the doc the editor actually holds (not just the active
+    // id) so a doc whose html is still being fetched exports from the DB.
+    const isActiveDoc = file.id === loadedIdRef.current && !!v;
+    let html: string;
+    if (isActiveDoc) {
+      html = serializeDoc(v!.state.doc);
+    } else if (file.html !== undefined) {
+      html = file.html;
+    } else {
+      // Member doc that was never opened this session — fetch (and cache) it.
+      const fetched = await getDocumentHtml(file.id).catch(() => null);
+      if (fetched === null) {
+        toast.error(tRef.current.toast.openFailed);
+        return;
+      }
+      html = fetched;
+      const list = filesRef.current.map((f) => (f.id === file.id ? { ...f, html: fetched } : f));
+      filesRef.current = list;
+      setFiles(list);
+    }
     const safe = (file.name || "document").replace(/[^\w.\- ]+/g, "").trim() || "document";
     const { docToDocxBlob, docToRtf, docToMarkdown, downloadBlob } = await import("@/lib/doc-export");
     if (fmt === "html") {
@@ -1478,7 +1562,7 @@ export default function Editor({
       tmp.innerHTML = html;
       downloadBlob(new Blob([tmp.innerText || tmp.textContent || ""], { type: "text/plain" }), `${safe}.txt`);
     } else {
-      const doc = isActiveDoc ? v!.state.doc : parseHtmlToDoc(file.html);
+      const doc = isActiveDoc ? v!.state.doc : parseHtmlToDoc(html);
       if (fmt === "docx") {
         downloadBlob(await docToDocxBlob(doc, file.name || "Document", pageOrientation), `${safe}.docx`);
       } else if (fmt === "md") {
@@ -1775,7 +1859,15 @@ export default function Editor({
     }
     (async () => {
       if (authUser) {
-        let docs = await listDocuments().catch(() => [] as DocRow[]);
+        // Startup roundtrips run in parallel: the document list, the user's
+        // preferences, and (when deep-linked) the target document's html all
+        // start together instead of waterfalling.
+        const deepLinkId = takeDeepLinkId();
+        const prefsPromise = getPreferences().catch(() => null);
+        const deepLinkHtmlPromise = deepLinkId
+          ? getDocumentHtml(deepLinkId).catch(() => null)
+          : null;
+        let docs = await listDocuments().catch(() => [] as DocListItem[]);
         if (!docs.length) {
           // Migrate guest files from localStorage; fall back to a Welcome doc if nothing there.
           const { list: localFiles } = loadFiles();
@@ -1784,12 +1876,12 @@ export default function Editor({
             localFiles.length > 1 ||
             (localFiles.length === 1 &&
               localFiles[0].html !== DEFAULT_REF_CONTENT &&
-              stripped(localFiles[0].html) !== "");
+              stripped(localFiles[0].html ?? "") !== "");
           if (hasRealContent) {
             const created = await Promise.all(
-              localFiles.map((f) => createDocument(f.name, f.html).catch(() => null))
+              localFiles.map((f) => createDocument(f.name, f.html ?? "<p></p>").catch(() => null))
             );
-            docs = created.filter(Boolean) as DocRow[];
+            docs = created.filter(Boolean) as DocListItem[];
             try {
               localStorage.removeItem(FILES_KEY);
               localStorage.removeItem(ACTIVE_KEY);
@@ -1798,7 +1890,6 @@ export default function Editor({
         }
         if (cancelled) return;
         // A ?doc=… deep link wins over the default document, when it still exists.
-        const deepLinkId = takeDeepLinkId();
         const deepLinked = deepLinkId ? docs.find((d) => d.id === deepLinkId) : undefined;
         if (deepLinkId && !deepLinked) {
           toast.warning(t.toast.deepLinkMissing);
@@ -1806,16 +1897,31 @@ export default function Editor({
         // An empty library is a valid state (everything was deleted): the start
         // screen is the only place that creates documents.
         const active = deepLinked ?? docs[0];
+        // The list carries metadata only — fetch just the active doc's html
+        // (already in flight for deep links; migrated docs carry it inline).
+        let activeHtml = active?.html;
+        if (active && activeHtml === undefined) {
+          const fetched =
+            deepLinkHtmlPromise && active.id === deepLinkId
+              ? await deepLinkHtmlPromise
+              : await getDocumentHtml(active.id).catch(() => null);
+          activeHtml = fetched ?? "<p></p>";
+          docs = docs.map((d) => (d.id === active.id ? { ...d, html: activeHtml } : d));
+        }
+        if (cancelled) return;
         filesRef.current = docs; activeIdRef.current = active?.id ?? "";
         setFiles(docs); setActiveId(active?.id ?? "");
-        if (active) { setDocFromHtml(active.html); setDocTitle(active.name); }
+        loadedIdRef.current = active?.id ?? "";
+        if (active) { setDocFromHtml(activeHtml ?? "<p></p>"); setDocTitle(active.name); }
         else { setDocFromHtml("<p></p>"); setDocTitle(""); openHome(false); }
         // Only stamp the URL when the visitor actually arrived via a deep link.
         // Writing it on a plain /pad visit would make the next reload look like
         // a deep link and skip the start screen.
         if (deepLinked) syncUrlToDoc(active.id);
         setInitialLoading(false);
-        try { const prefs = await getPreferences(); if (!cancelled) applyPreferences(prefs); } catch {}
+        const prefs = await prefsPromise;
+        if (cancelled) return;
+        if (prefs) applyPreferences(prefs);
         prefsLoadedRef.current = true;
       } else {
         // Signed out: arm the start screen again for the next sign-in.
@@ -1830,7 +1936,9 @@ export default function Editor({
         const activeId = activeFile?.id ?? "";
         filesRef.current = list; activeIdRef.current = activeId;
         setFiles(list); setActiveId(activeId);
-        if (activeFile) { setDocFromHtml(activeFile.html); setDocTitle(activeFile.name); }
+        loadedIdRef.current = activeId;
+        // Guest documents always carry html (localStorage stores them whole).
+        if (activeFile) { setDocFromHtml(activeFile.html ?? "<p></p>"); setDocTitle(activeFile.name); }
         // Guest deleted their last document: start screen, no auto-created doc.
         else { setDocFromHtml("<p></p>"); setDocTitle(""); openHome(false); }
         if (deepLinked) syncUrlToDoc(activeId);
@@ -3210,6 +3318,7 @@ export default function Editor({
         onSignIn={openAuth}
         onOpenProfile={openProfile}
         userEmail={authUser?.email || null}
+        sessionLoading={sessionPending}
       />
       {askDialogs}
       <Toaster />

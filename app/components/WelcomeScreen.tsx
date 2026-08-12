@@ -28,6 +28,9 @@ interface WelcomeScreenProps {
   /** Opens the account-settings dialog (signed-in users only). */
   onOpenProfile?: () => void;
   userEmail?: string | null;
+  /** True while the auth session is still resolving — show placeholders
+      instead of guessing "guest" (matters on a direct /welcome visit). */
+  sessionLoading?: boolean;
 }
 
 function greeting(t: ReturnType<typeof useT>) {
@@ -134,7 +137,7 @@ function DocRowSkeleton() {
 export default function WelcomeScreen({
   open, onClose, isAuthed, userName, files, activeId,
   onNewDocument, onOpenFile, onPickTemplate, onOpenDocument, onCopyLink, onDeleteDocument,
-  docHref, onSignIn, onOpenProfile, userEmail, loading = false,
+  docHref, onSignIn, onOpenProfile, userEmail, loading = false, sessionLoading = false,
 }: WelcomeScreenProps) {
   const t = useT();
   // Stay mounted through the closing animation so the editor fades in behind
@@ -197,8 +200,16 @@ export default function WelcomeScreen({
       {/* The template strip gets the wider container; the document lists below
           sit in a narrower one so the eye lands on "start something" first. */}
       <div className="mx-auto max-w-6xl px-5 pb-16 pt-10">
-        {/* Greeting on the left, account entry on the right, same line */}
+        {/* Greeting on the left, account entry on the right, same line.
+            While the session resolves we don't yet know WHO this is — show
+            placeholders rather than flashing the guest copy. */}
         <div className="flex items-start justify-between gap-4">
+          {sessionLoading ? (
+            <div className="animate-pulse" aria-hidden="true">
+              <div className="h-8 w-72 max-w-[70vw] bg-accent" />
+              <div className="mt-2.5 h-4 w-96 max-w-[85vw] bg-accent" />
+            </div>
+          ) : (
           <div>
             <h1 className="font-serif text-3xl font-normal tracking-tight">
               {firstName ? t.welcome.greetingWith(greeting(t), firstName) : t.welcome.titleGuest}
@@ -207,7 +218,17 @@ export default function WelcomeScreen({
               {t.welcome.subtitle}
             </p>
           </div>
-          {isAuthed && onOpenProfile && (
+          )}
+          {sessionLoading && (
+            <div className="flex shrink-0 animate-pulse items-center gap-2.5 px-2.5 py-1.5" aria-hidden="true">
+              <div className="h-9 w-9 bg-accent" />
+              <div className="space-y-1.5">
+                <div className="h-3.5 w-28 bg-accent" />
+                <div className="h-3 w-36 bg-accent" />
+              </div>
+            </div>
+          )}
+          {!sessionLoading && isAuthed && onOpenProfile && (
             <button
               type="button"
               onClick={onOpenProfile}
@@ -314,7 +335,7 @@ export default function WelcomeScreen({
         </div>
 
         {/* Sign-in nudge for guests */}
-        {!isAuthed && (
+        {!isAuthed && !sessionLoading && (
           <div className="mx-auto mt-10 flex max-w-4xl flex-wrap items-center justify-between gap-3 rounded-lg border border-border bg-card px-4 py-3">
             <p className="text-sm text-muted-foreground">
               {t.welcome.guestNudge}
