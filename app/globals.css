@@ -221,6 +221,8 @@ body {
 }
 
 /* ── Sayfa arası boşluk (pagination spacer, decoration) ── */
+/* Ölçüm sırasında spacer'lar akıştan çıkarılır (paginationPlugin). */
+.pm-measuring .pm-page-spacer { display: none !important; }
 .pm-page-spacer {
   display: block;
   user-select: none;

@@ -54,12 +54,18 @@ function spacerDom(fillPx: number, marginPx: number): HTMLElement {
 
 const positiveModulo = (value: number, mod: number) => ((value % mod) + mod) % mod;
 
+/** Tolerance for subpixel/rounding noise in measurements. */
+const MEASURE_EPS = 2;
+
 /**
  * Simulate the natural (spacer-free) vertical flow of the top-level blocks
- * and decide before which blocks a page break belongs. Measures via
- * getBoundingClientRect scaled back to layout px, so CSS `zoom` on the page
- * doesn't skew the numbers. Also returns how much of the last page is used,
- * so the editor can be padded to a full page.
+ * and decide before which blocks a page break belongs. Existing spacers are
+ * hidden (display:none) for the duration of the measurement so the flow —
+ * including the margin-collapse a spacer would otherwise interrupt — is
+ * measured exactly as it would render without them; the class toggle happens
+ * within a single frame, so nothing flickers. Rects are scaled back to layout
+ * px so CSS `zoom` on the page doesn't skew the numbers. Also returns how
+ * much of the last page is used, so the editor can be padded to a full page.
  */
 function computeLayout(
   view: EditorView,
@@ -68,47 +74,53 @@ function computeLayout(
   const dom = view.dom as HTMLElement;
   const pageContentH = cfg.pageHeightPx - 2 * cfg.marginPx;
   if (pageContentH <= 60 || !dom.offsetWidth) return { breaks: [], lastPagePadPx: 0 };
-  const scale = dom.getBoundingClientRect().width / dom.offsetWidth;
-  if (!scale || !isFinite(scale)) return { breaks: [], lastPagePadPx: 0 };
 
-  const offsets: number[] = [];
-  view.state.doc.forEach((_node, offset) => offsets.push(offset));
+  dom.classList.add("pm-measuring");
+  try {
+    const scale = dom.getBoundingClientRect().width / dom.offsetWidth;
+    if (!scale || !isFinite(scale)) return { breaks: [], lastPagePadPx: 0 };
 
-  const breaks: PageBreakPoint[] = [];
-  let spacerAccum = 0; // decoration heights seen so far, excluded from the flow
-  let baseTop: number | null = null;
-  let pageStart = 0; // natural y where the current page's content begins
-  let contentBottom = 0;
-  let forceBreakBeforeNext = false;
-  let blockIdx = 0;
+    const offsets: number[] = [];
+    view.state.doc.forEach((_node, offset) => offsets.push(offset));
 
-  for (const child of Array.from(dom.children) as HTMLElement[]) {
-    const rect = child.getBoundingClientRect();
-    if (child.classList.contains("pm-page-spacer")) {
-      spacerAccum += rect.height / scale;
-      continue;
+    const breaks: PageBreakPoint[] = [];
+    let baseTop: number | null = null;
+    let pageStart = 0; // natural y where the current page's content begins
+    let contentBottom = 0;
+    let forceBreakBeforeNext = false;
+    let blockIdx = 0;
+
+    for (const child of Array.from(dom.children) as HTMLElement[]) {
+      if (child.classList.contains("pm-page-spacer")) continue;
+      if (blockIdx >= offsets.length) break;
+      const rect = child.getBoundingClientRect();
+      if (baseTop === null) baseTop = rect.top / scale;
+      const top = rect.top / scale - baseTop;
+      const bottom = top + rect.height / scale;
+      contentBottom = Math.max(contentBottom, bottom);
+
+      const overflows =
+        bottom - pageStart > pageContentH + MEASURE_EPS && top > pageStart + MEASURE_EPS;
+      if (forceBreakBeforeNext || overflows) {
+        let fillPx = positiveModulo(pageContentH - (top - pageStart), pageContentH);
+        // A block sitting exactly on a page boundary can read as "overflowing"
+        // by a subpixel — never answer that with a whole blank page.
+        if (fillPx > pageContentH - MEASURE_EPS * 2) fillPx = 0;
+        breaks.push({ pos: offsets[blockIdx], fillPx });
+        pageStart = top;
+        forceBreakBeforeNext = false;
+      }
+      // A manual page break closes the page for whatever follows it.
+      if (child.matches("hr.pm-page-break")) forceBreakBeforeNext = true;
+      blockIdx++;
     }
-    if (blockIdx >= offsets.length) break;
-    if (baseTop === null) baseTop = rect.top / scale - spacerAccum;
-    const top = rect.top / scale - spacerAccum - baseTop;
-    const bottom = top + rect.height / scale;
-    contentBottom = Math.max(contentBottom, bottom);
 
-    const overflows = bottom - pageStart > pageContentH && top > pageStart;
-    if (forceBreakBeforeNext || overflows) {
-      const fillPx = positiveModulo(pageContentH - (top - pageStart), pageContentH);
-      breaks.push({ pos: offsets[blockIdx], fillPx });
-      pageStart = top;
-      forceBreakBeforeNext = false;
-    }
-    // A manual page break closes the page for whatever follows it.
-    if (child.matches("hr.pm-page-break")) forceBreakBeforeNext = true;
-    blockIdx++;
+    const usedOnLastPage = positiveModulo(contentBottom - pageStart, pageContentH);
+    const lastPagePadPx = usedOnLastPage > MEASURE_EPS ? pageContentH - usedOnLastPage : 0;
+    return { breaks, lastPagePadPx };
+  } finally {
+    dom.classList.remove("pm-measuring");
   }
-
-  const usedOnLastPage = positiveModulo(contentBottom - pageStart, pageContentH);
-  const lastPagePadPx = usedOnLastPage > 0 ? pageContentH - usedOnLastPage : 0;
-  return { breaks, lastPagePadPx };
 }
 
 function sameBreaks(a: PageBreakPoint[], b: PageBreakPoint[]): boolean {
