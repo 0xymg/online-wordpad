@@ -82,11 +82,6 @@ export default function AuthForm({
     if (autoFocus) requestAnimationFrame(() => emailRef.current?.focus());
   }, [autoFocus, mode]);
 
-  // The caller reads it from the URL after mount, so it can arrive late.
-  useEffect(() => {
-    if (initialError) setError(initialError);
-  }, [initialError]);
-
   const switchMode = (next: AuthMode) => {
     setError(null);
     setSuccess(null);

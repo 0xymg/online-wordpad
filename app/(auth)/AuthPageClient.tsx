@@ -17,28 +17,18 @@ import { useSession } from "@/lib/auth-client";
 export default function AuthPageClient({
   initialMode,
   googleEnabled = false,
+  oauthFailed = false,
 }: {
   initialMode: AuthMode;
   googleEnabled?: boolean;
+  /** Set by the page when the URL carries ?error=google — a Google round trip that came back failed. */
+  oauthFailed?: boolean;
 }) {
   const t = useT();
   const { locale, setLocale } = useLocale();
   const [mode, setMode] = useState<AuthMode>(initialMode);
   const router = useRouter();
   const { data: session, isPending } = useSession();
-
-  // A failed Google round trip comes back here as /login?error=google (see
-  // errorCallbackURL in AuthForm) — report it instead of showing a blank form
-  // that looks like the user simply never signed in. Read once, on mount, so a
-  // later mode switch doesn't resurrect a stale message.
-  // Read after mount, not during render: the page is prerendered without the
-  // query string, so reading it inline would mismatch on hydration.
-  const [oauthError, setOauthError] = useState<string | null>(null);
-  useEffect(() => {
-    if (new URLSearchParams(window.location.search).get("error") === "google") {
-      setOauthError(t.auth.errGoogle);
-    }
-  }, [t]);
 
   // Already signed in? There is nothing to do here.
   useEffect(() => {
@@ -95,7 +85,7 @@ export default function AuthPageClient({
             onModeChange={changeMode}
             onSuccess={() => router.push("/pad")}
             googleEnabled={googleEnabled}
-            initialError={oauthError}
+            initialError={oauthFailed ? t.auth.errGoogle : null}
           />
         </div>
       </main>

@@ -57,6 +57,60 @@ function TemplateThumb({ html }: { html: string }) {
   );
 }
 
+/** One row of the document lists: open, copy link, delete. */
+function DocRow({
+  f, t, activeId, docHref, onOpen, onCopyLink, onDelete,
+}: {
+  f: WelcomeFile;
+  t: ReturnType<typeof useT>;
+  activeId: string;
+  docHref: (id: string) => string;
+  onOpen: (id: string) => void;
+  onCopyLink: (id: string) => void;
+  onDelete: (id: string) => void;
+}) {
+  return (
+      <div className="group flex items-center hover:bg-accent/60">
+        {/* Real link so it can be bookmarked, middle-clicked, or copied;
+            plain clicks are handled in-app to avoid a full reload. */}
+        <a
+          href={docHref(f.id)}
+          onClick={(e) => {
+            if (e.metaKey || e.ctrlKey || e.shiftKey || e.button !== 0) return;
+            e.preventDefault();
+            onOpen(f.id);
+          }}
+          className="flex min-w-0 flex-1 items-center gap-3 px-4 py-2.5 text-left focus-visible:bg-accent/60 focus-visible:outline-none"
+        >
+          <FileText size={18} className="shrink-0 text-muted-foreground" />
+          <span className="min-w-0 flex-1 truncate text-sm">{f.name || t.sidebar.untitled}</span>
+          {f.folder && <span className="shrink-0 text-xs text-muted-foreground">{f.folder}</span>}
+          {f.id === activeId && (
+            <span className="shrink-0 rounded bg-accent px-1.5 py-0.5 text-[10px] font-medium text-accent-foreground">{t.welcome.lastOpened}</span>
+          )}
+        </a>
+        <button
+          type="button"
+          onClick={() => onCopyLink(f.id)}
+          aria-label={t.welcome.copyLinkTo(f.name || t.sidebar.untitled)}
+          title={t.sidebar.copyLink}
+          className="shrink-0 rounded p-1.5 text-muted-foreground opacity-0 transition hover:bg-accent hover:text-foreground focus-visible:opacity-100 focus-visible:outline-2 focus-visible:outline-ring group-hover:opacity-100"
+        >
+          <LinkSimple size={15} />
+        </button>
+        <button
+          type="button"
+          onClick={() => onDelete(f.id)}
+          aria-label={t.welcome.deleteDocumentNamed(f.name || t.sidebar.untitled)}
+          title={t.welcome.deleteDocument}
+          className="mr-2 shrink-0 rounded p-1.5 text-muted-foreground opacity-0 transition hover:bg-destructive/15 hover:text-destructive focus-visible:opacity-100 focus-visible:outline-2 focus-visible:outline-ring group-hover:opacity-100"
+        >
+          <Trash size={15} />
+        </button>
+      </div>
+    );
+}
+
 export default function WelcomeScreen({
   open, onClose, isAuthed, userName, files, activeId,
   onNewDocument, onOpenFile, onPickTemplate, onOpenDocument, onCopyLink, onDeleteDocument,
@@ -74,47 +128,12 @@ export default function WelcomeScreen({
 
   const firstName = (userName || "").trim().split(/\s+/)[0] || null;
 
-  const DocRow = ({ f }: { f: WelcomeFile }) => (
-    <div className="group flex items-center hover:bg-accent/60">
-      {/* Real link so it can be bookmarked, middle-clicked, or copied;
-          plain clicks are handled in-app to avoid a full reload. */}
-      <a
-        href={docHref(f.id)}
-        onClick={(e) => {
-          if (e.metaKey || e.ctrlKey || e.shiftKey || e.button !== 0) return;
-          e.preventDefault();
-          onOpenDocument(f.id);
-          onClose();
-        }}
-        className="flex min-w-0 flex-1 items-center gap-3 px-4 py-2.5 text-left focus-visible:bg-accent/60 focus-visible:outline-none"
-      >
-        <FileText size={18} className="shrink-0 text-muted-foreground" />
-        <span className="min-w-0 flex-1 truncate text-sm">{f.name || t.sidebar.untitled}</span>
-        {f.folder && <span className="shrink-0 text-xs text-muted-foreground">{f.folder}</span>}
-        {f.id === activeId && (
-          <span className="shrink-0 rounded bg-accent px-1.5 py-0.5 text-[10px] font-medium text-accent-foreground">{t.welcome.lastOpened}</span>
-        )}
-      </a>
-      <button
-        type="button"
-        onClick={() => onCopyLink(f.id)}
-        aria-label={t.welcome.copyLinkTo(f.name || t.sidebar.untitled)}
-        title={t.sidebar.copyLink}
-        className="shrink-0 rounded p-1.5 text-muted-foreground opacity-0 transition hover:bg-accent hover:text-foreground focus-visible:opacity-100 focus-visible:outline-2 focus-visible:outline-ring group-hover:opacity-100"
-      >
-        <LinkSimple size={15} />
-      </button>
-      <button
-        type="button"
-        onClick={() => onDeleteDocument(f.id)}
-        aria-label={t.welcome.deleteDocumentNamed(f.name || t.sidebar.untitled)}
-        title={t.welcome.deleteDocument}
-        className="mr-2 shrink-0 rounded p-1.5 text-muted-foreground opacity-0 transition hover:bg-destructive/15 hover:text-destructive focus-visible:opacity-100 focus-visible:outline-2 focus-visible:outline-ring group-hover:opacity-100"
-      >
-        <Trash size={15} />
-      </button>
-    </div>
-  );
+  // Opening a document from here always closes the screen behind it.
+  const rowProps = {
+    t, activeId, docHref, onCopyLink,
+    onOpen: (id: string) => { onOpenDocument(id); onClose(); },
+    onDelete: onDeleteDocument,
+  };
 
   return (
     <div
@@ -202,7 +221,7 @@ export default function WelcomeScreen({
             </p>
           ) : (
             <div className="divide-y divide-border overflow-hidden rounded-md border border-border">
-              <DocRow f={files[0]} />
+              <DocRow {...rowProps} f={files[0]} />
             </div>
           )}
 
@@ -213,7 +232,7 @@ export default function WelcomeScreen({
                 {t.welcome.allDocuments} <span className="text-xs font-normal">({files.length})</span>
               </h2>
               <div className="max-h-80 divide-y divide-border overflow-y-auto rounded-md border border-border">
-                {files.map((f) => <DocRow key={f.id} f={f} />)}
+                {files.map((f) => <DocRow key={f.id} {...rowProps} f={f} />)}
               </div>
             </>
           )}

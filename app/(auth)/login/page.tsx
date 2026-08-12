@@ -9,6 +9,15 @@ export const metadata: Metadata = {
   robots: { index: false, follow: true },
 };
 
-export default function LoginPage() {
-  return <AuthPageClient initialMode="login" googleEnabled={googleEnabled} />;
+export default async function LoginPage({ searchParams }: {
+  searchParams: Promise<{ error?: string }>;
+}) {
+  const { error } = await searchParams;
+  return (
+    <AuthPageClient
+      initialMode="login"
+      googleEnabled={googleEnabled}
+      oauthFailed={error === "google"}
+    />
+  );
 }
