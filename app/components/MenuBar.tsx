@@ -37,6 +37,8 @@ interface MenuBarProps {
   viewRef: React.MutableRefObject<EditorView | null>;
   schema: any;
   pageMarginCm?: number;
+  pageOrientation: "portrait" | "landscape";
+  onPageOrientationChange: (o: "portrait" | "landscape") => void;
   onPrint?: () => void;
   docTitle: string;
   onTitleChange: (title: string) => void;
@@ -129,6 +131,7 @@ const SPELL_LANGS: Array<{ value: string; label: string }> = [
 
 export default function MenuBar({
   viewRef, schema, onPrint,
+  pageOrientation, onPageOrientationChange,
   docTitle, onTitleChange, onNewDoc, onShowHome, onNewFromTemplate, onOpenFile, onExport,
   onSave, onCopyLink, onRenameDoc, onDeleteDoc, onReplace,
   onShowVersions, onShowShortcuts, onFind,
@@ -373,6 +376,23 @@ export default function MenuBar({
             </MenubarSubContent>
           </MenubarSub>
           <MenubarSeparator />
+          <MenubarSub>
+            <MenubarSubTrigger>{t.file.pageOrientation}</MenubarSubTrigger>
+            <MenubarSubContent>
+              <MenubarCheckboxItem
+                checked={pageOrientation === "portrait"}
+                onClick={() => onPageOrientationChange("portrait")}
+              >
+                {t.file.portrait}
+              </MenubarCheckboxItem>
+              <MenubarCheckboxItem
+                checked={pageOrientation === "landscape"}
+                onClick={() => onPageOrientationChange("landscape")}
+              >
+                {t.file.landscape}
+              </MenubarCheckboxItem>
+            </MenubarSubContent>
+          </MenubarSub>
           <MenubarCheckboxItem checked={printHeaderFooter} onClick={onTogglePrintHeaderFooter}>
             {t.file.printHeaderFooter}
           </MenubarCheckboxItem>

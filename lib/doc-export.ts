@@ -4,7 +4,7 @@ import type { Node as PMNode, Mark } from "prosemirror-model";
 import {
   Document, Packer, Paragraph, TextRun, HeadingLevel, AlignmentType,
   Table, TableRow, TableCell, WidthType, ImageRun, ExternalHyperlink,
-  LevelFormat, ShadingType, BorderStyle, PageBreak,
+  LevelFormat, ShadingType, BorderStyle, PageBreak, PageOrientation,
   type FileChild, type ParagraphChild, type INumberingOptions,
 } from "docx";
 
@@ -324,11 +324,17 @@ class DocxBuilder {
   }
 }
 
-export async function docToDocxBlob(doc: PMNode, title: string): Promise<Blob> {
+export async function docToDocxBlob(
+  doc: PMNode,
+  title: string,
+  orientation: "portrait" | "landscape" = "portrait"
+): Promise<Blob> {
   const images = await preloadImages(doc);
   const builder = new DocxBuilder(images);
   const children: FileChild[] = [];
   doc.forEach((block) => children.push(...builder.blockToDocx(block)));
+  // A4 portrait in twips (11906×16838) — docx.js swaps the two itself when
+  // orientation is LANDSCAPE, so always pass the portrait dimensions.
   const file = new Document({
     title,
     numbering: { config: builder.numbering },
@@ -337,7 +343,18 @@ export async function docToDocxBlob(doc: PMNode, title: string): Promise<Blob> {
         document: { run: { font: "Arial", size: 24 } },
       },
     },
-    sections: [{ children: children.length ? children : [new Paragraph("")] }],
+    sections: [{
+      properties: {
+        page: {
+          size: {
+            width: 11906,
+            height: 16838,
+            orientation: orientation === "landscape" ? PageOrientation.LANDSCAPE : PageOrientation.PORTRAIT,
+          },
+        },
+      },
+      children: children.length ? children : [new Paragraph("")],
+    }],
   });
   return Packer.toBlob(file);
 }

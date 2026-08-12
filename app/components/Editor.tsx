@@ -998,6 +998,7 @@ export default function Editor({ googleEnabled = false }: { googleEnabled?: bool
   const slashItemsRef = useRef(SLASH_COMMANDS);
   const [tick, setTick] = useState(0);
   const [pageMarginCm, setPageMarginCm] = useState(1);
+  const [pageOrientation, setPageOrientation] = useState<"portrait" | "landscape">("portrait");
   const [zoomPercent, setZoomPercent] = useState(100);
   const [paperBgColor, setPaperBgColor] = useState("#ccd6e5");
   const [docTitle, setDocTitle] = useState("Untitled document");
@@ -1072,10 +1073,16 @@ export default function Editor({ googleEnabled = false }: { googleEnabled?: bool
   const [readingAloud, setReadingAloud] = useState(false);
   const [wholeWord, setWholeWord] = useState(false);
 
+  // A4 at 96dpi: 794×1123px (21×29.7cm). Landscape swaps the two.
+  const isLandscape = pageOrientation === "landscape";
+  const pageWidthPx = isLandscape ? 1123 : 794;
+  const pageHeightPx = isLandscape ? 794 : 1123;
+  const pageWidthCm = isLandscape ? 29.7 : 21;
+
   const handlePrint = useReactToPrint({
     contentRef: printRef,
     pageStyle: `
-      @page { size: A4; margin: ${pageMarginCm}cm; }
+      @page { size: A4 ${pageOrientation}; margin: ${pageMarginCm}cm; }
       body { margin: 0 !important; padding: 0 !important; background: white !important; }
       .pm-page {
         zoom: 1 !important;
@@ -1643,7 +1650,7 @@ export default function Editor({ googleEnabled = false }: { googleEnabled?: bool
     } else {
       const doc = isActiveDoc ? v!.state.doc : parseHtmlToDoc(file.html);
       if (fmt === "docx") {
-        downloadBlob(await docToDocxBlob(doc, file.name || "Document"), `${safe}.docx`);
+        downloadBlob(await docToDocxBlob(doc, file.name || "Document", pageOrientation), `${safe}.docx`);
       } else if (fmt === "md") {
         downloadBlob(new Blob([docToMarkdown(doc)], { type: "text/markdown" }), `${safe}.md`);
       } else {
@@ -1651,7 +1658,7 @@ export default function Editor({ googleEnabled = false }: { googleEnabled?: bool
       }
     }
     toast.success(t.toast.downloaded(`${safe}.${fmt}`));
-  }, []);
+  }, [pageOrientation]);
 
   // Export the document currently open in the editor (used by the File menu).
   const exportActive = useCallback((fmt: "html" | "txt" | "docx" | "rtf" | "md") => {
@@ -1897,6 +1904,7 @@ export default function Editor({ googleEnabled = false }: { googleEnabled?: bool
     }
     if (typeof p.zoom === "number") setZoomPercent(p.zoom);
     if (typeof p.margin === "number") setPageMarginCm(p.margin);
+    if (p.orientation === "portrait" || p.orientation === "landscape") setPageOrientation(p.orientation);
     if (typeof p.bg === "string") setPaperBgColor(p.bg);
     if (typeof p.spellLang === "string") setSpellLang(p.spellLang);
     if (typeof p.printHeader === "boolean") setPrintHeaderFooter(p.printHeader);
@@ -1992,6 +2000,7 @@ export default function Editor({ googleEnabled = false }: { googleEnabled?: bool
         theme: isDark ? "dark" : "light",
         zoom: zoomPercent,
         margin: pageMarginCm,
+        orientation: pageOrientation,
         bg: paperBgColor,
         spellLang,
         printHeader: printHeaderFooter,
@@ -2007,7 +2016,7 @@ export default function Editor({ googleEnabled = false }: { googleEnabled?: bool
       });
     }, 700);
   }, [
-    isAuthed, isDark, zoomPercent, pageMarginCm, paperBgColor,
+    isAuthed, isDark, zoomPercent, pageMarginCm, pageOrientation, paperBgColor,
     spellLang, printHeaderFooter, spellcheckOn, showToolbar, showRuler, locale,
   ]);
 
@@ -2503,12 +2512,18 @@ export default function Editor({ googleEnabled = false }: { googleEnabled?: bool
       const lang = localStorage.getItem("wordpad-spelllang");
       if (lang) setSpellLang(lang);
       if (localStorage.getItem("wordpad-printheader") === "1") setPrintHeaderFooter(true);
+      if (localStorage.getItem("wordpad-orientation") === "landscape") setPageOrientation("landscape");
     } catch {}
   }, []);
 
   const changeSpellLang = useCallback((lang: string) => {
     setSpellLang(lang);
     try { localStorage.setItem("wordpad-spelllang", lang); } catch {}
+  }, []);
+
+  const changePageOrientation = useCallback((o: "portrait" | "landscape") => {
+    setPageOrientation(o);
+    try { localStorage.setItem("wordpad-orientation", o); } catch {}
   }, []);
 
   const togglePrintHeaderFooter = useCallback(() => {
@@ -2590,6 +2605,8 @@ export default function Editor({ googleEnabled = false }: { googleEnabled?: bool
         viewRef={viewRef}
         schema={mySchema}
         pageMarginCm={pageMarginCm}
+        pageOrientation={pageOrientation}
+        onPageOrientationChange={changePageOrientation}
         onPrint={handlePrint}
         docTitle={docTitle}
         onTitleChange={renameActive}
@@ -2667,11 +2684,11 @@ export default function Editor({ googleEnabled = false }: { googleEnabled?: bool
       )}
       {showRuler && !focusMode && (
         <div className="border-b border-border bg-card select-none overflow-hidden">
-          <div className="mx-auto h-5 relative" style={{ width: 794 * (zoomPercent / 100) }}>
+          <div className="mx-auto h-5 relative" style={{ width: pageWidthPx * (zoomPercent / 100) }}>
             <div className="absolute inset-0 flex">
-              {Array.from({ length: 21 }, (_, i) => (
+              {Array.from({ length: Math.ceil(pageWidthCm) }, (_, i) => (
                 <div key={i} className="relative shrink-0 border-l border-border/60"
-                  style={{ width: (794 / 21) * (zoomPercent / 100) }}>
+                  style={{ width: (pageWidthPx / pageWidthCm) * (zoomPercent / 100) }}>
                   <span className="absolute left-0.5 top-0 text-[8px] leading-none text-muted-foreground/70">{i}</span>
                 </div>
               ))}
@@ -2693,6 +2710,8 @@ export default function Editor({ googleEnabled = false }: { googleEnabled?: bool
               ref={editorRef}
               style={{
                 ["--page-margin" as any]: `${pageMarginCm}cm`,
+                ["--page-w" as any]: `${pageWidthPx}px`,
+                ["--page-h" as any]: `${pageHeightPx}px`,
                 ["zoom" as any]: zoomPercent / 100,
               }}
             />

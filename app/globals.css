@@ -198,9 +198,12 @@ body {
 /* ── A4 beyaz sayfa ── */
 .pm-page {
   --page-margin: 1cm;
+  /* Orientation swaps these (landscape: 1123×794) — set inline from Editor. */
+  --page-w: 794px;
+  --page-h: 1123px;
   background: #ffffff;
-  width: 794px;
-  min-height: 1123px;
+  width: var(--page-w);
+  min-height: var(--page-h);
   margin: 0 auto;
   padding: var(--page-margin);
   box-shadow: 0 2px 8px rgba(0,0,0,0.18);
@@ -210,7 +213,7 @@ body {
 /* ── ProseMirror içerik ── */
 .pm-page .ProseMirror {
   outline: none;
-  min-height: calc(1123px - (var(--page-margin) * 2));
+  min-height: calc(var(--page-h, 1123px) - (var(--page-margin) * 2));
   font-family: Arial, sans-serif;
   font-size: 12pt;
   line-height: 1.5;
@@ -228,7 +231,7 @@ body {
 
 .pm-page.ProseMirror {
   outline: none;
-  min-height: calc(1123px - (var(--page-margin) * 2));
+  min-height: calc(var(--page-h, 1123px) - (var(--page-margin) * 2));
   font-family: Arial, sans-serif;
   font-size: 12pt;
   line-height: 1.5;
