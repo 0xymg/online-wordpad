@@ -3209,6 +3209,7 @@ export default function Editor({
         docHref={docUrl}
         onSignIn={openAuth}
         onOpenProfile={openProfile}
+        userEmail={authUser?.email || null}
       />
       {askDialogs}
       <Toaster />

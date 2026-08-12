@@ -27,6 +27,7 @@ interface WelcomeScreenProps {
   onSignIn: () => void;
   /** Opens the account-settings dialog (signed-in users only). */
   onOpenProfile?: () => void;
+  userEmail?: string | null;
 }
 
 function greeting(t: ReturnType<typeof useT>) {
@@ -133,7 +134,7 @@ function DocRowSkeleton() {
 export default function WelcomeScreen({
   open, onClose, isAuthed, userName, files, activeId,
   onNewDocument, onOpenFile, onPickTemplate, onOpenDocument, onCopyLink, onDeleteDocument,
-  docHref, onSignIn, onOpenProfile, loading = false,
+  docHref, onSignIn, onOpenProfile, userEmail, loading = false,
 }: WelcomeScreenProps) {
   const t = useT();
   // Stay mounted through the closing animation so the editor fades in behind
@@ -213,10 +214,15 @@ export default function WelcomeScreen({
               title={t.profile.title}
               className="flex shrink-0 items-center gap-2.5 border border-transparent px-2.5 py-1.5 transition-colors hover:border-border hover:bg-accent/60 focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-ring"
             >
-              <span className="flex h-8 w-8 select-none items-center justify-center bg-primary text-[11px] font-semibold text-primary-foreground">
+              <span className="flex h-9 w-9 select-none items-center justify-center bg-primary text-[11px] font-semibold text-primary-foreground">
                 {(userName || "").trim().split(/\s+/).map((s) => s[0]).slice(0, 2).join("").toUpperCase() || "?"}
               </span>
-              <span className="max-w-[180px] truncate text-sm">{userName}</span>
+              <span className="flex min-w-0 flex-col items-start text-left">
+                <span className="max-w-[220px] truncate text-sm font-medium">{userName}</span>
+                {userEmail && (
+                  <span className="max-w-[220px] truncate text-xs text-muted-foreground">{userEmail}</span>
+                )}
+              </span>
             </button>
           )}
         </div>
