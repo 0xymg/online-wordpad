@@ -1,4 +1,5 @@
 import Editor from "../components/Editor";
+import { googleEnabled } from "@/lib/auth-flags";
 
 export const metadata = {
   title: "Online WordPad Editor — Free Word Processor in Your Browser",
@@ -30,5 +31,5 @@ export const metadata = {
 };
 
 export default function PadPage() {
-  return <Editor />;
+  return <Editor googleEnabled={googleEnabled} />;
 }

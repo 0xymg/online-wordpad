@@ -14,7 +14,13 @@ import { useSession } from "@/lib/auth-client";
  * (from marketing pages, emails, or a bookmark) instead of only existing as a
  * modal inside the editor.
  */
-export default function AuthPageClient({ initialMode }: { initialMode: AuthMode }) {
+export default function AuthPageClient({
+  initialMode,
+  googleEnabled = false,
+}: {
+  initialMode: AuthMode;
+  googleEnabled?: boolean;
+}) {
   const t = useT();
   const { locale, setLocale } = useLocale();
   const [mode, setMode] = useState<AuthMode>(initialMode);
@@ -75,6 +81,7 @@ export default function AuthPageClient({ initialMode }: { initialMode: AuthMode 
             mode={mode}
             onModeChange={changeMode}
             onSuccess={() => router.push("/pad")}
+            googleEnabled={googleEnabled}
           />
         </div>
       </main>

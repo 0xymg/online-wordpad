@@ -1,7 +1,6 @@
 import { betterAuth } from "better-auth";
 import { pool } from "./db";
-
-const hasGoogle = !!(process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET);
+import { googleEnabled } from "./auth-flags";
 
 const trustedOrigins = [
   "https://wordpad.info",
@@ -100,7 +99,7 @@ export const auth = betterAuth({
       }
     },
   },
-  socialProviders: hasGoogle
+  socialProviders: googleEnabled
     ? {
         google: {
           clientId: process.env.GOOGLE_CLIENT_ID as string,

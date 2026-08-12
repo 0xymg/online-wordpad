@@ -8,8 +8,6 @@ import {
   GoogleLogo, Eye, EyeSlash, CloudArrowUp, Files, ShieldCheck, CircleNotch,
 } from "@phosphor-icons/react";
 
-const GOOGLE_ENABLED = process.env.NEXT_PUBLIC_GOOGLE_ENABLED === "true";
-
 export type AuthMode = "login" | "signup" | "forgot";
 
 export function authCopy(t: Dictionary, mode: AuthMode): { title: string; sub: string; cta: string } {
@@ -49,6 +47,8 @@ interface AuthFormProps {
   onSuccess: () => void;
   /** Where OAuth returns to. */
   callbackURL?: string;
+  /** Whether the server has Google OAuth credentials; comes from `lib/auth-flags`. */
+  googleEnabled?: boolean;
   /** Rendered under the form; used by the modal for "continue without an account". */
   footerSlot?: React.ReactNode;
   autoFocus?: boolean;
@@ -59,7 +59,7 @@ interface AuthFormProps {
  * standalone /login and /signup pages so both behave identically.
  */
 export default function AuthForm({
-  mode, onModeChange, onSuccess, callbackURL = "/pad", footerSlot, autoFocus = true,
+  mode, onModeChange, onSuccess, callbackURL = "/pad", googleEnabled = false, footerSlot, autoFocus = true,
 }: AuthFormProps) {
   const t = useT();
   const copy = authCopy(t, mode);
@@ -150,7 +150,7 @@ export default function AuthForm({
         </ul>
       )}
 
-      {GOOGLE_ENABLED && mode !== "forgot" && (
+      {googleEnabled && mode !== "forgot" && (
         <>
           <button
             type="button"

@@ -8,9 +8,11 @@ import { useT } from "./I18nProvider";
 export default function AuthModal({
   open,
   onClose,
+  googleEnabled = false,
 }: {
   open: boolean;
   onClose: () => void;
+  googleEnabled?: boolean;
 }) {
   const t = useT();
   const [mode, setMode] = useState<AuthMode>("login");
@@ -50,6 +52,7 @@ export default function AuthModal({
           mode={mode}
           onModeChange={setMode}
           onSuccess={onClose}
+          googleEnabled={googleEnabled}
           footerSlot={
             mode !== "forgot" ? (
               <button

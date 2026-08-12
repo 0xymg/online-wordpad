@@ -977,7 +977,7 @@ const DEFAULT_REF_CONTENT = `
   </blockquote>
 `;
 
-export default function Editor() {
+export default function Editor({ googleEnabled = false }: { googleEnabled?: boolean }) {
   const t = useT();
   const { locale, setLocale } = useLocale();
   // Read inside ProseMirror callbacks, which are created once and would
@@ -3243,7 +3243,7 @@ export default function Editor() {
           </div>
         </div>
       )}
-      <AuthModal open={authOpen} onClose={() => setAuthOpen(false)} />
+      <AuthModal open={authOpen} onClose={() => setAuthOpen(false)} googleEnabled={googleEnabled} />
       <WelcomeScreen
         open={welcomeOpen}
         onClose={() => setWelcomeOpen(false)}

@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import AuthPageClient from "../AuthPageClient";
+import { googleEnabled } from "@/lib/auth-flags";
 
 export const metadata: Metadata = {
   title: "Log in",
@@ -9,5 +10,5 @@ export const metadata: Metadata = {
 };
 
 export default function LoginPage() {
-  return <AuthPageClient initialMode="login" />;
+  return <AuthPageClient initialMode="login" googleEnabled={googleEnabled} />;
 }

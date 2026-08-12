@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import AuthPageClient from "../AuthPageClient";
+import { googleEnabled } from "@/lib/auth-flags";
 
 export const metadata: Metadata = {
   title: "Create your free account",
@@ -9,5 +10,5 @@ export const metadata: Metadata = {
 };
 
 export default function SignupPage() {
-  return <AuthPageClient initialMode="signup" />;
+  return <AuthPageClient initialMode="signup" googleEnabled={googleEnabled} />;
 }
