@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { FileText, Plus, UploadSimple, X, SignIn, LinkSimple, Trash } from "@phosphor-icons/react";
 import { TEMPLATES, type DocTemplate } from "@/lib/templates";
 import { useT } from "./I18nProvider";
@@ -40,6 +40,11 @@ const PAGE_W = 794;
 const PAGE_H = 1123;
 const THUMB_W = 108;
 const SCALE = THUMB_W / PAGE_W;
+
+/** How many documents the "Last used" list shows before "All documents". */
+const RECENT_COUNT = 5;
+/** Keep in sync with the fade-out duration of .welcome-screen below. */
+const EXIT_MS = 220;
 
 function TemplateThumb({ html }: { html: string }) {
   return (
@@ -117,14 +122,27 @@ export default function WelcomeScreen({
   docHref, onSignIn,
 }: WelcomeScreenProps) {
   const t = useT();
+  // Stay mounted through the closing animation so the editor fades in behind
+  // it instead of snapping into place.
+  const [visible, setVisible] = useState(open);
   useEffect(() => {
-    if (!open) return;
+    if (open) { setVisible(true); return; }
+    const timer = setTimeout(() => setVisible(false), EXIT_MS);
+    return () => clearTimeout(timer);
+  }, [open]);
+
+  // With no documents there is nothing to go back to, so the screen stays put
+  // until one is created or opened.
+  const canClose = files.length > 0;
+
+  useEffect(() => {
+    if (!open || !canClose) return;
     const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") onClose(); };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [open, onClose]);
+  }, [open, onClose, canClose]);
 
-  if (!open) return null;
+  if (!visible) return null;
 
   const firstName = (userName || "").trim().split(/\s+/)[0] || null;
 
@@ -140,7 +158,9 @@ export default function WelcomeScreen({
       role="dialog"
       aria-modal="true"
       aria-label={t.welcome.ariaLabel}
-      className="fixed inset-0 z-[1400] overflow-y-auto bg-background text-foreground"
+      className={`welcome-screen fixed inset-0 z-[1400] overflow-y-auto bg-background text-foreground ${
+        open ? "welcome-screen-in" : "welcome-screen-out"
+      }`}
     >
       {/* Top bar */}
       <div className="sticky top-0 z-10 flex items-center justify-between border-b border-border bg-background/95 px-5 py-2.5 backdrop-blur">
@@ -148,13 +168,15 @@ export default function WelcomeScreen({
           <span className="text-lg font-bold tracking-tight text-foreground dark:text-[#FFFFE3]">EDTR</span>
           <span className="text-sm font-semibold tracking-wider text-muted-foreground dark:text-[#FFFFE3]/70">PAD</span>
         </span>
-        <button
-          type="button"
-          onClick={onClose}
-          className="flex items-center gap-1.5 rounded-md border border-input px-3 py-1.5 text-sm hover:bg-accent focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-ring"
-        >
-          {t.welcome.skipToEditor} <X size={14} />
-        </button>
+        {canClose && (
+          <button
+            type="button"
+            onClick={onClose}
+            className="flex items-center gap-1.5 rounded-md border border-input px-3 py-1.5 text-sm hover:bg-accent focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-ring"
+          >
+            {t.welcome.skipToEditor} <X size={14} />
+          </button>
+        )}
       </div>
 
       {/* The template strip gets the wider container; the document lists below
@@ -201,17 +223,19 @@ export default function WelcomeScreen({
           ))}
         </div>
 
+        {/* Stays open behind the file picker — the editor appears once a file is
+            actually chosen (and nothing flashes if the picker is cancelled). */}
         <button
           type="button"
-          onClick={() => { onOpenFile(); onClose(); }}
+          onClick={onOpenFile}
           className="mt-4 flex items-center gap-2 rounded-md border border-input px-3 py-2 text-sm hover:bg-accent focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-ring"
         >
           <UploadSimple size={16} /> {t.welcome.openFile}
           <span className="text-xs text-muted-foreground">{t.welcome.openFileFormats}</span>
         </button>
 
-        {/* Document lists — narrower than the strip above */}
-        <div className="max-w-4xl">
+        {/* Document lists — narrower than the strip above, and centred in it */}
+        <div className="mx-auto max-w-4xl">
           <h2 className="mb-2 mt-10 text-sm font-medium text-muted-foreground">
             {isAuthed ? t.welcome.lastUsed : t.welcome.continueWhereLeftOff}
           </h2>
@@ -221,12 +245,12 @@ export default function WelcomeScreen({
             </p>
           ) : (
             <div className="divide-y divide-border overflow-hidden rounded-md border border-border">
-              <DocRow {...rowProps} f={files[0]} />
+              {files.slice(0, RECENT_COUNT).map((f) => <DocRow key={f.id} {...rowProps} f={f} />)}
             </div>
           )}
 
-          {/* Everything else, only worth a section once there is more than one */}
-          {files.length > 1 && (
+          {/* Everything else, only worth a section once there is more to show */}
+          {files.length > RECENT_COUNT && (
             <>
               <h2 className="mb-2 mt-8 text-sm font-medium text-muted-foreground">
                 {t.welcome.allDocuments} <span className="text-xs font-normal">({files.length})</span>
@@ -240,7 +264,7 @@ export default function WelcomeScreen({
 
         {/* Sign-in nudge for guests */}
         {!isAuthed && (
-          <div className="mt-10 flex max-w-4xl flex-wrap items-center justify-between gap-3 rounded-lg border border-border bg-card px-4 py-3">
+          <div className="mx-auto mt-10 flex max-w-4xl flex-wrap items-center justify-between gap-3 rounded-lg border border-border bg-card px-4 py-3">
             <p className="text-sm text-muted-foreground">
               {t.welcome.guestNudge}
             </p>

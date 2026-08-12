@@ -255,6 +255,10 @@ export const en = {
     replaceDocBody:
       "Without an account you have a single document, so starting a new one replaces it. A snapshot is kept in version history. Export first if you want a file copy.",
     replaceDocConfirm: "Replace document",
+    deleteDocTitle: "Delete this document?",
+    deleteDocBody: (name: string) =>
+      `“${name}” and its version history will be deleted permanently. This cannot be undone.`,
+    deleteDocConfirm: "Delete permanently",
     renameTitle: "Rename document",
     renameLabel: "Document name",
     renameConfirm: "Rename",
@@ -294,7 +298,8 @@ export const en = {
     greetingNight: "Working late",
     greetingWith: (greeting: string, name: string) => `${greeting}, ${name}!`,
     titleGuest: "Welcome to EDTRpad",
-    subtitle: "Free word processor in your browser — no installation, no sign-up required.",
+    subtitle:
+      "Write, format, and print documents straight from your browser. Nothing to install, no account needed, and your work is saved as you type.",
     startNew: "Start a new document",
     blankDocument: "Blank document",
     openFile: "Open a file from your device",

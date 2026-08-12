@@ -223,6 +223,28 @@ body {
   color: #000;
 }
 
+/* ── Start screen (welcome) geçişleri ── */
+/* EXIT_MS in WelcomeScreen.tsx must match the fade-out duration. */
+@keyframes welcome-in {
+  from { opacity: 0; transform: scale(1.015); }
+  to   { opacity: 1; transform: scale(1); }
+}
+@keyframes welcome-out {
+  from { opacity: 1; transform: scale(1); }
+  to   { opacity: 0; transform: scale(0.99); }
+}
+.welcome-screen-in {
+  animation: welcome-in 220ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+.welcome-screen-out {
+  animation: welcome-out 220ms cubic-bezier(0.4, 0, 1, 1) both;
+  pointer-events: none;
+}
+@media (prefers-reduced-motion: reduce) {
+  .welcome-screen-in,
+  .welcome-screen-out { animation-duration: 1ms; }
+}
+
 /* ── Sayfa arası boşluk (pagination spacer, decoration) ── */
 /* Ölçüm sırasında spacer'lar akıştan çıkarılır (paginationPlugin). */
 .pm-measuring .pm-page-spacer { display: none !important; }

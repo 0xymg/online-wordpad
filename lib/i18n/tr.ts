@@ -253,6 +253,10 @@ export const tr: Dictionary = {
     replaceDocBody:
       "Hesabınız olmadan tek bir belgeniz olur, bu nedenle yeni bir belge açmak mevcut belgenin yerini alır. Sürüm geçmişine bir anlık görüntü kaydedilir. Dosya kopyası istiyorsanız önce dışa aktarın.",
     replaceDocConfirm: "Belgeyi değiştir",
+    deleteDocTitle: "Bu belge silinsin mi?",
+    deleteDocBody: (name: string) =>
+      `“${name}” ve sürüm geçmişi kalıcı olarak silinecek. Bu işlem geri alınamaz.`,
+    deleteDocConfirm: "Kalıcı olarak sil",
     renameTitle: "Belgeyi yeniden adlandır",
     renameLabel: "Belge adı",
     renameConfirm: "Yeniden adlandır",
@@ -292,7 +296,8 @@ export const tr: Dictionary = {
     greetingNight: "Geç saatlere kaldınız",
     greetingWith: (greeting: string, name: string) => `${greeting}, ${name}!`,
     titleGuest: "EDTRpad'e hoş geldiniz",
-    subtitle: "Tarayıcınızda çalışan ücretsiz kelime işlemci — kurulum yok, kayıt gerekmez.",
+    subtitle:
+      "Belgelerinizi doğrudan tarayıcıda yazın, biçimlendirin ve yazdırın. Kurulum yok, hesap gerekmiyor, yazdıkça kaydediliyor.",
     startNew: "Yeni bir belge başlatın",
     blankDocument: "Boş belge",
     openFile: "Cihazınızdan bir dosya açın",

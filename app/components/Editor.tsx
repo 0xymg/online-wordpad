@@ -52,7 +52,7 @@ import { useT, useLocale } from "./I18nProvider";
 import { isLocale, type Dictionary } from "@/lib/i18n";
 import {
   listDocuments, createDocument, updateDocument, renameDocument, deleteDocument,
-  getPreferences, savePreferences, setDocumentFolder,
+  getPreferences, savePreferences,
   saveVersion, listVersions, getVersionHtml, type DocRow,
 } from "@/app/actions/user-data";
 import { saveGuestVersion, listGuestVersions, removeGuestVersions } from "@/lib/versions";
@@ -761,11 +761,15 @@ function serializeDoc(doc: PMNode): string {
 
 function loadFiles(): { list: FileItem[]; active: string } {
   let list: FileItem[] = [];
+  let stored = false;
   try {
     const raw = localStorage.getItem(FILES_KEY);
-    if (raw) list = JSON.parse(raw);
+    if (raw) { list = JSON.parse(raw); stored = true; }
   } catch { list = []; }
-  if (!Array.isArray(list) || list.length === 0) {
+  if (!Array.isArray(list)) { list = []; stored = false; }
+  // An empty stored list means the visitor deleted everything — respect that
+  // and let the start screen offer a new document instead of conjuring one.
+  if (!list.length && !stored) {
     const legacy = localStorage.getItem("wordpad-content-pm");
     const legacyTitle = localStorage.getItem("wordpad-title");
     list = [{
@@ -775,7 +779,7 @@ function loadFiles(): { list: FileItem[]; active: string } {
     }];
   }
   let active = localStorage.getItem(ACTIVE_KEY) || "";
-  if (!list.find((f) => f.id === active)) active = list[0].id;
+  if (!list.find((f) => f.id === active)) active = list[0]?.id ?? "";
   return { list, active };
 }
 
@@ -1301,6 +1305,12 @@ export default function Editor({ googleEnabled = false }: { googleEnabled?: bool
     else window.history.replaceState({ docId: id }, "", url);
   }, [docUrl]);
 
+  // Drop ?doc=… — used when no document is open (e.g. the last one was deleted).
+  const clearDocUrl = useCallback(() => {
+    if (!window.location.search) return;
+    window.history.replaceState({}, "", window.location.pathname);
+  }, []);
+
   const copyDocLink = useCallback(async (id: string) => {
     const url = `${window.location.origin}${docUrl(id)}`;
     try {
@@ -1502,69 +1512,57 @@ export default function Editor({ googleEnabled = false }: { googleEnabled?: bool
     return addNewDocument(t.name, t.html);
   }, [addNewDocument]);
 
-  // Bring a just-deleted document back (Undo in the delete toast). For signed-in
-  // users the server row is gone, so it is recreated as a new document.
-  const restoreDeleted = useCallback(async (target: FileItem) => {
-    if (isAuthedRef.current) {
-      try {
-        const doc = await createDocument(target.name, target.html);
-        if (target.folder) setDocumentFolder(doc.id, target.folder).catch(() => {});
-        applyFiles([{ ...doc, folder: target.folder ?? null }, ...filesRef.current], doc.id);
-        setDocFromHtml(doc.html);
-        setDocTitle(doc.name);
-        syncUrlToDoc(doc.id);
-      } catch {
-        toast.error(t.toast.restoreFailed);
-      }
-    } else {
-      applyFiles([target, ...filesRef.current.filter((f) => f.id !== target.id)], target.id);
-      setDocFromHtml(target.html);
-      setDocTitle(target.name);
-      syncUrlToDoc(target.id);
-    }
-  }, [applyFiles, setDocFromHtml, syncUrlToDoc]);
-
+  // Deleting is permanent and confirmed up front: the document goes from the
+  // list, from local storage, from its version history, and (for members) from
+  // the database before this resolves. Deleting the last document leaves the
+  // library empty — only the start screen creates documents.
   const deleteFile = useCallback(async (id: string) => {
     const target = filesRef.current.find((f) => f.id === id);
+    if (!target) return;
+    const label = target.name || t.sidebar.untitled;
+    if (!(await confirmDialog({
+      title: t.dialog.deleteDocTitle,
+      description: t.dialog.deleteDocBody(label),
+      confirmLabel: t.dialog.deleteDocConfirm,
+      destructive: true,
+    }))) return;
+
     if (pendingSaveRef.current?.id === id) {
       if (saveTimer.current) { clearTimeout(saveTimer.current); saveTimer.current = null; }
       pendingSaveRef.current = null;
     }
-    if (!isAuthedRef.current) removeGuestVersions(id);
     const wasActive = activeIdRef.current === id;
-    let list = filesRef.current.filter((f) => f.id !== id);
-    const notifyDeleted = () => {
-      if (!target) return;
-      toast(t.toast.deleted(target.name || t.sidebar.untitled), {
-        action: { label: t.toast.undo, onClick: () => restoreDeleted(target) },
-      });
-    };
+    const list = filesRef.current.filter((f) => f.id !== id);
+
     if (isAuthedRef.current) {
-      deleteDocument(id).catch(() => {
+      try {
+        await deleteDocument(id);
+      } catch {
         toast.error(t.toast.deleteFailed);
-      });
-      if (list.length === 0) {
-        try {
-          const doc = await createDocument("Untitled document", "<p></p>");
-          applyFiles([doc], doc.id);
-          setDocFromHtml(doc.html);
-          setDocTitle(doc.name);
-          syncUrlToDoc(doc.id);
-        } catch {}
-        notifyDeleted();
         return;
       }
-    } else if (list.length === 0) {
-      list = [{ id: newId(), name: "Untitled 1", html: "<p></p>" }];
+    } else {
+      removeGuestVersions(id);
     }
-    const nextActive = wasActive ? list[0].id : activeIdRef.current;
+
+    const nextActive = wasActive ? (list[0]?.id ?? "") : activeIdRef.current;
     applyFiles(list, nextActive);
     if (wasActive) {
-      const t = list.find((f) => f.id === nextActive);
-      if (t) { setDocFromHtml(t.html); setDocTitle(t.name); syncUrlToDoc(t.id); }
+      const next = list.find((f) => f.id === nextActive);
+      if (next) {
+        setDocFromHtml(next.html);
+        setDocTitle(next.name);
+        syncUrlToDoc(next.id);
+      } else {
+        // Nothing left to show — clear the editor and hand over to the start screen.
+        setDocFromHtml("<p></p>");
+        setDocTitle("");
+        clearDocUrl();
+        setWelcomeOpen(true);
+      }
     }
-    notifyDeleted();
-  }, [applyFiles, restoreDeleted, setDocFromHtml, syncUrlToDoc]);
+    toast.success(t.toast.deleted(label));
+  }, [applyFiles, clearDocUrl, confirmDialog, setDocFromHtml, syncUrlToDoc, t]);
 
   // Live title input: reflect typing immediately, debounce the persisted rename.
   const renameActive = useCallback((name: string) => {
@@ -1696,6 +1694,9 @@ export default function Editor({ googleEnabled = false }: { googleEnabled?: bool
       const { fileToHtml } = await import("@/lib/doc-import");
       const { html, name } = await fileToHtml(file);
       await addNewDocument(name, html);
+      // The start screen stays up while the picker is open; the imported
+      // document is what closes it.
+      setWelcomeOpen(false);
     } catch {
       toast.error(t.toast.openFailed);
     }
@@ -1939,6 +1940,13 @@ export default function Editor({ googleEnabled = false }: { googleEnabled?: bool
   useEffect(() => {
     if (sessionPending || !viewRef.current) return;
     let cancelled = false;
+    // Show the start screen *before* the documents load, so signing in doesn't
+    // flash the editor first. A ?doc=… deep link goes straight to the editor.
+    const welcomeUid = authUser?.id ?? "";
+    if (authUser && !initialDeepLinkId && welcomedForRef.current !== welcomeUid) {
+      welcomedForRef.current = welcomeUid;
+      setWelcomeOpen(true);
+    }
     (async () => {
       if (authUser) {
         let docs = await listDocuments().catch(() => [] as DocRow[]);
@@ -1958,32 +1966,25 @@ export default function Editor({ googleEnabled = false }: { googleEnabled?: bool
               localStorage.removeItem(ACTIVE_KEY);
             } catch {}
           }
-          if (!docs.length) {
-            try { docs = [await createDocument("Welcome", DEFAULT_REF_CONTENT)]; } catch { docs = []; }
-          }
         }
-        if (cancelled || !docs.length) return;
+        if (cancelled) return;
         // A ?doc=… deep link wins over the default document, when it still exists.
         const deepLinkId = takeDeepLinkId();
         const deepLinked = deepLinkId ? docs.find((d) => d.id === deepLinkId) : undefined;
         if (deepLinkId && !deepLinked) {
           toast.warning(t.toast.deepLinkMissing);
         }
+        // An empty library is a valid state (everything was deleted): the start
+        // screen is the only place that creates documents.
         const active = deepLinked ?? docs[0];
-        filesRef.current = docs; activeIdRef.current = active.id;
-        setFiles(docs); setActiveId(active.id);
-        setDocFromHtml(active.html); setDocTitle(active.name);
+        filesRef.current = docs; activeIdRef.current = active?.id ?? "";
+        setFiles(docs); setActiveId(active?.id ?? "");
+        if (active) { setDocFromHtml(active.html); setDocTitle(active.name); }
+        else { setDocFromHtml("<p></p>"); setDocTitle(""); setWelcomeOpen(true); }
         // Only stamp the URL when the visitor actually arrived via a deep link.
         // Writing it on a plain /pad visit would make the next reload look like
         // a deep link and skip the start screen.
         if (deepLinked) syncUrlToDoc(active.id);
-        // Every sign-in lands on the start screen, unless a deep link asked for
-        // one specific document.
-        const uid = authUser?.id ?? "";
-        if (!deepLinked && welcomedForRef.current !== uid) {
-          welcomedForRef.current = uid;
-          setWelcomeOpen(true);
-        }
         try { const prefs = await getPreferences(); if (!cancelled) applyPreferences(prefs); } catch {}
         prefsLoadedRef.current = true;
       } else {
@@ -1996,10 +1997,12 @@ export default function Editor({ googleEnabled = false }: { googleEnabled?: bool
           toast.warning("That document link is no longer available — opening your latest document.");
         }
         const activeFile = deepLinked ?? list.find((f) => f.id === active) ?? list[0];
-        const activeId = activeFile.id;
+        const activeId = activeFile?.id ?? "";
         filesRef.current = list; activeIdRef.current = activeId;
         setFiles(list); setActiveId(activeId);
-        setDocFromHtml(activeFile.html); setDocTitle(activeFile.name);
+        if (activeFile) { setDocFromHtml(activeFile.html); setDocTitle(activeFile.name); }
+        // Guest deleted their last document: start screen, no auto-created doc.
+        else { setDocFromHtml("<p></p>"); setDocTitle(""); setWelcomeOpen(true); }
         if (deepLinked) syncUrlToDoc(activeId);
         try {
           localStorage.setItem(FILES_KEY, JSON.stringify(list));

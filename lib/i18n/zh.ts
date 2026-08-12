@@ -253,6 +253,9 @@ export const zh: Dictionary = {
     replaceDocBody:
       "未登录时只能保存一个文档，因此新建文档会替换当前文档。系统会在版本历史中保留一份快照。如果需要文件副本，请先导出。",
     replaceDocConfirm: "替换文档",
+    deleteDocTitle: "确定删除此文档？",
+    deleteDocBody: (name: string) => `“${name}”及其版本历史将被永久删除，且无法恢复。`,
+    deleteDocConfirm: "永久删除",
     renameTitle: "重命名文档",
     renameLabel: "文档名称",
     renameConfirm: "重命名",
@@ -292,7 +295,7 @@ export const zh: Dictionary = {
     greetingNight: "夜深了",
     greetingWith: (greeting: string, name: string) => `${greeting}，${name}！`,
     titleGuest: "欢迎使用 EDTRpad",
-    subtitle: "浏览器中的免费文字处理器，无需安装，无需注册。",
+    subtitle: "直接在浏览器里撰写、排版并打印文档。无需安装，不用注册，输入时自动保存。",
     startNew: "新建文档",
     blankDocument: "空白文档",
     openFile: "从本地设备打开文件",

@@ -253,6 +253,10 @@ export const fr: Dictionary = {
     replaceDocBody:
       "Sans compte, vous ne disposez que d'un seul document : en créer un nouveau remplacera donc celui-ci. Une copie sera conservée dans l'historique des versions. Exportez-le d'abord si vous souhaitez en garder un fichier.",
     replaceDocConfirm: "Remplacer le document",
+    deleteDocTitle: "Supprimer ce document ?",
+    deleteDocBody: (name: string) =>
+      `« ${name} » et son historique de versions seront supprimés définitivement. Cette action est irréversible.`,
+    deleteDocConfirm: "Supprimer définitivement",
     renameTitle: "Renommer le document",
     renameLabel: "Nom du document",
     renameConfirm: "Renommer",
@@ -292,7 +296,8 @@ export const fr: Dictionary = {
     greetingNight: "Vous travaillez tard",
     greetingWith: (greeting: string, name: string) => `${greeting}, ${name} !`,
     titleGuest: "Bienvenue sur EDTRpad",
-    subtitle: "Traitement de texte gratuit dans votre navigateur — sans installation ni inscription.",
+    subtitle:
+      "Rédigez, mettez en forme et imprimez vos documents directement dans votre navigateur. Rien à installer, aucun compte requis, et tout est enregistré au fil de la frappe.",
     startNew: "Créer un nouveau document",
     blankDocument: "Document vierge",
     openFile: "Ouvrir un fichier depuis votre appareil",
