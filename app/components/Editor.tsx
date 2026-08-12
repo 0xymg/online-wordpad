@@ -25,6 +25,7 @@ import { tableEditing, columnResizing, tableNodes, isInTable, findTable, CellSel
 import MenuBar from "./MenuBar";
 import Toolbar from "./Toolbar";
 import TableContextMenu from "./TableContextMenu";
+import { paginationPlugin, type PageLayoutConfig } from "./paginationPlugin";
 import {
   searchPlugin, setSearch, findNext, findPrev,
   replaceCurrent, replaceAll, clearSearch, getSearchState,
@@ -355,6 +356,13 @@ const editorHandlers: {
   flushSave?: () => void;
 } = {};
 
+// CSS reference pixel: 96px per inch, 2.54cm per inch.
+const CM_TO_PX = 96 / 2.54;
+
+// Current page geometry for the pagination plugin (single-editor app, same
+// pattern as editorHandlers). Updated from React state; read at measure time.
+const pageLayoutConfig: PageLayoutConfig = { pageHeightPx: 1123, marginPx: CM_TO_PX };
+
 function setTextAlignCmd(align: "left" | "center" | "right" | "justify") {
   return (state: EditorState, dispatch?: (tr: Transaction) => void): boolean => {
     const { from, to } = state.selection;
@@ -383,6 +391,7 @@ function buildPlugins() {
     columnResizing(),
     tableEditing(),
     searchPlugin(),
+    paginationPlugin(() => pageLayoutConfig),
     keymap({
       "Mod-z":       undo,
       "Mod-y":       redo,
@@ -1079,6 +1088,15 @@ export default function Editor({ googleEnabled = false }: { googleEnabled?: bool
   const pageHeightPx = isLandscape ? 794 : 1123;
   const pageWidthCm = isLandscape ? 29.7 : 21;
 
+  // Keep the pagination plugin's geometry in sync; an empty transaction pokes
+  // its update hook so pages re-flow right away.
+  useEffect(() => {
+    pageLayoutConfig.pageHeightPx = pageHeightPx;
+    pageLayoutConfig.marginPx = pageMarginCm * CM_TO_PX;
+    const v = viewRef.current;
+    if (v) v.dispatch(v.state.tr);
+  }, [pageHeightPx, pageMarginCm]);
+
   const handlePrint = useReactToPrint({
     contentRef: printRef,
     pageStyle: `
@@ -1100,6 +1118,9 @@ export default function Editor({ googleEnabled = false }: { googleEnabled?: bool
         break-after: page !important;
       }
       hr.pm-page-break::after { content: "" !important; display: none !important; }
+      /* On-screen pagination spacers: print uses real CSS page breaks instead. */
+      .pm-page-spacer { display: none !important; }
+      .pm-page .ProseMirror { padding-bottom: 0 !important; min-height: unset !important; }
       /* position:fixed repeats on every printed page (Chromium/Firefox) */
       .pm-print-header, .pm-print-footer {
         display: flex !important;
@@ -2696,7 +2717,10 @@ export default function Editor({ googleEnabled = false }: { googleEnabled?: bool
           </div>
         </div>
       )}
-      <div className="editor-shell" style={{ backgroundColor: paperBgColor }}>
+      <div
+        className="editor-shell"
+        style={{ backgroundColor: paperBgColor, ["--shell-bg" as any]: paperBgColor }}
+      >
         <TableContextMenu viewRef={viewRef}>
           <div ref={printRef}>
             {printHeaderFooter && (

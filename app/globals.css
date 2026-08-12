@@ -220,6 +220,21 @@ body {
   color: #000;
 }
 
+/* ── Sayfa arası boşluk (pagination spacer, decoration) ── */
+.pm-page-spacer {
+  display: block;
+  user-select: none;
+  pointer-events: none;
+}
+.pm-page-spacer-gap {
+  background: var(--shell-bg, #ccd6e5);
+  /* Fake the bottom edge of the closing page and the top edge of the next. */
+  box-shadow:
+    inset 0 8px 6px -8px rgba(0, 0, 0, 0.4),
+    inset 0 -8px 6px -8px rgba(0, 0, 0, 0.4);
+}
+.dark .pm-page-spacer-gap { background: #141414 !important; }
+
 /* Find & Replace highlights */
 .search-match {
   background-color: rgba(250, 204, 21, 0.45);
