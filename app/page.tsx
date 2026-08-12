@@ -480,7 +480,7 @@ export default function LandingPage() {
 
       {/* ── Footer ── */}
       <footer className="border-t border-gray-100 py-10">
-        <div className="mx-auto max-w-5xl px-6 flex flex-col sm:flex-row items-center justify-between gap-4 text-sm text-gray-400">
+        <div className="mx-auto max-w-5xl px-6 flex flex-col sm:flex-row items-center justify-between gap-4 text-sm text-gray-500">
           <span>
             © {new Date().getFullYear()} EDTRpad · Free Online WordPad
           </span>
@@ -490,7 +490,7 @@ export default function LandingPage() {
             <a href="/llms.txt" className="hover:text-gray-600 transition-colors">llms.txt</a>
           </div>
         </div>
-        <div className="mx-auto max-w-5xl px-6 mt-4 text-xs text-gray-300 leading-relaxed">
+        <div className="mx-auto max-w-5xl px-6 mt-4 text-xs text-gray-500 leading-relaxed">
           Disclaimer: without an account, EDTRpad stores your document in your browser local storage. If you clear your browser cache or storage, your document will be lost. Please export important files regularly. EDTRpad is an independent project and is not affiliated with Microsoft or the Microsoft WordPad application.
         </div>
       </footer>

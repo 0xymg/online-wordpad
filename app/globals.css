@@ -683,3 +683,22 @@ body {
 .pm-print-footer {
   display: none;
 }
+
+/* Compact typography for the version-history preview pane */
+.version-preview {
+  font-family: Arial, sans-serif;
+  font-size: 11px;
+  line-height: 1.45;
+}
+.version-preview h1 { font-size: 17px; font-weight: 700; margin: 8px 0 4px; }
+.version-preview h2 { font-size: 14px; font-weight: 700; margin: 7px 0 3px; }
+.version-preview h3, .version-preview h4 { font-size: 12px; font-weight: 700; margin: 6px 0 2px; }
+.version-preview p { margin: 3px 0; }
+.version-preview ul, .version-preview ol { margin: 3px 0; padding-left: 18px; }
+.version-preview ul { list-style: disc; }
+.version-preview ol { list-style: decimal; }
+.version-preview table { border-collapse: collapse; margin: 5px 0; }
+.version-preview td, .version-preview th { border: 1px solid #d1d5db; padding: 2px 5px; }
+.version-preview img { max-width: 100%; height: auto; }
+.version-preview hr { margin: 6px 0; border-color: #e5e7eb; }
+.version-preview blockquote { border-left: 3px solid #d1d5db; margin: 4px 0; padding-left: 8px; color: #4b5563; }

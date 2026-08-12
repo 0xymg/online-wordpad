@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, lazy, Suspense } from "react";
+import { useState, useEffect, lazy, Suspense } from "react";
 import { EditorView } from "prosemirror-view";
 import { EditorState, Transaction, TextSelection } from "prosemirror-state";
 import { toggleMark, setBlockType, wrapIn } from "prosemirror-commands";
@@ -70,7 +70,8 @@ const BLOCK_STYLES = [
 /* ── Button ─────────────────────────────────────────────────────────────── */
 const BTN = cn(
   "inline-flex items-center justify-center w-10 h-10 rounded cursor-pointer shrink-0 transition-colors",
-  "hover:bg-accent hover:text-accent-foreground focus-visible:outline-none"
+  "hover:bg-accent hover:text-accent-foreground",
+  "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset"
 );
 
 function TBtn({ onClick, active, tip, children }: {
@@ -79,8 +80,14 @@ function TBtn({ onClick, active, tip, children }: {
   return (
     <Tooltip>
       <TooltipTrigger asChild>
+        {/* mousedown only prevents focus theft from the editor; the action runs
+            on click so keyboard activation (Enter/Space) works too. */}
         <button
-          onMouseDown={(e) => { e.preventDefault(); onClick(); }}
+          type="button"
+          aria-label={tip}
+          aria-pressed={active}
+          onMouseDown={(e) => e.preventDefault()}
+          onClick={onClick}
           className={cn(BTN, active && "bg-accent text-accent-foreground")}
         >
           {children}
@@ -124,7 +131,7 @@ function TablePicker({ onPick }: { onPick: (rows: number, cols: number) => void 
       <Tooltip>
         <TooltipTrigger asChild>
           <PopoverTrigger asChild>
-            <button onMouseDown={(e) => e.preventDefault()} className={cn(BTN, open && "bg-accent text-accent-foreground")}>
+            <button type="button" aria-label="Insert table" onMouseDown={(e) => e.preventDefault()} className={cn(BTN, open && "bg-accent text-accent-foreground")}>
               <Table size={16} />
             </button>
           </PopoverTrigger>
@@ -139,11 +146,15 @@ function TablePicker({ onPick }: { onPick: (rows: number, cols: number) => void 
             Array.from({ length: GRID_COLS }, (_, ci) => {
               const active = ri < hovered.r && ci < hovered.c;
               return (
-                <div key={`${ri}-${ci}`}
+                <button key={`${ri}-${ci}`} type="button"
+                  aria-label={`Insert ${ri + 1} × ${ci + 1} table`}
                   className={cn("w-5 h-5 border rounded-sm cursor-pointer transition-colors",
+                    "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
                     active ? "bg-blue-500 border-blue-600" : "bg-background border-border hover:border-blue-400")}
                   onMouseEnter={() => setHovered({ r: ri + 1, c: ci + 1 })}
-                  onMouseDown={(e) => { e.preventDefault(); pick(ri + 1, ci + 1); }}
+                  onFocus={() => setHovered({ r: ri + 1, c: ci + 1 })}
+                  onMouseDown={(e) => e.preventDefault()}
+                  onClick={() => pick(ri + 1, ci + 1)}
                 />
               );
             })
@@ -172,7 +183,6 @@ interface ToolbarProps {
 export default function Toolbar({
   viewRef, schema, onInsertTable, onPageBreakAdd, onLinkAdd, onImageAdd, tick,
 }: ToolbarProps) {
-  void tick;
   const [textColor, setTextColor] = useState("#000000");
   const [bgColor,   setBgColor]   = useState("#ffff00");
   const SZ = 22;
@@ -192,7 +202,13 @@ export default function Toolbar({
 
   const applyMark = (markName: string, attrs: Record<string, string>) => {
     const v = viewRef.current; if (!v) return;
-    const mt = schema.marks[markName]; if (!mt || v.state.selection.empty) return;
+    const mt = schema.marks[markName]; if (!mt) return;
+    if (v.state.selection.empty) {
+      // Collapsed cursor: store the mark so it applies to whatever is typed next.
+      v.dispatch(v.state.tr.addStoredMark(mt.create(attrs)));
+      v.focus();
+      return;
+    }
     const tr = v.state.tr;
     v.state.selection.ranges.forEach(({ $from, $to }: any) => {
       tr.removeMark($from.pos, $to.pos, mt);
@@ -200,6 +216,46 @@ export default function Toolbar({
     });
     v.dispatch(tr); v.focus();
   };
+
+  // Attrs of the given mark at the cursor (or on the first marked text in the
+  // selection) — lets the font/size selects mirror where the cursor is.
+  const activeMarkAttrs = (markName: string): Record<string, string> | null => {
+    const v = viewRef.current; if (!v) return null;
+    const mt = schema.marks[markName]; if (!mt) return null;
+    const { empty, $from, from, to } = v.state.selection;
+    if (empty) {
+      const m = mt.isInSet(v.state.storedMarks || $from.marks());
+      return m ? m.attrs : null;
+    }
+    let attrs: Record<string, string> | null = null;
+    v.state.doc.nodesBetween(from, to, (node: any) => {
+      if (attrs) return false;
+      if (node.isText) {
+        const m = mt.isInSet(node.marks);
+        if (m) { attrs = m.attrs; return false; }
+      }
+      return true;
+    });
+    return attrs;
+  };
+
+  // Mirror the cursor's formatting in the selects/buttons. Recomputed per editor
+  // transaction (tick) in an effect — refs must not be read during render.
+  const [selFmt, setSelFmt] = useState({ fontFamily: "", fontSize: "12", block: "paragraph", align: "left" });
+  useEffect(() => {
+    const v = viewRef.current; if (!v) return;
+    const parent = v.state.selection.$from.parent;
+    setSelFmt({
+      fontFamily: activeMarkAttrs("fontFamily")?.family ?? "",
+      fontSize: (activeMarkAttrs("fontSize")?.size ?? "12pt").replace("pt", ""),
+      block: parent.type === schema.nodes.heading ? `h${parent.attrs.level}`
+        : parent.type === schema.nodes.code_block ? "code_block"
+        : "paragraph",
+      align: (parent.attrs?.textAlign as string) || "left",
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [tick]);
+  const { fontFamily: currentFontFamily, fontSize: currentFontSize, block: currentBlock, align: currentAlign } = selFmt;
 
   const setTextAlign = (align: string) => {
     const v = viewRef.current; if (!v) return;
@@ -268,7 +324,8 @@ export default function Toolbar({
         <Row between>
           <select className={cn(SEL, "w-[120px]")}
             onChange={(e) => applyMark("fontFamily", { family: e.target.value })}
-            defaultValue="" title="Font family">
+            value={FONTS.some(f => f.value === currentFontFamily) ? currentFontFamily : ""}
+            aria-label="Font family" title="Font family">
             <option value="" disabled>Font</option>
             <optgroup label="Classic">
               {FONTS.slice(0, 7).map(f => <option key={f.value} value={f.value}>{f.label}</option>)}
@@ -288,7 +345,8 @@ export default function Toolbar({
           </select>
           <select className={cn(SEL, "w-[54px]")}
             onChange={(e) => applyMark("fontSize", { size: e.target.value + "pt" })}
-            defaultValue="12" title="Font size">
+            value={currentFontSize} aria-label="Font size" title="Font size">
+            {FONT_SIZES.includes(currentFontSize) ? null : <option value={currentFontSize}>{currentFontSize}</option>}
             {FONT_SIZES.map(s => <option key={s} value={s}>{s}</option>)}
           </select>
           <ColorPicker color={bgColor}   onChange={(c) => { setBgColor(c);   applyMark("bgColor",   { color: c }); }} tip="Highlight color" icon={<Highlighter size={18} />} />
@@ -316,13 +374,14 @@ export default function Toolbar({
               else if (/^h\d$/.test(val))    cmd(setBlockType(nodes.heading, { level: +val[1] }));
               else if (val === "code_block") cmd(setBlockType(nodes.code_block));
             }}
-            defaultValue="paragraph" title="Block style">
+            value={BLOCK_STYLES.some(s => s.value === currentBlock) ? currentBlock : "paragraph"}
+            aria-label="Block style" title="Block style">
             {BLOCK_STYLES.map(s => <option key={s.value} value={s.value}>{s.label}</option>)}
           </select>
-          <TBtn onClick={() => setTextAlign("left")}    tip="Align left">    <TextAlignLeft size={SZ} /></TBtn>
-          <TBtn onClick={() => setTextAlign("center")}  tip="Align center">  <TextAlignCenter size={SZ} /></TBtn>
-          <TBtn onClick={() => setTextAlign("right")}   tip="Align right">   <TextAlignRight size={SZ} /></TBtn>
-          <TBtn onClick={() => setTextAlign("justify")} tip="Justify">       <TextAlignJustify size={SZ} /></TBtn>
+          <TBtn onClick={() => setTextAlign("left")}    active={currentAlign === "left"}    tip="Align left">    <TextAlignLeft size={SZ} /></TBtn>
+          <TBtn onClick={() => setTextAlign("center")}  active={currentAlign === "center"}  tip="Align center">  <TextAlignCenter size={SZ} /></TBtn>
+          <TBtn onClick={() => setTextAlign("right")}   active={currentAlign === "right"}   tip="Align right">   <TextAlignRight size={SZ} /></TBtn>
+          <TBtn onClick={() => setTextAlign("justify")} active={currentAlign === "justify"} tip="Justify">       <TextAlignJustify size={SZ} /></TBtn>
         </Row>
         {/* Row 2: list + indent + code + quote */}
         <Row>
@@ -354,7 +413,7 @@ export default function Toolbar({
             <Tooltip>
               <TooltipTrigger asChild>
                 <PopoverTrigger asChild>
-                  <button onMouseDown={(e) => e.preventDefault()} className={BTN} title="Insert emoji">
+                  <button type="button" aria-label="Insert emoji" onMouseDown={(e) => e.preventDefault()} className={BTN}>
                     <Smiley size={SZ} />
                   </button>
                 </PopoverTrigger>

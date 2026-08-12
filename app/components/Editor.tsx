@@ -34,6 +34,7 @@ import {
   ArrowClockwise, Crop, FlipHorizontal, FlipVertical,
   TextAlignLeft, TextAlignCenter, TextAlignRight,
   Sun, Moon, FileText, Trash, Plus, MagnifyingGlass, PencilSimple, DownloadSimple, SignIn, Warning, X,
+  ArrowSquareOut, LinkBreak, LinkSimple,
   FolderSimple, ClockCounterClockwise, CaretRight, ArrowsInSimple,
 } from "@phosphor-icons/react";
 import {
@@ -45,6 +46,8 @@ import { authClient, useSession } from "@/lib/auth-client";
 import { prepareImageFile, insertWidth } from "@/lib/image-util";
 import { OPEN_ACCEPT } from "@/lib/doc-import";
 import AuthModal from "./AuthModal";
+import WelcomeScreen from "./WelcomeScreen";
+import { toast, Toaster } from "./toast";
 import {
   listDocuments, createDocument, updateDocument, renameDocument, deleteDocument,
   getPreferences, savePreferences, setDocumentFolder,
@@ -546,6 +549,25 @@ class TableNodeView {
   destroy() {}
 }
 
+// The contiguous link range (same href) containing pos, or null if pos isn't inside a link.
+function linkRangeAt(doc: PMNode, pos: number): { from: number; to: number; href: string } | null {
+  const $pos = doc.resolve(pos);
+  const parent = $pos.parent;
+  const start = $pos.start();
+  const ranges: Array<{ from: number; to: number; href: string }> = [];
+  parent.forEach((child, offset) => {
+    const mk = mySchema.marks.link.isInSet(child.marks);
+    if (!mk) return;
+    const href = String(mk.attrs.href || "");
+    const s = start + offset;
+    const e = s + child.nodeSize;
+    const last = ranges[ranges.length - 1];
+    if (last && last.href === href && last.to === s) last.to = e;
+    else ranges.push({ from: s, to: e, href });
+  });
+  return ranges.find((r) => pos >= r.from && pos <= r.to) ?? null;
+}
+
 class ImageNodeView {
   dom: HTMLElement;
   private img: HTMLImageElement;
@@ -572,7 +594,9 @@ class ImageNodeView {
       const handle = document.createElement("span");
       handle.className = `pm-image-handle pm-image-handle-${corner}`;
       handle.setAttribute("contenteditable", "false");
-      handle.addEventListener("mousedown", (event) => this.startResize(event, corner));
+      // touch-action:none + pointer events so resizing also works on touch screens.
+      handle.style.touchAction = "none";
+      handle.addEventListener("pointerdown", (event) => this.startResize(event, corner));
       this.dom.appendChild(handle);
     });
 
@@ -623,7 +647,7 @@ class ImageNodeView {
     }
   }
 
-  private startResize(event: MouseEvent, corner: "tl" | "tr" | "bl" | "br") {
+  private startResize(event: PointerEvent, corner: "tl" | "tr" | "bl" | "br") {
     event.preventDefault();
     event.stopPropagation();
 
@@ -649,8 +673,9 @@ class ImageNodeView {
 
     this.onUp = () => {
       if (!this.onMove || !this.onUp) return;
-      window.removeEventListener("mousemove", this.onMove);
-      window.removeEventListener("mouseup", this.onUp);
+      window.removeEventListener("pointermove", this.onMove);
+      window.removeEventListener("pointerup", this.onUp);
+      window.removeEventListener("pointercancel", this.onUp);
       const nextWidth = this.img.getAttribute("data-width") || `${Math.round(this.img.getBoundingClientRect().width)}px`;
       const latestPos = this.getPos();
       if (latestPos !== undefined) {
@@ -664,8 +689,9 @@ class ImageNodeView {
       this.onUp = undefined;
     };
 
-    window.addEventListener("mousemove", this.onMove);
-    window.addEventListener("mouseup", this.onUp);
+    window.addEventListener("pointermove", this.onMove);
+    window.addEventListener("pointerup", this.onUp);
+    window.addEventListener("pointercancel", this.onUp);
   }
 
   update(node: PMNode) {
@@ -693,8 +719,11 @@ class ImageNodeView {
   }
 
   destroy() {
-    if (this.onMove) window.removeEventListener("mousemove", this.onMove);
-    if (this.onUp) window.removeEventListener("mouseup", this.onUp);
+    if (this.onMove) window.removeEventListener("pointermove", this.onMove);
+    if (this.onUp) {
+      window.removeEventListener("pointerup", this.onUp);
+      window.removeEventListener("pointercancel", this.onUp);
+    }
   }
 }
 
@@ -973,6 +1002,7 @@ export default function Editor() {
   const [fileSearch, setFileSearch] = useState("");
   const [renamingId, setRenamingId] = useState<string | null>(null);
   const [authOpen, setAuthOpen] = useState(false);
+  const [welcomeOpen, setWelcomeOpen] = useState(false);
   const [verifyDismissed, setVerifyDismissed] = useState(false);
   const { data: session, isPending: sessionPending } = useSession();
   const authUser = session?.user;
@@ -1005,6 +1035,23 @@ export default function Editor() {
   const docInfoTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [versionsOpen, setVersionsOpen] = useState(false);
   const [versions, setVersions] = useState<Array<{ id: string; t: number }> | null>(null);
+  // Selected version in the history modal; html === null while it loads.
+  const [versionPreview, setVersionPreview] = useState<{ id: string; html: string | null } | null>(null);
+  // Small popover shown when the caret is placed inside a link (open / edit / remove).
+  const [linkCard, setLinkCard] = useState<{ href: string; from: number; to: number; left: number; top: number } | null>(null);
+  // Document id requested via ?doc=… when this page was opened (deep link).
+  // Captured once at first render, before any effect can rewrite the URL.
+  const [initialDeepLinkId] = useState<string | null>(() =>
+    typeof window === "undefined" ? null : new URLSearchParams(window.location.search).get("doc")
+  );
+  // The id is applied only once, so reloading the list (e.g. after signing in)
+  // doesn't re-apply an id that belonged to the previous storage.
+  const deepLinkUsedRef = useRef(false);
+  const takeDeepLinkId = useCallback(() => {
+    if (deepLinkUsedRef.current) return null;
+    deepLinkUsedRef.current = true;
+    return initialDeepLinkId;
+  }, [initialDeepLinkId]);
   const lastSnapAtRef = useRef<Record<string, number>>({});
   const [shortcutsOpen, setShortcutsOpen] = useState(false);
   const [focusMode, setFocusMode] = useState(false);
@@ -1201,6 +1248,29 @@ export default function Editor() {
     }, 300);
   }, []);
 
+  // ── Deep links: every document has its own URL (/pad?doc=<id>) ────────────
+  const docUrl = useCallback((id: string) => `${window.location.pathname}?doc=${encodeURIComponent(id)}`, []);
+
+  // Reflect the open document in the address bar so it can be bookmarked and shared.
+  // `push` adds a history entry (user navigation); otherwise the current one is replaced.
+  const syncUrlToDoc = useCallback((id: string, push = false) => {
+    if (!id) return;
+    const url = docUrl(id);
+    if (window.location.pathname + window.location.search === url) return;
+    if (push) window.history.pushState({ docId: id }, "", url);
+    else window.history.replaceState({ docId: id }, "", url);
+  }, [docUrl]);
+
+  const copyDocLink = useCallback(async (id: string) => {
+    const url = `${window.location.origin}${docUrl(id)}`;
+    try {
+      await navigator.clipboard.writeText(url);
+      toast.success("Link copied — it opens this document directly.");
+    } catch {
+      toast.error("Could not copy the link. Your browser blocked clipboard access.");
+    }
+  }, [docUrl]);
+
   // Update in-memory file list; persist to localStorage only for guests (DB handled by callers).
   const applyFiles = useCallback((list: FileItem[], active?: string) => {
     filesRef.current = list;
@@ -1309,8 +1379,11 @@ export default function Editor() {
     return list.map((f) => (f.id === id ? { ...f, html } : f));
   }, []);
 
-  const switchFile = useCallback((id: string) => {
-    if (id === activeIdRef.current) return;
+  // `history` = false when the switch itself came from a browser back/forward event.
+  const switchFile = useCallback((id: string, history = true) => {
+    // Re-opening the document that's already active still stamps the URL, so
+    // picking it from the start screen leaves a shareable address behind.
+    if (id === activeIdRef.current) { if (history) syncUrlToDoc(id); return; }
     const list = commitCurrent(filesRef.current);
     const target = list.find((f) => f.id === id);
     if (!target) return;
@@ -1318,7 +1391,18 @@ export default function Editor() {
     applyFiles(list, id);
     setDocFromHtml(target.html);
     setDocTitle(target.name);
-  }, [applyFiles, commitCurrent, setDocFromHtml]);
+    if (history) syncUrlToDoc(id, true);
+  }, [applyFiles, commitCurrent, setDocFromHtml, syncUrlToDoc]);
+
+  // Browser back/forward moves between documents opened in this tab.
+  useEffect(() => {
+    const onPop = () => {
+      const id = new URLSearchParams(window.location.search).get("doc");
+      if (id && filesRef.current.some((f) => f.id === id)) switchFile(id, false);
+    };
+    window.addEventListener("popstate", onPop);
+    return () => window.removeEventListener("popstate", onPop);
+  }, [switchFile]);
 
   // Shared path for new blank documents, templates, and opened files.
   // Members get a new document in their list; guests have exactly ONE document,
@@ -1332,7 +1416,10 @@ export default function Editor() {
         applyFiles([doc, ...list], doc.id);
         setDocFromHtml(doc.html);
         setDocTitle(doc.name);
-      } catch {}
+        syncUrlToDoc(doc.id);
+      } catch {
+        toast.error("Could not create the document — check your connection and try again.");
+      }
     } else {
       const v = viewRef.current;
       const active = filesRef.current.find((f) => f.id === activeIdRef.current);
@@ -1352,9 +1439,10 @@ export default function Editor() {
       applyFiles([{ id, name, html }], id);
       setDocFromHtml(html);
       setDocTitle(name);
+      syncUrlToDoc(id);
       try { localStorage.setItem(ACTIVE_KEY, id); } catch {}
     }
-  }, [applyFiles, commitCurrent, setDocFromHtml]);
+  }, [applyFiles, commitCurrent, setDocFromHtml, syncUrlToDoc]);
 
   const createFile = useCallback(() => {
     return addNewDocument("Untitled document", "<p></p>");
@@ -1364,9 +1452,30 @@ export default function Editor() {
     return addNewDocument(t.name, t.html);
   }, [addNewDocument]);
 
+  // Bring a just-deleted document back (Undo in the delete toast). For signed-in
+  // users the server row is gone, so it is recreated as a new document.
+  const restoreDeleted = useCallback(async (target: FileItem) => {
+    if (isAuthedRef.current) {
+      try {
+        const doc = await createDocument(target.name, target.html);
+        if (target.folder) setDocumentFolder(doc.id, target.folder).catch(() => {});
+        applyFiles([{ ...doc, folder: target.folder ?? null }, ...filesRef.current], doc.id);
+        setDocFromHtml(doc.html);
+        setDocTitle(doc.name);
+        syncUrlToDoc(doc.id);
+      } catch {
+        toast.error("Could not restore the document — check your connection.");
+      }
+    } else {
+      applyFiles([target, ...filesRef.current.filter((f) => f.id !== target.id)], target.id);
+      setDocFromHtml(target.html);
+      setDocTitle(target.name);
+      syncUrlToDoc(target.id);
+    }
+  }, [applyFiles, setDocFromHtml, syncUrlToDoc]);
+
   const deleteFile = useCallback(async (id: string) => {
     const target = filesRef.current.find((f) => f.id === id);
-    if (target && !window.confirm(`Delete "${target.name || "Untitled"}"? This cannot be undone.`)) return;
     if (pendingSaveRef.current?.id === id) {
       if (saveTimer.current) { clearTimeout(saveTimer.current); saveTimer.current = null; }
       pendingSaveRef.current = null;
@@ -1374,15 +1483,25 @@ export default function Editor() {
     if (!isAuthedRef.current) removeGuestVersions(id);
     const wasActive = activeIdRef.current === id;
     let list = filesRef.current.filter((f) => f.id !== id);
+    const notifyDeleted = () => {
+      if (!target) return;
+      toast(`Deleted "${target.name || "Untitled"}"`, {
+        action: { label: "Undo", onClick: () => restoreDeleted(target) },
+      });
+    };
     if (isAuthedRef.current) {
-      deleteDocument(id).catch(() => {});
+      deleteDocument(id).catch(() => {
+        toast.error("Could not delete on the server — the document may reappear after reload.");
+      });
       if (list.length === 0) {
         try {
           const doc = await createDocument("Untitled document", "<p></p>");
           applyFiles([doc], doc.id);
           setDocFromHtml(doc.html);
           setDocTitle(doc.name);
+          syncUrlToDoc(doc.id);
         } catch {}
+        notifyDeleted();
         return;
       }
     } else if (list.length === 0) {
@@ -1392,16 +1511,19 @@ export default function Editor() {
     applyFiles(list, nextActive);
     if (wasActive) {
       const t = list.find((f) => f.id === nextActive);
-      if (t) { setDocFromHtml(t.html); setDocTitle(t.name); }
+      if (t) { setDocFromHtml(t.html); setDocTitle(t.name); syncUrlToDoc(t.id); }
     }
-  }, [applyFiles, setDocFromHtml]);
+    notifyDeleted();
+  }, [applyFiles, restoreDeleted, setDocFromHtml, syncUrlToDoc]);
 
   const renameFile = useCallback((id: string, name: string) => {
     const clean = name.trim();
     if (!clean) return;
     if (id === activeIdRef.current) setDocTitle(clean);
     applyFiles(filesRef.current.map((f) => (f.id === id ? { ...f, name: clean } : f)));
-    if (isAuthedRef.current) renameDocument(id, clean).catch(() => {});
+    if (isAuthedRef.current) renameDocument(id, clean).catch(() => {
+      toast.error("Could not save the new name — check your connection.");
+    });
   }, [applyFiles]);
 
   // Live title input: reflect typing immediately, debounce the persisted rename.
@@ -1412,7 +1534,9 @@ export default function Editor() {
     if (renameTimer.current) clearTimeout(renameTimer.current);
     renameTimer.current = setTimeout(() => {
       const clean = name.trim();
-      if (clean && isAuthedRef.current) renameDocument(id, clean).catch(() => {});
+      if (clean && isAuthedRef.current) renameDocument(id, clean).catch(() => {
+        toast.error("Could not save the new name — check your connection.");
+      });
     }, 600);
   }, [applyFiles]);
 
@@ -1440,13 +1564,16 @@ export default function Editor() {
   // Move a document into a folder (null = ungrouped). Folder is a flat label.
   const moveToFolder = useCallback((id: string, folder: string | null) => {
     applyFiles(filesRef.current.map((f) => (f.id === id ? { ...f, folder } : f)));
-    if (isAuthedRef.current) setDocumentFolder(id, folder).catch(() => {});
+    if (isAuthedRef.current) setDocumentFolder(id, folder).catch(() => {
+      toast.error("Could not move the document — check your connection.");
+    });
   }, [applyFiles]);
 
   // ── Version history ──────────────────────────────────────────────────────
   const openVersions = useCallback(async () => {
     setVersionsOpen(true);
     setVersions(null);
+    setVersionPreview(null);
     const id = activeIdRef.current;
     if (isAuthedRef.current) {
       try {
@@ -1460,17 +1587,31 @@ export default function Editor() {
     }
   }, []);
 
+  const loadVersionHtml = useCallback(async (versionId: string): Promise<string | null> => {
+    if (isAuthedRef.current) {
+      try { return await getVersionHtml(versionId); } catch { return null; }
+    }
+    return listGuestVersions(activeIdRef.current)[Number(versionId)]?.html ?? null;
+  }, []);
+
+  // Load a version's content into the preview pane of the history modal.
+  const previewVersion = useCallback(async (versionId: string) => {
+    setVersionPreview({ id: versionId, html: null });
+    const html = await loadVersionHtml(versionId);
+    if (html === null) {
+      setVersionPreview(null);
+      toast.error("Could not load this version.");
+      return;
+    }
+    setVersionPreview({ id: versionId, html });
+  }, [loadVersionHtml]);
+
   const restoreVersion = useCallback(async (versionId: string) => {
     const v = viewRef.current;
     if (!v) return;
     const id = activeIdRef.current;
-    let html: string | null = null;
-    if (isAuthedRef.current) {
-      try { html = await getVersionHtml(versionId); } catch { html = null; }
-    } else {
-      html = listGuestVersions(id)[Number(versionId)]?.html ?? null;
-    }
-    if (!html) { alert("Could not load this version."); return; }
+    const html: string | null = await loadVersionHtml(versionId);
+    if (!html) { toast.error("Could not load this version."); return; }
     // Safety snapshot of the current state before overwriting it.
     const currentHtml = serializeDoc(v.state.doc);
     if (isAuthedRef.current) saveVersion(id, currentHtml).catch(() => {});
@@ -1479,7 +1620,8 @@ export default function Editor() {
     setDocFromHtml(html);
     if (viewRef.current) persistDoc(id, viewRef.current.state);
     setVersionsOpen(false);
-  }, [persistDoc, setDocFromHtml]);
+    toast.success("Version restored — the previous state was saved to history.");
+  }, [loadVersionHtml, persistDoc, setDocFromHtml]);
 
   const exportFile = useCallback(async (file: FileItem, fmt: "html" | "txt" | "docx" | "rtf" | "md") => {
     const v = viewRef.current;
@@ -1504,6 +1646,7 @@ export default function Editor() {
         downloadBlob(new Blob([docToRtf(doc)], { type: "application/rtf" }), `${safe}.rtf`);
       }
     }
+    toast.success(`Downloaded ${safe}.${fmt}`);
   }, []);
 
   // Export the document currently open in the editor (used by the File menu).
@@ -1522,7 +1665,7 @@ export default function Editor() {
       const { html, name } = await fileToHtml(file);
       await addNewDocument(name, html);
     } catch {
-      alert("Could not open this file. Supported formats: .txt, .md, .html, .docx");
+      toast.error("Could not open this file. Supported formats: .txt, .md, .html, .docx");
     }
   }, [addNewDocument]);
 
@@ -1551,23 +1694,23 @@ export default function Editor() {
 
   const openAuth = useCallback(() => setAuthOpen(true), []);
 
-  // Auto-open the auth dialog on first load for logged-out visitors (once per browser session).
+  // Word-style start screen on every visit. Replaces the old auto-opening auth
+  // dialog — sign-in is offered inside the screen. Skipped when the URL points
+  // at a specific document, since the intent there is to open that document.
+  const welcomeShownRef = useRef(false);
   useEffect(() => {
-    if (sessionPending || isAuthed) return;
-    try {
-      if (sessionStorage.getItem("wordpad-auth-prompted")) return;
-      sessionStorage.setItem("wordpad-auth-prompted", "1");
-    } catch {}
-    setAuthOpen(true);
-  }, [sessionPending, isAuthed]);
+    if (sessionPending || initialDeepLinkId || welcomeShownRef.current) return;
+    welcomeShownRef.current = true; // don't reopen if the session state settles again
+    setWelcomeOpen(true);
+  }, [sessionPending, initialDeepLinkId]);
 
   const resendVerification = useCallback(async () => {
     if (!authUser?.email) return;
     try {
       await authClient.sendVerificationEmail({ email: authUser.email, callbackURL: "/pad" });
-      alert("Verification email sent (check the server log if no email provider is configured).");
+      toast.success("Verification email sent — check your inbox.");
     } catch {
-      alert("Could not send verification email.");
+      toast.error("Could not send verification email.");
     }
   }, [authUser?.email]);
 
@@ -1589,6 +1732,17 @@ export default function Editor() {
         view.dispatch(view.state.tr.setSelection(NodeSelection.create(view.state.doc, pos)));
         view.focus();
         return true;
+      },
+      handleClick(v, pos) {
+        const range = linkRangeAt(v.state.doc, pos);
+        if (!range || !range.href) { setLinkCard(null); return false; }
+        const coords = v.coordsAtPos(range.from);
+        setLinkCard({
+          ...range,
+          left: Math.max(8, Math.min(coords.left, window.innerWidth - 340)),
+          top: coords.bottom + 6,
+        });
+        return false;
       },
       handleDrop(v, event, _slice, moved) {
         const e = event as DragEvent;
@@ -1703,6 +1857,7 @@ export default function Editor() {
         if (tr.docChanged) {
           save(next);
           maybeAutoName(next);
+          setLinkCard(null); // positions may have shifted
         }
       },
     });
@@ -1756,21 +1911,38 @@ export default function Editor() {
           }
         }
         if (cancelled || !docs.length) return;
-        const active = docs[0];
+        // A ?doc=… deep link wins over the default document, when it still exists.
+        const deepLinkId = takeDeepLinkId();
+        const deepLinked = deepLinkId ? docs.find((d) => d.id === deepLinkId) : undefined;
+        if (deepLinkId && !deepLinked) {
+          toast.warning("That document link is no longer available — opening your latest document.");
+        }
+        const active = deepLinked ?? docs[0];
         filesRef.current = docs; activeIdRef.current = active.id;
         setFiles(docs); setActiveId(active.id);
         setDocFromHtml(active.html); setDocTitle(active.name);
+        // Only stamp the URL when the visitor actually arrived via a deep link.
+        // Writing it on a plain /pad visit would make the next reload look like
+        // a deep link and skip the start screen.
+        if (deepLinked) syncUrlToDoc(active.id);
         try { const prefs = await getPreferences(); if (!cancelled) applyPreferences(prefs); } catch {}
         prefsLoadedRef.current = true;
       } else {
         const { list, active } = loadFiles();
-        const activeFile = list.find((f) => f.id === active) || list[0];
-        filesRef.current = list; activeIdRef.current = active;
-        setFiles(list); setActiveId(active);
+        const deepLinkId = takeDeepLinkId();
+        const deepLinked = deepLinkId ? list.find((f) => f.id === deepLinkId) : undefined;
+        if (deepLinkId && !deepLinked) {
+          toast.warning("That document link is no longer available — opening your latest document.");
+        }
+        const activeFile = deepLinked ?? list.find((f) => f.id === active) ?? list[0];
+        const activeId = activeFile.id;
+        filesRef.current = list; activeIdRef.current = activeId;
+        setFiles(list); setActiveId(activeId);
         setDocFromHtml(activeFile.html); setDocTitle(activeFile.name);
+        if (deepLinked) syncUrlToDoc(activeId);
         try {
           localStorage.setItem(FILES_KEY, JSON.stringify(list));
-          localStorage.setItem(ACTIVE_KEY, active);
+          localStorage.setItem(ACTIVE_KEY, activeId);
         } catch {}
         prefsLoadedRef.current = true;
       }
@@ -1814,7 +1986,7 @@ export default function Editor() {
     const v = viewRef.current;
     if (!v) return;
     if (v.state.selection.empty) {
-      alert("Select the text you want to link first.");
+      toast.warning("Select the text you want to link first.");
       return;
     }
     // Prefill with an existing link's href when editing.
@@ -1843,6 +2015,42 @@ export default function Editor() {
     setLinkDialog(null);
     v.focus();
   }, []);
+
+  // ── Link card actions (popover shown when clicking a link in the doc) ─────
+  const editLinkFromCard = useCallback(() => {
+    const v = viewRef.current;
+    const card = linkCard;
+    if (!v || !card) return;
+    v.dispatch(v.state.tr.setSelection(TextSelection.create(v.state.doc, card.from, card.to)));
+    setLinkCard(null);
+    handleLinkAdd();
+  }, [linkCard, handleLinkAdd]);
+
+  const removeLinkFromCard = useCallback(() => {
+    const v = viewRef.current;
+    const card = linkCard;
+    if (!v || !card) return;
+    v.dispatch(v.state.tr.removeMark(card.from, card.to, mySchema.marks.link));
+    setLinkCard(null);
+    v.focus();
+  }, [linkCard]);
+
+  // Dismiss the link card on Escape or when clicking outside it and the editor.
+  useEffect(() => {
+    if (!linkCard) return;
+    const onDown = (e: MouseEvent) => {
+      const t = e.target as HTMLElement | null;
+      if (t?.closest("[data-link-card]") || t?.closest(".ProseMirror")) return;
+      setLinkCard(null);
+    };
+    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") setLinkCard(null); };
+    window.addEventListener("mousedown", onDown);
+    window.addEventListener("keydown", onKey);
+    return () => {
+      window.removeEventListener("mousedown", onDown);
+      window.removeEventListener("keydown", onKey);
+    };
+  }, [linkCard]);
 
   const applyLinkDialog = useCallback(() => {
     const v = viewRef.current;
@@ -1951,7 +2159,7 @@ export default function Editor() {
     const v = viewRef.current;
     if (!v) return;
     const { from, to, empty } = v.state.selection;
-    if (empty) { alert("Select some text first."); return; }
+    if (empty) { toast.warning("Select some text first."); return; }
     const tr = v.state.tr;
     v.state.doc.nodesBetween(from, to, (node, pos) => {
       if (!node.isText || !node.text) return true;
@@ -1981,7 +2189,7 @@ export default function Editor() {
       }
     });
     if (!entries.length) {
-      alert("Add some headings first — the table of contents is built from headings (H1–H3).");
+      toast.warning("Add some headings first — the table of contents is built from headings (H1–H3).");
       return;
     }
     const nodes: PMNode[] = [
@@ -2009,7 +2217,7 @@ export default function Editor() {
     const v = viewRef.current;
     if (!v) return;
     if (!("speechSynthesis" in window)) {
-      alert("Read aloud isn't supported in this browser.");
+      toast.error("Read aloud isn't supported in this browser.");
       return;
     }
     const sel = v.state.selection;
@@ -2148,7 +2356,7 @@ export default function Editor() {
     if (!cropper) return;
     const canvas = cropper.getCanvas();
     if (!canvas) {
-      alert("Crop sonucu alınamadı.");
+      toast.error("Could not crop this image.");
       return;
     }
     try {
@@ -2157,7 +2365,7 @@ export default function Editor() {
       setCropDialogOpen(false);
       setCropSource(null);
     } catch {
-      alert("Bu görsel cross-origin nedeniyle kırpılamadı.");
+      toast.error("This image can't be cropped because it comes from another site.");
     }
   }, [updateSelectedImageAttrs]);
 
@@ -2398,7 +2606,7 @@ export default function Editor() {
                             onClick={() => deleteFile(f.id)}
                             title="Delete document"
                             aria-label="Delete document"
-                            className="shrink-0 rounded p-1 opacity-0 group-hover:opacity-100 hover:bg-destructive/15 hover:text-destructive transition"
+                            className="shrink-0 rounded p-1 opacity-0 group-hover:opacity-100 focus-visible:opacity-100 focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-ring hover:bg-destructive/15 hover:text-destructive transition"
                           >
                             <Trash size={14} />
                           </button>
@@ -2412,6 +2620,9 @@ export default function Editor() {
                     </ContextMenuItem>
                     <ContextMenuItem onClick={() => { switchFile(f.id); openVersions(); }}>
                       <ClockCounterClockwise size={15} /> Version history
+                    </ContextMenuItem>
+                    <ContextMenuItem onClick={() => copyDocLink(f.id)}>
+                      <LinkSimple size={15} /> Copy link
                     </ContextMenuItem>
                     <ContextMenuSub>
                       <ContextMenuSubTrigger>
@@ -2530,6 +2741,7 @@ export default function Editor() {
         docTitle={docTitle}
         onTitleChange={renameActive}
         onNewDoc={createFile}
+        onShowHome={() => setWelcomeOpen(true)}
         onNewFromTemplate={createFromTemplate}
         onOpenFile={openFileDialog}
         onExport={exportActive}
@@ -2690,7 +2902,7 @@ export default function Editor() {
       )}
       {cropDialogOpen && cropSource && (
         <div className="fixed inset-0 z-[1300] flex items-center justify-center bg-black/40 p-4">
-          <div className="w-full max-w-4xl rounded-lg border border-border bg-card text-card-foreground p-4 shadow-2xl">
+          <div role="dialog" aria-modal="true" aria-label="Crop image" className="w-full max-w-4xl rounded-lg border border-border bg-card text-card-foreground p-4 shadow-2xl">
             <div className="mb-3 flex items-center justify-between">
               <h3 className="text-sm font-semibold">Crop Image</h3>
               <button
@@ -2740,7 +2952,7 @@ export default function Editor() {
           className="fixed inset-0 z-[1300] flex items-center justify-center bg-black/40 p-4"
           onMouseDown={(e) => { if (e.target === e.currentTarget) setLinkDialog(null); }}
         >
-          <div className="w-full max-w-sm rounded-lg border border-border bg-popover text-popover-foreground p-4 shadow-2xl">
+          <div role="dialog" aria-modal="true" aria-label={linkDialog.mode === "link" ? "Insert link" : "Insert image from URL"} className="w-full max-w-sm rounded-lg border border-border bg-popover text-popover-foreground p-4 shadow-2xl">
             <h3 className="mb-2 text-sm font-semibold">
               {linkDialog.mode === "link" ? "Insert link" : "Insert image from URL"}
             </h3>
@@ -2781,6 +2993,49 @@ export default function Editor() {
               </button>
             </div>
           </div>
+        </div>
+      )}
+      {linkCard && (
+        <div
+          data-link-card
+          className="fixed z-[1250] flex items-center gap-1 rounded-md border border-border bg-popover px-2 py-1.5 text-popover-foreground shadow-lg"
+          style={{ left: linkCard.left, top: linkCard.top }}
+        >
+          <a
+            href={linkCard.href}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="max-w-[200px] truncate text-xs text-blue-600 underline underline-offset-2 dark:text-blue-400"
+            title={linkCard.href}
+          >
+            {linkCard.href.replace(/^https?:\/\//, "")}
+          </a>
+          <span className="mx-0.5 h-4 w-px bg-border" />
+          <a
+            href={linkCard.href}
+            target="_blank"
+            rel="noopener noreferrer"
+            aria-label="Open link in new tab"
+            className="rounded p-1 hover:bg-accent focus-visible:outline-2 focus-visible:outline-ring"
+          >
+            <ArrowSquareOut size={14} />
+          </a>
+          <button
+            type="button"
+            onClick={editLinkFromCard}
+            aria-label="Edit link"
+            className="rounded p-1 hover:bg-accent focus-visible:outline-2 focus-visible:outline-ring"
+          >
+            <PencilSimple size={14} />
+          </button>
+          <button
+            type="button"
+            onClick={removeLinkFromCard}
+            aria-label="Remove link"
+            className="rounded p-1 hover:bg-destructive/15 hover:text-destructive focus-visible:outline-2 focus-visible:outline-ring"
+          >
+            <LinkBreak size={14} />
+          </button>
         </div>
       )}
       {findOpen && (
@@ -2887,20 +3142,26 @@ export default function Editor() {
               }
             }}
             placeholder="Search commands..."
+            role="combobox"
+            aria-expanded="true"
+            aria-controls="slash-menu-list"
+            aria-activedescendant={slashItems.length ? `slash-item-${slashMenu.selected}` : undefined}
             className="mb-1 w-full rounded border border-input bg-background px-2 py-1.5 text-sm outline-none focus:ring-1 focus:ring-ring"
           />
           {slashItems.length === 0 ? (
             <div className="px-2 py-2 text-xs text-muted-foreground">No command found</div>
           ) : (
-            <div ref={slashListRef} className="max-h-[132px] overflow-y-auto">
+            <div ref={slashListRef} id="slash-menu-list" role="listbox" className="max-h-[132px] overflow-y-auto">
               {slashItems.map((item, idx) => (
                 <button
                   key={item.id}
+                  type="button"
+                  id={`slash-item-${idx}`}
+                  role="option"
+                  aria-selected={idx === slashMenu.selected}
                   data-slash-index={idx}
-                  onMouseDown={(e) => {
-                    e.preventDefault();
-                    runSlashCommand(item.id);
-                  }}
+                  onMouseDown={(e) => e.preventDefault()}
+                  onClick={() => runSlashCommand(item.id)}
                   className={`w-full text-left rounded px-2 py-1.5 ${
                     idx === slashMenu.selected ? "bg-accent text-accent-foreground" : "hover:bg-accent/60"
                   }`}
@@ -2916,26 +3177,50 @@ export default function Editor() {
       {!focusMode && (
       <div className="border-t border-border bg-card/95 px-2 py-1 text-[11px] leading-none relative">
         {/* Brand watermark, centered — only on small screens where the header brand is hidden */}
-        <div className="font-brand pointer-events-none absolute inset-x-0 top-1/2 z-0 -translate-y-1/2 hidden max-[799px]:flex items-center justify-center select-none leading-none opacity-60">
-          <span className="text-sm font-bold tracking-tight text-muted-foreground">EDTR</span>
-          <span className="text-xs font-semibold tracking-wider text-muted-foreground">PAD</span>
+        <div className="absolute inset-x-0 top-1/2 z-0 -translate-y-1/2 hidden max-[799px]:flex items-center justify-center gap-1.5 leading-none">
+          <span className="font-brand pointer-events-none select-none leading-none opacity-60">
+            <span className="text-sm font-bold tracking-tight text-muted-foreground">EDTR</span>
+            <span className="text-xs font-semibold tracking-wider text-muted-foreground">PAD</span>
+          </span>
+          {/* On phones the header title input is hidden, so renaming happens here. */}
+          <input
+            value={docTitle}
+            onChange={(e) => renameActive(e.target.value)}
+            onFocus={(e) => e.target.select()}
+            spellCheck={false}
+            aria-label="Document title"
+            className="pointer-events-auto z-10 w-[120px] truncate rounded border border-transparent bg-transparent px-1 py-0.5 text-[11px] text-foreground/70 outline-none focus:border-border focus:bg-background"
+          />
         </div>
         <div className="relative z-10 flex items-center justify-between gap-2">
           <div className="flex items-center gap-2 text-muted-foreground">
-            <span><span className="font-medium text-foreground">{docInfo.selectedType}</span></span>
+            <span className="max-[520px]:hidden"><span className="font-medium text-foreground">{docInfo.selectedType}</span></span>
             <span>Words: <span className="font-medium text-foreground">{docInfo.words}</span></span>
-            <span>Chars: <span className="font-medium text-foreground">{docInfo.characters}</span></span>
+            <span className="max-[520px]:hidden">Chars: <span className="font-medium text-foreground">{docInfo.characters}</span></span>
             {saveStatus !== "idle" && (
-              <span
-                className={cn(
-                  "max-[520px]:hidden",
-                  saveStatus === "error" ? "font-medium text-destructive" : "text-muted-foreground"
-                )}
-              >
-                {saveStatus === "saving" && "Saving…"}
-                {saveStatus === "saved" && "Saved"}
-                {saveStatus === "error" && (isAuthed ? "Not saved — check your connection" : "Not saved — storage is full, export your work")}
-              </span>
+              <>
+                <span
+                  className={cn(
+                    "max-[520px]:hidden",
+                    saveStatus === "error" ? "font-medium text-destructive" : "text-muted-foreground"
+                  )}
+                >
+                  {saveStatus === "saving" && "Saving…"}
+                  {saveStatus === "saved" && "Saved"}
+                  {saveStatus === "error" && (isAuthed ? "Not saved — check your connection" : "Not saved — storage is full, export your work")}
+                </span>
+                {/* Compact form for narrow screens — save failures must stay visible on phones. */}
+                <span
+                  className={cn(
+                    "hidden max-[520px]:inline",
+                    saveStatus === "error" ? "font-medium text-destructive" : "text-muted-foreground"
+                  )}
+                >
+                  {saveStatus === "saving" && "Saving…"}
+                  {saveStatus === "saved" && "Saved"}
+                  {saveStatus === "error" && "Not saved!"}
+                </span>
+              </>
             )}
           </div>
           <div className="flex items-center gap-2">
@@ -3032,7 +3317,15 @@ export default function Editor() {
           className="fixed inset-0 z-[1300] flex items-center justify-center bg-black/40 p-4"
           onMouseDown={(e) => { if (e.target === e.currentTarget) setVersionsOpen(false); }}
         >
-          <div className="w-full max-w-sm rounded-lg border border-border bg-popover text-popover-foreground p-4 shadow-2xl">
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-label="Version history"
+            className={cn(
+              "w-full rounded-lg border border-border bg-popover text-popover-foreground p-4 shadow-2xl",
+              versionPreview ? "max-w-2xl" : "max-w-sm"
+            )}
+          >
             <div className="mb-1 flex items-center justify-between">
               <h3 className="text-sm font-semibold">Version history</h3>
               <button type="button" onClick={() => setVersionsOpen(false)} aria-label="Close" className="rounded p-1 hover:bg-accent">
@@ -3041,8 +3334,8 @@ export default function Editor() {
             </div>
             <p className="mb-3 text-xs text-muted-foreground">
               {isAuthed
-                ? "Versions are saved automatically every few minutes while you edit."
-                : "The last 5 versions are kept on this device. Sign in to keep more."}
+                ? "Versions are saved automatically every few minutes while you edit. Click one to preview it."
+                : "The last 5 versions are kept on this device. Click one to preview it. Sign in to keep more."}
             </p>
             {versions === null ? (
               <p className="py-4 text-center text-sm text-muted-foreground">Loading…</p>
@@ -3051,19 +3344,45 @@ export default function Editor() {
                 No versions yet — keep editing and they will appear here.
               </p>
             ) : (
-              <div className="max-h-64 space-y-1 overflow-y-auto">
-                {versions.map((ver) => (
-                  <div key={ver.id} className="flex items-center justify-between rounded-md border border-border px-2.5 py-1.5">
-                    <span className="text-sm">{timeAgo(ver.t)}</span>
-                    <button
-                      type="button"
-                      onClick={() => restoreVersion(ver.id)}
-                      className="rounded border border-input px-2 py-1 text-xs hover:bg-accent/70"
+              <div className={cn("flex gap-3", !versionPreview && "flex-col")}>
+                <div className={cn("max-h-72 space-y-1 overflow-y-auto", versionPreview && "w-44 shrink-0")}>
+                  {versions.map((ver) => (
+                    <div
+                      key={ver.id}
+                      className={cn(
+                        "flex items-center justify-between gap-2 rounded-md border px-2.5 py-1.5",
+                        versionPreview?.id === ver.id ? "border-ring bg-accent/60" : "border-border"
+                      )}
                     >
-                      Restore
-                    </button>
+                      <button
+                        type="button"
+                        onClick={() => previewVersion(ver.id)}
+                        className="min-w-0 flex-1 truncate text-left text-sm hover:underline"
+                      >
+                        {timeAgo(ver.t)}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => restoreVersion(ver.id)}
+                        className="shrink-0 rounded border border-input px-2 py-1 text-xs hover:bg-accent/70"
+                      >
+                        Restore
+                      </button>
+                    </div>
+                  ))}
+                </div>
+                {versionPreview && (
+                  <div className="min-w-0 flex-1 overflow-hidden rounded-md border border-border bg-white text-black">
+                    {versionPreview.html === null ? (
+                      <p className="py-10 text-center text-sm text-muted-foreground">Loading preview…</p>
+                    ) : (
+                      <div
+                        className="version-preview max-h-72 overflow-y-auto px-4 py-3"
+                        dangerouslySetInnerHTML={{ __html: versionPreview.html }}
+                      />
+                    )}
                   </div>
-                ))}
+                )}
               </div>
             )}
           </div>
@@ -3074,7 +3393,7 @@ export default function Editor() {
           className="fixed inset-0 z-[1300] flex items-center justify-center bg-black/40 p-4"
           onMouseDown={(e) => { if (e.target === e.currentTarget) setShortcutsOpen(false); }}
         >
-          <div className="w-full max-w-md rounded-lg border border-border bg-popover text-popover-foreground p-4 shadow-2xl">
+          <div role="dialog" aria-modal="true" aria-label="Keyboard shortcuts" className="w-full max-w-md rounded-lg border border-border bg-popover text-popover-foreground p-4 shadow-2xl">
             <div className="mb-3 flex items-center justify-between">
               <h3 className="text-sm font-semibold">Keyboard shortcuts</h3>
               <button type="button" onClick={() => setShortcutsOpen(false)} aria-label="Close" className="rounded p-1 hover:bg-accent">
@@ -3102,6 +3421,22 @@ export default function Editor() {
         </div>
       )}
       <AuthModal open={authOpen} onClose={() => setAuthOpen(false)} />
+      <WelcomeScreen
+        open={welcomeOpen}
+        onClose={() => setWelcomeOpen(false)}
+        isAuthed={isAuthed}
+        userName={authUser?.name || null}
+        files={files.map((f) => ({ id: f.id, name: f.name, folder: f.folder }))}
+        activeId={activeId}
+        onNewDocument={createFile}
+        onOpenFile={openFileDialog}
+        onPickTemplate={createFromTemplate}
+        onOpenDocument={switchFile}
+        onCopyLink={copyDocLink}
+        docHref={docUrl}
+        onSignIn={openAuth}
+      />
+      <Toaster />
     </div>
   );
 }

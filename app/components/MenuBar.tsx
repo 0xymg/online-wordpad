@@ -20,6 +20,7 @@ import { wrapInList } from "prosemirror-schema-list";
 import { EditorState, Transaction, AllSelection } from "prosemirror-state";
 import { addColumnAfter, addRowAfter, deleteColumn, deleteRow, deleteTable } from "prosemirror-tables";
 import { SidebarSimple, SignIn, SignOut } from "@phosphor-icons/react";
+import { toast } from "./toast";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
 import { TEMPLATES } from "@/lib/templates";
@@ -32,6 +33,7 @@ interface MenuBarProps {
   docTitle: string;
   onTitleChange: (title: string) => void;
   onNewDoc: () => void;
+  onShowHome: () => void;
   onNewFromTemplate: (t: { name: string; html: string }) => void;
   onOpenFile: () => void;
   onExport: (fmt: "html" | "txt" | "docx" | "rtf" | "md") => void;
@@ -118,7 +120,7 @@ const SPELL_LANGS: Array<{ value: string; label: string }> = [
 
 export default function MenuBar({
   viewRef, schema, onPrint,
-  docTitle, onTitleChange, onNewDoc, onNewFromTemplate, onOpenFile, onExport,
+  docTitle, onTitleChange, onNewDoc, onShowHome, onNewFromTemplate, onOpenFile, onExport,
   onShowVersions, onShowShortcuts, onFind,
   onInsertTable, onPageBreakAdd, onLinkAdd, onImageAdd, onImageUrlAdd,
   onInsertDivider, onInsertSymbol, onInsertDate,
@@ -184,7 +186,7 @@ export default function MenuBar({
       const text = await navigator.clipboard.readText();
       if (text) v.pasteText(text);
     } catch {
-      alert("Your browser blocked programmatic paste. Press Ctrl+V (⌘V) instead.");
+      toast.warning("Your browser blocked programmatic paste. Press Ctrl+V (⌘V) instead.");
     }
   };
 
@@ -203,7 +205,7 @@ export default function MenuBar({
       const text = await navigator.clipboard.readText();
       if (text) v.pasteText(text);
     } catch {
-      alert("Your browser blocked programmatic paste. Press Ctrl+Shift+V (⇧⌘V) instead.");
+      toast.warning("Your browser blocked programmatic paste. Press Ctrl+Shift+V (⇧⌘V) instead.");
     }
   };
 
@@ -242,6 +244,14 @@ export default function MenuBar({
           <span className="text-lg font-bold tracking-tight text-foreground dark:text-[#FFFFE3]">EDTR</span>
           <span className="text-sm font-semibold tracking-wider text-muted-foreground dark:text-[#FFFFE3]/70">PAD</span>
         </span>
+        <input
+          value={docTitle}
+          onChange={(e) => onTitleChange(e.target.value)}
+          onFocus={(e) => e.target.select()}
+          spellCheck={false}
+          aria-label="Document title"
+          className="min-w-0 w-[120px] rounded px-1.5 py-0.5 text-xs text-foreground/70 bg-transparent border border-transparent hover:border-border focus:border-border focus:bg-background outline-none truncate"
+        />
       </div>
       {/* <800px: trigger only — brand moves to the status bar */}
       {canUseSidebar && <SidebarBtn onClick={onToggleSidebar} className="min-[800px]:hidden" />}
@@ -249,6 +259,8 @@ export default function MenuBar({
       <MenubarMenu>
         <MenubarTrigger className={TRIGGER}>File</MenubarTrigger>
         <MenubarContent>
+          <MenubarItem onClick={onShowHome}>Home</MenubarItem>
+          <MenubarSeparator />
           <MenubarItem onClick={onNewDoc}>New</MenubarItem>
           <MenubarSub>
             <MenubarSubTrigger>New from template</MenubarSubTrigger>

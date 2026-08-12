@@ -29,11 +29,13 @@ export default function ColorPicker({ color, onChange, tip, icon }: ColorPickerP
         <TooltipTrigger asChild>
           <PopoverTrigger asChild>
             <button
+              type="button"
+              aria-label={tip}
               onMouseDown={(e) => e.preventDefault()}
               className={cn(
                 "inline-flex flex-col items-center justify-center w-10 h-10 rounded shrink-0 cursor-pointer",
                 "hover:bg-accent hover:text-accent-foreground transition-colors",
-                "focus-visible:outline-none",
+                "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset",
                 open && "bg-accent text-accent-foreground"
               )}
             >
@@ -81,8 +83,11 @@ export default function ColorPicker({ color, onChange, tip, icon }: ColorPickerP
           {PRESETS.map((p) => (
             <button
               key={p}
-              onMouseDown={(e) => { e.preventDefault(); onChange(p); }}
-              className="w-5 h-5 rounded-sm border border-black/10 hover:scale-110 transition-transform shrink-0 cursor-pointer"
+              type="button"
+              aria-label={`Color ${p}`}
+              onMouseDown={(e) => e.preventDefault()}
+              onClick={() => onChange(p)}
+              className="w-5 h-5 rounded-sm border border-black/10 hover:scale-110 transition-transform shrink-0 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
               style={{ background: p }}
               title={p}
             />
