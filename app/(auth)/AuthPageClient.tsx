@@ -27,6 +27,19 @@ export default function AuthPageClient({
   const router = useRouter();
   const { data: session, isPending } = useSession();
 
+  // A failed Google round trip comes back here as /login?error=google (see
+  // errorCallbackURL in AuthForm) — report it instead of showing a blank form
+  // that looks like the user simply never signed in. Read once, on mount, so a
+  // later mode switch doesn't resurrect a stale message.
+  // Read after mount, not during render: the page is prerendered without the
+  // query string, so reading it inline would mismatch on hydration.
+  const [oauthError, setOauthError] = useState<string | null>(null);
+  useEffect(() => {
+    if (new URLSearchParams(window.location.search).get("error") === "google") {
+      setOauthError(t.auth.errGoogle);
+    }
+  }, [t]);
+
   // Already signed in? There is nothing to do here.
   useEffect(() => {
     if (!isPending && session?.user) router.replace("/pad");
@@ -82,6 +95,7 @@ export default function AuthPageClient({
             onModeChange={changeMode}
             onSuccess={() => router.push("/pad")}
             googleEnabled={googleEnabled}
+            initialError={oauthError}
           />
         </div>
       </main>

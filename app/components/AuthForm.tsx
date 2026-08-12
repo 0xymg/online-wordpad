@@ -49,6 +49,8 @@ interface AuthFormProps {
   callbackURL?: string;
   /** Whether the server has Google OAuth credentials; comes from `lib/auth-flags`. */
   googleEnabled?: boolean;
+  /** Shown on first render — used to report an OAuth round trip that came back failed. */
+  initialError?: string | null;
   /** Rendered under the form; used by the modal for "continue without an account". */
   footerSlot?: React.ReactNode;
   autoFocus?: boolean;
@@ -59,7 +61,8 @@ interface AuthFormProps {
  * standalone /login and /signup pages so both behave identically.
  */
 export default function AuthForm({
-  mode, onModeChange, onSuccess, callbackURL = "/pad", googleEnabled = false, footerSlot, autoFocus = true,
+  mode, onModeChange, onSuccess, callbackURL = "/pad", googleEnabled = false,
+  initialError = null, footerSlot, autoFocus = true,
 }: AuthFormProps) {
   const t = useT();
   const copy = authCopy(t, mode);
@@ -69,7 +72,7 @@ export default function AuthForm({
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(initialError);
   const [success, setSuccess] = useState<string | null>(null);
   const emailRef = useRef<HTMLInputElement>(null);
 
@@ -78,6 +81,11 @@ export default function AuthForm({
   useEffect(() => {
     if (autoFocus) requestAnimationFrame(() => emailRef.current?.focus());
   }, [autoFocus, mode]);
+
+  // The caller reads it from the URL after mount, so it can arrive late.
+  useEffect(() => {
+    if (initialError) setError(initialError);
+  }, [initialError]);
 
   const switchMode = (next: AuthMode) => {
     setError(null);
@@ -124,7 +132,16 @@ export default function AuthForm({
     setError(null);
     setGoogleLoading(true);
     try {
-      await authClient.signIn.social({ provider: "google", callbackURL });
+      // signIn.social resolves with an `error` object instead of throwing, so a
+      // rejected sign-in used to leave the button spinning with nothing on screen.
+      // errorCallbackURL brings a failed OAuth *callback* back to the login page
+      // with a readable message rather than Better Auth's raw /api/auth/error page.
+      const { error } = await authClient.signIn.social({
+        provider: "google",
+        callbackURL,
+        errorCallbackURL: "/login?error=google",
+      });
+      if (error) throw new Error(error.message || "Google sign-in failed");
     } catch {
       setGoogleLoading(false);
       setError(t.auth.errGoogle);

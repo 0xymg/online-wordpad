@@ -15,6 +15,19 @@ const trustedOrigins = [
 // existing cookies — which shows up as users being asked to sign in again.
 // Set BETTER_AUTH_SECRET in the environment; generate one with:
 //   openssl rand -base64 32
+// The site answers on both wordpad.info and www.wordpad.info, and Vercel's
+// primary-domain redirect can move a request from one host to the other in the
+// middle of an OAuth round trip. With host-only cookies that breaks sign-in:
+// the state cookie is written on the host the user started from and read back
+// on the other one, which fails as `state_mismatch` and leaves no session.
+// A leading-dot domain lets both hosts share the auth cookies.
+// Only for the real domain — on localhost and preview deployments (*.vercel.app)
+// a wordpad.info domain would be rejected outright, so cookies stay host-only.
+const authHost = (() => {
+  try { return new URL(process.env.BETTER_AUTH_URL ?? "").hostname; } catch { return ""; }
+})();
+const cookieDomain = /(^|\.)wordpad\.info$/.test(authHost) ? ".wordpad.info" : undefined;
+
 const secret = process.env.BETTER_AUTH_SECRET;
 if (!secret && process.env.NODE_ENV === "production") {
   console.error(
@@ -36,6 +49,7 @@ export const auth = betterAuth({
     },
   },
   advanced: {
+    ...(cookieDomain ? { crossSubDomainCookies: { enabled: true, domain: cookieDomain } } : {}),
     // Persistent (not session-scoped) cookies so closing the browser doesn't
     // sign the user out; lax keeps them attached on normal navigations.
     defaultCookieAttributes: {
