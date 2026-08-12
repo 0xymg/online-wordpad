@@ -518,5 +518,6 @@ export const fr: Dictionary = {
     errNetwork: "Impossible de joindre le serveur. Vérifiez votre connexion et réessayez.",
     errGeneric: "Une erreur est survenue. Veuillez réessayer.",
     errGoogle: "La connexion avec Google a échoué. Veuillez réessayer.",
+    errAccountNotLinked: "Cette adresse a déjà un compte avec mot de passe ici. Connectez-vous avec votre mot de passe — vous pourrez ajouter Google ensuite.",
   },
 };

@@ -28,7 +28,8 @@ export const LOCALE_TAGS: Record<Locale, string> = {
   fr: "fr",
 };
 
-export const LOCALE_STORAGE_KEY = "wordpad-locale";
+/** Names the locale cookie, and the legacy localStorage entry it replaced. */
+export const LOCALE_KEY = "wordpad-locale";
 
 export function isLocale(value: unknown): value is Locale {
   return typeof value === "string" && (LOCALES as readonly string[]).includes(value);

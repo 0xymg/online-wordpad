@@ -10,14 +10,15 @@ export const metadata: Metadata = {
 };
 
 export default async function SignupPage({ searchParams }: {
-  searchParams: Promise<{ error?: string }>;
+  searchParams: Promise<{ error?: string | string[] }>;
 }) {
   const { error } = await searchParams;
+  const oauthError = Array.isArray(error) ? error[error.length - 1] : error;
   return (
     <AuthPageClient
       initialMode="signup"
       googleEnabled={googleEnabled}
-      oauthFailed={error === "google"}
+      oauthError={oauthError}
     />
   );
 }

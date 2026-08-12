@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import AuthForm, { type AuthMode } from "@/app/components/AuthForm";
+import AuthForm, { oauthErrorMessage, type AuthMode } from "@/app/components/AuthForm";
 import { useT, useLocale } from "@/app/components/I18nProvider";
 import { LOCALES, LOCALE_NAMES } from "@/lib/i18n";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -17,12 +17,12 @@ import { useSession } from "@/lib/auth-client";
 export default function AuthPageClient({
   initialMode,
   googleEnabled = false,
-  oauthFailed = false,
+  oauthError,
 }: {
   initialMode: AuthMode;
   googleEnabled?: boolean;
-  /** Set by the page when the URL carries ?error=google — a Google round trip that came back failed. */
-  oauthFailed?: boolean;
+  /** Better Auth's ?error=<code> from a Google round trip that came back failed. */
+  oauthError?: string;
 }) {
   const t = useT();
   const { locale, setLocale } = useLocale();
@@ -85,7 +85,7 @@ export default function AuthPageClient({
             onModeChange={changeMode}
             onSuccess={() => router.push("/pad")}
             googleEnabled={googleEnabled}
-            initialError={oauthFailed ? t.auth.errGoogle : null}
+            initialError={oauthError ? oauthErrorMessage(t, oauthError) : null}
           />
         </div>
       </main>

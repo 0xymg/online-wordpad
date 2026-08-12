@@ -16,6 +16,16 @@ export function authCopy(t: Dictionary, mode: AuthMode): { title: string; sub: s
   return { title: t.auth.loginTitle, sub: t.auth.loginSub, cta: t.auth.loginCta };
 }
 
+/**
+ * Better Auth reports a failed OAuth callback as ?error=<code> on the error URL.
+ * Only `account_not_linked` needs its own wording — it is the one a user can act
+ * on (sign in with the password that address already has).
+ */
+export function oauthErrorMessage(t: Dictionary, code: string): string {
+  if (code === "account_not_linked") return t.auth.errAccountNotLinked;
+  return t.auth.errGoogle;
+}
+
 function signupBenefits(t: Dictionary) {
   return [
     { Icon: CloudArrowUp, text: t.auth.benefitSync },
@@ -130,11 +140,12 @@ export default function AuthForm({
       // signIn.social resolves with an `error` object instead of throwing, so a
       // rejected sign-in used to leave the button spinning with nothing on screen.
       // errorCallbackURL brings a failed OAuth *callback* back to the login page
-      // with a readable message rather than Better Auth's raw /api/auth/error page.
+      // rather than Better Auth's raw /api/auth/error page; it appends its own
+      // ?error=<code> there, so this URL carries no query of its own.
       const { error } = await authClient.signIn.social({
         provider: "google",
         callbackURL,
-        errorCallbackURL: "/login?error=google",
+        errorCallbackURL: "/login",
       });
       if (error) throw new Error(error.message || "Google sign-in failed");
     } catch {

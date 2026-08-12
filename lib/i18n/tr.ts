@@ -500,5 +500,6 @@ export const tr: Dictionary = {
     errNetwork: "Sunucuya ulaşılamadı. Bağlantınızı kontrol edip tekrar deneyin.",
     errGeneric: "Bir şeyler ters gitti. Lütfen tekrar deneyin.",
     errGoogle: "Google ile giriş başarısız oldu. Lütfen tekrar deneyin.",
+    errAccountNotLinked: "Bu e-posta burada zaten parolayla kayıtlı. Parolanızla giriş yapın — Google'ı sonradan ekleyebilirsiniz.",
   },
 };

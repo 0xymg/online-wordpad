@@ -502,6 +502,7 @@ export const en = {
     errNetwork: "Could not reach the server. Check your connection and try again.",
     errGeneric: "Something went wrong. Please try again.",
     errGoogle: "Google sign-in failed. Please try again.",
+    errAccountNotLinked: "This email already has a password account here. Sign in with your password — you can add Google afterwards.",
   },
 };
 

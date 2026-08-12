@@ -110,6 +110,22 @@ export const auth = betterAuth({
       });
     },
   },
+  account: {
+    accountLinking: {
+      enabled: true,
+      trustedProviders: ["google"],
+      // Without this, signing in with Google fails as `account_not_linked`
+      // whenever the address already has a password account that has not been
+      // verified — and local accounts stay unverified whenever no mail provider
+      // is configured, so it would block the flow for practically everyone.
+      // Google has itself verified the address before we get here.
+      // The trade-off: someone who registered a password account under an
+      // address they do not own would be merged into the real owner's Google
+      // sign-in. Requiring verified local emails (i.e. configuring RESEND_API_KEY
+      // and setting this back to true) is the stricter option.
+      requireLocalEmailVerified: false,
+    },
+  },
   user: {
     changeEmail: {
       enabled: true,

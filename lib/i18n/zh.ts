@@ -505,5 +505,6 @@ export const zh: Dictionary = {
     errNetwork: "无法连接服务器，请检查网络后重试。",
     errGeneric: "出现问题，请重试。",
     errGoogle: "Google 登录失败，请重试。",
+    errAccountNotLinked: "该邮箱在这里已有密码账户。请先用密码登录，之后再绑定 Google。",
   },
 };
