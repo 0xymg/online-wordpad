@@ -281,7 +281,7 @@ export default function LandingPage() {
               Accounts are here. Save and sync your documents across devices.
             </span>
           </span>
-          <Link href="/pad" className="whitespace-nowrap font-medium underline underline-offset-4 decoration-[var(--pad-border-strong)] hover:decoration-current">
+          <Link href="/signup" className="whitespace-nowrap font-medium underline underline-offset-4 decoration-[var(--pad-border-strong)] hover:decoration-current">
             Sign up free →
           </Link>
         </div>
@@ -289,12 +289,14 @@ export default function LandingPage() {
 
       {/* ── Nav ── */}
       <header className="sticky top-0 z-50 border-b border-[var(--pad-border)] bg-[var(--pad-bg)]/85 backdrop-blur-md">
-        <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-6">
+        {/* Nav is absolutely centered: with justify-between it would sit
+            wherever the logo and the CTA leave room, which is not the middle. */}
+        <div className="relative mx-auto flex h-16 max-w-6xl items-center justify-between px-6">
           <span className="font-brand leading-none">
             <span className="text-2xl font-bold tracking-tight">EDTR</span>
             <span className="text-lg font-semibold tracking-wider text-[var(--pad-ink-50)]">PAD</span>
           </span>
-          <nav className="hidden items-center gap-8 text-[13px] text-[var(--pad-ink-50)] sm:flex">
+          <nav className="absolute left-1/2 hidden -translate-x-1/2 items-center gap-8 text-[13px] text-[var(--pad-ink-50)] sm:flex">
             <a href="#features" className="transition-colors hover:text-[var(--pad-ink)]">Features</a>
             <a href="#how" className="transition-colors hover:text-[var(--pad-ink)]">How it works</a>
             <a href="#privacy" className="transition-colors hover:text-[var(--pad-ink)]">Privacy</a>
@@ -548,21 +550,69 @@ export default function LandingPage() {
 
       {/* ── Footer ── */}
       <footer className="border-t border-[var(--pad-border)] px-6 py-12">
-        <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-4 text-sm text-[var(--pad-ink-50)] sm:flex-row">
-          <span className="font-brand leading-none">
-            <span className="text-lg font-bold tracking-tight text-[var(--pad-ink)]">EDTR</span>
-            <span className="text-sm font-semibold tracking-wider">PAD</span>
-          </span>
-          <div className="flex items-center gap-6">
-            <Link href="/pad" className="transition-colors hover:text-[var(--pad-ink)]">Editor</Link>
-            <Link href="/guides" className="transition-colors hover:text-[var(--pad-ink)]">Guides</Link>
-            <a href="/llms.txt" className="transition-colors hover:text-[var(--pad-ink)]">llms.txt</a>
+        <div className="mx-auto grid max-w-6xl gap-8 sm:grid-cols-3">
+          <div>
+            <span className="font-brand leading-none">
+              <span className="text-lg font-bold tracking-tight text-[var(--pad-ink)]">EDTR</span>
+              <span className="text-sm font-semibold tracking-wider text-[var(--pad-ink-50)]">PAD</span>
+            </span>
+            <p className="mt-2 text-sm text-[var(--pad-ink-50)]">
+              A free online WordPad and Word alternative.
+            </p>
           </div>
-          <span>© {new Date().getFullYear()} EDTRpad · Free Online WordPad</span>
+          <div>
+            <h3 className="text-xs font-semibold uppercase tracking-wide text-[var(--pad-ink-50)]">
+              EDTRpad
+            </h3>
+            <div className="mt-3 flex flex-col gap-2 text-sm text-[var(--pad-ink-50)]">
+              <Link href="/pad" className="transition-colors hover:text-[var(--pad-ink)]">Editor</Link>
+              <Link href="/guides" className="transition-colors hover:text-[var(--pad-ink)]">Guides</Link>
+              <a href="/llms.txt" className="transition-colors hover:text-[var(--pad-ink)]">llms.txt</a>
+            </div>
+          </div>
+          <div>
+            <h3 className="text-xs font-semibold uppercase tracking-wide text-[var(--pad-ink-50)]">
+              More from EDTR
+            </h3>
+            <div className="mt-3 flex flex-col gap-2 text-sm text-[var(--pad-ink-50)]">
+              <a
+                href="https://edtr.md"
+                target="_blank"
+                rel="noopener"
+                className="transition-colors hover:text-[var(--pad-ink)]"
+              >
+                EDTR.md — Markdown editor
+              </a>
+              <a
+                href="https://edtr.plus"
+                target="_blank"
+                rel="noopener"
+                className="transition-colors hover:text-[var(--pad-ink)]"
+              >
+                EDTR.plus
+              </a>
+            </div>
+          </div>
         </div>
-        <p className="mx-auto mt-8 max-w-6xl text-xs leading-relaxed text-[var(--pad-ink-50)]">
-          Disclaimer: without an account, EDTRpad stores your document in your browser local storage. If you clear your browser cache or storage, your document will be lost. Please export important files regularly. EDTRpad is an independent project and is not affiliated with Microsoft or the Microsoft WordPad application.
-        </p>
+        <div className="mx-auto mt-10 max-w-6xl border-t border-[var(--pad-border)] pt-6 text-sm text-[var(--pad-ink-50)]">
+          <div className="flex flex-col items-center justify-between gap-3 sm:flex-row">
+            <span>© {new Date().getFullYear()} EDTRpad · Free Online WordPad</span>
+            <span>
+              Part of project EDTR, brought to you by{" "}
+              <a
+                href="https://ymg.digital"
+                target="_blank"
+                rel="noopener"
+                className="font-medium text-[var(--pad-ink)] transition-opacity hover:opacity-70"
+              >
+                ymg.digital
+              </a>
+            </span>
+          </div>
+          <p className="mt-6 text-xs leading-relaxed">
+            Disclaimer: without an account, EDTRpad stores your document in your browser local storage. If you clear your browser cache or storage, your document will be lost. Please export important files regularly. EDTRpad is an independent project and is not affiliated with Microsoft or the Microsoft WordPad application.
+          </p>
+        </div>
       </footer>
     </div>
     </>

@@ -151,10 +151,12 @@ export async function getPreferences(): Promise<Record<string, unknown>> {
   return rows[0]?.metadata ?? {};
 }
 
+// Merges into the existing metadata rather than replacing it, so a partial
+// save can never drop keys written by another part of the app.
 export async function savePreferences(metadata: Record<string, unknown>): Promise<void> {
   const userId = await requireUserId();
-  await pool.query(`UPDATE "user" SET metadata = $1 WHERE id = $2`, [
-    JSON.stringify(metadata),
-    userId,
-  ]);
+  await pool.query(
+    `UPDATE "user" SET metadata = COALESCE(metadata, '{}'::jsonb) || $1::jsonb WHERE id = $2`,
+    [JSON.stringify(metadata), userId]
+  );
 }

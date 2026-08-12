@@ -11,8 +11,21 @@ const trustedOrigins = [
   ...(process.env.NODE_ENV === "development" ? ["http://localhost:3000", "http://localhost:3001"] : []),
 ];
 
+// Sessions are signed with this. Without it Better Auth falls back to a
+// built-in default, and every deploy (or serverless instance) can invalidate
+// existing cookies — which shows up as users being asked to sign in again.
+// Set BETTER_AUTH_SECRET in the environment; generate one with:
+//   openssl rand -base64 32
+const secret = process.env.BETTER_AUTH_SECRET;
+if (!secret && process.env.NODE_ENV === "production") {
+  console.error(
+    "[EDTRpad] BETTER_AUTH_SECRET is not set. Sessions will not survive deploys — set it in your environment."
+  );
+}
+
 export const auth = betterAuth({
   baseURL: process.env.BETTER_AUTH_URL,
+  secret,
   trustedOrigins,
   database: pool,
   session: {
@@ -21,6 +34,15 @@ export const auth = betterAuth({
     cookieCache: {
       enabled: true,
       maxAge: 5 * 60,
+    },
+  },
+  advanced: {
+    // Persistent (not session-scoped) cookies so closing the browser doesn't
+    // sign the user out; lax keeps them attached on normal navigations.
+    defaultCookieAttributes: {
+      sameSite: "lax",
+      secure: process.env.NODE_ENV === "production",
+      httpOnly: true,
     },
   },
   emailAndPassword: {

@@ -1011,6 +1011,7 @@ export default function Editor() {
   const isAuthed = !!authUser;
   const isAuthedRef = useRef(false);
   const prefsLoadedRef = useRef(false);
+  const prefsErrorShownRef = useRef(false);
   const user = authUser
     ? {
         name: authUser.name || authUser.email,
@@ -1885,6 +1886,9 @@ export default function Editor() {
     if (p.sidebar === "open" || p.sidebar === "closed") setSidebarOpen(p.sidebar === "open");
     if (typeof p.spellLang === "string") setSpellLang(p.spellLang);
     if (typeof p.printHeader === "boolean") setPrintHeaderFooter(p.printHeader);
+    if (typeof p.spellcheck === "boolean") setSpellcheckOn(p.spellcheck);
+    if (typeof p.toolbar === "boolean") setShowToolbar(p.toolbar);
+    if (typeof p.ruler === "boolean") setShowRuler(p.ruler);
   }, []);
 
   // Load documents + preferences once the session resolves (DB when signed in, localStorage for guests).
@@ -1977,9 +1981,20 @@ export default function Editor() {
         sidebar: sidebarOpen ? "open" : "closed",
         spellLang,
         printHeader: printHeaderFooter,
-      }).catch(() => {});
+        spellcheck: spellcheckOn,
+        toolbar: showToolbar,
+        ruler: showRuler,
+      }).catch(() => {
+        // Warn once per session — repeating it on every settings tweak would nag.
+        if (prefsErrorShownRef.current) return;
+        prefsErrorShownRef.current = true;
+        toast.error("Could not save your editor settings — they may not carry over to your next visit.");
+      });
     }, 700);
-  }, [isAuthed, isDark, zoomPercent, pageMarginCm, paperBgColor, sidebarOpen, spellLang, printHeaderFooter]);
+  }, [
+    isAuthed, isDark, zoomPercent, pageMarginCm, paperBgColor, sidebarOpen,
+    spellLang, printHeaderFooter, spellcheckOn, showToolbar, showRuler,
+  ]);
 
   const handleInsertTable = useCallback((rows: number, cols: number) => {
     const v = viewRef.current;
