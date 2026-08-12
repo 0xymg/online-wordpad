@@ -763,7 +763,14 @@ const DEFAULT_REF_CONTENT = `
   </blockquote>
 `;
 
-export default function Editor({ googleEnabled = false }: { googleEnabled?: boolean }) {
+export default function Editor({
+  googleEnabled = false,
+  initialHome = false,
+}: {
+  googleEnabled?: boolean;
+  /** True when mounted on /welcome — the start screen opens with the page. */
+  initialHome?: boolean;
+}) {
   const t = useT();
   const { locale, setLocale } = useLocale();
   // Read inside ProseMirror callbacks, which are created once and would
@@ -797,7 +804,7 @@ export default function Editor({ googleEnabled = false }: { googleEnabled?: bool
   const [authOpen, setAuthOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
   const [hasPassword, setHasPassword] = useState(false);
-  const [welcomeOpen, setWelcomeOpen] = useState(false);
+  const [welcomeOpen, setWelcomeOpen] = useState(initialHome);
   // True until the first document (DB or localStorage) lands in the editor,
   // so visitors see a loading page instead of a flash of empty paper.
   const [initialLoading, setInitialLoading] = useState(true);
@@ -1071,7 +1078,9 @@ export default function Editor({ googleEnabled = false }: { googleEnabled?: bool
   }, []);
 
   // ── Deep links: every document has its own URL (/pad?doc=<id>) ────────────
-  const docUrl = useCallback((id: string) => `${window.location.pathname}?doc=${encodeURIComponent(id)}`, []);
+  // Always /pad, even when the editor is mounted on /welcome — document links
+  // must stay canonical.
+  const docUrl = useCallback((id: string) => `/pad?doc=${encodeURIComponent(id)}`, []);
 
   // Reflect the open document in the address bar so it can be bookmarked and shared.
   // `push` adds a history entry (user navigation); otherwise the current one is replaced.
@@ -1088,6 +1097,26 @@ export default function Editor({ googleEnabled = false }: { googleEnabled?: bool
     if (!window.location.search) return;
     window.history.replaceState({}, "", window.location.pathname);
   }, []);
+
+  // ── Start screen ↔ URL sync: the welcome screen lives at /welcome ────────
+  // `push` = user navigation (Home button → back returns to the editor);
+  // auto-opens (sign-in, empty library) replace instead, adding no entry.
+  const openHome = useCallback((push = true) => {
+    setWelcomeOpen(true);
+    if (window.location.pathname !== "/welcome") {
+      if (push) window.history.pushState({ home: true }, "", "/welcome");
+      else window.history.replaceState({ home: true }, "", "/welcome");
+    }
+  }, []);
+
+  const closeHome = useCallback(() => {
+    setWelcomeOpen(false);
+    // Leaving /welcome lands on the active document's canonical URL.
+    if (window.location.pathname === "/welcome") {
+      const id = activeIdRef.current;
+      window.history.replaceState({}, "", id ? docUrl(id) : "/pad");
+    }
+  }, [docUrl]);
 
   const copyDocLink = useCallback(async (id: string) => {
     const url = `${window.location.origin}${docUrl(id)}`;
@@ -1231,9 +1260,11 @@ export default function Editor({ googleEnabled = false }: { googleEnabled?: bool
     if (history) syncUrlToDoc(id, true);
   }, [applyFiles, commitCurrent, setDocFromHtml, syncUrlToDoc]);
 
-  // Browser back/forward moves between documents opened in this tab.
+  // Browser back/forward moves between documents opened in this tab, and in
+  // and out of the start screen (/welcome).
   useEffect(() => {
     const onPop = () => {
+      setWelcomeOpen(window.location.pathname === "/welcome");
       const id = new URLSearchParams(window.location.search).get("doc");
       if (id && filesRef.current.some((f) => f.id === id)) switchFile(id, false);
     };
@@ -1338,11 +1369,11 @@ export default function Editor({ googleEnabled = false }: { googleEnabled?: bool
         setDocFromHtml("<p></p>");
         setDocTitle("");
         clearDocUrl();
-        setWelcomeOpen(true);
+        openHome(false);
       }
     }
     toast.success(t.toast.deleted(label));
-  }, [applyFiles, clearDocUrl, confirmDialog, setDocFromHtml, syncUrlToDoc, t]);
+  }, [applyFiles, clearDocUrl, confirmDialog, openHome, setDocFromHtml, syncUrlToDoc, t]);
 
   // Live title input: reflect typing immediately, debounce the persisted rename.
   const renameActive = useCallback((name: string) => {
@@ -1476,11 +1507,11 @@ export default function Editor({ googleEnabled = false }: { googleEnabled?: bool
       await addNewDocument(name, html);
       // The start screen stays up while the picker is open; the imported
       // document is what closes it.
-      setWelcomeOpen(false);
+      closeHome();
     } catch {
       toast.error(t.toast.openFailed);
     }
-  }, [addNewDocument]);
+  }, [addNewDocument, closeHome]);
 
   // ── Image insert (file picker, paste, drag-drop share this path) ─────────
   const insertImageFromFile = useCallback(async (imageFile: File) => {
@@ -1531,7 +1562,7 @@ export default function Editor({ googleEnabled = false }: { googleEnabled?: bool
   // ── Stable handlers for the memoized MenuBar ───────────────────────────────
   // Every prop MenuBar receives must keep its identity across keystrokes, or
   // React.memo can't skip its ~700-line render. Former inline arrows live here.
-  const showHome = useCallback(() => setWelcomeOpen(true), []);
+  const showHome = useCallback(() => openHome(), [openHome]);
   const showShortcuts = useCallback(() => setShortcutsOpen(true), []);
   const toggleToolbar = useCallback(() => setShowToolbar((s) => !s), []);
   const toggleRuler = useCallback(() => setShowRuler((s) => !s), []);
@@ -1740,7 +1771,7 @@ export default function Editor({ googleEnabled = false }: { googleEnabled?: bool
     const welcomeUid = authUser?.id ?? "";
     if (authUser && !initialDeepLinkId && welcomedForRef.current !== welcomeUid) {
       welcomedForRef.current = welcomeUid;
-      setWelcomeOpen(true);
+      openHome(false);
     }
     (async () => {
       if (authUser) {
@@ -1778,7 +1809,7 @@ export default function Editor({ googleEnabled = false }: { googleEnabled?: bool
         filesRef.current = docs; activeIdRef.current = active?.id ?? "";
         setFiles(docs); setActiveId(active?.id ?? "");
         if (active) { setDocFromHtml(active.html); setDocTitle(active.name); }
-        else { setDocFromHtml("<p></p>"); setDocTitle(""); setWelcomeOpen(true); }
+        else { setDocFromHtml("<p></p>"); setDocTitle(""); openHome(false); }
         // Only stamp the URL when the visitor actually arrived via a deep link.
         // Writing it on a plain /pad visit would make the next reload look like
         // a deep link and skip the start screen.
@@ -1801,7 +1832,7 @@ export default function Editor({ googleEnabled = false }: { googleEnabled?: bool
         setFiles(list); setActiveId(activeId);
         if (activeFile) { setDocFromHtml(activeFile.html); setDocTitle(activeFile.name); }
         // Guest deleted their last document: start screen, no auto-created doc.
-        else { setDocFromHtml("<p></p>"); setDocTitle(""); setWelcomeOpen(true); }
+        else { setDocFromHtml("<p></p>"); setDocTitle(""); openHome(false); }
         if (deepLinked) syncUrlToDoc(activeId);
         try {
           localStorage.setItem(FILES_KEY, JSON.stringify(list));
@@ -3163,7 +3194,7 @@ export default function Editor({ googleEnabled = false }: { googleEnabled?: bool
       )}
       <WelcomeScreen
         open={welcomeOpen}
-        onClose={() => setWelcomeOpen(false)}
+        onClose={closeHome}
         isAuthed={isAuthed}
         userName={authUser?.name || null}
         files={files.map((f) => ({ id: f.id, name: f.name, folder: f.folder }))}
