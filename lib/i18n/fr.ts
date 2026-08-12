@@ -364,135 +364,148 @@ export const fr: Dictionary = {
 
   landing: {
     announcementNew: "Nouveau",
-    announcementText:
-      "Les comptes sont arrivés. Enregistrez vos documents et retrouvez-les sur tous vos appareils.",
-    announcementCta: "Créer un compte gratuit →",
+    announcementText: "Comptes facultatifs. Synchronisez vos documents entre vos appareils, toujours gratuitement.",
+    announcementCta: "Créer un compte →",
     navFeatures: "Fonctionnalités",
     navHow: "Comment ça marche",
-    navPrivacy: "Confidentialité",
+    navVs: "vs. WordPad",
     navFaq: "Questions fréquentes",
     navGuides: "Guides",
     openEditor: "Ouvrir l'éditeur →",
-    heroTitleLine1: "Écrivez, tout simplement.",
-    heroTitleLine2: "Directement dans votre navigateur.",
+    heroTitle: "WordPad, le traitement de texte que Windows a supprimé, reconstruit pour le navigateur.",
     heroSubtitle:
-      "Une alternative gratuite à WordPad et à Word, en ligne, qui s'ouvre instantanément. Texte enrichi, tableaux, images et impression, sans rien installer ni créer de compte.",
+      "Un traitement de texte en ligne gratuit qui s'ouvre en une seconde environ. Gras, puces, tableaux, images, sauts de page, et une impression qui correspond vraiment à la page. Pas de téléchargement, pas de licence, pas de compte.",
     heroCtaPrimary: "Commencer à écrire →",
-    heroCtaSecondary: "Voir les fonctionnalités",
-    heroSeoText:
-      "Online WordPad est un éditeur de texte en ligne gratuit qui fonctionne dans le navigateur, pensé pour l'écriture de tous les jours : rédiger un document, prendre des notes, préparer un rapport ou écrire une lettre. C'est un Word en ligne léger, dans l'esprit des éditeurs de bureau classiques comme WordPad, et il ne demande aucune installation.",
-    statDownloads: "téléchargement requis",
-    statFormats: "formats d'export",
-    statUndo: "annulations",
-    statPrice: "sans abonnement",
-    featuresTitle: "Tout ce qu'il faut pour écrire",
-    featuresSubtitle:
-      "Un traitement de texte complet qui tourne entièrement dans votre navigateur.",
-    featuresSeoText:
-      "Contrairement aux éditeurs de texte brut, Online WordPad gère la mise en forme : gras, italique, polices, tailles de caractères, couleur du texte et surlignage. Vous pouvez insérer des tableaux, des images et des sauts de page. Les documents s'exportent en Word (.docx), en HTML ou en texte brut (.txt).",
-    wordAltTitle: "Une alternative gratuite à Word, en ligne",
-    wordAltP1:
-      "Si vous cherchiez un Microsoft Word en ligne pour rédiger un document rapidement, EDTRpad couvre l'essentiel, sans licence ni téléchargement. L'éditeur en ligne s'ouvre en quelques secondes, lit et écrit les fichiers Word (.docx) et imprime au format A4 avec des marges correctes.",
-    wordAltP2:
-      "Il fait aussi office de traitement de texte en ligne pour celles et ceux qui utilisent OpenOffice ou LibreOffice à la maison : ouvrez votre document dans le navigateur depuis n'importe quel ordinateur, faites vos modifications, puis réexportez-le au format Word ou en texte enrichi. Rien à installer sur une machine qui ne vous appartient pas.",
-    wordAltP3:
-      "Soyons clairs sur le compromis : ce n'est pas une suite bureautique en ligne complète. Pas de publipostage, pas de suivi des modifications, pas de tableur. Pour les lettres, les notes, les rapports, les devoirs et les formulaires, c'est justement cette simplicité qui le rend rapide.",
-    howTitle: "Comment utiliser Online WordPad",
-    howSubtitle: "Ouvrir, écrire, exporter. Tout tient en trois étapes.",
+    heroCtaSecondary: "Ouvrir un fichier .docx",
+    heroMicrocopy: "Gratuit pour toujours · Rien à installer · Votre document reste sur votre appareil",
+    heroEditorPlaceholder:
+      "Cliquez ici et commencez à écrire. C'est le vrai éditeur, pas une image de l'éditeur.",
+    trustItems: [
+      "S'ouvre en ~1 seconde",
+      "Fonctionne entièrement hors ligne",
+      "Ouvre et exporte le .docx",
+      "0 Ko envoyé",
+    ],
+    goneTitle: "Si vous êtes ici parce que WordPad a disparu, vous ne rêvez pas.",
+    goneP1:
+      "Microsoft a retiré WordPad de Windows avec la mise à jour 24H2, après une trentaine d'années. Aucune option ne le ramène, et il n'existe aucun remplaçant officiel.",
+    goneP2:
+      "Ce qui laisse un vide que la plupart des gens ressentent tout de suite : Notepad ne sait pas mettre un mot en gras. Word veut un abonnement. Google Docs veut votre compte et votre fichier.",
+    goneP3:
+      "EDTRpad est ce chaînon manquant, ce que WordPad était vraiment. Texte enrichi, tableaux, images, impression. Ouvrez-le, écrivez, fermez-le. Rien à acheter, rien à installer, rien à signer.",
+    goneCta: "Ouvrir l'éditeur →",
+    compareTitle: "La comparaison honnête",
+    compareCols: ["EDTRpad", "WordPad", "Word Online", "Google Docs", "Notepad"],
+    compareRows: [
+      { label: "Prix", cells: ["Gratuit", "Supprimé", "Offre gratuite", "Gratuit", "Gratuit"] },
+      { label: "Installation requise", cells: ["Non", "–", "Non", "Non", "Oui"] },
+      { label: "Compte requis", cells: ["Non", "–", "Oui", "Oui", "Non"] },
+      { label: "Gras, tableaux, images", cells: ["Oui", "Oui", "Oui", "Oui", "Non"] },
+      { label: "Ouvre le .docx", cells: ["Oui", "Limité", "Oui", "Oui", "Non"] },
+      { label: "Exporte le .docx", cells: ["Oui", "Oui", "Oui", "Oui", "Non"] },
+      { label: "Fonctionne hors ligne", cells: ["Oui", "Oui", "Non", "En partie", "Oui"] },
+      { label: "Votre fichier quitte votre appareil", cells: ["Jamais", "Jamais", "Toujours", "Toujours", "Jamais"] },
+      { label: "Marges d'impression exactes", cells: ["Oui", "Oui", "Oui", "Limité", "Non"] },
+    ],
+    compareCaption: "EDTRpad est un produit indépendant, sans lien avec Microsoft.",
+    featuresTitle: "Tout ce que vous attendez. Rien à apprendre.",
+    privacyTitle: "Votre document ne quitte jamais cet onglet.",
+    privacyP1:
+      "Sans compte, il n'y a pas d'envoi. Pas de copie sur un serveur. Pas de synchronisation, pas d'analyse, pas de \"nous utilisons votre contenu pour améliorer nos services\".",
+    privacyP2:
+      "Ce que vous tapez est écrit dans le stockage local de votre navigateur, sur cet appareil. Fermez l'onglet : tout est encore là à votre retour. Nous ne pouvons pas lire votre document, puisque nous ne le recevons jamais.",
+    privacyP3:
+      "Si vous le voulez sur vos autres appareils, c'est exactement à ça que sert un compte. Et cela reste votre décision, pas le réglage par défaut.",
+    accountsTitle: "Commencez anonyme. Ajoutez un compte seulement si vous en voulez un.",
+    accountsIntro:
+      "Tout ce qui précède fonctionne sans aucune configuration. Quand vous préférez ne pas dépendre d'un seul navigateur :",
+    accountsB1: "Gardez autant de documents que vous voulez, rangés au même endroit",
+    accountsB2: "Reprenez sur n'importe quel appareil. Commencez sur votre ordinateur portable, terminez sur votre téléphone",
+    accountsB3: "Toujours entièrement gratuit. Pas d'offre premium, pas de paywall, pas de compte à rebours d'essai",
+    accountsCta: "Créer un compte gratuit →",
+    accountsSkip: "ou continuez à écrire sans compte",
+    howTitle: "Trois étapes, et la première est déjà faite",
     howStep1Title: "Ouvrir",
     howStep1Desc:
-      "Cliquez sur « Commencer à écrire » et l'éditeur s'ouvre instantanément. Sans téléchargement ni inscription.",
+      "Vous êtes sur la page. Cliquez sur Commencer à écrire et l'éditeur est là. Pas d'écran d'installation, pas de visite guidée.",
     howStep2Title: "Écrire",
     howStep2Desc:
-      "Mettez le texte en forme, insérez des tableaux et des images, ajoutez des sauts de page et structurez votre document.",
+      "Mettez le texte en forme, insérez tableaux et images, ajoutez des sauts de page. Tout s'enregistre pendant que vous tapez.",
     howStep3Title: "Exporter ou imprimer",
     howStep3Desc:
-      "Téléchargez au format .docx, .html ou .txt. Ou imprimez avec des marges au millimètre près.",
-    howSeoText:
-      "Vous pouvez écrire dès l'ouverture de l'éditeur. Votre contenu est enregistré automatiquement à chaque modification. Passez par Fichier > Exporter pour enregistrer en .docx, .html ou .txt à tout moment. Appuyez sur Ctrl+P ou choisissez Fichier > Imprimer pour imprimer avec les marges de votre choix.",
-    privacyTitle: "Confidentiel par défaut",
-    privacyLead:
-      "Aucun compte nécessaire : vos documents sont stockés dans le stockage local de votre navigateur et ne quittent jamais votre appareil. Nous ne voyons pas ce que vous écrivez.",
-    privacyDetail:
-      "Ouvrez le site, commencez à taper : votre travail est enregistré automatiquement sur votre appareil. Si vous choisissez de créer un compte gratuit, vos documents sont synchronisés dans votre espace privé afin de continuer depuis n'importe quel appareil. Ils ne sont jamais partagés ni utilisés à d'autres fins.",
-    faqTitle: "Questions fréquentes",
-    ctaTitle: "Prêt à vous mettre à écrire ?",
-    ctaSubtitle:
-      "Aucun compte requis. Aucun téléchargement. Ouvrez l'éditeur et lancez-vous.",
-    ctaButton: "Ouvrir Online WordPad →",
-    footerTagline: "Une alternative gratuite à WordPad et à Word, en ligne.",
+      "Téléchargez en .docx, .html ou .txt, ou envoyez directement à l'imprimante avec les marges que vous avez définies.",
+    useCasesTitle: "Ce pour quoi les gens l'ouvrent vraiment",
+    useCases: [
+      "Une lettre qui doit ressembler à une lettre",
+      "Des notes de réunion avec un tableau dedans",
+      "Un CV, vite",
+      "Un devoir à rendre ce soir",
+      "Un courrier au propriétaire",
+      "Un .docx reçu par e-mail alors que vous n'avez pas Word",
+      "Ce truc pour lequel vous ouvriez WordPad",
+    ],
+    faqTitle: "Des questions qui méritent une réponse",
+    ctaTitle: "Rien à installer. Rien à signer. Écrivez, c'est tout.",
+    ctaButton: "Commencer à écrire →",
+    ctaMicrocopy: "Gratuit pour toujours · S'ouvre en une seconde environ · Votre document reste sur votre appareil",
+    footerTagline: "Le traitement de texte en ligne gratuit. WordPad, reconstruit pour le navigateur.",
     footerMoreFrom: "À découvrir aussi",
     footerEditor: "Éditeur",
     footerGuides: "Guides",
-    footerMd: "EDTR.md — éditeur Markdown",
-    footerPlus: "EDTR.plus — alternative à Notepad++",
+    footerWordAlt: "Alternative à Word",
+    footerOpenDocx: "Ouvrir un .docx en ligne",
+    footerMd: "EDTR.md · éditeur Markdown",
+    footerPlus: "EDTR.plus · alternative à Notepad++",
     footerCredit: "Fait partie de {project}, proposé par {by}",
-    footerCopyright: (year: number) => `© ${year} EDTRpad · Online WordPad gratuit`,
-    footerDisclaimer:
-      "Avertissement : sans compte, EDTRpad conserve votre document dans le stockage local de votre navigateur. Si vous videz le cache ou les données de votre navigateur, votre document sera perdu. Pensez à exporter régulièrement vos fichiers importants. EDTRpad est un projet indépendant, sans aucun lien avec Microsoft ni avec l'application Microsoft WordPad.",
+    footerCopyright: (year: number) => `© ${year} EDTRpad. Sans lien avec Microsoft.`,
+    footerTrademark: "WordPad et Microsoft Word sont des marques de Microsoft Corporation.",
   },
 
   features: {
-    speedTitle: "Instantané et léger",
-    speedDesc:
-      "L'éditeur s'ouvre en un clin d'œil et suit votre frappe sans ralentir, même dans les longs documents. Une fois chargé, il continue de fonctionner hors ligne.",
-    accountsTitle: "Comptes et synchronisation",
-    accountsDesc:
-      "Créez un compte gratuit pour enregistrer vos documents dans le cloud et reprendre votre travail sur n'importe quel appareil. Aucun compte n'est nécessaire pour commencer.",
-    multiDocTitle: "Plusieurs documents",
-    multiDocDesc:
-      "Avec un compte gratuit, conservez autant de documents que vous voulez. L'écran d'accueil liste vos fichiers récents : créez-en un nouveau ou reprenez un ancien en un clic.",
-    darkTitle: "Mode sombre",
-    darkDesc:
-      "Basculez entre thème clair et thème sombre pour écrire confortablement de jour comme de nuit. Vos préférences de thème et de mise en page suivent votre compte.",
-    richTextTitle: "Texte enrichi",
-    richTextDesc:
-      "Gras, italique, souligné, barré, polices, tailles, couleur du texte et surlignage. Tout ce que l'on attend d'un éditeur de texte.",
-    tablesTitle: "Tableaux",
-    tablesDesc:
-      "Insérez des tableaux à l'aide d'une grille visuelle. Ajoutez ou supprimez des lignes et des colonnes, redimensionnez les cellules, naviguez entièrement au clavier.",
-    imagesTitle: "Images",
-    imagesDesc:
-      "Collez ou importez des images. Redimensionnez-les, rognez-les, faites-les pivoter, retournez-les et alignez-les dans le document.",
-    findTitle: "Rechercher et remplacer",
-    findDesc:
-      "Parcourez votre document et remplacez le texte au même endroit. Chaque occurrence est mise en évidence. Appuyez sur Ctrl+F pour ouvrir l'outil.",
-    pageBreaksTitle: "Sauts de page",
-    pageBreaksDesc:
-      "Insérez de vrais sauts de page, respectés à l'écran comme à l'impression. Les pages s'affichent au format A4.",
-    importExportTitle: "Import et export",
-    importExportDesc:
-      "Ouvrez des fichiers .docx, .txt et .html. Enregistrez en Word (.docx), texte enrichi (.rtf), HTML ou texte brut (.txt), mise en forme comprise.",
-    printTitle: "Impression",
-    printDesc:
-      "Imprimez avec des marges exactes. Réglez des marges de 0,5 cm à 2 cm et obtenez précisément cela sur le papier.",
-    undoTitle: "Annuler / Rétablir",
-    undoDesc:
-      "Historique complet, avec un nombre illimité d'annulations et de rétablissements. Raccourcis clavier Ctrl+Z / Ctrl+Y.",
-    commandTitle: "Menu de commandes",
-    commandDesc:
-      "Tapez / n'importe où dans le document pour ouvrir un menu de commandes. Insérez titres, listes, tableaux, images, emojis et bien plus sans passer par la barre d'outils.",
+    f1Title: "Un vrai traitement de texte, pas une zone de texte",
+    f1Desc:
+      "Gras, italique, souligné, barré. Polices, tailles, couleur du texte, couleur de surlignage. Listes à puces et numérotées. Tableaux via un sélecteur de grille visuel. Des images que vous pouvez coller, redimensionner, rogner, faire pivoter, retourner et aligner. De vrais sauts de page qui tiennent à l'écran comme à l'impression.",
+    f2Title: "Ouvre ce que vous avez déjà",
+    f2Desc:
+      "Glissez un fichier .docx, .txt ou .html et il s'ouvre. Réexportez en Word .docx, HTML ou texte brut. Le .docx s'ouvre proprement dans Word, Pages et Google Docs. Pas d'étape de conversion, pas d'envoi, pas d'écran \"traitement de votre fichier en cours\".",
+    f3Title: "Fonctionne quand Internet ne fonctionne pas",
+    f3Desc:
+      "EDTRpad s'installe comme Progressive Web App (application web progressive) dès votre première visite. Ensuite, il s'ouvre et fonctionne sans Wi-Fi : dans un avion, dans une cave, sur une connexion d'hôtel qui fait semblant de marcher. Tout continue de s'enregistrer.",
+    f4Title: "Imprime comme du papier, pas comme une page web",
+    f4Desc:
+      "Réglez les marges de 0.5 cm à 2 cm et imprimez exactement ce que vous voyez. Si vous avez déjà imprimé depuis un navigateur en regardant votre document se désagréger, c'est ici que vous verrez la différence.",
+    smallTitle: "Les petites choses qui le rendent rapide",
+    smallItems: [
+      "Tapez / n'importe où pour ouvrir le menu de commandes",
+      "Rechercher et remplacer",
+      "Annuler et rétablir sans limite",
+      "Mode sombre",
+      "Raccourcis clavier complets",
+      "Enregistrement automatique à chaque frappe",
+    ],
   },
 
   faq: {
-    q1: "Dois-je créer un compte ?",
-    a1: "Non. Vous pouvez ouvrir l'éditeur et commencer à taper immédiatement, sans inscription. Le compte gratuit est facultatif : il permet d'enregistrer plusieurs documents dans le cloud et de les synchroniser entre vos appareils.",
-    q2: "Mes documents sont-ils enregistrés ?",
-    a2: "Oui. Sans compte, votre document est enregistré automatiquement dans le stockage local de votre navigateur, sur l'appareil utilisé. Une fois connecté, vos documents et vos préférences sont enregistrés sur votre compte et synchronisés entre vos appareils.",
-    q3: "Puis-je exporter au format Microsoft Word ?",
-    a3: "Oui. Passez par Fichier > Exporter > Word (.docx) pour télécharger un fichier .docx compatible avec Microsoft Word et Google Docs.",
-    q4: "Est-ce que ça fonctionne hors ligne ?",
-    a4: "Oui. L'éditeur est une Progressive Web App : après une première visite, il s'ouvre et fonctionne entièrement hors ligne, et vous pouvez l'installer depuis votre navigateur comme une application de bureau.",
-    q5: "Puis-je ouvrir mes fichiers Word ou texte existants ?",
-    a5: "Oui. Utilisez Fichier > Ouvrir… (ou Ctrl+O) pour ouvrir directement des fichiers .docx, .txt et .html dans l'éditeur, puis réexportez-les en Word (.docx) ou en texte enrichi (.rtf) une fois votre travail terminé.",
-    q6: "Est-ce gratuit ?",
-    a6: "Oui. Toutes les fonctionnalités sont gratuites : aucun contenu payant, aucune formule premium, aucun abonnement. Le compte est facultatif et gratuit lui aussi.",
-    q7: "Est-ce un Microsoft Word en ligne ?",
-    a7: "Non. EDTRpad est un traitement de texte en ligne indépendant, sans aucun lien avec Microsoft. Il couvre les usages courants pour lesquels on ouvre Word, et il lit et écrit les fichiers Word (.docx) : c'est donc une alternative gratuite à Word en ligne.",
-    q8: "Puis-je m'en servir à la place d'Office ou d'OpenOffice ?",
-    a8: "Pour les documents du quotidien, oui. EDTRpad gère le texte enrichi, les tableaux, les images et l'impression, et exporte des fichiers Word (.docx) et texte enrichi (.rtf) qu'ouvrent aussi bien Microsoft Office qu'OpenOffice ou LibreOffice. Pour des fonctions lourdes comme le publipostage ou le suivi des modifications, une suite bureautique complète reste nécessaire.",
-    q9: "Quels navigateurs sont pris en charge ?",
-    a9: "Chrome, Edge, Firefox et Safari. Tous les navigateurs modernes sont pris en charge. Nous recommandons Chrome pour la meilleure qualité d'impression.",
+    q1: "Où est passé WordPad ?",
+    a1: "Microsoft a retiré WordPad de Windows avec la mise à jour 24H2, après une trentaine d'années dans chaque version de Windows. Aucun réglage ne le ramène, et il n'existe aucun remplaçant officiel. EDTRpad existe pour combler ce vide : le même genre de traitement de texte léger, qui tourne dans votre navigateur plutôt que sous Windows.",
+    q2: "Ai-je besoin d'un compte ?",
+    a2: "Non. L'éditeur s'ouvre et fonctionne entièrement sans compte. Le compte est facultatif et gratuit, et n'existe que pour vous permettre de garder plusieurs documents et de continuer sur d'autres appareils.",
+    q3: "Si je ferme l'onglet, est-ce que je perds mon travail ?",
+    a3: "Non. Votre document est enregistré dans le stockage local de votre navigateur à chaque frappe : il est donc toujours là à votre retour, même après un redémarrage. Effacer les données de navigation le supprime, alors exportez un fichier ou créez un compte pour tout ce que vous ne pouvez pas vous permettre de perdre.",
+    q4: "Est-ce sûr d'y coller quelque chose de confidentiel ?",
+    a4: "Sans compte, ce que vous tapez ne quitte jamais votre appareil. Pas d'envoi, pas de copie sur un serveur, rien qui lise votre texte. Le document vit dans le stockage local de votre navigateur, auquel nous n'avons pas accès.",
+    q5: "Mon .docx s'ouvrira-t-il correctement dans Word ?",
+    a5: "Oui. Les fichiers .docx exportés conservent leur mise en forme, leurs tableaux et leurs images, et s'ouvrent proprement dans Microsoft Word, Pages, Google Docs, LibreOffice et OpenOffice.",
+    q6: "Puis-je ouvrir les fichiers Word que j'ai déjà ?",
+    a6: "Oui. Glissez un fichier .docx, .txt ou .html dans l'éditeur, ou passez par Fichier > Ouvrir. Le fichier est converti directement dans votre navigateur ; il n'est jamais envoyé nulle part.",
+    q7: "Fonctionne-t-il hors ligne ?",
+    a7: "Oui. EDTRpad est une Progressive Web App : après votre première visite, il s'ouvre et fonctionne sans connexion Internet, et tout continue de s'enregistrer. Vous pouvez aussi l'installer depuis votre navigateur comme une application de bureau.",
+    q8: "Est-ce Microsoft Word ?",
+    a8: "Non. EDTRpad est un produit indépendant, sans lien avec Microsoft. Il couvre ce que couvrait WordPad : texte enrichi, tableaux, images et impression. Pour le publipostage, le suivi des modifications ou les macros, il vous faut toujours une suite bureautique complète.",
+    q9: "Est-ce vraiment gratuit ?",
+    a9: "Oui. Toutes les fonctionnalités sont gratuites, sans offre premium, sans période d'essai et sans paywall. Le compte facultatif est gratuit lui aussi.",
+    q10: "Quels navigateurs fonctionnent ?",
+    a10: "Chrome, Edge, Firefox et Safari, sous Windows, macOS, Linux, ChromeOS, Android et iPad. Tout navigateur moderne convient ; nous recommandons Chrome pour la meilleure qualité d'impression.",
   },
 
   auth: {

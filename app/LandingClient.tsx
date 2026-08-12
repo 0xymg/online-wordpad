@@ -2,31 +2,20 @@
 
 import Link from "next/link";
 import { Fragment, type ReactNode } from "react";
-import {
-  TextB, Table, ImageSquare, Article, Export, Printer, Clock, Lock,
-  Command, CloudArrowUp, Files, Moon, MagnifyingGlass, Lightning,
-} from "./components/icons";
+import { TextB, Files, WifiSlash, Printer, Lock, CloudArrowUp, Check } from "./components/icons";
 import ToolbarPreviewClient from "./components/ToolbarPreviewClient";
 import { useT, useLocale } from "./components/I18nProvider";
 import { LOCALES, LOCALE_NAMES, type Dictionary } from "@/lib/i18n";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
-/* The feature grid and FAQ read their copy from the dictionary, so the icons
+/* The feature cards and FAQ read their copy from the dictionary, so the icons
    and order live here while the words come from the active locale. */
 function featureList(t: Dictionary) {
   return [
-    { Icon: CloudArrowUp,    title: t.features.accountsTitle,     desc: t.features.accountsDesc },
-    { Icon: Files,           title: t.features.multiDocTitle,     desc: t.features.multiDocDesc },
-    { Icon: Moon,            title: t.features.darkTitle,         desc: t.features.darkDesc },
-    { Icon: TextB,           title: t.features.richTextTitle,     desc: t.features.richTextDesc },
-    { Icon: Table,           title: t.features.tablesTitle,       desc: t.features.tablesDesc },
-    { Icon: ImageSquare,     title: t.features.imagesTitle,       desc: t.features.imagesDesc },
-    { Icon: MagnifyingGlass, title: t.features.findTitle,         desc: t.features.findDesc },
-    { Icon: Article,         title: t.features.pageBreaksTitle,   desc: t.features.pageBreaksDesc },
-    { Icon: Export,          title: t.features.importExportTitle, desc: t.features.importExportDesc },
-    { Icon: Printer,         title: t.features.printTitle,        desc: t.features.printDesc },
-    { Icon: Clock,           title: t.features.undoTitle,         desc: t.features.undoDesc },
-    { Icon: Command,         title: t.features.commandTitle,      desc: t.features.commandDesc },
+    { Icon: TextB,     title: t.features.f1Title, desc: t.features.f1Desc },
+    { Icon: Files,     title: t.features.f2Title, desc: t.features.f2Desc },
+    { Icon: WifiSlash, title: t.features.f3Title, desc: t.features.f3Desc },
+    { Icon: Printer,   title: t.features.f4Title, desc: t.features.f4Desc },
   ];
 }
 
@@ -41,7 +30,23 @@ function faqList(t: Dictionary) {
     { q: t.faq.q7, a: t.faq.a7 },
     { q: t.faq.q8, a: t.faq.a8 },
     { q: t.faq.q9, a: t.faq.a9 },
+    { q: t.faq.q10, a: t.faq.a10 },
   ];
+}
+
+/* Renders "item · item · item" lines (hero microcopy, trust bar, use cases)
+   from a list, so the separator never has to live inside the translations. */
+function DotSeparated({ items, className }: { items: string[]; className?: string }) {
+  return (
+    <span className={className}>
+      {items.map((item, i) => (
+        <Fragment key={item}>
+          {i > 0 && <span aria-hidden className="mx-2 text-[var(--pad-ink-50)]">·</span>}
+          <span className="whitespace-nowrap">{item}</span>
+        </Fragment>
+      ))}
+    </span>
+  );
 }
 
 /* The credit line puts the two brand names in different positions depending on
@@ -78,12 +83,12 @@ export default function LandingClient() {
   const { locale, setLocale } = useLocale();
 
   return (
-<div className="pad-marketing min-h-screen font-sans">
+    <div className="pad-marketing min-h-screen font-sans">
       {/* ── Announcement banner ── */}
       <div className="border-b border-[var(--pad-border)] text-[13px]">
         <div className="mx-auto flex max-w-6xl items-center justify-center gap-2 px-6 py-2 text-center">
           <span className="inline-flex items-center gap-2">
-            <span className="rounded-full border border-[var(--pad-border-strong)] px-2 py-0.5 text-[11px] font-medium uppercase tracking-wide text-[var(--pad-ink-70)]">
+            <span className="border border-[var(--pad-border-strong)] px-2 py-0.5 text-[11px] font-medium uppercase tracking-wide text-[var(--pad-ink-70)]">
               {t.landing.announcementNew}
             </span>
             <span className="text-[var(--pad-ink-70)]">
@@ -108,13 +113,13 @@ export default function LandingClient() {
           <nav className="absolute left-1/2 hidden -translate-x-1/2 items-center gap-8 text-[13px] text-[var(--pad-ink-50)] sm:flex">
             <a href="#features" className="transition-colors hover:text-[var(--pad-ink)]">{t.landing.navFeatures}</a>
             <a href="#how" className="transition-colors hover:text-[var(--pad-ink)]">{t.landing.navHow}</a>
-            <a href="#privacy" className="transition-colors hover:text-[var(--pad-ink)]">{t.landing.navPrivacy}</a>
+            <a href="#vs-wordpad" className="transition-colors hover:text-[var(--pad-ink)]">{t.landing.navVs}</a>
             <a href="#faq" className="transition-colors hover:text-[var(--pad-ink)]">{t.landing.navFaq}</a>
             <Link href="/guides" className="transition-colors hover:text-[var(--pad-ink)]">{t.landing.navGuides}</Link>
           </nav>
           <Link
             href="/pad"
-            className="rounded-full bg-[var(--pad-ink)] px-4 py-2 text-[13px] font-semibold text-[var(--pad-bg)] transition-opacity hover:opacity-90"
+            className="bg-[var(--pad-ink)] px-4 py-2 text-[13px] font-semibold text-[var(--pad-bg)] transition-opacity hover:opacity-90"
           >
             {t.landing.openEditor}
           </Link>
@@ -126,10 +131,8 @@ export default function LandingClient() {
         <section className="relative overflow-hidden px-6 pb-16 pt-20 sm:pt-28">
           <div className="pad-hero-glow" aria-hidden />
           <div className="relative mx-auto max-w-4xl text-center">
-            <h1 className="pad-display text-[clamp(2.75rem,8vw,4.75rem)]">
-              {t.landing.heroTitleLine1}
-              <br />
-              {t.landing.heroTitleLine2}
+            <h1 className="pad-display text-[clamp(2.25rem,6.5vw,4rem)]">
+              {t.landing.heroTitle}
             </h1>
             <p className="mx-auto mt-7 max-w-2xl text-lg leading-relaxed text-[var(--pad-ink-70)] sm:text-xl">
               {t.landing.heroSubtitle}
@@ -137,25 +140,28 @@ export default function LandingClient() {
             <div className="mt-10 flex flex-col items-center justify-center gap-3 sm:flex-row">
               <Link
                 href="/pad"
-                className="w-full rounded-full bg-[var(--pad-ink)] px-8 py-3.5 text-base font-semibold text-[var(--pad-bg)] transition-opacity hover:opacity-90 sm:w-auto"
+                className="w-full bg-[var(--pad-ink)] px-8 py-3.5 text-base font-semibold text-[var(--pad-bg)] transition-opacity hover:opacity-90 sm:w-auto"
               >
                 {t.landing.heroCtaPrimary}
               </Link>
-              <a
-                href="#features"
-                className="w-full rounded-full border border-[var(--pad-border-strong)] px-8 py-3.5 text-base font-medium text-[var(--pad-ink-70)] transition-colors hover:border-[var(--pad-ink)] hover:text-[var(--pad-ink)] sm:w-auto"
+              <Link
+                href="/pad"
+                className="w-full border border-[var(--pad-border-strong)] px-8 py-3.5 text-base font-medium text-[var(--pad-ink-70)] transition-colors hover:border-[var(--pad-ink)] hover:text-[var(--pad-ink)] sm:w-auto"
               >
                 {t.landing.heroCtaSecondary}
-              </a>
+              </Link>
             </div>
+            <p className="mt-6 text-[13px] text-[var(--pad-ink-50)]">
+              {t.landing.heroMicrocopy}
+            </p>
           </div>
 
-          {/* ── Editor Preview ── */}
+          {/* ── Live editor preview ── */}
           <div className="relative mx-auto mt-16 max-w-5xl">
             {/* text-gray-900 matters: the surrounding page is cream-on-dark and
                 the preview's icons inherit currentColor. */}
             <div
-              className="preview-animated-shadow light overflow-hidden rounded-2xl border border-[var(--pad-border-strong)] text-gray-900"
+              className="preview-animated-shadow light overflow-hidden border border-[var(--pad-border-strong)] text-gray-900"
               style={{ colorScheme: "light" }}
             >
               {/* Browser chrome */}
@@ -163,126 +169,194 @@ export default function LandingClient() {
                 <span className="size-3 rounded-full bg-[#ff5f57]" />
                 <span className="size-3 rounded-full bg-[#febc2e]" />
                 <span className="size-3 rounded-full bg-[#28c840]" />
-                <span className="ml-3 max-w-xs flex-1 rounded bg-white px-3 py-1 text-xs text-gray-400">
+                <span className="ml-3 max-w-xs flex-1 bg-white px-3 py-1 text-xs text-gray-400">
                   wordpad.info/pad
                 </span>
               </div>
-              {/* Real Toolbar — pointer-events-none, decorative */}
+              {/* Real Toolbar + a real, typeable ProseMirror page */}
               <ToolbarPreviewClient />
-              {/* Fake page */}
-              <div className="flex justify-center bg-gray-50 p-6">
-                <div className="min-h-[220px] w-full max-w-lg space-y-3 rounded bg-white p-8 text-sm text-gray-800 shadow-md">
-                  <h2 className="text-xl font-bold">Meeting Notes: Q3 Planning</h2>
-                  <p className="text-xs text-gray-500">September 2024 · Confidential</p>
-                  <p>
-                    <strong>Attendees:</strong> Alice, Bob, Carol
-                  </p>
-                  <p>The team agreed on the following action items for the upcoming quarter:</p>
-                  <ul className="list-disc space-y-1 pl-5 text-gray-700">
-                    <li>Finalize product roadmap by <u>Oct 1</u></li>
-                    <li>Schedule bi-weekly syncs with design team</li>
-                    <li>Complete migration to new infrastructure</li>
-                  </ul>
-                </div>
-              </div>
             </div>
           </div>
-
-          {/* ── Hero subtext (SEO) ── */}
-          <p className="mx-auto mt-12 max-w-3xl text-center text-[15px] leading-relaxed text-[var(--pad-ink-50)]">
-            {t.landing.heroSeoText}
-          </p>
         </section>
 
-        {/* ── Trust strip ── */}
+        {/* ── Trust bar ── */}
         <section className="border-y border-[var(--pad-border)]">
-          <div className="mx-auto grid max-w-6xl grid-cols-2 divide-x divide-[var(--pad-border)] px-6 sm:grid-cols-4">
-            {[
-              { k: "0", v: t.landing.statDownloads },
-              { k: "5", v: t.landing.statFormats },
-              { k: "∞", v: t.landing.statUndo },
-              { k: "$0", v: t.landing.statPrice },
-            ].map((s) => (
-              <div key={s.v} className="px-4 py-6 text-center">
-                <div className="pad-display text-2xl">{s.k}</div>
-                <div className="mt-1 text-xs text-[var(--pad-ink-50)]">{s.v}</div>
-              </div>
-            ))}
+          <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-center gap-y-2 px-6 py-5 text-center text-sm text-[var(--pad-ink-70)]">
+            <DotSeparated items={t.landing.trustItems} />
+          </div>
+        </section>
+
+        {/* ── WordPad is gone ── */}
+        <section className="px-6 py-24">
+          <div className="mx-auto max-w-3xl">
+            <h2 className="pad-display text-center text-[clamp(2rem,5vw,3rem)]">
+              {t.landing.goneTitle}
+            </h2>
+            <div className="mt-8 space-y-5 leading-relaxed text-[var(--pad-ink-70)]">
+              <p>{t.landing.goneP1}</p>
+              <p>{t.landing.goneP2}</p>
+              <p>{t.landing.goneP3}</p>
+            </div>
+            <div className="mt-8 text-center">
+              <Link
+                href="/pad"
+                className="font-medium underline underline-offset-4 decoration-[var(--pad-border-strong)] transition-colors hover:decoration-current"
+              >
+                {t.landing.goneCta}
+              </Link>
+            </div>
+          </div>
+        </section>
+
+        {/* ── Comparison table ── */}
+        <section id="vs-wordpad" className="border-t border-[var(--pad-border)] px-6 py-24">
+          <div className="mx-auto max-w-4xl">
+            <h2 className="pad-display text-center text-[clamp(2rem,5vw,3rem)]">
+              {t.landing.compareTitle}
+            </h2>
+            <div className="mt-12 overflow-x-auto border border-[var(--pad-border)]">
+              <table className="w-full min-w-[640px] border-collapse text-sm">
+                <thead>
+                  <tr className="border-b border-[var(--pad-border)]">
+                    <th scope="col" className="px-4 py-3 text-left font-medium text-[var(--pad-ink-50)]">
+                      <span className="sr-only">{t.landing.compareTitle}</span>
+                    </th>
+                    {t.landing.compareCols.map((col, i) => (
+                      <th
+                        key={col}
+                        scope="col"
+                        className={
+                          i === 0
+                            ? "bg-[var(--pad-surface)] px-4 py-3 text-left font-bold"
+                            : "px-4 py-3 text-left font-medium text-[var(--pad-ink-70)]"
+                        }
+                      >
+                        {col}
+                      </th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-[var(--pad-border)]">
+                  {t.landing.compareRows.map((row) => (
+                    <tr key={row.label}>
+                      <th scope="row" className="px-4 py-3 text-left font-medium text-[var(--pad-ink-70)]">
+                        {row.label}
+                      </th>
+                      {row.cells.map((cell, i) => (
+                        <td
+                          key={i}
+                          className={
+                            i === 0
+                              ? "bg-[var(--pad-surface)] px-4 py-3 font-semibold"
+                              : "px-4 py-3 text-[var(--pad-ink-50)]"
+                          }
+                        >
+                          {cell}
+                        </td>
+                      ))}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            <p className="mt-4 text-center text-xs text-[var(--pad-ink-50)]">
+              {t.landing.compareCaption}
+            </p>
           </div>
         </section>
 
         {/* ── Features ── */}
-        <section id="features" className="px-6 py-24">
+        <section id="features" className="border-t border-[var(--pad-border)] px-6 py-24">
           <div className="mx-auto max-w-6xl">
             <div className="mx-auto max-w-2xl text-center">
               <h2 className="pad-display text-[clamp(2rem,5vw,3rem)]">{t.landing.featuresTitle}</h2>
-              <p className="mt-4 text-lg text-[var(--pad-ink-70)]">
-                {t.landing.featuresSubtitle}
-              </p>
-              <p className="mt-4 text-sm leading-relaxed text-[var(--pad-ink-50)]">
-                {t.landing.featuresSeoText}
-              </p>
             </div>
-            {/* gap-px divider grid — keep the feature count divisible by both 2
-                and 3, or the empty cells in the last row show as dark blocks. */}
-            <div className="mt-14 grid gap-px overflow-hidden rounded-2xl border border-[var(--pad-border)] bg-[var(--pad-border)] sm:grid-cols-2 lg:grid-cols-3">
-              {/* Speed is the headline feature: a full-row card keeps the
-                  12-card grid below divisible by both 2 and 3. */}
-              <div className="bg-[var(--pad-bg)] p-6 transition-colors hover:bg-[var(--pad-surface)] sm:col-span-2 lg:col-span-3">
-                <div className="flex items-start gap-4">
-                  <div className="flex size-10 shrink-0 items-center justify-center rounded-lg border border-[var(--pad-border)] bg-[var(--pad-surface-2)]">
-                    <Lightning size={20} weight="duotone" />
-                  </div>
-                  <div>
-                    <h3 className="mb-1.5 font-semibold">{t.features.speedTitle}</h3>
-                    <p className="max-w-2xl text-sm leading-relaxed text-[var(--pad-ink-50)]">{t.features.speedDesc}</p>
-                  </div>
-                </div>
-              </div>
+            {/* gap-px divider grid — the border color shows through the gaps. */}
+            <div className="mt-14 grid gap-px overflow-hidden border border-[var(--pad-border)] bg-[var(--pad-border)] sm:grid-cols-2">
               {featureList(t).map((f) => (
                 <div
                   key={f.title}
-                  className="bg-[var(--pad-bg)] p-6 transition-colors hover:bg-[var(--pad-surface)]"
+                  className="bg-[var(--pad-bg)] p-8 transition-colors hover:bg-[var(--pad-surface)]"
                 >
-                  <div className="mb-4 flex size-10 items-center justify-center rounded-lg border border-[var(--pad-border)] bg-[var(--pad-surface-2)]">
+                  <div className="mb-4 flex size-10 items-center justify-center border border-[var(--pad-border)] bg-[var(--pad-surface-2)]">
                     <f.Icon size={20} weight="duotone" />
                   </div>
-                  <h3 className="mb-1.5 font-semibold">{f.title}</h3>
+                  <h3 className="mb-2 text-lg font-semibold">{f.title}</h3>
                   <p className="text-sm leading-relaxed text-[var(--pad-ink-50)]">{f.desc}</p>
                 </div>
               ))}
+            </div>
+            {/* Small-print strip */}
+            <div className="mt-6 border border-[var(--pad-border)] bg-[var(--pad-surface)] px-6 py-4 text-center">
+              <span className="text-xs font-semibold uppercase tracking-wide text-[var(--pad-ink-50)]">
+                {t.features.smallTitle}
+              </span>
+              <p className="mt-2 flex flex-wrap items-center justify-center gap-y-1 text-[13px] text-[var(--pad-ink-70)]">
+                <DotSeparated items={t.features.smallItems} />
+              </p>
+            </div>
+          </div>
+        </section>
+
+        {/* ── Privacy ── */}
+        <section id="privacy" className="border-t border-[var(--pad-border)] px-6 py-24">
+          <div className="mx-auto flex max-w-3xl flex-col items-center gap-5 text-center">
+            <div className="flex size-14 items-center justify-center border border-[var(--pad-border)] bg-[var(--pad-surface)]">
+              <Lock size={26} weight="duotone" />
+            </div>
+            <h2 className="pad-display text-[clamp(2rem,5vw,3rem)]">{t.landing.privacyTitle}</h2>
+            <p className="text-lg leading-relaxed text-[var(--pad-ink-70)]">
+              {t.landing.privacyP1}
+            </p>
+            <p className="leading-relaxed text-[var(--pad-ink-70)]">
+              {t.landing.privacyP2}
+            </p>
+            <p className="text-sm leading-relaxed text-[var(--pad-ink-50)]">
+              {t.landing.privacyP3}
+            </p>
+          </div>
+        </section>
+
+        {/* ── Accounts ── */}
+        <section className="border-t border-[var(--pad-border)] px-6 py-24">
+          <div className="mx-auto flex max-w-3xl flex-col items-center text-center">
+            <div className="flex size-14 items-center justify-center border border-[var(--pad-border)] bg-[var(--pad-surface)]">
+              <CloudArrowUp size={26} weight="duotone" />
+            </div>
+            <h2 className="pad-display mt-5 text-[clamp(2rem,5vw,3rem)]">{t.landing.accountsTitle}</h2>
+            <p className="mt-5 text-lg leading-relaxed text-[var(--pad-ink-70)]">
+              {t.landing.accountsIntro}
+            </p>
+            <ul className="mt-6 space-y-3 text-left leading-relaxed text-[var(--pad-ink-70)]">
+              {[t.landing.accountsB1, t.landing.accountsB2, t.landing.accountsB3].map((b) => (
+                <li key={b} className="flex items-start gap-3">
+                  <Check size={18} className="mt-1 shrink-0 text-[var(--pad-ink)]" />
+                  <span>{b}</span>
+                </li>
+              ))}
+            </ul>
+            <div className="mt-9 flex flex-col items-center gap-4 sm:flex-row">
+              <Link
+                href="/signup"
+                className="bg-[var(--pad-ink)] px-8 py-3.5 text-base font-semibold text-[var(--pad-bg)] transition-opacity hover:opacity-90"
+              >
+                {t.landing.accountsCta}
+              </Link>
+              <Link
+                href="/pad"
+                className="text-sm text-[var(--pad-ink-50)] underline underline-offset-4 decoration-[var(--pad-border-strong)] transition-colors hover:text-[var(--pad-ink)] hover:decoration-current"
+              >
+                {t.landing.accountsSkip}
+              </Link>
             </div>
           </div>
         </section>
 
         {/* ── How it works ── */}
-        {/* ── Word alternative (SEO) ── */}
-        <section id="word-alternative" className="border-t border-[var(--pad-border)] px-6 py-24">
-          <div className="mx-auto max-w-3xl">
-            <h2 className="pad-display text-center text-[clamp(2rem,5vw,3rem)]">
-              {t.landing.wordAltTitle}
-            </h2>
-            <div className="mt-8 space-y-5 leading-relaxed text-[var(--pad-ink-70)]">
-              <p>
-                {t.landing.wordAltP1}
-              </p>
-              <p>
-                {t.landing.wordAltP2}
-              </p>
-              <p>
-                {t.landing.wordAltP3}
-              </p>
-            </div>
-          </div>
-        </section>
-
         <section id="how" className="border-t border-[var(--pad-border)] px-6 py-24">
           <div className="mx-auto max-w-5xl">
             <div className="mx-auto max-w-2xl text-center">
               <h2 className="pad-display text-[clamp(2rem,5vw,3rem)]">{t.landing.howTitle}</h2>
-              <p className="mt-4 text-lg text-[var(--pad-ink-70)]">
-                {t.landing.howSubtitle}
-              </p>
             </div>
             <div className="mt-14 grid gap-10 sm:grid-cols-3">
               {[
@@ -291,7 +365,7 @@ export default function LandingClient() {
                 { step: "3", title: t.landing.howStep3Title, desc: t.landing.howStep3Desc },
               ].map((s) => (
                 <div key={s.step}>
-                  <div className="mb-4 flex size-11 items-center justify-center rounded-full border border-[var(--pad-border-strong)] text-lg font-semibold">
+                  <div className="mb-4 flex size-11 items-center justify-center border border-[var(--pad-border-strong)] text-lg font-semibold">
                     {s.step}
                   </div>
                   <h3 className="mb-2 text-lg font-semibold">{s.title}</h3>
@@ -299,25 +373,23 @@ export default function LandingClient() {
                 </div>
               ))}
             </div>
-            <p className="mx-auto mt-12 max-w-3xl text-center text-sm leading-relaxed text-[var(--pad-ink-50)]">
-              {t.landing.howSeoText}
-            </p>
           </div>
         </section>
 
-        {/* ── Privacy callout ── */}
-        <section id="privacy" className="border-t border-[var(--pad-border)] px-6 py-24">
-          <div className="mx-auto flex max-w-3xl flex-col items-center gap-5 text-center">
-            <div className="flex size-14 items-center justify-center rounded-2xl border border-[var(--pad-border)] bg-[var(--pad-surface)]">
-              <Lock size={26} weight="duotone" />
+        {/* ── Use cases ── */}
+        <section className="border-t border-[var(--pad-border)] px-6 py-24">
+          <div className="mx-auto max-w-4xl text-center">
+            <h2 className="pad-display text-[clamp(2rem,5vw,3rem)]">{t.landing.useCasesTitle}</h2>
+            <div className="mt-10 flex flex-wrap items-center justify-center gap-3">
+              {t.landing.useCases.map((useCase) => (
+                <span
+                  key={useCase}
+                  className="border border-[var(--pad-border-strong)] px-4 py-2 text-sm text-[var(--pad-ink-70)]"
+                >
+                  {useCase}
+                </span>
+              ))}
             </div>
-            <h2 className="pad-display text-[clamp(2rem,5vw,3rem)]">{t.landing.privacyTitle}</h2>
-            <p className="text-lg leading-relaxed text-[var(--pad-ink-70)]">
-              {t.landing.privacyLead}
-            </p>
-            <p className="text-sm leading-relaxed text-[var(--pad-ink-50)]">
-              {t.landing.privacyDetail}
-            </p>
           </div>
         </section>
 
@@ -345,15 +417,15 @@ export default function LandingClient() {
         <section className="border-t border-[var(--pad-border)] px-6 py-24">
           <div className="mx-auto max-w-3xl text-center">
             <h2 className="pad-display text-[clamp(2rem,5vw,3.25rem)]">{t.landing.ctaTitle}</h2>
-            <p className="mx-auto mt-4 max-w-xl text-lg text-[var(--pad-ink-70)]">
-              {t.landing.ctaSubtitle}
-            </p>
             <Link
               href="/pad"
-              className="mt-9 inline-block rounded-full bg-[var(--pad-ink)] px-10 py-4 text-base font-semibold text-[var(--pad-bg)] transition-opacity hover:opacity-90"
+              className="mt-9 inline-block bg-[var(--pad-ink)] px-10 py-4 text-base font-semibold text-[var(--pad-bg)] transition-opacity hover:opacity-90"
             >
               {t.landing.ctaButton}
             </Link>
+            <p className="mt-5 text-[13px] text-[var(--pad-ink-50)]">
+              {t.landing.ctaMicrocopy}
+            </p>
           </div>
         </section>
       </main>
@@ -397,6 +469,8 @@ export default function LandingClient() {
             <div className="mt-3 flex flex-col gap-2 text-sm text-[var(--pad-ink-50)]">
               <Link href="/pad" className="transition-colors hover:text-[var(--pad-ink)]">{t.landing.footerEditor}</Link>
               <Link href="/guides" className="transition-colors hover:text-[var(--pad-ink)]">{t.landing.footerGuides}</Link>
+              <Link href="/guides/wordpad-alternative" className="transition-colors hover:text-[var(--pad-ink)]">{t.landing.footerWordAlt}</Link>
+              <Link href="/guides/export-to-word-docx-online" className="transition-colors hover:text-[var(--pad-ink)]">{t.landing.footerOpenDocx}</Link>
               <a href="/llms.txt" className="transition-colors hover:text-[var(--pad-ink)]">llms.txt</a>
             </div>
           </div>
@@ -427,12 +501,12 @@ export default function LandingClient() {
         </div>
         <div className="mx-auto mt-10 max-w-6xl border-t border-[var(--pad-border)] pt-6 text-sm text-[var(--pad-ink-50)]">
           <div className="flex flex-col items-center justify-between gap-3 sm:flex-row">
-            <span>{t.landing.footerCopyright(new Date().getFullYear())}</span>
-            <span>{renderCredit(t.landing.footerCredit)}</span>
+            <span>
+              {t.landing.footerCopyright(new Date().getFullYear())}{" "}
+              {t.landing.footerTrademark}
+            </span>
+            <span className="whitespace-nowrap">{renderCredit(t.landing.footerCredit)}</span>
           </div>
-          <p className="mt-6 text-xs leading-relaxed">
-            {t.landing.footerDisclaimer}
-          </p>
         </div>
       </footer>
     </div>
