@@ -43,6 +43,7 @@ import { authClient, useSession } from "@/lib/auth-client";
 import { prepareImageFile, insertWidth } from "@/lib/image-util";
 import { OPEN_ACCEPT } from "@/lib/doc-import";
 import AuthModal from "./AuthModal";
+import ProfileDialog from "./ProfileDialog";
 import WelcomeScreen from "./WelcomeScreen";
 import { toast, Toaster } from "./toast";
 import { useAskDialogs } from "./AskDialogs";
@@ -1008,6 +1009,8 @@ export default function Editor({ googleEnabled = false }: { googleEnabled?: bool
   const filesRef = useRef<FileItem[]>([]);
   const activeIdRef = useRef<string>("");
   const [authOpen, setAuthOpen] = useState(false);
+  const [profileOpen, setProfileOpen] = useState(false);
+  const [hasPassword, setHasPassword] = useState(false);
   const [welcomeOpen, setWelcomeOpen] = useState(false);
   const { confirm: confirmDialog, prompt: promptDialog, dialogs: askDialogs } = useAskDialogs();
   const [verifyDismissed, setVerifyDismissed] = useState(false);
@@ -1691,6 +1694,25 @@ export default function Editor({ googleEnabled = false }: { googleEnabled?: bool
   const logout = useCallback(async () => {
     await authClient.signOut();
     prefsLoadedRef.current = false;
+  }, []);
+
+  // Which credentials the account actually has decides what the profile dialog
+  // can offer: a Google-only user has no current password to confirm against.
+  const openProfile = useCallback(async () => {
+    setProfileOpen(true);
+    try {
+      const { data } = await authClient.listAccounts();
+      setHasPassword(!!data?.some((a) => a.providerId === "credential"));
+    } catch {
+      setHasPassword(false);
+    }
+  }, []);
+
+  // The account and every document behind it are gone — reload into the guest
+  // experience rather than leaving a dead session in memory.
+  const onAccountDeleted = useCallback(() => {
+    prefsLoadedRef.current = false;
+    window.location.href = "/";
   }, []);
 
   const openAuth = useCallback(() => setAuthOpen(true), []);
@@ -2617,6 +2639,7 @@ export default function Editor({ googleEnabled = false }: { googleEnabled?: bool
         user={user}
         onLogin={openAuth}
         onLogout={logout}
+        onOpenProfile={openProfile}
       />
       )}
       {user && !user.emailVerified && !verifyDismissed && (
@@ -3244,6 +3267,13 @@ export default function Editor({ googleEnabled = false }: { googleEnabled?: bool
         </div>
       )}
       <AuthModal open={authOpen} onClose={() => setAuthOpen(false)} googleEnabled={googleEnabled} />
+      <ProfileDialog
+        open={profileOpen}
+        onClose={() => setProfileOpen(false)}
+        user={user}
+        hasPassword={hasPassword}
+        onDeleted={onAccountDeleted}
+      />
       <WelcomeScreen
         open={welcomeOpen}
         onClose={() => setWelcomeOpen(false)}

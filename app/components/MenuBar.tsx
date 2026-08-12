@@ -25,7 +25,7 @@ import {
   mergeCells, splitCell, toggleHeaderRow, toggleHeaderColumn,
 } from "prosemirror-tables";
 import { setTextAlign, adjustIndent } from "@/lib/editor-commands";
-import { SignIn, SignOut, House, PencilSimple } from "@phosphor-icons/react";
+import { SignIn, SignOut, House, PencilSimple, UserCircle } from "@phosphor-icons/react";
 import { toast } from "./toast";
 import { useT, useLocale } from "./I18nProvider";
 import { LOCALES, LOCALE_NAMES } from "@/lib/i18n";
@@ -86,6 +86,7 @@ interface MenuBarProps {
   user: { name: string; initials: string } | null;
   onLogin: () => void;
   onLogout: () => void;
+  onOpenProfile: () => void;
 }
 
 const TEXT_COLORS = ["#000000", "#e11d48", "#ea580c", "#ca8a04", "#16a34a", "#2563eb", "#7c3aed", "#6b7280"];
@@ -143,7 +144,7 @@ export default function MenuBar({
   focusMode, onToggleFocusMode,
   printHeaderFooter, onTogglePrintHeaderFooter,
   isDark, onToggleDark,
-  user, onLogin, onLogout,
+  user, onLogin, onLogout, onOpenProfile,
 }: MenuBarProps) {
   const t = useT();
   const { locale, setLocale } = useLocale();
