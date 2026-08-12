@@ -201,6 +201,9 @@ body {
   /* Orientation swaps these (landscape: 1123×794) — set inline from Editor. */
   --page-w: 794px;
   --page-h: 1123px;
+  /* How far the page's drop shadow reaches sideways; the pagination gap
+     bleeds this far past the page so the shadow doesn't cross it. */
+  --page-bleed: 14px;
   background: #ffffff;
   width: var(--page-w);
   min-height: var(--page-h);
@@ -230,12 +233,25 @@ body {
 }
 .pm-page-spacer-gap {
   background: var(--shell-bg, #ccd6e5);
-  /* Fake the bottom edge of the closing page and the top edge of the next. */
+  box-sizing: border-box;
+  /* Cover the page's own drop shadow on both sides of the gap. */
+  padding: 0 var(--page-bleed);
+}
+/* Fake the bottom edge of the closing page and the top edge of the next. */
+.pm-page-spacer-edge {
+  height: 100%;
   box-shadow:
-    inset 0 8px 6px -8px rgba(0, 0, 0, 0.4),
-    inset 0 -8px 6px -8px rgba(0, 0, 0, 0.4);
+    inset 0 8px 6px -8px rgba(0, 0, 0, 0.3),
+    inset 0 -8px 6px -8px rgba(0, 0, 0, 0.3);
 }
 .dark .pm-page-spacer-gap { background: #141414 !important; }
+.dark .pm-page-spacer-edge {
+  box-shadow:
+    inset 0 1px 0 0 rgba(255, 255, 255, 0.08),
+    inset 0 -1px 0 0 rgba(255, 255, 255, 0.08),
+    inset 0 14px 12px -12px rgba(0, 0, 0, 0.7),
+    inset 0 -14px 12px -12px rgba(0, 0, 0, 0.7);
+}
 
 /* Find & Replace highlights */
 .search-match {
@@ -648,6 +664,8 @@ body {
 .dark .pm-page {
   background: #262626;
   box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.08), 0 8px 30px rgba(0, 0, 0, 0.6);
+  /* The dark drop shadow is much softer/wider than the light one. */
+  --page-bleed: 34px;
 }
 /* Inverse text colours on the dark page */
 .dark .pm-page,

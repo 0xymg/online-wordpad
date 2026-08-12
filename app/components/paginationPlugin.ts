@@ -6,6 +6,7 @@
 import { Plugin, PluginKey } from "prosemirror-state";
 import { Decoration, DecorationSet } from "prosemirror-view";
 import type { EditorView } from "prosemirror-view";
+import type { Node as PMNode } from "prosemirror-model";
 
 export interface PageLayoutConfig {
   /** Full page height in CSS px (A4 portrait: 1123). */
@@ -39,12 +40,18 @@ function spacerDom(fillPx: number, marginPx: number): HTMLElement {
   // Rest of the closed page + its bottom margin (stays page-colored).
   const fill = document.createElement("div");
   fill.style.height = `${Math.max(0, fillPx) + marginPx}px`;
-  // The gap between pages, bleeding over the page padding to full width.
+  // The gap between pages. It bleeds past the page's own edges so the single
+  // box-shadow around .pm-page doesn't run through the gap; the inner element
+  // redraws that shadow as a bottom edge for the closing page and a top edge
+  // for the opening one.
   const gap = document.createElement("div");
   gap.className = "pm-page-spacer-gap";
   gap.style.height = `${PAGE_GAP_PX}px`;
-  gap.style.marginLeft = "calc(-1 * var(--page-margin))";
-  gap.style.marginRight = "calc(-1 * var(--page-margin))";
+  gap.style.marginLeft = "calc(-1 * (var(--page-margin) + var(--page-bleed)))";
+  gap.style.marginRight = "calc(-1 * (var(--page-margin) + var(--page-bleed)))";
+  const edge = document.createElement("div");
+  edge.className = "pm-page-spacer-edge";
+  gap.appendChild(edge);
   // Top margin of the page being opened.
   const top = document.createElement("div");
   top.style.height = `${marginPx}px`;
@@ -53,6 +60,51 @@ function spacerDom(fillPx: number, marginPx: number): HTMLElement {
 }
 
 const positiveModulo = (value: number, mod: number) => ((value % mod) + mod) % mod;
+
+/**
+ * Inside a textblock rendered as `blockPos`'s node, find the start of the
+ * first line whose bottom crosses `boundary` (all values in natural/layout
+ * px, relative to the measurement base). Returns the doc position where an
+ * inline spacer should be inserted, plus that line's top. Line tops are
+ * monotonic in doc positions within a textblock, so binary search works.
+ */
+function findLineSplit(
+  view: EditorView,
+  blockPos: number,
+  node: PMNode,
+  boundary: number,
+  scale: number,
+  baseTop: number
+): { pos: number; lineTop: number } | null {
+  const from = blockPos + 1;
+  const to = blockPos + node.nodeSize - 1;
+  if (to <= from) return null;
+  try {
+    const lineBottom = (pos: number) => view.coordsAtPos(pos).bottom / scale - baseTop;
+    const lineTop = (pos: number) => view.coordsAtPos(pos).top / scale - baseTop;
+    if (lineBottom(to) <= boundary + MEASURE_EPS) return null;
+    // Smallest position whose line crosses the boundary…
+    let lo = from, hi = to;
+    while (lo < hi) {
+      const mid = Math.floor((lo + hi) / 2);
+      if (lineBottom(mid) > boundary + MEASURE_EPS) hi = mid;
+      else lo = mid + 1;
+    }
+    // …snapped back to the start of that line.
+    const crossTop = lineTop(lo);
+    let lo2 = from, hi2 = lo;
+    while (lo2 < hi2) {
+      const mid = Math.floor((lo2 + hi2) / 2);
+      if (lineTop(mid) >= crossTop - MEASURE_EPS) hi2 = mid;
+      else lo2 = mid + 1;
+    }
+    return { pos: lo2, lineTop: lineTop(lo2) };
+  } catch {
+    // coordsAtPos can throw on odd positions (atoms at edges) — fall back to
+    // pushing the whole block.
+    return null;
+  }
+}
 
 /** Tolerance for subpixel/rounding noise in measurements. */
 const MEASURE_EPS = 2;
@@ -98,18 +150,44 @@ function computeLayout(
       const top = rect.top / scale - baseTop;
       const bottom = top + rect.height / scale;
       contentBottom = Math.max(contentBottom, bottom);
+      const node = view.state.doc.child(blockIdx);
 
-      const overflows =
-        bottom - pageStart > pageContentH + MEASURE_EPS && top > pageStart + MEASURE_EPS;
-      if (forceBreakBeforeNext || overflows) {
+      if (forceBreakBeforeNext && top > pageStart + MEASURE_EPS) {
         let fillPx = positiveModulo(pageContentH - (top - pageStart), pageContentH);
-        // A block sitting exactly on a page boundary can read as "overflowing"
-        // by a subpixel — never answer that with a whole blank page.
         if (fillPx > pageContentH - MEASURE_EPS * 2) fillPx = 0;
         breaks.push({ pos: offsets[blockIdx], fillPx });
         pageStart = top;
-        forceBreakBeforeNext = false;
       }
+      forceBreakBeforeNext = false;
+
+      // Paragraphs and headings break at line boundaries (like Word); other
+      // blocks (tables, lists, dividers) are pushed to the next page whole.
+      const lineSplittable = node.type.name === "paragraph" || node.type.name === "heading";
+      let guard = 0;
+      while (bottom - pageStart > pageContentH + MEASURE_EPS && guard++ < 100) {
+        const boundary = pageStart + pageContentH;
+        const split = lineSplittable
+          ? findLineSplit(view, offsets[blockIdx], node, boundary, scale, baseTop)
+          : null;
+        if (split && split.lineTop > top + MEASURE_EPS && split.lineTop > pageStart + MEASURE_EPS) {
+          // Break inside the block, right before the line crossing the boundary.
+          breaks.push({ pos: split.pos, fillPx: Math.max(0, boundary - split.lineTop) });
+          pageStart = split.lineTop;
+        } else if (top > pageStart + MEASURE_EPS) {
+          // Block (or its very first line) doesn't fit — push it down whole.
+          let fillPx = positiveModulo(pageContentH - (top - pageStart), pageContentH);
+          // A block sitting exactly on a page boundary can read as
+          // "overflowing" by a subpixel — never answer with a blank page.
+          if (fillPx > pageContentH - MEASURE_EPS * 2) fillPx = 0;
+          breaks.push({ pos: offsets[blockIdx], fillPx });
+          pageStart = top;
+        } else {
+          // Starts at the page top and still doesn't fit (oversized table,
+          // image, …) — let it run across the boundary; realign afterwards.
+          break;
+        }
+      }
+
       // A manual page break closes the page for whatever follows it.
       if (child.matches("hr.pm-page-break")) forceBreakBeforeNext = true;
       blockIdx++;
@@ -141,6 +219,9 @@ export function paginationPlugin(getConfig: () => PageLayoutConfig): Plugin {
       scheduled = false;
       // View destroyed between the schedule and the frame.
       if (!view.dom.isConnected) return;
+      // Redecorating mid-composition would abort IME input; the update after
+      // compositionend re-triggers the measure.
+      if (view.composing) return;
       const cfg = getConfig();
       const { breaks, lastPagePadPx } = computeLayout(view, cfg);
       (view.dom as HTMLElement).style.paddingBottom =
