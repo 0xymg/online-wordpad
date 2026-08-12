@@ -1,5 +1,6 @@
 "use client";
 
+import { useRef } from "react";
 import {
   Menubar,
   MenubarContent,
@@ -18,8 +19,13 @@ import { undo, redo } from "prosemirror-history";
 import { toggleMark } from "prosemirror-commands";
 import { wrapInList } from "prosemirror-schema-list";
 import { EditorState, Transaction, AllSelection } from "prosemirror-state";
-import { addColumnAfter, addRowAfter, deleteColumn, deleteRow, deleteTable } from "prosemirror-tables";
-import { SidebarSimple, SignIn, SignOut } from "@phosphor-icons/react";
+import {
+  addColumnAfter, addColumnBefore, addRowAfter, addRowBefore,
+  deleteColumn, deleteRow, deleteTable,
+  mergeCells, splitCell, toggleHeaderRow, toggleHeaderColumn,
+} from "prosemirror-tables";
+import { setTextAlign, adjustIndent } from "@/lib/editor-commands";
+import { SidebarSimple, SignIn, SignOut, House, PencilSimple } from "@phosphor-icons/react";
 import { toast } from "./toast";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
@@ -34,6 +40,11 @@ interface MenuBarProps {
   onTitleChange: (title: string) => void;
   onNewDoc: () => void;
   onShowHome: () => void;
+  onSave: () => void;
+  onCopyLink: () => void;
+  onRenameDoc: () => void;
+  onDeleteDoc: () => void;
+  onReplace: () => void;
   onNewFromTemplate: (t: { name: string; html: string }) => void;
   onOpenFile: () => void;
   onExport: (fmt: "html" | "txt" | "docx" | "rtf" | "md") => void;
@@ -107,6 +118,21 @@ function SidebarBtn({ onClick, className }: { onClick: () => void; className?: s
   );
 }
 
+/** Back to the start screen — documents, templates, and recent files. */
+function HomeBtn({ onClick }: { onClick: () => void }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      title="Home — documents and templates"
+      aria-label="Home — documents and templates"
+      className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded text-foreground/70 transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-ring"
+    >
+      <House size={17} weight="regular" />
+    </button>
+  );
+}
+
 const SPELL_LANGS: Array<{ value: string; label: string }> = [
   { value: "auto", label: "Automatic" },
   { value: "en", label: "English" },
@@ -121,6 +147,7 @@ const SPELL_LANGS: Array<{ value: string; label: string }> = [
 export default function MenuBar({
   viewRef, schema, onPrint,
   docTitle, onTitleChange, onNewDoc, onShowHome, onNewFromTemplate, onOpenFile, onExport,
+  onSave, onCopyLink, onRenameDoc, onDeleteDoc, onReplace,
   onShowVersions, onShowShortcuts, onFind,
   onInsertTable, onPageBreakAdd, onLinkAdd, onImageAdd, onImageUrlAdd,
   onInsertDivider, onInsertSymbol, onInsertDate,
@@ -213,53 +240,95 @@ export default function MenuBar({
 
   const TRIGGER = "text-sm font-normal px-0 py-1 h-7";
 
+  // Signed-in users get the start screen; guests have no document library, so
+  // Home simply takes them to the landing page.
+  const titleInputRef = useRef<HTMLInputElement>(null);
+
+  const goHome = () => {
+    if (user) onShowHome();
+    else window.location.href = "/";
+  };
+
   return (
-    <Menubar className="relative rounded-none border-x-0 border-t-0 border-b border-border bg-card h-8 px-0">
-      {/* Brand + document title — sits in the left gutter beside the centered 800px menu box.
-          Shown only when the gutter is wide enough to fit it without overlapping the menus. */}
-      <div
-        className="hidden min-[1180px]:flex absolute left-3 top-0 bottom-0 items-center gap-1 overflow-hidden"
-        style={{ right: "calc(50% + 412px)" }}
-      >
-        {canUseSidebar && <SidebarBtn onClick={onToggleSidebar} />}
-        <span className="font-brand shrink-0 select-none leading-none">
-          <span className="text-lg font-bold tracking-tight text-foreground dark:text-[#FFFFE3]">EDTR</span>
-          <span className="text-sm font-semibold tracking-wider text-muted-foreground dark:text-[#FFFFE3]/70">PAD</span>
-        </span>
-        <input
-          value={docTitle}
-          onChange={(e) => onTitleChange(e.target.value)}
-          onFocus={(e) => e.target.select()}
-          spellCheck={false}
-          aria-label="Document title"
-          className="min-w-0 w-[160px] rounded px-1.5 py-0.5 text-xs text-foreground/70 bg-transparent border border-transparent hover:border-border focus:border-border focus:bg-background outline-none truncate"
-        />
+    <div className="border-b border-border bg-card">
+      {/* Top bar: brand on the left, document title centered, account on the right */}
+      <div className="relative flex h-9 items-center border-b border-border/60 px-3">
+        <div className="flex min-w-0 items-center gap-1.5">
+          {canUseSidebar && <SidebarBtn onClick={onToggleSidebar} />}
+          <span className="font-brand shrink-0 select-none leading-none">
+            <span className="text-lg font-bold tracking-tight text-foreground dark:text-[#FFFFE3]">EDTR</span>
+            <span className="text-sm font-semibold tracking-wider text-muted-foreground dark:text-[#FFFFE3]/70">PAD</span>
+          </span>
+        </div>
+        <div className="pointer-events-none absolute inset-x-0 flex items-center justify-center">
+          <div className="group pointer-events-auto flex items-center">
+            <input
+              ref={titleInputRef}
+              value={docTitle}
+              onChange={(e) => onTitleChange(e.target.value)}
+              onFocus={(e) => e.target.select()}
+              spellCheck={false}
+              aria-label="Document title"
+              className="w-[220px] max-w-[42vw] truncate rounded border border-transparent bg-transparent px-2 py-0.5 text-center text-[13px] text-foreground/80 outline-none hover:border-border focus:border-border focus:bg-background"
+            />
+            <button
+              type="button"
+              aria-label="Rename document"
+              onClick={() => { titleInputRef.current?.focus(); titleInputRef.current?.select(); }}
+              className="ml-0.5 rounded p-1 text-muted-foreground opacity-60 transition-opacity hover:bg-accent hover:text-foreground group-focus-within:opacity-0 group-hover:opacity-100 focus-visible:opacity-100 focus-visible:outline-2 focus-visible:outline-ring"
+            >
+              <PencilSimple size={13} />
+            </button>
+          </div>
+        </div>
+        <div className="ml-auto flex items-center">
+          {user ? (
+            <Popover>
+              <PopoverTrigger asChild>
+                <button
+                  type="button"
+                  title={user.name}
+                  aria-label="Account"
+                  className="flex h-6 w-6 select-none items-center justify-center rounded-full bg-primary text-[10px] font-semibold text-primary-foreground"
+                >
+                  {user.initials}
+                </button>
+              </PopoverTrigger>
+              <PopoverContent align="end" sideOffset={6} className="w-48 p-1">
+                <div className="px-2 py-1.5">
+                  <div className="truncate text-sm font-medium">{user.name}</div>
+                  <div className="truncate text-[11px] text-muted-foreground">Free plan</div>
+                </div>
+                <div className="my-1 h-px bg-border" />
+                <button
+                  type="button"
+                  onClick={onLogout}
+                  className="flex w-full items-center gap-2 rounded-sm px-2 py-1.5 text-sm hover:bg-accent hover:text-accent-foreground"
+                >
+                  <SignOut size={15} /> Log out
+                </button>
+              </PopoverContent>
+            </Popover>
+          ) : (
+            <button
+              type="button"
+              onClick={onLogin}
+              className="flex items-center gap-1 rounded px-2 py-0.5 text-xs transition-colors hover:bg-accent hover:text-accent-foreground"
+            >
+              <SignIn size={13} /> Log in
+            </button>
+          )}
+        </div>
       </div>
-      {/* Menus — left-aligned inside a centered 800px box, 15px gap, no side padding */}
+      {/* Menu row */}
+      <Menubar className="h-8 rounded-none border-0 bg-transparent px-0">
       <div className="max-w-[800px] w-full mx-auto flex items-center gap-[15px]">
-      {/* 800–1179px: trigger + brand live inside the box (gutter too narrow, but brand still in header) */}
-      <div className="hidden min-[800px]:flex min-[1180px]:hidden items-center gap-1.5 shrink-0">
-        {canUseSidebar && <SidebarBtn onClick={onToggleSidebar} />}
-        <span className="font-brand shrink-0 select-none leading-none">
-          <span className="text-lg font-bold tracking-tight text-foreground dark:text-[#FFFFE3]">EDTR</span>
-          <span className="text-sm font-semibold tracking-wider text-muted-foreground dark:text-[#FFFFE3]/70">PAD</span>
-        </span>
-        <input
-          value={docTitle}
-          onChange={(e) => onTitleChange(e.target.value)}
-          onFocus={(e) => e.target.select()}
-          spellCheck={false}
-          aria-label="Document title"
-          className="min-w-0 w-[120px] rounded px-1.5 py-0.5 text-xs text-foreground/70 bg-transparent border border-transparent hover:border-border focus:border-border focus:bg-background outline-none truncate"
-        />
-      </div>
-      {/* <800px: trigger only — brand moves to the status bar */}
-      {canUseSidebar && <SidebarBtn onClick={onToggleSidebar} className="min-[800px]:hidden" />}
+      <HomeBtn onClick={goHome} />
       {/* File */}
       <MenubarMenu>
         <MenubarTrigger className={TRIGGER}>File</MenubarTrigger>
         <MenubarContent>
-          <MenubarItem onClick={onShowHome}>Home</MenubarItem>
+          <MenubarItem onClick={goHome}>Home</MenubarItem>
           <MenubarSeparator />
           <MenubarItem onClick={onNewDoc}>New</MenubarItem>
           <MenubarSub>
@@ -279,7 +348,13 @@ export default function MenuBar({
             Open… <MenubarShortcut>Ctrl+O</MenubarShortcut>
           </MenubarItem>
           <MenubarSeparator />
+          <MenubarItem onClick={onSave}>
+            Save now <MenubarShortcut>Ctrl+S</MenubarShortcut>
+          </MenubarItem>
           <MenubarItem onClick={onShowVersions}>Version history…</MenubarItem>
+          <MenubarSeparator />
+          <MenubarItem onClick={onRenameDoc}>Rename…</MenubarItem>
+          <MenubarItem onClick={onCopyLink}>Copy link to this document</MenubarItem>
           <MenubarSeparator />
           <MenubarSub>
             <MenubarSubTrigger>Export</MenubarSubTrigger>
@@ -298,7 +373,20 @@ export default function MenuBar({
           <MenubarItem onClick={print}>
             Print <MenubarShortcut>Ctrl+P</MenubarShortcut>
           </MenubarItem>
-          <MenubarItem onClick={print}>Save as PDF…</MenubarItem>
+          {/* Browsers only expose PDF export through the print dialog, so this
+              opens print and says where to find it rather than pretending. */}
+          <MenubarItem
+            onClick={() => {
+              toast("In the print dialog, set the destination to “Save as PDF”.");
+              print();
+            }}
+          >
+            Save as PDF…
+          </MenubarItem>
+          <MenubarSeparator />
+          <MenubarItem variant="destructive" onClick={onDeleteDoc}>
+            Delete this document
+          </MenubarItem>
         </MenubarContent>
       </MenubarMenu>
 
@@ -329,7 +417,7 @@ export default function MenuBar({
           <MenubarItem onClick={onFind}>
             Find <MenubarShortcut>Ctrl+F</MenubarShortcut>
           </MenubarItem>
-          <MenubarItem onClick={onFind}>
+          <MenubarItem onClick={onReplace}>
             Replace <MenubarShortcut>Ctrl+H</MenubarShortcut>
           </MenubarItem>
           <MenubarSeparator />
@@ -390,10 +478,14 @@ export default function MenuBar({
             Read aloud
           </MenubarCheckboxItem>
           <MenubarSeparator />
-          <MenubarItem onClick={() => document.documentElement.requestFullscreen?.()}>
-            Full Screen <MenubarShortcut>F11</MenubarShortcut>
+          <MenubarItem
+            onClick={() => {
+              if (document.fullscreenElement) document.exitFullscreen?.();
+              else document.documentElement.requestFullscreen?.();
+            }}
+          >
+            Full screen <MenubarShortcut>F11</MenubarShortcut>
           </MenubarItem>
-          <MenubarItem onClick={print}>Print Preview</MenubarItem>
         </MenubarContent>
       </MenubarMenu>
 
@@ -493,6 +585,30 @@ export default function MenuBar({
             </MenubarSubContent>
           </MenubarSub>
           <MenubarSeparator />
+          <MenubarSub>
+            <MenubarSubTrigger>Align</MenubarSubTrigger>
+            <MenubarSubContent>
+              <MenubarItem onClick={() => setTextAlign(viewRef.current, schema, "left")}>
+                Left <MenubarShortcut>Ctrl+Shift+L</MenubarShortcut>
+              </MenubarItem>
+              <MenubarItem onClick={() => setTextAlign(viewRef.current, schema, "center")}>
+                Center <MenubarShortcut>Ctrl+Shift+E</MenubarShortcut>
+              </MenubarItem>
+              <MenubarItem onClick={() => setTextAlign(viewRef.current, schema, "right")}>
+                Right <MenubarShortcut>Ctrl+Shift+R</MenubarShortcut>
+              </MenubarItem>
+              <MenubarItem onClick={() => setTextAlign(viewRef.current, schema, "justify")}>
+                Justify <MenubarShortcut>Ctrl+Shift+J</MenubarShortcut>
+              </MenubarItem>
+            </MenubarSubContent>
+          </MenubarSub>
+          <MenubarItem onClick={() => adjustIndent(viewRef.current, schema, 1)}>
+            Increase indent <MenubarShortcut>Tab</MenubarShortcut>
+          </MenubarItem>
+          <MenubarItem onClick={() => adjustIndent(viewRef.current, schema, -1)}>
+            Decrease indent <MenubarShortcut>Shift+Tab</MenubarShortcut>
+          </MenubarItem>
+          <MenubarSeparator />
           <MenubarItem onClick={() => cmd(wrapInList(schema.nodes.bullet_list))}>
             Bullet list
           </MenubarItem>
@@ -520,15 +636,30 @@ export default function MenuBar({
       <MenubarMenu>
         <MenubarTrigger className={TRIGGER}>Table</MenubarTrigger>
         <MenubarContent>
-          <MenubarItem onClick={() => onInsertTable(3, 3)}>Insert Table (3 × 3)</MenubarItem>
+          <MenubarSub>
+            <MenubarSubTrigger>Insert table</MenubarSubTrigger>
+            <MenubarSubContent>
+              <MenubarItem onClick={() => onInsertTable(2, 2)}>2 × 2</MenubarItem>
+              <MenubarItem onClick={() => onInsertTable(3, 3)}>3 × 3</MenubarItem>
+              <MenubarItem onClick={() => onInsertTable(4, 4)}>4 × 4</MenubarItem>
+              <MenubarItem onClick={() => onInsertTable(5, 3)}>5 rows × 3 columns</MenubarItem>
+            </MenubarSubContent>
+          </MenubarSub>
           <MenubarSeparator />
-          <MenubarItem onClick={() => cmd(addColumnAfter)}>Add Column Right</MenubarItem>
-          <MenubarItem onClick={() => cmd(addRowAfter)}>Add Row Below</MenubarItem>
+          <MenubarItem onClick={() => cmd(addRowBefore)}>Insert row above</MenubarItem>
+          <MenubarItem onClick={() => cmd(addRowAfter)}>Insert row below</MenubarItem>
+          <MenubarItem onClick={() => cmd(addColumnBefore)}>Insert column left</MenubarItem>
+          <MenubarItem onClick={() => cmd(addColumnAfter)}>Insert column right</MenubarItem>
           <MenubarSeparator />
-          <MenubarItem onClick={() => cmd(deleteColumn)}>Delete Column</MenubarItem>
-          <MenubarItem onClick={() => cmd(deleteRow)}>Delete Row</MenubarItem>
+          <MenubarItem onClick={() => cmd(mergeCells)}>Merge cells</MenubarItem>
+          <MenubarItem onClick={() => cmd(splitCell)}>Split cell</MenubarItem>
           <MenubarSeparator />
-          <MenubarItem onClick={() => cmd(deleteTable)}>Delete Table</MenubarItem>
+          <MenubarItem onClick={() => cmd(toggleHeaderRow)}>Toggle header row</MenubarItem>
+          <MenubarItem onClick={() => cmd(toggleHeaderColumn)}>Toggle header column</MenubarItem>
+          <MenubarSeparator />
+          <MenubarItem onClick={() => cmd(deleteRow)}>Delete row</MenubarItem>
+          <MenubarItem onClick={() => cmd(deleteColumn)}>Delete column</MenubarItem>
+          <MenubarItem variant="destructive" onClick={() => cmd(deleteTable)}>Delete table</MenubarItem>
         </MenubarContent>
       </MenubarMenu>
 
@@ -538,51 +669,20 @@ export default function MenuBar({
         <MenubarContent>
           <MenubarItem onClick={onShowShortcuts}>Keyboard shortcuts</MenubarItem>
           <MenubarSeparator />
-          <MenubarItem onClick={() => alert("EDTRpad — Online WordPad\nFree word processor in your browser.\nhttps://wordpad.info")}>
-            About
+          <MenubarItem
+            onClick={() =>
+              toast(
+                "EDTRpad is a free online word processor at wordpad.info. It is an independent project, not affiliated with Microsoft.",
+                { position: "top", duration: 6000 }
+              )
+            }
+          >
+            About EDTRpad
           </MenubarItem>
         </MenubarContent>
       </MenubarMenu>
-      <div className="ml-auto flex items-center">
-        {user ? (
-          <Popover>
-            <PopoverTrigger asChild>
-              <button
-                type="button"
-                title={user.name}
-                aria-label="Account"
-                className="flex h-6 w-6 items-center justify-center rounded-full bg-primary text-primary-foreground text-[10px] font-semibold select-none"
-              >
-                {user.initials}
-              </button>
-            </PopoverTrigger>
-            <PopoverContent align="end" sideOffset={6} className="w-48 p-1">
-              <div className="px-2 py-1.5">
-                <div className="truncate text-sm font-medium">{user.name}</div>
-                <div className="truncate text-[11px] text-muted-foreground">Free plan</div>
-              </div>
-              <div className="my-1 h-px bg-border" />
-              <button
-                type="button"
-                onClick={onLogout}
-                className="flex w-full items-center gap-2 rounded-sm px-2 py-1.5 text-sm hover:bg-accent hover:text-accent-foreground"
-              >
-                <SignOut size={15} /> Log out
-              </button>
-            </PopoverContent>
-          </Popover>
-        ) : (
-          <button
-            type="button"
-            onClick={onLogin}
-            className="flex items-center gap-1 rounded px-2 py-0.5 text-xs hover:bg-accent hover:text-accent-foreground transition-colors"
-          >
-            <SignIn size={13} /> Log in
-          </button>
-        )}
       </div>
-      </div>
-
-    </Menubar>
+      </Menubar>
+    </div>
   );
 }

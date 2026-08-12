@@ -48,6 +48,7 @@ import { OPEN_ACCEPT } from "@/lib/doc-import";
 import AuthModal from "./AuthModal";
 import WelcomeScreen from "./WelcomeScreen";
 import { toast, Toaster } from "./toast";
+import { useAskDialogs } from "./AskDialogs";
 import {
   listDocuments, createDocument, updateDocument, renameDocument, deleteDocument,
   getPreferences, savePreferences, setDocumentFolder,
@@ -1003,6 +1004,7 @@ export default function Editor() {
   const [renamingId, setRenamingId] = useState<string | null>(null);
   const [authOpen, setAuthOpen] = useState(false);
   const [welcomeOpen, setWelcomeOpen] = useState(false);
+  const { confirm: confirmDialog, prompt: promptDialog, dialogs: askDialogs } = useAskDialogs();
   const [verifyDismissed, setVerifyDismissed] = useState(false);
   const { data: session, isPending: sessionPending } = useSession();
   const authUser = session?.user;
@@ -1024,6 +1026,7 @@ export default function Editor() {
   const [replaceText, setReplaceText] = useState("");
   const [caseSensitive, setCaseSensitive] = useState(false);
   const findInputRef = useRef<HTMLInputElement>(null);
+  const replaceInputRef = useRef<HTMLInputElement>(null);
   const [saveStatus, setSaveStatus] = useState<"idle" | "saving" | "saved" | "error">("idle");
   const pendingSaveRef = useRef<{ id: string; state: EditorState } | null>(null);
   const [linkDialog, setLinkDialog] = useState<{ mode: "link" | "image"; value: string } | null>(null);
@@ -1425,9 +1428,13 @@ export default function Editor() {
       const active = filesRef.current.find((f) => f.id === activeIdRef.current);
       const hasContent =
         !!v && active?.html !== DEFAULT_REF_CONTENT && v.state.doc.textContent.trim().length > 0;
-      if (hasContent && !window.confirm(
-        "This will replace your current document. Export it first if you want to keep a copy. Continue?"
-      )) return;
+      if (hasContent && !(await confirmDialog({
+        title: "Replace your current document?",
+        description:
+          "Without an account you have a single document, so starting a new one replaces it. A snapshot is kept in version history. Export first if you want a file copy.",
+        confirmLabel: "Replace document",
+        destructive: true,
+      }))) return;
       if (saveTimer.current) { clearTimeout(saveTimer.current); saveTimer.current = null; }
       pendingSaveRef.current = null;
       lastAutoNameRef.current = null;
@@ -1442,7 +1449,7 @@ export default function Editor() {
       syncUrlToDoc(id);
       try { localStorage.setItem(ACTIVE_KEY, id); } catch {}
     }
-  }, [applyFiles, commitCurrent, setDocFromHtml, syncUrlToDoc]);
+  }, [applyFiles, commitCurrent, confirmDialog, setDocFromHtml, syncUrlToDoc]);
 
   const createFile = useCallback(() => {
     return addNewDocument("Untitled document", "<p></p>");
@@ -1694,15 +1701,12 @@ export default function Editor() {
 
   const openAuth = useCallback(() => setAuthOpen(true), []);
 
-  // Word-style start screen on every visit. Replaces the old auto-opening auth
-  // dialog — sign-in is offered inside the screen. Skipped when the URL points
-  // at a specific document, since the intent there is to open that document.
-  const welcomeShownRef = useRef(false);
-  useEffect(() => {
-    if (sessionPending || initialDeepLinkId || welcomeShownRef.current) return;
-    welcomeShownRef.current = true; // don't reopen if the session state settles again
-    setWelcomeOpen(true);
-  }, [sessionPending, initialDeepLinkId]);
+  // The start screen is for signed-in users, who have a document library worth
+  // landing on. Guests have a single document, so it would only be a detour —
+  // they go straight to the editor. Opening is driven by the document loader
+  // below (so the list is already populated); this ref keeps it to once per
+  // signed-in session rather than on every session-state settle.
+  const welcomedForRef = useRef<string | null>(null);
 
   const resendVerification = useCallback(async () => {
     if (!authUser?.email) return;
@@ -1925,9 +1929,18 @@ export default function Editor() {
         // Writing it on a plain /pad visit would make the next reload look like
         // a deep link and skip the start screen.
         if (deepLinked) syncUrlToDoc(active.id);
+        // Every sign-in lands on the start screen, unless a deep link asked for
+        // one specific document.
+        const uid = authUser?.id ?? "";
+        if (!deepLinked && welcomedForRef.current !== uid) {
+          welcomedForRef.current = uid;
+          setWelcomeOpen(true);
+        }
         try { const prefs = await getPreferences(); if (!cancelled) applyPreferences(prefs); } catch {}
         prefsLoadedRef.current = true;
       } else {
+        // Signed out: arm the start screen again for the next sign-in.
+        welcomedForRef.current = null;
         const { list, active } = loadFiles();
         const deepLinkId = takeDeepLinkId();
         const deepLinked = deepLinkId ? list.find((f) => f.id === deepLinkId) : undefined;
@@ -2118,6 +2131,33 @@ export default function Editor() {
     });
   }, []);
 
+  // Same panel as Find, but focus starts in the replace field.
+  const openReplace = useCallback(() => {
+    setFindOpen(true);
+    requestAnimationFrame(() => {
+      replaceInputRef.current?.focus();
+      replaceInputRef.current?.select();
+    });
+  }, []);
+
+  // Rename from the File menu: focus the title input when it's on screen,
+  // otherwise fall back to a dialog (narrow screens hide the header input).
+  const renameActiveDoc = useCallback(async () => {
+    const input = document.querySelector<HTMLInputElement>('input[aria-label="Document title"]');
+    if (input && input.offsetParent !== null) {
+      input.focus();
+      input.select();
+      return;
+    }
+    const next = await promptDialog({
+      title: "Rename document",
+      label: "Document name",
+      defaultValue: docTitle,
+      confirmLabel: "Rename",
+    });
+    if (next) renameActive(next);
+  }, [docTitle, promptDialog, renameActive]);
+
   const closeFind = useCallback(() => {
     setFindOpen(false);
     const v = viewRef.current;
@@ -2292,12 +2332,13 @@ export default function Editor() {
     const onKey = (e: KeyboardEvent) => {
       if ((e.ctrlKey || e.metaKey) && (e.key === "f" || e.key === "h")) {
         e.preventDefault();
-        openFind();
+        if (e.key === "h") openReplace();
+        else openFind();
       }
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [openFind]);
+  }, [openFind, openReplace]);
 
   const updateSelectedImageAttrs = useCallback((patch: Record<string, unknown>) => {
     const v = viewRef.current;
@@ -2636,9 +2677,14 @@ export default function Editor() {
                         ))}
                         {allFolders.length > 0 && <ContextMenuSeparator />}
                         <ContextMenuItem
-                          onClick={() => {
-                            const name = window.prompt("Folder name:");
-                            if (name?.trim()) moveToFolder(f.id, name.trim());
+                          onClick={async () => {
+                            const name = await promptDialog({
+                              title: "New folder",
+                              label: "Folder name",
+                              placeholder: "e.g. Work",
+                              confirmLabel: "Create",
+                            });
+                            if (name) moveToFolder(f.id, name);
                           }}
                         >
                           New folder…
@@ -2742,6 +2788,11 @@ export default function Editor() {
         onTitleChange={renameActive}
         onNewDoc={createFile}
         onShowHome={() => setWelcomeOpen(true)}
+        onSave={() => { flushSave(); toast.success("Saved"); }}
+        onCopyLink={() => copyDocLink(activeIdRef.current)}
+        onRenameDoc={renameActiveDoc}
+        onDeleteDoc={() => deleteFile(activeIdRef.current)}
+        onReplace={openReplace}
         onNewFromTemplate={createFromTemplate}
         onOpenFile={openFileDialog}
         onExport={exportActive}
@@ -3073,6 +3124,7 @@ export default function Editor() {
           </div>
           <div className="flex items-center gap-1.5">
             <input
+              ref={replaceInputRef}
               value={replaceText}
               onChange={(e) => setReplaceText(e.target.value)}
               placeholder="Replace with"
@@ -3177,20 +3229,9 @@ export default function Editor() {
       {!focusMode && (
       <div className="border-t border-border bg-card/95 px-2 py-1 text-[11px] leading-none relative">
         {/* Brand watermark, centered — only on small screens where the header brand is hidden */}
-        <div className="absolute inset-x-0 top-1/2 z-0 -translate-y-1/2 hidden max-[799px]:flex items-center justify-center gap-1.5 leading-none">
-          <span className="font-brand pointer-events-none select-none leading-none opacity-60">
-            <span className="text-sm font-bold tracking-tight text-muted-foreground">EDTR</span>
-            <span className="text-xs font-semibold tracking-wider text-muted-foreground">PAD</span>
-          </span>
-          {/* On phones the header title input is hidden, so renaming happens here. */}
-          <input
-            value={docTitle}
-            onChange={(e) => renameActive(e.target.value)}
-            onFocus={(e) => e.target.select()}
-            spellCheck={false}
-            aria-label="Document title"
-            className="pointer-events-auto z-10 w-[120px] truncate rounded border border-transparent bg-transparent px-1 py-0.5 text-[11px] text-foreground/70 outline-none focus:border-border focus:bg-background"
-          />
+        <div className="font-brand pointer-events-none absolute inset-x-0 top-1/2 z-0 -translate-y-1/2 hidden max-[799px]:flex items-center justify-center select-none leading-none opacity-60">
+          <span className="text-sm font-bold tracking-tight text-muted-foreground">EDTR</span>
+          <span className="text-xs font-semibold tracking-wider text-muted-foreground">PAD</span>
         </div>
         <div className="relative z-10 flex items-center justify-between gap-2">
           <div className="flex items-center gap-2 text-muted-foreground">
@@ -3436,6 +3477,7 @@ export default function Editor() {
         docHref={docUrl}
         onSignIn={openAuth}
       />
+      {askDialogs}
       <Toaster />
     </div>
   );

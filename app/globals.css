@@ -654,12 +654,68 @@ body {
   body {
     @apply bg-background text-foreground;
   }
+
+  /* Tailwind v4 preflight leaves buttons with the default cursor; everything
+     clickable should read as clickable. */
+  button:not(:disabled),
+  [role="button"]:not([aria-disabled="true"]),
+  a[href],
+  label[for],
+  select:not(:disabled),
+  summary,
+  input[type="checkbox"]:not(:disabled),
+  input[type="radio"]:not(:disabled),
+  input[type="file"]:not(:disabled),
+  [role="menuitem"],
+  [role="menuitemcheckbox"],
+  [role="option"],
+  [role="tab"] {
+    cursor: pointer;
+  }
+  button:disabled {
+    cursor: not-allowed;
+  }
+}
+
+/* ── Marketing pages (landing, guides) ───────────────────────────────────
+   A light, warm-neutral palette in the same family as edtr.md, so the two
+   products read as siblings. Independent of the editor's light/dark theme. */
+.pad-marketing {
+  --pad-bg: #ffffff;
+  --pad-surface: #f7f7f5;
+  --pad-surface-2: #f1f1ed;
+  --pad-border: rgba(55, 53, 47, 0.1);
+  --pad-border-strong: rgba(55, 53, 47, 0.2);
+  --pad-ink: #1c1b18;
+  --pad-ink-70: rgba(28, 27, 24, 0.72);
+  --pad-ink-50: rgba(28, 27, 24, 0.56);
+
+  background: var(--pad-bg);
+  color: var(--pad-ink);
+}
+
+/* Hero headline: Author, tight and heavy, the way edtr.md sets it. */
+.pad-display {
+  font-family: "Author", ui-sans-serif, system-ui, sans-serif;
+  font-weight: 700;
+  letter-spacing: -0.04em;
+  line-height: 0.98;
+}
+
+/* Soft radial glow behind the hero. */
+.pad-hero-glow {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(65% 55% at 50% 0%, rgba(96, 165, 250, 0.1), transparent 70%),
+    radial-gradient(45% 45% at 85% 15%, rgba(250, 204, 21, 0.07), transparent 70%);
 }
 
 /* ── Editor Preview Animated Shadow ── */
 @keyframes preview-glow {
-  0%, 100% { box-shadow: 0 8px 40px 0 rgba(96, 165, 250, 0.12), 0 2px 8px 0 rgba(0,0,0,0.06); }
-  50%       { box-shadow: 0 8px 64px 12px rgba(96, 165, 250, 0.30), 0 2px 8px 0 rgba(0,0,0,0.06); }
+  0%, 100% { box-shadow: 0 8px 40px 0 rgba(96, 165, 250, 0.12), 0 2px 10px 0 rgba(0,0,0,0.07); }
+  50%      { box-shadow: 0 8px 64px 12px rgba(96, 165, 250, 0.26), 0 2px 10px 0 rgba(0,0,0,0.07); }
 }
 
 .preview-animated-shadow {
@@ -667,15 +723,8 @@ body {
   border-radius: 1rem;
 }
 
-/* ── Landing Hero Gradient Animation ── */
-@keyframes hero-gradient {
-  0%   { background-position: 0% 50%; }
-  50%  { background-position: 100% 50%; }
-  100% { background-position: 0% 50%; }
-}
-
-.hero-animated-bg {
-  background: #ffffff;
+@media (prefers-reduced-motion: reduce) {
+  .preview-animated-shadow { animation: none; }
 }
 
 /* Print header/footer: hidden on screen, shown by react-to-print pageStyle */
@@ -702,3 +751,42 @@ body {
 .version-preview img { max-width: 100%; height: auto; }
 .version-preview hr { margin: 6px 0; border-color: #e5e7eb; }
 .version-preview blockquote { border-left: 3px solid #d1d5db; margin: 4px 0; padding-left: 8px; color: #4b5563; }
+
+/* Template thumbnails: an A4 page rendered at full size, then scaled down by
+   the component. Mirrors the editor page so previews match the real result. */
+.template-preview {
+  background: #ffffff;
+  color: #000000;
+  font-family: Arial, sans-serif;
+  font-size: 12pt;
+  line-height: 1.5;
+  padding: 38px 60px;
+  overflow: hidden;
+}
+.template-preview h1 { font-size: 24pt; font-weight: 700; margin: 10px 0 6px; }
+.template-preview h2 { font-size: 16pt; font-weight: 700; margin: 14px 0 5px; }
+.template-preview h3 { font-size: 13pt; font-weight: 700; margin: 10px 0 4px; }
+.template-preview p { margin: 6px 0; }
+.template-preview ul, .template-preview ol { margin: 6px 0; padding-left: 32px; }
+.template-preview ul { list-style: disc; }
+.template-preview ol { list-style: decimal; }
+.template-preview hr { margin: 12px 0; border: 0; border-top: 1px solid #c9d3dd; }
+.template-preview table {
+  border-collapse: collapse;
+  width: 100%;
+  margin: 8px 0;
+  table-layout: fixed;
+}
+.template-preview td, .template-preview th {
+  border: 1px solid #c9d3dd;
+  padding: 4px 8px;
+  text-align: left;
+  vertical-align: top;
+}
+.template-preview th { background: #eef3f8; font-weight: 700; }
+.template-preview blockquote {
+  border-left: 3px solid #c9d3dd;
+  margin: 8px 0;
+  padding-left: 12px;
+  color: #4b5563;
+}

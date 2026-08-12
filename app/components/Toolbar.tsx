@@ -4,7 +4,8 @@ import { useState, useEffect, lazy, Suspense } from "react";
 import { EditorView } from "prosemirror-view";
 import { EditorState, Transaction, TextSelection } from "prosemirror-state";
 import { toggleMark, setBlockType, wrapIn } from "prosemirror-commands";
-import { wrapInList, sinkListItem, liftListItem } from "prosemirror-schema-list";
+import { wrapInList } from "prosemirror-schema-list";
+import { setTextAlign as applyTextAlign, adjustIndent as applyIndent } from "@/lib/editor-commands";
 import { undo, redo } from "prosemirror-history";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
@@ -257,32 +258,8 @@ export default function Toolbar({
   }, [tick]);
   const { fontFamily: currentFontFamily, fontSize: currentFontSize, block: currentBlock, align: currentAlign } = selFmt;
 
-  const setTextAlign = (align: string) => {
-    const v = viewRef.current; if (!v) return;
-    const { from, to } = v.state.selection;
-    const tr = v.state.tr;
-    v.state.doc.nodesBetween(from, to, (node, pos) => {
-      if (node.type === schema.nodes.paragraph || node.type === schema.nodes.heading)
-        tr.setNodeMarkup(pos, undefined, { ...node.attrs, textAlign: align });
-    });
-    v.dispatch(tr); v.focus();
-  };
-
-  const adjustIndent = (direction: 1 | -1) => {
-    const v = viewRef.current; if (!v) return;
-    const listCmd = direction > 0 ? sinkListItem(schema.nodes.list_item) : liftListItem(schema.nodes.list_item);
-    if (listCmd(v.state, v.dispatch)) { v.focus(); return; }
-    const { from, to } = v.state.selection;
-    const tr = v.state.tr; let changed = false;
-    v.state.doc.nodesBetween(from, to, (node, pos) => {
-      if (node.type === schema.nodes.paragraph || node.type === schema.nodes.heading) {
-        const next = Math.max(0, Math.min(12, Number(node.attrs.indent || 0) + direction));
-        if (next !== Number(node.attrs.indent || 0)) { tr.setNodeMarkup(pos, undefined, { ...node.attrs, indent: next }); changed = true; }
-      }
-    });
-    if (!changed) return;
-    v.dispatch(tr); v.focus();
-  };
+  const setTextAlign = (align: string) => applyTextAlign(viewRef.current, schema, align);
+  const adjustIndent = (direction: 1 | -1) => applyIndent(viewRef.current, schema, direction);
 
   const insertEmoji = (emojiData: EmojiClickData) => {
     const v = viewRef.current; if (!v) return;

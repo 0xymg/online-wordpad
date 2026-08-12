@@ -7,7 +7,6 @@ import { Article }             from "@phosphor-icons/react/dist/ssr/Article";
 import { Export }              from "@phosphor-icons/react/dist/ssr/Export";
 import { Printer }             from "@phosphor-icons/react/dist/ssr/Printer";
 import { Clock }               from "@phosphor-icons/react/dist/ssr/Clock";
-import { Smiley }              from "@phosphor-icons/react/dist/ssr/Smiley";
 import { Lock }                from "@phosphor-icons/react/dist/ssr/Lock";
 import { Command }             from "@phosphor-icons/react/dist/ssr/Command";
 import { CloudArrowUp }        from "@phosphor-icons/react/dist/ssr/CloudArrowUp";
@@ -17,16 +16,25 @@ import { MagnifyingGlass }     from "@phosphor-icons/react/dist/ssr/MagnifyingGl
 import ToolbarPreviewClient from "./components/ToolbarPreviewClient";
 
 export const metadata: Metadata = {
-  title: "EDTRpad — Online WordPad: Free Browser Word Processor | No Install",
+  title: "EDTRpad: Online WordPad & Free Online Word Alternative | No Install",
   description:
-    "Free online WordPad alternative. Rich text editor in your browser — bold, tables, images, export to Word (.docx), and print. No install, no account.",
+    "Free online WordPad and Microsoft Word alternative. An online word processor in your browser: rich text, tables, images, export to Word (.docx), print. No install, no account.",
   keywords: [
     "online wordpad",
     "wordpad online",
     "free wordpad",
     "online word",
+    "online microsoft word",
     "online word editor",
     "online word processor",
+    "online text editor",
+    "online editor",
+    "word alternative",
+    "microsoft word alternative",
+    "office word alternative",
+    "online office word",
+    "online office",
+    "online open office",
     "online microsoft word alternative",
     "microsoft word alternative online",
     "free online word processor",
@@ -41,7 +49,7 @@ export const metadata: Metadata = {
     "word editor online no download",
   ],
   openGraph: {
-    title: "EDTRpad — Online WordPad: Free Word Processor, No Install",
+    title: "EDTRpad: Online WordPad & Free Online Word Alternative",
     description:
       "Free online WordPad & Microsoft Word alternative. Rich text, tables, images, export to Word (.docx). No install, no account.",
     type: "website",
@@ -50,7 +58,7 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "EDTRpad — Online WordPad: Free Word Processor, No Install",
+    title: "EDTRpad: Online WordPad & Free Online Word Alternative",
     description:
       "Free online WordPad & Microsoft Word alternative. No install, no account required.",
   },
@@ -68,7 +76,7 @@ const features = [
   {
     Icon: Files,
     title: "Multiple Documents",
-    desc: "With a free account, manage all your work from a built-in sidebar — create, rename, organize into folders, and switch documents without leaving the editor.",
+    desc: "With a free account, manage all your work from a built-in sidebar: create, rename, organize into folders, and switch documents without leaving the editor.",
   },
   {
     Icon: Moon,
@@ -93,7 +101,7 @@ const features = [
   {
     Icon: MagnifyingGlass,
     title: "Find & Replace",
-    desc: "Search your document and replace text in one place. Highlights every match — press Ctrl+F to open.",
+    desc: "Search your document and replace text in one place. Every match is highlighted. Press Ctrl+F to open.",
   },
   {
     Icon: Article,
@@ -103,7 +111,7 @@ const features = [
   {
     Icon: Export,
     title: "Import & Export",
-    desc: "Open .docx, .txt, and .html files. Save as Word (.docx), Rich Text (.rtf), HTML, or plain text (.txt) — formatting included.",
+    desc: "Open .docx, .txt, and .html files. Save as Word (.docx), Rich Text (.rtf), HTML, or plain text (.txt) with formatting included.",
   },
   {
     Icon: Printer,
@@ -116,21 +124,16 @@ const features = [
     desc: "Full history with unlimited undo and redo steps. Keyboard shortcuts Ctrl+Z / Ctrl+Y.",
   },
   {
-    Icon: Smiley,
-    title: "Emoji",
-    desc: "Insert emoji anywhere in your document with a searchable emoji picker.",
-  },
-  {
     Icon: Command,
     title: "Command Menu",
-    desc: "Type / anywhere in the document to open a command menu. Insert headings, lists, tables, images, and more without touching the toolbar.",
+    desc: "Type / anywhere in the document to open a command menu. Insert headings, lists, tables, images, emoji, and more without touching the toolbar.",
   },
 ];
 
 const faqs = [
   {
     q: "Do I need to create an account?",
-    a: "No. You can open the editor and start typing immediately, no registration required. Creating a free account is optional — it lets you save multiple documents to the cloud and sync them across your devices.",
+    a: "No. You can open the editor and start typing immediately, no registration required. A free account is optional and lets you save multiple documents to the cloud and sync them across your devices.",
   },
   {
     q: "Are my documents saved?",
@@ -150,7 +153,15 @@ const faqs = [
   },
   {
     q: "Is it free?",
-    a: "Yes, completely free. No ads, no paywalls, no premium tiers.",
+    a: "Yes. Every feature is free to use, with no paywalls, no premium tiers, and no subscription. An account is optional and also free.",
+  },
+  {
+    q: "Is this an online Microsoft Word?",
+    a: "No. EDTRpad is an independent online word processor and is not affiliated with Microsoft. It covers the everyday features people open Word for, and it reads and writes Word (.docx) files, so it works as a free online Word alternative.",
+  },
+  {
+    q: "Can I use it instead of Office or OpenOffice?",
+    a: "For everyday documents, yes. EDTRpad handles rich text, tables, images, and printing, and exports Word (.docx) and Rich Text (.rtf) files that Microsoft Office, OpenOffice, and LibreOffice all open. For heavy features like mail merge or tracked changes you still need a full office suite.",
   },
   {
     q: "What browsers are supported?",
@@ -162,7 +173,15 @@ const jsonLdWebApp = {
   "@context": "https://schema.org",
   "@type": "WebApplication",
   name: "EDTRpad",
-  alternateName: ["Online WordPad", "Online Word Editor", "Free Word Processor Online"],
+  alternateName: [
+    "Online WordPad",
+    "Online Word Editor",
+    "Online Word Alternative",
+    "Online Microsoft Word Alternative",
+    "Online Office Word Editor",
+    "Online Text Editor",
+    "Free Word Processor Online",
+  ],
   url: "https://wordpad.info",
   applicationCategory: "ProductivityApplication",
   operatingSystem: "Any",
@@ -250,106 +269,106 @@ export default function LandingPage() {
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLdHowTo) }}
       />
-    <div className="min-h-screen bg-white text-gray-900 font-sans">
+    <div className="pad-marketing min-h-screen font-sans">
       {/* ── Announcement banner ── */}
-      <div className="bg-gray-900 text-white text-sm">
-        <div className="mx-auto max-w-5xl px-6 py-2 flex items-center justify-center gap-2 text-center">
-          <span className="inline-flex items-center gap-1.5">
-            <span aria-hidden className="hidden sm:inline">🎉</span>
-            <span className="text-gray-300">New:</span>
-            <span className="font-medium">User accounts are here — save &amp; sync your documents across devices.</span>
+      <div className="border-b border-[var(--pad-border)] text-[13px]">
+        <div className="mx-auto flex max-w-6xl items-center justify-center gap-2 px-6 py-2 text-center">
+          <span className="inline-flex items-center gap-2">
+            <span className="rounded-full border border-[var(--pad-border-strong)] px-2 py-0.5 text-[11px] font-medium uppercase tracking-wide text-[var(--pad-ink-70)]">
+              New
+            </span>
+            <span className="text-[var(--pad-ink-70)]">
+              Accounts are here. Save and sync your documents across devices.
+            </span>
           </span>
-          <Link href="/pad" className="font-semibold underline underline-offset-2 decoration-gray-500 hover:decoration-white whitespace-nowrap">
+          <Link href="/pad" className="whitespace-nowrap font-medium underline underline-offset-4 decoration-[var(--pad-border-strong)] hover:decoration-current">
             Sign up free →
           </Link>
         </div>
       </div>
 
       {/* ── Nav ── */}
-      <header className="sticky top-0 z-50 border-b border-gray-100 bg-white/90 backdrop-blur-sm">
-        <div className="mx-auto max-w-5xl px-6 flex items-center justify-between h-14">
+      <header className="sticky top-0 z-50 border-b border-[var(--pad-border)] bg-[var(--pad-bg)]/85 backdrop-blur-md">
+        <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-6">
           <span className="font-brand leading-none">
-            <span className="text-2xl font-bold tracking-tight text-gray-900">EDTR</span>
-            <span className="text-lg font-semibold tracking-wider text-gray-400">PAD</span>
+            <span className="text-2xl font-bold tracking-tight">EDTR</span>
+            <span className="text-lg font-semibold tracking-wider text-[var(--pad-ink-50)]">PAD</span>
           </span>
-          <nav className="hidden sm:flex items-center gap-6 text-sm text-gray-600">
-            <a href="#features" className="hover:text-gray-900 transition-colors">Features</a>
-            <a href="#faq" className="hover:text-gray-900 transition-colors">FAQ</a>
-            <Link href="/guides" className="hover:text-gray-900 transition-colors">Guides</Link>
+          <nav className="hidden items-center gap-8 text-[13px] text-[var(--pad-ink-50)] sm:flex">
+            <a href="#features" className="transition-colors hover:text-[var(--pad-ink)]">Features</a>
+            <a href="#how" className="transition-colors hover:text-[var(--pad-ink)]">How it works</a>
+            <a href="#privacy" className="transition-colors hover:text-[var(--pad-ink)]">Privacy</a>
+            <a href="#faq" className="transition-colors hover:text-[var(--pad-ink)]">FAQ</a>
+            <Link href="/guides" className="transition-colors hover:text-[var(--pad-ink)]">Guides</Link>
           </nav>
           <Link
             href="/pad"
-            className="bg-gray-900 hover:bg-black text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors"
+            className="rounded-full bg-[var(--pad-ink)] px-4 py-2 text-[13px] font-semibold text-[var(--pad-bg)] transition-opacity hover:opacity-90"
           >
-            Open Editor
+            Open editor →
           </Link>
         </div>
       </header>
 
       <main>
         {/* ── Hero ── */}
-        <section className="hero-animated-bg">
-          <div className="mx-auto max-w-5xl px-6 pt-20 pb-8 text-center">
-            <div className="inline-flex items-center gap-2 bg-white/70 text-gray-600 text-xs font-medium px-3 py-1.5 rounded-full mb-6 border border-gray-200">
-              <span className="w-1.5 h-1.5 bg-gray-400 rounded-full" />
-              Free · No account · Works in your browser
-            </div>
-            <h1 className="text-5xl sm:text-6xl font-extrabold tracking-tight leading-tight mb-6">
-              Fast text editing.
+        <section className="relative overflow-hidden px-6 pb-16 pt-20 sm:pt-28">
+          <div className="pad-hero-glow" aria-hidden />
+          <div className="relative mx-auto max-w-4xl text-center">
+            <h1 className="pad-display text-[clamp(2.75rem,8vw,4.75rem)]">
+              Just write.
               <br />
-              <span className="text-gray-900">Right in your browser.</span>
+              Right in your browser.
             </h1>
-            <p className="text-xl text-gray-500 max-w-2xl mx-auto mb-10 leading-relaxed">
-              Like WordPad, but online. Rich text, tables, images, and printing,
-              without installing anything or creating an account.
+            <p className="mx-auto mt-7 max-w-2xl text-lg leading-relaxed text-[var(--pad-ink-70)] sm:text-xl">
+              A free online WordPad and Word alternative. Rich text, tables, images,
+              and printing, without installing anything or creating an account.
             </p>
-            <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
+            <div className="mt-10 flex flex-col items-center justify-center gap-3 sm:flex-row">
               <Link
                 href="/pad"
-                className="w-full sm:w-auto bg-gray-900 hover:bg-black text-white text-base font-semibold px-8 py-3.5 rounded-xl transition-colors shadow-md shadow-gray-200"
+                className="w-full rounded-full bg-[var(--pad-ink)] px-8 py-3.5 text-base font-semibold text-[var(--pad-bg)] transition-opacity hover:opacity-90 sm:w-auto"
               >
-                Start Writing. It&apos;s Free.
+                Start writing →
               </Link>
               <a
                 href="#features"
-                className="w-full sm:w-auto text-gray-600 hover:text-gray-900 text-base font-medium px-8 py-3.5 rounded-xl border border-gray-200 bg-white/60 hover:bg-white hover:border-gray-300 transition-colors"
+                className="w-full rounded-full border border-[var(--pad-border-strong)] px-8 py-3.5 text-base font-medium text-[var(--pad-ink-70)] transition-colors hover:border-[var(--pad-ink)] hover:text-[var(--pad-ink)] sm:w-auto"
               >
-                See Features
+                See features
               </a>
             </div>
           </div>
 
-          {/* ── Hero subtext ── */}
-          <div className="mx-auto max-w-3xl px-6 pb-10 text-center">
-            <p className="text-gray-400 text-[15px] leading-relaxed">
-              Online WordPad is a free browser-based rich text editor for everyday writing tasks: drafting documents, taking notes, writing reports, or composing letters. It is inspired by classic desktop editors like WordPad and requires no software installation.
-            </p>
-          </div>
-
           {/* ── Editor Preview ── */}
-          <div className="mx-auto max-w-5xl px-6 pb-16">
-            <div className="preview-animated-shadow rounded-2xl border border-gray-200 overflow-hidden light" style={{ colorScheme: "light" }}>
+          <div className="relative mx-auto mt-16 max-w-5xl">
+            {/* text-gray-900 matters: the surrounding page is cream-on-dark and
+                the preview's icons inherit currentColor. */}
+            <div
+              className="preview-animated-shadow light overflow-hidden rounded-2xl border border-[var(--pad-border-strong)] text-gray-900"
+              style={{ colorScheme: "light" }}
+            >
               {/* Browser chrome */}
-              <div className="bg-gray-100 px-4 py-2.5 flex items-center gap-2 border-b border-gray-200">
-                <span className="w-3 h-3 rounded-full bg-gray-300" />
-                <span className="w-3 h-3 rounded-full bg-gray-300" />
-                <span className="w-3 h-3 rounded-full bg-gray-300" />
-                <span className="ml-3 flex-1 bg-white rounded text-xs text-gray-400 px-3 py-1 max-w-xs">
+              <div className="flex items-center gap-2 border-b border-gray-200 bg-gray-100 px-4 py-2.5">
+                <span className="size-3 rounded-full bg-[#ff5f57]" />
+                <span className="size-3 rounded-full bg-[#febc2e]" />
+                <span className="size-3 rounded-full bg-[#28c840]" />
+                <span className="ml-3 max-w-xs flex-1 rounded bg-white px-3 py-1 text-xs text-gray-400">
                   wordpad.info/pad
                 </span>
               </div>
               {/* Real Toolbar — pointer-events-none, decorative */}
               <ToolbarPreviewClient />
               {/* Fake page */}
-              <div className="bg-gray-50 p-6 flex justify-center">
-                <div className="bg-white w-full max-w-lg rounded shadow-md p-8 space-y-3 text-sm text-gray-800 min-h-[220px]">
+              <div className="flex justify-center bg-gray-50 p-6">
+                <div className="min-h-[220px] w-full max-w-lg space-y-3 rounded bg-white p-8 text-sm text-gray-800 shadow-md">
                   <h2 className="text-xl font-bold">Meeting Notes: Q3 Planning</h2>
-                  <p className="text-gray-500 text-xs">September 2024 · Confidential</p>
+                  <p className="text-xs text-gray-500">September 2024 · Confidential</p>
                   <p>
                     <strong>Attendees:</strong> Alice, Bob, Carol
                   </p>
                   <p>The team agreed on the following action items for the upcoming quarter:</p>
-                  <ul className="list-disc pl-5 space-y-1 text-gray-700">
+                  <ul className="list-disc space-y-1 pl-5 text-gray-700">
                     <li>Finalize product roadmap by <u>Oct 1</u></li>
                     <li>Schedule bi-weekly syncs with design team</li>
                     <li>Complete migration to new infrastructure</li>
@@ -358,31 +377,55 @@ export default function LandingPage() {
               </div>
             </div>
           </div>
+
+          {/* ── Hero subtext (SEO) ── */}
+          <p className="mx-auto mt-12 max-w-3xl text-center text-[15px] leading-relaxed text-[var(--pad-ink-50)]">
+            Online WordPad is a free browser-based online text editor for everyday writing tasks: drafting documents, taking notes, writing reports, or composing letters. It works as a lightweight online Word in the spirit of classic desktop editors like WordPad, and requires no software installation.
+          </p>
+        </section>
+
+        {/* ── Trust strip ── */}
+        <section className="border-y border-[var(--pad-border)]">
+          <div className="mx-auto grid max-w-6xl grid-cols-2 divide-x divide-[var(--pad-border)] px-6 sm:grid-cols-4">
+            {[
+              { k: "0", v: "downloads needed" },
+              { k: "5", v: "export formats" },
+              { k: "∞", v: "undo history" },
+              { k: "$0", v: "no subscription" },
+            ].map((s) => (
+              <div key={s.v} className="px-4 py-6 text-center">
+                <div className="pad-display text-2xl">{s.k}</div>
+                <div className="mt-1 text-xs text-[var(--pad-ink-50)]">{s.v}</div>
+              </div>
+            ))}
+          </div>
         </section>
 
         {/* ── Features ── */}
-        <section id="features" className="bg-gray-50 py-20">
-          <div className="mx-auto max-w-5xl px-6">
-            <div className="text-center mb-14">
-              <h2 className="text-3xl sm:text-4xl font-bold mb-4">Everything you need to write</h2>
-              <p className="text-gray-500 text-lg max-w-xl mx-auto">
-                A full-featured text editor that runs entirely in your browser.
+        <section id="features" className="px-6 py-24">
+          <div className="mx-auto max-w-6xl">
+            <div className="mx-auto max-w-2xl text-center">
+              <h2 className="pad-display text-[clamp(2rem,5vw,3rem)]">Everything you need to write</h2>
+              <p className="mt-4 text-lg text-[var(--pad-ink-70)]">
+                A full-featured word processor that runs entirely in your browser.
+              </p>
+              <p className="mt-4 text-sm leading-relaxed text-[var(--pad-ink-50)]">
+                Unlike plain text editors, Online WordPad supports rich formatting: bold, italic, font families, font sizes, text color, and highlight color. You can insert tables, images, and page breaks. Documents export as Word (.docx), HTML, or plain text (.txt).
               </p>
             </div>
-            <p className="text-center text-gray-400 text-sm max-w-2xl mx-auto mb-10 -mt-6">
-              Unlike plain text editors, Online WordPad supports rich formatting: bold, italic, font families, font sizes, text color, and highlight color. You can insert tables, images, and page breaks. Documents export as Word (.docx), HTML, or plain text (.txt).
-            </p>
-            <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-5">
+            {/* gap-px divider grid — keep the feature count divisible by both 2
+                and 3, or the empty cells in the last row show as dark blocks. */}
+            <div className="mt-14 grid gap-px overflow-hidden rounded-2xl border border-[var(--pad-border)] bg-[var(--pad-border)] sm:grid-cols-2 lg:grid-cols-3">
               {features.map((f) => (
                 <div
                   key={f.title}
-                  className="bg-white rounded-xl p-5 border border-gray-100 hover:shadow-md transition-shadow"
+                  className="bg-[var(--pad-bg)] p-6 transition-colors hover:bg-[var(--pad-surface)]"
                 >
-                  <div className="w-10 h-10 rounded-lg bg-gray-100 flex items-center justify-center mb-3">
-                    <f.Icon size={22} weight="duotone" className="text-gray-700" />
+                  <div className="mb-4 flex size-10 items-center justify-center rounded-lg border border-[var(--pad-border)] bg-[var(--pad-surface-2)]">
+                    <f.Icon size={20} weight="duotone" />
                   </div>
-                  <h3 className="font-semibold mb-1.5">{f.title}</h3>
-                  <p className="text-sm text-gray-500 leading-relaxed">{f.desc}</p>
+                  <h3 className="mb-1.5 font-semibold">{f.title}</h3>
+                  <p className="text-sm leading-relaxed text-[var(--pad-ink-50)]">{f.desc}</p>
                 </div>
               ))}
             </div>
@@ -390,71 +433,96 @@ export default function LandingPage() {
         </section>
 
         {/* ── How it works ── */}
-        <section className="py-20">
-          <div className="mx-auto max-w-5xl px-6">
-            <div className="text-center mb-14">
-              <h2 className="text-3xl sm:text-4xl font-bold mb-4">How to use Online WordPad</h2>
-              <p className="text-gray-500 text-lg max-w-xl mx-auto">
-                Three steps stand between you and a finished document.
+        {/* ── Word alternative (SEO) ── */}
+        <section id="word-alternative" className="border-t border-[var(--pad-border)] px-6 py-24">
+          <div className="mx-auto max-w-3xl">
+            <h2 className="pad-display text-center text-[clamp(2rem,5vw,3rem)]">
+              A free online Word alternative
+            </h2>
+            <div className="mt-8 space-y-5 leading-relaxed text-[var(--pad-ink-70)]">
+              <p>
+                If you searched for an online Microsoft Word to write a quick document, EDTRpad
+                covers the essentials without a license or a download. The online editor opens in
+                seconds, reads and writes Word (.docx) files, and prints on A4 paper with proper
+                margins.
+              </p>
+              <p>
+                It also works as an online office word editor for people who use OpenOffice or
+                LibreOffice at home: open your document in the browser on any computer, make your
+                edits, and export it back to Word or Rich Text format. Nothing to install on
+                machines you do not own.
+              </p>
+              <p>
+                To be clear about the trade-off: this is not a full online office suite. There is
+                no mail merge, no tracked changes, and no spreadsheet. For letters, notes, reports,
+                homework, and forms, that focus is exactly what keeps it fast.
               </p>
             </div>
-            <div className="grid sm:grid-cols-3 gap-8">
+          </div>
+        </section>
+
+        <section id="how" className="border-t border-[var(--pad-border)] px-6 py-24">
+          <div className="mx-auto max-w-5xl">
+            <div className="mx-auto max-w-2xl text-center">
+              <h2 className="pad-display text-[clamp(2rem,5vw,3rem)]">How to use Online WordPad</h2>
+              <p className="mt-4 text-lg text-[var(--pad-ink-70)]">
+                Open, write, export. That&apos;s the whole flow.
+              </p>
+            </div>
+            <div className="mt-14 grid gap-10 sm:grid-cols-3">
               {[
-                { step: "1", title: "Open", desc: 'Click "Start Writing" and the editor opens instantly. No download, no sign-up.' },
+                { step: "1", title: "Open", desc: 'Click "Start writing" and the editor opens instantly. No download, no sign-up.' },
                 { step: "2", title: "Write", desc: "Format text, insert tables and images, add page breaks, and structure your document." },
-                { step: "3", title: "Export or Print", desc: "Download as .docx, .html, or .txt. Or print with pixel-perfect margins." },
+                { step: "3", title: "Export or print", desc: "Download as .docx, .html, or .txt. Or print with exact margins." },
               ].map((s) => (
-                <div key={s.step} className="text-center">
-                  <div className="w-12 h-12 rounded-full bg-gray-900 text-white text-xl font-bold flex items-center justify-center mx-auto mb-4">
+                <div key={s.step}>
+                  <div className="mb-4 flex size-11 items-center justify-center rounded-full border border-[var(--pad-border-strong)] text-lg font-semibold">
                     {s.step}
                   </div>
-                  <h3 className="font-semibold text-lg mb-2">{s.title}</h3>
-                  <p className="text-gray-500 leading-relaxed">{s.desc}</p>
+                  <h3 className="mb-2 text-lg font-semibold">{s.title}</h3>
+                  <p className="leading-relaxed text-[var(--pad-ink-50)]">{s.desc}</p>
                 </div>
               ))}
             </div>
-            <p className="text-center text-gray-400 text-sm max-w-2xl mx-auto mt-10">
+            <p className="mx-auto mt-12 max-w-3xl text-center text-sm leading-relaxed text-[var(--pad-ink-50)]">
               You can begin writing immediately after opening the editor. Your content is saved automatically after every change. Use File &gt; Export to save as .docx, .html, or .txt at any time. Press Ctrl+P or use File &gt; Print to print with your preferred page margins.
             </p>
           </div>
         </section>
 
         {/* ── Privacy callout ── */}
-        <section className="bg-gray-900 py-16">
-          <div className="mx-auto max-w-5xl px-6 text-center flex flex-col items-center gap-4">
-            <Lock size={36} weight="duotone" className="text-gray-400" />
-            <h2 className="text-3xl font-bold text-white">Private by default</h2>
-            <p className="text-gray-300 text-lg max-w-2xl mx-auto">
+        <section id="privacy" className="border-t border-[var(--pad-border)] px-6 py-24">
+          <div className="mx-auto flex max-w-3xl flex-col items-center gap-5 text-center">
+            <div className="flex size-14 items-center justify-center rounded-2xl border border-[var(--pad-border)] bg-[var(--pad-surface)]">
+              <Lock size={26} weight="duotone" />
+            </div>
+            <h2 className="pad-display text-[clamp(2rem,5vw,3rem)]">Private by default</h2>
+            <p className="text-lg leading-relaxed text-[var(--pad-ink-70)]">
               No account needed: your documents are stored in your browser&apos;s local storage and never
               leave your device. We don&apos;t see your content.
             </p>
-            <p className="text-gray-400 text-sm max-w-2xl mx-auto">
+            <p className="text-sm leading-relaxed text-[var(--pad-ink-50)]">
               Open the website, start typing, and your work is saved automatically on your device. If you
               choose to create a free account, your documents sync to your private cloud space so you can
-              continue on any device — they are never shared or used for anything else.
+              continue on any device. They are never shared or used for anything else.
             </p>
           </div>
         </section>
 
         {/* ── FAQ ── */}
-        <section id="faq" className="py-20">
-          <div className="mx-auto max-w-3xl px-6">
-            <div className="text-center mb-14">
-              <h2 className="text-3xl sm:text-4xl font-bold mb-4">Frequently Asked Questions</h2>
-            </div>
-            <div className="space-y-4">
+        <section id="faq" className="border-t border-[var(--pad-border)] px-6 py-24">
+          <div className="mx-auto max-w-3xl">
+            <h2 className="pad-display text-center text-[clamp(2rem,5vw,3rem)]">Common questions</h2>
+            <div className="mt-12 divide-y divide-[var(--pad-border)] border-y border-[var(--pad-border)]">
               {faqs.map((faq) => (
-                <details
-                  key={faq.q}
-                  className="group border border-gray-200 rounded-xl overflow-hidden"
-                >
-                  <summary className="flex items-center justify-between p-5 cursor-pointer font-medium hover:bg-gray-50 transition-colors list-none">
+                <details key={faq.q} className="group">
+                  <summary className="flex cursor-pointer list-none items-center justify-between gap-4 py-5 font-medium transition-colors hover:text-[var(--pad-ink)]">
                     {faq.q}
-                    <span className="ml-4 text-gray-400 group-open:rotate-45 transition-transform text-xl leading-none">+</span>
+                    <span className="text-xl leading-none text-[var(--pad-ink-50)] transition-transform group-open:rotate-45">
+                      +
+                    </span>
                   </summary>
-                  <div className="px-5 pb-5 text-gray-500 leading-relaxed border-t border-gray-100 pt-4">
-                    {faq.a}
-                  </div>
+                  <div className="pb-5 leading-relaxed text-[var(--pad-ink-50)]">{faq.a}</div>
                 </details>
               ))}
             </div>
@@ -462,37 +530,39 @@ export default function LandingPage() {
         </section>
 
         {/* ── CTA ── */}
-        <section className="bg-gray-50 py-20">
-          <div className="mx-auto max-w-5xl px-6 text-center">
-            <h2 className="text-3xl sm:text-4xl font-bold mb-4">Ready to start writing?</h2>
-            <p className="text-gray-500 text-lg mb-8 max-w-xl mx-auto">
+        <section className="border-t border-[var(--pad-border)] px-6 py-24">
+          <div className="mx-auto max-w-3xl text-center">
+            <h2 className="pad-display text-[clamp(2rem,5vw,3.25rem)]">Ready to start writing?</h2>
+            <p className="mx-auto mt-4 max-w-xl text-lg text-[var(--pad-ink-70)]">
               No account required. No download. Just open the editor and start.
             </p>
             <Link
               href="/pad"
-              className="inline-block bg-gray-900 hover:bg-black text-white text-base font-semibold px-10 py-4 rounded-xl transition-colors shadow-md shadow-gray-200"
+              className="mt-9 inline-block rounded-full bg-[var(--pad-ink)] px-10 py-4 text-base font-semibold text-[var(--pad-bg)] transition-opacity hover:opacity-90"
             >
-              Open Online WordPad
+              Open Online WordPad →
             </Link>
           </div>
         </section>
       </main>
 
       {/* ── Footer ── */}
-      <footer className="border-t border-gray-100 py-10">
-        <div className="mx-auto max-w-5xl px-6 flex flex-col sm:flex-row items-center justify-between gap-4 text-sm text-gray-500">
-          <span>
-            © {new Date().getFullYear()} EDTRpad · Free Online WordPad
+      <footer className="border-t border-[var(--pad-border)] px-6 py-12">
+        <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-4 text-sm text-[var(--pad-ink-50)] sm:flex-row">
+          <span className="font-brand leading-none">
+            <span className="text-lg font-bold tracking-tight text-[var(--pad-ink)]">EDTR</span>
+            <span className="text-sm font-semibold tracking-wider">PAD</span>
           </span>
           <div className="flex items-center gap-6">
-            <Link href="/pad" className="hover:text-gray-600 transition-colors">Editor</Link>
-            <Link href="/guides" className="hover:text-gray-600 transition-colors">Guides</Link>
-            <a href="/llms.txt" className="hover:text-gray-600 transition-colors">llms.txt</a>
+            <Link href="/pad" className="transition-colors hover:text-[var(--pad-ink)]">Editor</Link>
+            <Link href="/guides" className="transition-colors hover:text-[var(--pad-ink)]">Guides</Link>
+            <a href="/llms.txt" className="transition-colors hover:text-[var(--pad-ink)]">llms.txt</a>
           </div>
+          <span>© {new Date().getFullYear()} EDTRpad · Free Online WordPad</span>
         </div>
-        <div className="mx-auto max-w-5xl px-6 mt-4 text-xs text-gray-500 leading-relaxed">
+        <p className="mx-auto mt-8 max-w-6xl text-xs leading-relaxed text-[var(--pad-ink-50)]">
           Disclaimer: without an account, EDTRpad stores your document in your browser local storage. If you clear your browser cache or storage, your document will be lost. Please export important files regularly. EDTRpad is an independent project and is not affiliated with Microsoft or the Microsoft WordPad application.
-        </div>
+        </p>
       </footer>
     </div>
     </>

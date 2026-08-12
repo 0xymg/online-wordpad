@@ -3,7 +3,6 @@
 import { useEffect } from "react";
 import { FileText, Plus, UploadSimple, X, SignIn, LinkSimple } from "@phosphor-icons/react";
 import { TEMPLATES, type DocTemplate } from "@/lib/templates";
-import { cn } from "@/lib/utils";
 
 export type WelcomeFile = { id: string; name: string; folder?: string | null };
 
@@ -32,32 +31,29 @@ function greeting() {
   return "Good evening";
 }
 
-/* Stylized mini page used as a template thumbnail (no real previews exist). */
-function PageThumb({ accent, lines }: { accent?: boolean; lines: number[] }) {
+/* Miniature of an A4 page rendering the template's own HTML, scaled down.
+   Showing the real content beats a generic line drawing — you pick a template
+   by recognising its layout. */
+const PAGE_W = 794;
+const PAGE_H = 1123;
+const THUMB_W = 108;
+const SCALE = THUMB_W / PAGE_W;
+
+function TemplateThumb({ html }: { html: string }) {
   return (
-    <div className="relative mx-auto h-28 w-[84px] overflow-hidden rounded-sm border border-gray-200 bg-white shadow-sm dark:border-gray-600 dark:bg-gray-100">
-      {accent && <div className="absolute inset-x-0 top-0 h-3 bg-gray-800" />}
-      <div className={cn("flex flex-col gap-1.5 px-2.5", accent ? "pt-6" : "pt-4")}>
-        {lines.map((w, i) => (
-          <div
-            key={i}
-            className={cn("h-1 rounded-full bg-gray-300", i === 0 && "h-1.5 bg-gray-500")}
-            style={{ width: `${w}%` }}
-          />
-        ))}
-      </div>
+    <div
+      aria-hidden
+      className="relative mx-auto overflow-hidden rounded-sm border border-gray-200 bg-white shadow-sm dark:border-gray-600"
+      style={{ width: THUMB_W, height: Math.round(PAGE_H * SCALE) }}
+    >
+      <div
+        className="template-preview absolute left-0 top-0 origin-top-left"
+        style={{ width: PAGE_W, height: PAGE_H, transform: `scale(${SCALE})` }}
+        dangerouslySetInnerHTML={{ __html: html }}
+      />
     </div>
   );
 }
-
-const THUMB_LINES: Record<string, number[]> = {
-  "business-letter": [45, 90, 85, 70, 88, 60],
-  resume: [55, 35, 80, 90, 75, 40, 85],
-  "meeting-notes": [60, 40, 85, 85, 70],
-  invoice: [50, 30, 90, 90, 90, 45],
-  report: [65, 45, 88, 82, 88, 76],
-  "todo-list": [40, 70, 70, 70, 70],
-};
 
 export default function WelcomeScreen({
   open, onClose, isAuthed, userName, files, activeId,
@@ -111,10 +107,13 @@ export default function WelcomeScreen({
           <button
             type="button"
             onClick={() => { onNewDocument(); onClose(); }}
-            className="group w-[116px] shrink-0 text-left focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+            className="group w-[124px] shrink-0 text-left focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
           >
-            <div className="mx-auto flex h-28 w-[84px] items-center justify-center rounded-sm border border-gray-300 bg-white shadow-sm transition group-hover:border-gray-500 group-hover:shadow dark:border-gray-500 dark:bg-gray-100">
-              <Plus size={26} className="text-gray-500" />
+            <div
+              className="mx-auto flex items-center justify-center rounded-sm border border-gray-300 bg-white shadow-sm transition group-hover:border-gray-500 group-hover:shadow dark:border-gray-500"
+              style={{ width: THUMB_W, height: Math.round(PAGE_H * SCALE) }}
+            >
+              <Plus size={26} className="text-gray-400" />
             </div>
             <p className="mt-2 truncate text-center text-xs font-medium">Blank document</p>
           </button>
@@ -124,12 +123,13 @@ export default function WelcomeScreen({
               type="button"
               onClick={() => { onPickTemplate(t); onClose(); }}
               title={t.description}
-              className="group w-[116px] shrink-0 text-left focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+              className="group w-[124px] shrink-0 text-left focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
             >
               <div className="transition group-hover:-translate-y-0.5">
-                <PageThumb accent={t.id === "invoice" || t.id === "report"} lines={THUMB_LINES[t.id] ?? [55, 85, 80, 70, 85]} />
+                <TemplateThumb html={t.html} />
               </div>
               <p className="mt-2 truncate text-center text-xs font-medium">{t.name}</p>
+              <p className="mt-0.5 line-clamp-2 text-center text-[11px] leading-tight text-muted-foreground">{t.description}</p>
             </button>
           ))}
         </div>
