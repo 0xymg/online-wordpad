@@ -3256,6 +3256,7 @@ export default function Editor({ googleEnabled = false }: { googleEnabled?: bool
         onPickTemplate={createFromTemplate}
         onOpenDocument={switchFile}
         onCopyLink={copyDocLink}
+        onDeleteDocument={deleteFile}
         docHref={docUrl}
         onSignIn={openAuth}
       />

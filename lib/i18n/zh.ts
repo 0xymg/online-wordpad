@@ -255,6 +255,32 @@ export const zh: Dictionary = {
     renameConfirm: "重命名",
   },
 
+  profile: {
+    title: "账户设置",
+    name: "姓名",
+    email: "电子邮箱",
+    emailUnverified: "此邮箱尚未验证。",
+    emailPending: "请查看新邮箱 — 点击确认链接后邮箱才会更换。",
+    saved: "资料已更新。",
+    saveFailed: "无法更新你的资料。",
+    passwordTitle: "密码",
+    currentPassword: "当前密码",
+    newPassword: "新密码（至少 8 位）",
+    changePassword: "修改密码",
+    setPassword: "发送设置密码的链接",
+    noPasswordYet: "你使用 Google 登录，账户还没有密码。我们可以给你发一个设置密码的链接。",
+    passwordChanged: "密码已修改，其他设备已退出登录。",
+    passwordEmailSent: "请查收邮件中的设置密码链接。",
+    passwordFailed: "无法修改你的密码。",
+    dangerZone: "危险操作",
+    deleteWarning: "删除账户会清除全部文稿、历史版本和偏好设置，且无法恢复。",
+    deleteAccount: "删除账户",
+    deleteConfirm: "此操作不可撤销。确认后将删除你的账户和全部文稿。",
+    deletePermanently: "永久删除",
+    accountDeleted: "你的账户已删除。",
+    deleteFailed: "无法删除你的账户。",
+  },
+
   welcome: {
     ariaLabel: "欢迎",
     greetingMorning: "早上好",
@@ -268,7 +294,6 @@ export const zh: Dictionary = {
     blankDocument: "空白文档",
     openFile: "从本地设备打开文件",
     openFileFormats: "(.docx, .txt, .md, .html)",
-    recentDocuments: "最近的文档",
     continueWhereLeftOff: "继续上次的编辑",
     noDocuments: "暂无文档，可以从上面的空白页或模板开始。",
     lastOpened: "上次打开",
@@ -277,6 +302,10 @@ export const zh: Dictionary = {
     guestNudge:
       "文档保存在当前浏览器中。登录后可保存多个文档，并在多台设备间同步。",
     signInFree: "登录，完全免费",
+    lastUsed: "最近使用",
+    allDocuments: "全部文稿",
+    deleteDocument: "删除文稿",
+    deleteDocumentNamed: (name: string) => `删除 ${name}`,
   },
 
   toast: {

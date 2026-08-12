@@ -255,6 +255,32 @@ export const fr: Dictionary = {
     renameConfirm: "Renommer",
   },
 
+  profile: {
+    title: "Paramètres du compte",
+    name: "Nom",
+    email: "Adresse e-mail",
+    emailUnverified: "Cette adresse n'est pas encore vérifiée.",
+    emailPending: "Consultez votre nouvelle boîte de réception — l'adresse change une fois le lien confirmé.",
+    saved: "Profil mis à jour.",
+    saveFailed: "Impossible de mettre à jour votre profil.",
+    passwordTitle: "Mot de passe",
+    currentPassword: "Mot de passe actuel",
+    newPassword: "Nouveau mot de passe (8 caractères minimum)",
+    changePassword: "Changer le mot de passe",
+    setPassword: "Envoyer un lien de mot de passe",
+    noPasswordYet: "Vous vous êtes connecté avec Google, ce compte n'a donc pas de mot de passe. Nous pouvons vous envoyer un lien pour en définir un.",
+    passwordChanged: "Mot de passe changé. Les autres appareils ont été déconnectés.",
+    passwordEmailSent: "Consultez votre boîte de réception pour le lien de définition du mot de passe.",
+    passwordFailed: "Impossible de changer votre mot de passe.",
+    dangerZone: "Zone sensible",
+    deleteWarning: "Supprimer votre compte efface tous vos documents, versions et préférences. Cette action est irréversible.",
+    deleteAccount: "Supprimer le compte",
+    deleteConfirm: "C'est définitif. Confirmez pour supprimer votre compte et tous vos documents.",
+    deletePermanently: "Supprimer définitivement",
+    accountDeleted: "Votre compte a été supprimé.",
+    deleteFailed: "Impossible de supprimer votre compte.",
+  },
+
   welcome: {
     ariaLabel: "Bienvenue",
     greetingMorning: "Bonjour",
@@ -268,7 +294,6 @@ export const fr: Dictionary = {
     blankDocument: "Document vierge",
     openFile: "Ouvrir un fichier depuis votre appareil",
     openFileFormats: "(.docx, .txt, .md, .html)",
-    recentDocuments: "Documents récents",
     continueWhereLeftOff: "Reprenez là où vous vous êtes arrêté",
     noDocuments: "Aucun document pour l'instant — commencez par une page vierge ou un modèle ci-dessus.",
     lastOpened: "Dernière ouverture",
@@ -277,6 +302,10 @@ export const fr: Dictionary = {
     guestNudge:
       "Vos documents sont stockés dans ce navigateur. Connectez-vous pour en conserver plusieurs et les synchroniser entre vos appareils.",
     signInFree: "Se connecter — c'est gratuit",
+    lastUsed: "Dernier utilisé",
+    allDocuments: "Tous les documents",
+    deleteDocument: "Supprimer le document",
+    deleteDocumentNamed: (name: string) => `Supprimer ${name}`,
   },
 
   toast: {

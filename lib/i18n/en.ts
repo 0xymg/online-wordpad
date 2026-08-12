@@ -257,6 +257,32 @@ export const en = {
     renameConfirm: "Rename",
   },
 
+  profile: {
+    title: "Account settings",
+    name: "Name",
+    email: "Email address",
+    emailUnverified: "This address is not verified yet.",
+    emailPending: "Check your new inbox — the address changes once you confirm the link.",
+    saved: "Profile updated.",
+    saveFailed: "Could not update your profile.",
+    passwordTitle: "Password",
+    currentPassword: "Current password",
+    newPassword: "New password (at least 8 characters)",
+    changePassword: "Change password",
+    setPassword: "Send a password link",
+    noPasswordYet: "You signed in with Google, so there is no password on this account. We can email you a link to set one.",
+    passwordChanged: "Password changed. Other devices were signed out.",
+    passwordEmailSent: "Check your inbox for the link to set a password.",
+    passwordFailed: "Could not change your password.",
+    dangerZone: "Danger zone",
+    deleteWarning: "Deleting your account removes every document, version, and setting. This cannot be undone.",
+    deleteAccount: "Delete account",
+    deleteConfirm: "This is permanent. Confirm to delete your account and all documents.",
+    deletePermanently: "Delete permanently",
+    accountDeleted: "Your account was deleted.",
+    deleteFailed: "Could not delete your account.",
+  },
+
   welcome: {
     ariaLabel: "Welcome",
     greetingMorning: "Good morning",
@@ -270,7 +296,6 @@ export const en = {
     blankDocument: "Blank document",
     openFile: "Open a file from your device",
     openFileFormats: "(.docx, .txt, .md, .html)",
-    recentDocuments: "Recent documents",
     continueWhereLeftOff: "Continue where you left off",
     noDocuments: "No documents yet — start with a blank page or a template above.",
     lastOpened: "Last opened",
@@ -279,6 +304,10 @@ export const en = {
     guestNudge:
       "Documents are stored in this browser. Sign in to keep multiple documents and sync across devices.",
     signInFree: "Sign in — it's free",
+    lastUsed: "Last used",
+    allDocuments: "All documents",
+    deleteDocument: "Delete document",
+    deleteDocumentNamed: (name: string) => `Delete ${name}`,
   },
 
   toast: {

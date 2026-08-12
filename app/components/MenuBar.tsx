@@ -300,6 +300,13 @@ export default function MenuBar({
                 <div className="my-1 h-px bg-border" />
                 <button
                   type="button"
+                  onClick={onOpenProfile}
+                  className="flex w-full items-center gap-2 rounded-sm px-2 py-1.5 text-sm hover:bg-accent hover:text-accent-foreground"
+                >
+                  <UserCircle size={15} /> {t.profile.title}
+                </button>
+                <button
+                  type="button"
                   onClick={onLogout}
                   className="flex w-full items-center gap-2 rounded-sm px-2 py-1.5 text-sm hover:bg-accent hover:text-accent-foreground"
                 >

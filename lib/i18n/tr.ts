@@ -255,6 +255,32 @@ export const tr: Dictionary = {
     renameConfirm: "Yeniden adlandır",
   },
 
+  profile: {
+    title: "Hesap ayarları",
+    name: "Ad",
+    email: "E-posta adresi",
+    emailUnverified: "Bu adres henüz doğrulanmadı.",
+    emailPending: "Yeni adresinizi kontrol edin — bağlantıyı onaylayınca adres değişecek.",
+    saved: "Profil güncellendi.",
+    saveFailed: "Profiliniz güncellenemedi.",
+    passwordTitle: "Parola",
+    currentPassword: "Mevcut parola",
+    newPassword: "Yeni parola (en az 8 karakter)",
+    changePassword: "Parolayı değiştir",
+    setPassword: "Parola bağlantısı gönder",
+    noPasswordYet: "Google ile giriş yaptınız, bu yüzden hesabınızda parola yok. Parola belirlemeniz için size bağlantı gönderebiliriz.",
+    passwordChanged: "Parola değiştirildi. Diğer cihazlardaki oturumlar kapatıldı.",
+    passwordEmailSent: "Parola belirleme bağlantısı için e-postanızı kontrol edin.",
+    passwordFailed: "Parolanız değiştirilemedi.",
+    dangerZone: "Tehlikeli alan",
+    deleteWarning: "Hesabınızı silmek tüm belgelerinizi, sürümlerinizi ve ayarlarınızı kaldırır. Bu işlem geri alınamaz.",
+    deleteAccount: "Hesabı sil",
+    deleteConfirm: "Bu işlem kalıcıdır. Hesabınızı ve tüm belgelerinizi silmek için onaylayın.",
+    deletePermanently: "Kalıcı olarak sil",
+    accountDeleted: "Hesabınız silindi.",
+    deleteFailed: "Hesabınız silinemedi.",
+  },
+
   welcome: {
     ariaLabel: "Hoş geldiniz",
     greetingMorning: "Günaydın",
@@ -268,7 +294,6 @@ export const tr: Dictionary = {
     blankDocument: "Boş belge",
     openFile: "Cihazınızdan bir dosya açın",
     openFileFormats: "(.docx, .txt, .md, .html)",
-    recentDocuments: "Son belgeler",
     continueWhereLeftOff: "Kaldığınız yerden devam edin",
     noDocuments: "Henüz belge yok — yukarıdaki boş sayfa veya şablonlardan biriyle başlayın.",
     lastOpened: "Son açılma",
@@ -277,6 +302,10 @@ export const tr: Dictionary = {
     guestNudge:
       "Belgeler bu tarayıcıda saklanır. Birden fazla belge tutmak ve cihazlar arasında eşitlemek için giriş yapın.",
     signInFree: "Giriş yapın — ücretsiz",
+    lastUsed: "Son kullanılan",
+    allDocuments: "Tüm belgeler",
+    deleteDocument: "Belgeyi sil",
+    deleteDocumentNamed: (name: string) => `${name} belgesini sil`,
   },
 
   toast: {
