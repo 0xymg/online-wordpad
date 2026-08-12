@@ -130,7 +130,7 @@ export default function ProfileDialog({ open, onClose, user, hasPassword, onDele
 
   return (
     <div
-      className="fixed inset-0 z-[1400] flex items-start justify-center overflow-y-auto bg-black/40 p-4 py-10"
+      className="fixed inset-0 z-[1450] flex items-start justify-center overflow-y-auto bg-black/40 p-4 py-10"
       onMouseDown={onClose}
       role="dialog"
       aria-modal="true"

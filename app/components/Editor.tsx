@@ -3208,6 +3208,7 @@ export default function Editor({
         loading={initialLoading}
         docHref={docUrl}
         onSignIn={openAuth}
+        onOpenProfile={openProfile}
       />
       {askDialogs}
       <Toaster />

@@ -25,6 +25,8 @@ interface WelcomeScreenProps {
   /** Shareable/bookmarkable URL for a document, used as the row's href. */
   docHref: (id: string) => string;
   onSignIn: () => void;
+  /** Opens the account-settings dialog (signed-in users only). */
+  onOpenProfile?: () => void;
 }
 
 function greeting(t: ReturnType<typeof useT>) {
@@ -131,7 +133,7 @@ function DocRowSkeleton() {
 export default function WelcomeScreen({
   open, onClose, isAuthed, userName, files, activeId,
   onNewDocument, onOpenFile, onPickTemplate, onOpenDocument, onCopyLink, onDeleteDocument,
-  docHref, onSignIn, loading = false,
+  docHref, onSignIn, onOpenProfile, loading = false,
 }: WelcomeScreenProps) {
   const t = useT();
   // Stay mounted through the closing animation so the editor fades in behind
@@ -180,15 +182,28 @@ export default function WelcomeScreen({
           <span className="text-lg font-bold tracking-tight text-foreground dark:text-[#FFFFE3]">EDTR</span>
           <span className="text-sm font-semibold tracking-wider text-muted-foreground dark:text-[#FFFFE3]/70">PAD</span>
         </span>
-        {canClose && (
-          <button
-            type="button"
-            onClick={onClose}
-            className="flex items-center gap-1.5 rounded-md border border-input px-3 py-1.5 text-sm hover:bg-accent focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-ring"
-          >
-            {t.welcome.skipToEditor} <X size={14} />
-          </button>
-        )}
+        <div className="flex items-center gap-2">
+          {isAuthed && onOpenProfile && (
+            <button
+              type="button"
+              onClick={onOpenProfile}
+              title={t.profile.title}
+              aria-label={t.profile.title}
+              className="flex h-8 w-8 select-none items-center justify-center bg-primary text-[11px] font-semibold text-primary-foreground transition-opacity hover:opacity-85 focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-ring"
+            >
+              {(userName || "").trim().split(/\s+/).map((s) => s[0]).slice(0, 2).join("").toUpperCase() || "?"}
+            </button>
+          )}
+          {canClose && (
+            <button
+              type="button"
+              onClick={onClose}
+              className="flex items-center gap-1.5 rounded-md border border-input px-3 py-1.5 text-sm hover:bg-accent focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-ring"
+            >
+              {t.welcome.skipToEditor} <X size={14} />
+            </button>
+          )}
+        </div>
       </div>
 
       {/* The template strip gets the wider container; the document lists below
