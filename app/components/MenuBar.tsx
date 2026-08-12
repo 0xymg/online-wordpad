@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef } from "react";
+import { memo, useRef } from "react";
 import {
   Menubar,
   MenubarContent,
@@ -25,7 +25,7 @@ import {
   mergeCells, splitCell, toggleHeaderRow, toggleHeaderColumn,
 } from "prosemirror-tables";
 import { setTextAlign, adjustIndent } from "@/lib/editor-commands";
-import { SignIn, SignOut, House, PencilSimple, UserCircle } from "@phosphor-icons/react";
+import { SignIn, SignOut, House, PencilSimple, UserCircle } from "@phosphor-icons/react/dist/ssr";
 import { toast } from "./toast";
 import { useT, useLocale } from "./I18nProvider";
 import { LOCALES, LOCALE_NAMES } from "@/lib/i18n";
@@ -131,7 +131,9 @@ const SPELL_LANGS: Array<{ value: string; label: string }> = [
   { value: "it", label: "Italiano" },
 ];
 
-export default function MenuBar({
+// Memoized so per-keystroke Editor re-renders (tick/docInfo/saveStatus) skip
+// this ~700-line tree — every prop Editor passes is referentially stable.
+function MenuBar({
   viewRef, schema, onPrint,
   pageMarginCm, onPageMarginChange,
   pageOrientation, onPageOrientationChange,
@@ -749,3 +751,5 @@ export default function MenuBar({
     </div>
   );
 }
+
+export default memo(MenuBar);

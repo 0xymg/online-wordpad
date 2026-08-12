@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, lazy, Suspense } from "react";
+import { memo, useCallback, useState, useEffect, lazy, Suspense } from "react";
 import { EditorView } from "prosemirror-view";
 import { EditorState, Transaction, TextSelection } from "prosemirror-state";
 import { toggleMark, setBlockType, wrapIn } from "prosemirror-commands";
@@ -21,7 +21,7 @@ import {
   TextAlignLeft, TextAlignCenter, TextAlignRight, TextAlignJustify,
   ListBullets, ListNumbers, TextOutdent, TextIndent,
   Link, Quotes, Table, TextT, Highlighter, Smiley, ImageSquare, Minus, Code,
-} from "@phosphor-icons/react";
+} from "@phosphor-icons/react/dist/ssr";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import {
   Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue,
@@ -72,6 +72,8 @@ const FONT_GROUPS = [
 ];
 
 const BLOCK_VALUES = ["paragraph", "h1", "h2", "h3", "h4", "code_block"] as const;
+
+const SZ = 22;
 
 /* ── Button ─────────────────────────────────────────────────────────────── */
 const BTN = cn(
@@ -127,7 +129,9 @@ function Sep() {
 }
 
 /* ── TablePicker ─────────────────────────────────────────────────────────── */
-function TablePicker({ onPick, t }: { onPick: (rows: number, cols: number) => void; t: ReturnType<typeof useT> }) {
+// Memoized: `onPick` and `t` are stable, so the 80-cell grid is not re-rendered
+// on every editor transaction.
+const TablePicker = memo(function TablePicker({ onPick, t }: { onPick: (rows: number, cols: number) => void; t: ReturnType<typeof useT> }) {
   const [hovered, setHovered] = useState({ r: 0, c: 0 });
   const [open, setOpen] = useState(false);
   const pick = (r: number, c: number) => { setOpen(false); onPick(r, c); };
@@ -172,7 +176,72 @@ function TablePicker({ onPick, t }: { onPick: (rows: number, cols: number) => vo
       </PopoverContent>
     </Popover>
   );
-}
+});
+
+/* ── HistoryGroup ────────────────────────────────────────────────────────── */
+// No active-state to mirror — memoized so per-tick renders skip it entirely.
+const HistoryGroup = memo(function HistoryGroup({ onUndo, onRedo, t }: {
+  onUndo: () => void; onRedo: () => void; t: ReturnType<typeof useT>;
+}) {
+  return (
+    <Group label={t.toolbar.groupHistory}>
+      <Row>
+        <TBtn onClick={onUndo} tip={`${t.edit.undo} (Ctrl+Z)`}><ArrowCounterClockwise size={SZ} /></TBtn>
+        <TBtn onClick={onRedo} tip={`${t.edit.redo} (Ctrl+Y)`}><ArrowClockwise size={SZ} /></TBtn>
+      </Row>
+    </Group>
+  );
+});
+
+/* ── InsertGroup ─────────────────────────────────────────────────────────── */
+// Static buttons + the emoji popover (lazy chunk) + table grid — none of it
+// depends on the selection, so it is memoized out of the per-tick render.
+const InsertGroup = memo(function InsertGroup({
+  onLinkAdd, onImageAdd, onInsertDivider, onPageBreakAdd, onInsertEmoji, onInsertTable, t,
+}: {
+  onLinkAdd: () => void;
+  onImageAdd: () => void;
+  onInsertDivider: () => void;
+  onPageBreakAdd: () => void;
+  onInsertEmoji: (emojiData: EmojiClickData) => void;
+  onInsertTable: (rows: number, cols: number) => void;
+  t: ReturnType<typeof useT>;
+}) {
+  return (
+    <Group label={t.toolbar.groupInsert}>
+      {/* Row 1: link image divider pagebreak */}
+      <Row>
+        <TBtn onClick={onLinkAdd}       tip={t.toolbar.insertLink}>       <Link size={SZ} /></TBtn>
+        <TBtn onClick={onImageAdd}      tip={t.toolbar.insertImage}>      <ImageSquare size={SZ} /></TBtn>
+        <TBtn onClick={onInsertDivider} tip={t.toolbar.insertDivider}>    <Minus size={SZ} /></TBtn>
+        <TBtn onClick={onPageBreakAdd}  tip={t.toolbar.insertPageBreak}>
+          <span className="text-[9px] font-bold leading-none tracking-tight">PB</span>
+        </TBtn>
+      </Row>
+      {/* Row 2: emoji + table */}
+      <Row>
+        <Popover>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <PopoverTrigger asChild>
+                <button type="button" aria-label={t.toolbar.insertEmoji} onMouseDown={(e) => e.preventDefault()} className={BTN}>
+                  <Smiley size={SZ} />
+                </button>
+              </PopoverTrigger>
+            </TooltipTrigger>
+            <TooltipContent side="bottom" className="text-xs">{t.toolbar.insertEmoji}</TooltipContent>
+          </Tooltip>
+          <PopoverContent side="bottom" align="start" className="w-auto p-0">
+            <Suspense fallback={<div className="flex h-[300px] w-[300px] items-center justify-center text-sm text-muted-foreground">{t.dialog.loading}</div>}>
+              <EmojiPicker onEmojiClick={onInsertEmoji} autoFocusSearch={false} skinTonesDisabled lazyLoadEmojis />
+            </Suspense>
+          </PopoverContent>
+        </Popover>
+        <TablePicker t={t} onPick={onInsertTable} />
+      </Row>
+    </Group>
+  );
+});
 
 /* ── Props ───────────────────────────────────────────────────────────────── */
 interface ToolbarProps {
@@ -186,7 +255,10 @@ interface ToolbarProps {
 }
 
 /* ── Main ────────────────────────────────────────────────────────────────── */
-export default function Toolbar({
+// Memoized: still re-renders whenever `tick` changes (active marks/block state
+// must track every transaction), but unrelated Editor state (dialogs, toasts,
+// save status, word count) no longer reaches it.
+function Toolbar({
   viewRef, schema, onInsertTable, onPageBreakAdd, onLinkAdd, onImageAdd, tick,
 }: ToolbarProps) {
   const t = useT();
@@ -196,7 +268,6 @@ export default function Toolbar({
       : t.toolbar.heading(Number(value[1]));
   const [textColor, setTextColor] = useState("#000000");
   const [bgColor,   setBgColor]   = useState("#ffff00");
-  const SZ = 22;
 
   const cmd = (command: (state: EditorState, dispatch?: (tr: Transaction) => void) => boolean) => {
     const v = viewRef.current; if (!v) return;
@@ -271,12 +342,24 @@ export default function Toolbar({
   const setTextAlign = (align: string) => applyTextAlign(viewRef.current, schema, align);
   const adjustIndent = (direction: 1 | -1) => applyIndent(viewRef.current, schema, direction);
 
-  const insertEmoji = (emojiData: EmojiClickData) => {
+  // Stable identities so the memoized HistoryGroup / InsertGroup never
+  // re-render on a tick (viewRef and schema never change).
+  const onUndo = useCallback(() => {
+    const v = viewRef.current; if (!v) return;
+    undo(v.state, v.dispatch); v.focus();
+  }, [viewRef]);
+
+  const onRedo = useCallback(() => {
+    const v = viewRef.current; if (!v) return;
+    redo(v.state, v.dispatch); v.focus();
+  }, [viewRef]);
+
+  const insertEmoji = useCallback((emojiData: EmojiClickData) => {
     const v = viewRef.current; if (!v) return;
     v.dispatch(v.state.tr.insertText(emojiData.emoji)); v.focus();
-  };
+  }, [viewRef]);
 
-  const insertDivider = () => {
+  const insertDivider = useCallback(() => {
     const v = viewRef.current; if (!v) return;
     const hrType = schema.nodes.horizontal_rule;
     const paragraphType = schema.nodes.paragraph;
@@ -286,7 +369,7 @@ export default function Toolbar({
     tr = tr.insert(pos, paragraphType.create());
     tr = tr.setSelection(TextSelection.create(tr.doc, pos + 1));
     v.dispatch(tr.scrollIntoView()); v.focus();
-  };
+  }, [viewRef, schema]);
 
   /* select shared class */
   const SEL = "h-10 text-xs border border-input rounded px-1.5 bg-background hover:bg-accent focus:outline-none focus:ring-1 focus:ring-ring shrink-0 cursor-pointer";
@@ -296,12 +379,7 @@ export default function Toolbar({
     <div className="max-w-[850px] mx-auto px-3 pt-1.5 pb-1 flex items-stretch justify-center gap-0">
 
       {/* ── History ── */}
-      <Group label={t.toolbar.groupHistory}>
-        <Row>
-          <TBtn onClick={() => cmd(undo)} tip={`${t.edit.undo} (Ctrl+Z)`}><ArrowCounterClockwise size={SZ} /></TBtn>
-          <TBtn onClick={() => cmd(redo)} tip={`${t.edit.redo} (Ctrl+Y)`}><ArrowClockwise size={SZ} /></TBtn>
-        </Row>
-      </Group>
+      <HistoryGroup onUndo={onUndo} onRedo={onRedo} t={t} />
 
       <Sep />
 
@@ -412,40 +490,19 @@ export default function Toolbar({
       <Sep />
 
       {/* ── Insert ── */}
-      <Group label={t.toolbar.groupInsert}>
-        {/* Row 1: link image divider pagebreak */}
-        <Row>
-          <TBtn onClick={onLinkAdd}      tip={t.toolbar.insertLink}>       <Link size={SZ} /></TBtn>
-          <TBtn onClick={onImageAdd}     tip={t.toolbar.insertImage}>      <ImageSquare size={SZ} /></TBtn>
-          <TBtn onClick={insertDivider}  tip={t.toolbar.insertDivider}>    <Minus size={SZ} /></TBtn>
-          <TBtn onClick={onPageBreakAdd} tip={t.toolbar.insertPageBreak}>
-            <span className="text-[9px] font-bold leading-none tracking-tight">PB</span>
-          </TBtn>
-        </Row>
-        {/* Row 2: emoji + table */}
-        <Row>
-          <Popover>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <PopoverTrigger asChild>
-                  <button type="button" aria-label={t.toolbar.insertEmoji} onMouseDown={(e) => e.preventDefault()} className={BTN}>
-                    <Smiley size={SZ} />
-                  </button>
-                </PopoverTrigger>
-              </TooltipTrigger>
-              <TooltipContent side="bottom" className="text-xs">{t.toolbar.insertEmoji}</TooltipContent>
-            </Tooltip>
-            <PopoverContent side="bottom" align="start" className="w-auto p-0">
-              <Suspense fallback={<div className="flex h-[300px] w-[300px] items-center justify-center text-sm text-muted-foreground">{t.dialog.loading}</div>}>
-                <EmojiPicker onEmojiClick={insertEmoji} autoFocusSearch={false} skinTonesDisabled lazyLoadEmojis />
-              </Suspense>
-            </PopoverContent>
-          </Popover>
-          <TablePicker t={t} onPick={(r, c) => onInsertTable(r, c)} />
-        </Row>
-      </Group>
+      <InsertGroup
+        onLinkAdd={onLinkAdd}
+        onImageAdd={onImageAdd}
+        onInsertDivider={insertDivider}
+        onPageBreakAdd={onPageBreakAdd}
+        onInsertEmoji={insertEmoji}
+        onInsertTable={onInsertTable}
+        t={t}
+      />
 
     </div>
     </div>
   );
 }
+
+export default memo(Toolbar);

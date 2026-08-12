@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { FileText, Plus, UploadSimple, X, SignIn, LinkSimple, Trash } from "@phosphor-icons/react";
+import { FileText, Plus, UploadSimple, X, SignIn, LinkSimple, Trash } from "@phosphor-icons/react/dist/ssr";
 import { TEMPLATES, type DocTemplate } from "@/lib/templates";
 import { useT } from "./I18nProvider";
 

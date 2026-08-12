@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { X, CircleNotch, Warning } from "@phosphor-icons/react";
+import { X, CircleNotch, Warning } from "@phosphor-icons/react/dist/ssr";
 import { authClient } from "@/lib/auth-client";
 import { useT } from "./I18nProvider";
 import { toast } from "./toast";

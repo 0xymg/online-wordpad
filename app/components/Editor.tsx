@@ -7,13 +7,10 @@ import { EditorState, Transaction, AllSelection, TextSelection, NodeSelection } 
 import { EditorView } from "prosemirror-view";
 import type { CropperRef } from "react-advanced-cropper";
 import { HexColorPicker, HexColorInput } from "react-colorful";
-import "react-advanced-cropper/dist/style.css";
 
-// Heavy and rarely used — load only when the crop dialog opens.
-const Cropper = lazy(async () => {
-  const m = await import("react-advanced-cropper");
-  return { default: m.Cropper };
-});
+// Heavy and rarely used — LazyCropper pulls in react-advanced-cropper AND its
+// stylesheet, so neither loads until the crop dialog opens.
+const Cropper = lazy(() => import("./LazyCropper"));
 import { schema as basicSchema } from "prosemirror-schema-basic";
 import { addListNodes } from "prosemirror-schema-list";
 import { history, undo, redo } from "prosemirror-history";
@@ -38,14 +35,17 @@ import {
   Sun, Moon, PencilSimple, Warning, X,
   ArrowSquareOut, LinkBreak,
   ArrowsInSimple,
-} from "@phosphor-icons/react";
+} from "@phosphor-icons/react/dist/ssr";
 import { cn } from "@/lib/utils";
 import { authClient, useSession } from "@/lib/auth-client";
 import { prepareImageFile, insertWidth } from "@/lib/image-util";
 import { OPEN_ACCEPT } from "@/lib/doc-import";
-import AuthModal from "./AuthModal";
-import ProfileDialog from "./ProfileDialog";
 import WelcomeScreen from "./WelcomeScreen";
+
+// Auth/profile dialogs are closed for the vast majority of a session — load
+// their chunks only when they are first opened.
+const AuthModal = lazy(() => import("./AuthModal"));
+const ProfileDialog = lazy(() => import("./ProfileDialog"));
 import { toast, Toaster } from "./toast";
 import { useAskDialogs } from "./AskDialogs";
 import { useT, useLocale } from "./I18nProvider";
@@ -1038,7 +1038,9 @@ export default function Editor({ googleEnabled = false }: { googleEnabled?: bool
   const isAuthedRef = useRef(false);
   const prefsLoadedRef = useRef(false);
   const prefsErrorShownRef = useRef(false);
-  const user = authUser
+  // Referentially stable across renders so the memoized MenuBar (and
+  // ProfileDialog) only re-render when the account itself changes.
+  const user = useMemo(() => authUser
     ? {
         name: authUser.name || authUser.email,
         email: authUser.email,
@@ -1046,7 +1048,8 @@ export default function Editor({ googleEnabled = false }: { googleEnabled?: bool
         initials: (authUser.name || authUser.email)
           .trim().split(/\s+/).map((s) => s[0]).slice(0, 2).join("").toUpperCase(),
       }
-    : null;
+    : null,
+  [authUser]);
   useEffect(() => { isAuthedRef.current = isAuthed; }, [isAuthed]);
   const [findOpen, setFindOpen] = useState(false);
   const [findQuery, setFindQuery] = useState("");
@@ -1749,6 +1752,21 @@ export default function Editor({ googleEnabled = false }: { googleEnabled?: bool
   }, []);
 
   const openAuth = useCallback(() => setAuthOpen(true), []);
+  const closeAuth = useCallback(() => setAuthOpen(false), []);
+  const closeProfile = useCallback(() => setProfileOpen(false), []);
+
+  // ── Stable handlers for the memoized MenuBar ───────────────────────────────
+  // Every prop MenuBar receives must keep its identity across keystrokes, or
+  // React.memo can't skip its ~700-line render. Former inline arrows live here.
+  const showHome = useCallback(() => setWelcomeOpen(true), []);
+  const showShortcuts = useCallback(() => setShortcutsOpen(true), []);
+  const toggleToolbar = useCallback(() => setShowToolbar((s) => !s), []);
+  const toggleRuler = useCallback(() => setShowRuler((s) => !s), []);
+  const toggleSpellcheck = useCallback(() => setSpellcheckOn((s) => !s), []);
+  const toggleFocusMode = useCallback(() => setFocusMode((f) => !f), []);
+  const saveNow = useCallback(() => { flushSave(); toast.success(t.toast.saved); }, [flushSave]);
+  const copyActiveDocLink = useCallback(() => copyDocLink(activeIdRef.current), [copyDocLink]);
+  const deleteActiveDoc = useCallback(() => deleteFile(activeIdRef.current), [deleteFile]);
 
   // The start screen is for signed-in users, who have a document library worth
   // landing on. Guests have a single document, so it would only be a detour —
@@ -2645,17 +2663,17 @@ export default function Editor({ googleEnabled = false }: { googleEnabled?: bool
         docTitle={docTitle}
         onTitleChange={renameActive}
         onNewDoc={createFile}
-        onShowHome={() => setWelcomeOpen(true)}
-        onSave={() => { flushSave(); toast.success(t.toast.saved); }}
-        onCopyLink={() => copyDocLink(activeIdRef.current)}
+        onShowHome={showHome}
+        onSave={saveNow}
+        onCopyLink={copyActiveDocLink}
         onRenameDoc={renameActiveDoc}
-        onDeleteDoc={() => deleteFile(activeIdRef.current)}
+        onDeleteDoc={deleteActiveDoc}
         onReplace={openReplace}
         onNewFromTemplate={createFromTemplate}
         onOpenFile={openFileDialog}
         onExport={exportActive}
         onShowVersions={openVersions}
-        onShowShortcuts={() => setShortcutsOpen(true)}
+        onShowShortcuts={showShortcuts}
         onFind={openFind}
         onInsertTable={handleInsertTable}
         onPageBreakAdd={handleInsertPageBreak}
@@ -2670,11 +2688,11 @@ export default function Editor({ googleEnabled = false }: { googleEnabled?: bool
         zoomPercent={zoomPercent}
         onZoomChange={setZoomPercent}
         showToolbar={showToolbar}
-        onToggleToolbar={() => setShowToolbar((s) => !s)}
+        onToggleToolbar={toggleToolbar}
         showRuler={showRuler}
-        onToggleRuler={() => setShowRuler((s) => !s)}
+        onToggleRuler={toggleRuler}
         spellcheckOn={spellcheckOn}
-        onToggleSpellcheck={() => setSpellcheckOn((s) => !s)}
+        onToggleSpellcheck={toggleSpellcheck}
         spellLang={spellLang}
         onSpellLangChange={changeSpellLang}
         onChangeCase={changeCase}
@@ -2682,7 +2700,7 @@ export default function Editor({ googleEnabled = false }: { googleEnabled?: bool
         readingAloud={readingAloud}
         onToggleReadAloud={toggleReadAloud}
         focusMode={focusMode}
-        onToggleFocusMode={() => setFocusMode((f) => !f)}
+        onToggleFocusMode={toggleFocusMode}
         printHeaderFooter={printHeaderFooter}
         onTogglePrintHeaderFooter={togglePrintHeaderFooter}
         isDark={isDark}
@@ -3343,14 +3361,24 @@ export default function Editor({ googleEnabled = false }: { googleEnabled?: bool
           </div>
         </div>
       )}
-      <AuthModal open={authOpen} onClose={() => setAuthOpen(false)} googleEnabled={googleEnabled} />
-      <ProfileDialog
-        open={profileOpen}
-        onClose={() => setProfileOpen(false)}
-        user={user}
-        hasPassword={hasPassword}
-        onDeleted={onAccountDeleted}
-      />
+      {/* Mounted only while open so their lazy chunks stay out of the initial
+          load; the null fallback covers the brief first-open fetch. */}
+      {authOpen && (
+        <Suspense fallback={null}>
+          <AuthModal open={authOpen} onClose={closeAuth} googleEnabled={googleEnabled} />
+        </Suspense>
+      )}
+      {profileOpen && (
+        <Suspense fallback={null}>
+          <ProfileDialog
+            open={profileOpen}
+            onClose={closeProfile}
+            user={user}
+            hasPassword={hasPassword}
+            onDeleted={onAccountDeleted}
+          />
+        </Suspense>
+      )}
       <WelcomeScreen
         open={welcomeOpen}
         onClose={() => setWelcomeOpen(false)}

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { X } from "@phosphor-icons/react";
+import { X } from "@phosphor-icons/react/dist/ssr";
 import AuthForm, { authCopy, type AuthMode } from "./AuthForm";
 import { useT } from "./I18nProvider";
 
