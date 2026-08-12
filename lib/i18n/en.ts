@@ -38,6 +38,7 @@ export const en = {
     exportHtml: "Web page (.html)",
     exportMd: "Markdown (.md)",
     exportTxt: "Plain text (.txt)",
+    pageSetup: "Page setup",
     pageOrientation: "Page orientation",
     portrait: "Portrait",
     landscape: "Landscape",

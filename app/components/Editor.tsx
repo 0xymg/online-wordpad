@@ -769,13 +769,14 @@ function loadFiles(): { list: FileItem[]; active: string } {
   if (!Array.isArray(list)) { list = []; stored = false; }
   // An empty stored list means the visitor deleted everything — respect that
   // and let the start screen offer a new document instead of conjuring one.
+  // First visit ever: a blank page, ready to type into.
   if (!list.length && !stored) {
     const legacy = localStorage.getItem("wordpad-content-pm");
     const legacyTitle = localStorage.getItem("wordpad-title");
     list = [{
       id: newId(),
-      name: legacy ? (legacyTitle || "Untitled document") : "Welcome",
-      html: legacy || DEFAULT_REF_CONTENT,
+      name: legacy ? (legacyTitle || "Untitled document") : "Untitled document",
+      html: legacy || "<p></p>",
     }];
   }
   let active = localStorage.getItem(ACTIVE_KEY) || "";
@@ -1026,6 +1027,9 @@ export default function Editor({ googleEnabled = false }: { googleEnabled?: bool
   const [profileOpen, setProfileOpen] = useState(false);
   const [hasPassword, setHasPassword] = useState(false);
   const [welcomeOpen, setWelcomeOpen] = useState(false);
+  // True until the first document (DB or localStorage) lands in the editor,
+  // so visitors see a loading page instead of a flash of empty paper.
+  const [initialLoading, setInitialLoading] = useState(true);
   const { confirm: confirmDialog, prompt: promptDialog, dialogs: askDialogs } = useAskDialogs();
   const [verifyDismissed, setVerifyDismissed] = useState(false);
   const { data: session, isPending: sessionPending } = useSession();
@@ -1953,9 +1957,12 @@ export default function Editor({ googleEnabled = false }: { googleEnabled?: bool
         if (!docs.length) {
           // Migrate guest files from localStorage; fall back to a Welcome doc if nothing there.
           const { list: localFiles } = loadFiles();
+          const stripped = (html: string) => html.replace(/<[^>]*>/g, "").trim();
           const hasRealContent =
             localFiles.length > 1 ||
-            (localFiles.length === 1 && localFiles[0].name !== "Welcome" && localFiles[0].html !== DEFAULT_REF_CONTENT);
+            (localFiles.length === 1 &&
+              localFiles[0].html !== DEFAULT_REF_CONTENT &&
+              stripped(localFiles[0].html) !== "");
           if (hasRealContent) {
             const created = await Promise.all(
               localFiles.map((f) => createDocument(f.name, f.html).catch(() => null))
@@ -1985,6 +1992,7 @@ export default function Editor({ googleEnabled = false }: { googleEnabled?: bool
         // Writing it on a plain /pad visit would make the next reload look like
         // a deep link and skip the start screen.
         if (deepLinked) syncUrlToDoc(active.id);
+        setInitialLoading(false);
         try { const prefs = await getPreferences(); if (!cancelled) applyPreferences(prefs); } catch {}
         prefsLoadedRef.current = true;
       } else {
@@ -2008,6 +2016,7 @@ export default function Editor({ googleEnabled = false }: { googleEnabled?: bool
           localStorage.setItem(FILES_KEY, JSON.stringify(list));
           localStorage.setItem(ACTIVE_KEY, activeId);
         } catch {}
+        setInitialLoading(false);
         prefsLoadedRef.current = true;
       }
     })();
@@ -2629,6 +2638,7 @@ export default function Editor({ googleEnabled = false }: { googleEnabled?: bool
         viewRef={viewRef}
         schema={mySchema}
         pageMarginCm={pageMarginCm}
+        onPageMarginChange={setPageMarginCm}
         pageOrientation={pageOrientation}
         onPageOrientationChange={changePageOrientation}
         onPrint={handlePrint}
@@ -2721,9 +2731,30 @@ export default function Editor({ googleEnabled = false }: { googleEnabled?: bool
         </div>
       )}
       <div
-        className="editor-shell"
+        className="editor-shell relative"
         style={{ backgroundColor: paperBgColor, ["--shell-bg" as any]: paperBgColor }}
       >
+        {/* Blank documents already look blank, so the shimmer only matters for
+            content that is still on its way; it clears the moment it lands. */}
+        {initialLoading && (
+          <div
+            className="absolute inset-0 z-10 flex justify-center pt-10"
+            style={{ backgroundColor: paperBgColor }}
+            aria-hidden="true"
+          >
+            <div
+              className="animate-pulse bg-white shadow-md dark:bg-[#262626]"
+              style={{ width: pageWidthPx * (zoomPercent / 100), height: "100%" }}
+            >
+              <div className="mx-auto mt-16 w-4/5 space-y-3">
+                <div className="h-4 w-2/3 rounded bg-gray-100 dark:bg-white/10" />
+                <div className="h-3 rounded bg-gray-100 dark:bg-white/10" />
+                <div className="h-3 rounded bg-gray-100 dark:bg-white/10" />
+                <div className="h-3 w-3/4 rounded bg-gray-100 dark:bg-white/10" />
+              </div>
+            </div>
+          </div>
+        )}
         <TableContextMenu viewRef={viewRef}>
           <div ref={printRef}>
             {printHeaderFooter && (

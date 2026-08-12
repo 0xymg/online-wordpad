@@ -36,6 +36,7 @@ export const tr: Dictionary = {
     exportHtml: "Web sayfası (.html)",
     exportMd: "Markdown (.md)",
     exportTxt: "Düz metin (.txt)",
+    pageSetup: "Sayfa yapısı",
     pageOrientation: "Sayfa yönü",
     portrait: "Dikey",
     landscape: "Yatay",

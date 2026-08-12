@@ -23,6 +23,9 @@ import {
   Link, Quotes, Table, TextT, Highlighter, Smiley, ImageSquare, Minus, Code,
 } from "@phosphor-icons/react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import {
+  Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue,
+} from "@/components/ui/select";
 
 /* ── Constants ─────────────────────────────────────────────────────────── */
 const GRID_ROWS = 8;
@@ -59,6 +62,14 @@ const FONTS = [
 ];
 
 const FONT_SIZES = ["8","9","10","11","12","14","16","18","20","24","28","36","48","72"];
+
+const FONT_GROUPS = [
+  { label: "Classic",    fonts: FONTS.slice(0, 7) },
+  { label: "Sans-serif", fonts: FONTS.slice(7, 17) },
+  { label: "Serif",      fonts: FONTS.slice(17, 22) },
+  { label: "Monospace",  fonts: FONTS.slice(22, 23) },
+  { label: "Decorative", fonts: FONTS.slice(23) },
+];
 
 const BLOCK_VALUES = ["paragraph", "h1", "h2", "h3", "h4", "code_block"] as const;
 
@@ -298,33 +309,50 @@ export default function Toolbar({
       <Group label={t.toolbar.groupFont}>
         {/* Row 1: font family + size + highlight */}
         <Row between>
-          <select className={cn(SEL, "w-[120px]")}
-            onChange={(e) => applyMark("fontFamily", { family: e.target.value })}
+          <Select
             value={FONTS.some(f => f.value === currentFontFamily) ? currentFontFamily : ""}
-            aria-label={t.toolbar.fontFamily} title={t.toolbar.fontFamily}>
-            <option value="" disabled>{t.toolbar.fontPlaceholder}</option>
-            <optgroup label="Classic">
-              {FONTS.slice(0, 7).map(f => <option key={f.value} value={f.value}>{f.label}</option>)}
-            </optgroup>
-            <optgroup label="Sans-serif">
-              {FONTS.slice(7, 17).map(f => <option key={f.value} value={f.value}>{f.label}</option>)}
-            </optgroup>
-            <optgroup label="Serif">
-              {FONTS.slice(17, 22).map(f => <option key={f.value} value={f.value}>{f.label}</option>)}
-            </optgroup>
-            <optgroup label="Monospace">
-              {FONTS.slice(22, 23).map(f => <option key={f.value} value={f.value}>{f.label}</option>)}
-            </optgroup>
-            <optgroup label="Decorative">
-              {FONTS.slice(23).map(f => <option key={f.value} value={f.value}>{f.label}</option>)}
-            </optgroup>
-          </select>
-          <select className={cn(SEL, "w-[54px]")}
-            onChange={(e) => applyMark("fontSize", { size: e.target.value + "pt" })}
-            value={currentFontSize} aria-label={t.toolbar.fontSize} title={t.toolbar.fontSize}>
-            {FONT_SIZES.includes(currentFontSize) ? null : <option value={currentFontSize}>{currentFontSize}</option>}
-            {FONT_SIZES.map(s => <option key={s} value={s}>{s}</option>)}
-          </select>
+            onValueChange={(val) => applyMark("fontFamily", { family: val })}
+          >
+            <SelectTrigger
+              className={cn(SEL, "w-[120px] justify-between")}
+              aria-label={t.toolbar.fontFamily}
+              title={t.toolbar.fontFamily}
+            >
+              <SelectValue placeholder={t.toolbar.fontPlaceholder} />
+            </SelectTrigger>
+            <SelectContent>
+              {FONT_GROUPS.map((g) => (
+                <SelectGroup key={g.label}>
+                  <SelectLabel>{g.label}</SelectLabel>
+                  {g.fonts.map((f) => (
+                    <SelectItem key={f.value} value={f.value} className="text-xs">
+                      <span style={{ fontFamily: f.value }}>{f.label}</span>
+                    </SelectItem>
+                  ))}
+                </SelectGroup>
+              ))}
+            </SelectContent>
+          </Select>
+          <Select
+            value={currentFontSize}
+            onValueChange={(val) => applyMark("fontSize", { size: val + "pt" })}
+          >
+            <SelectTrigger
+              className={cn(SEL, "w-[58px] justify-between")}
+              aria-label={t.toolbar.fontSize}
+              title={t.toolbar.fontSize}
+            >
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {!FONT_SIZES.includes(currentFontSize) && (
+                <SelectItem value={currentFontSize} className="text-xs">{currentFontSize}</SelectItem>
+              )}
+              {FONT_SIZES.map((s) => (
+                <SelectItem key={s} value={s} className="text-xs">{s}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
           <ColorPicker color={bgColor}   onChange={(c) => { setBgColor(c);   applyMark("bgColor",   { color: c }); }} tip={t.toolbar.highlightColor} icon={<Highlighter size={18} />} />
         </Row>
         {/* Row 2: B I U S + text color */}
@@ -343,19 +371,28 @@ export default function Toolbar({
       <Group label={t.toolbar.groupParagraph}>
         {/* Row 1: block style + alignment */}
         <Row>
-          <select className={cn(SEL, "w-[80px]")}
-            onChange={(e) => {
-              const val = e.target.value; const { nodes } = schema;
+          <Select
+            value={(BLOCK_VALUES as readonly string[]).includes(currentBlock) ? currentBlock : "paragraph"}
+            onValueChange={(val) => {
+              const { nodes } = schema;
               if (val === "paragraph")       cmd(setBlockType(nodes.paragraph));
               else if (/^h\d$/.test(val))    cmd(setBlockType(nodes.heading, { level: +val[1] }));
               else if (val === "code_block") cmd(setBlockType(nodes.code_block));
             }}
-            value={(BLOCK_VALUES as readonly string[]).includes(currentBlock) ? currentBlock : "paragraph"}
-            aria-label={t.toolbar.blockStyle} title={t.toolbar.blockStyle}>
-            {BLOCK_VALUES.map((v) => (
-              <option key={v} value={v}>{blockLabel(v)}</option>
-            ))}
-          </select>
+          >
+            <SelectTrigger
+              className={cn(SEL, "w-[86px] justify-between")}
+              aria-label={t.toolbar.blockStyle}
+              title={t.toolbar.blockStyle}
+            >
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {BLOCK_VALUES.map((v) => (
+                <SelectItem key={v} value={v} className="text-xs">{blockLabel(v)}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
           <TBtn onClick={() => setTextAlign("left")}    active={currentAlign === "left"}    tip={t.format.alignLeft}>    <TextAlignLeft size={SZ} /></TBtn>
           <TBtn onClick={() => setTextAlign("center")}  active={currentAlign === "center"}  tip={t.format.alignCenter}>  <TextAlignCenter size={SZ} /></TBtn>
           <TBtn onClick={() => setTextAlign("right")}   active={currentAlign === "right"}   tip={t.format.alignRight}>   <TextAlignRight size={SZ} /></TBtn>

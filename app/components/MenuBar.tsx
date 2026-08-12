@@ -36,7 +36,8 @@ import { TEMPLATES } from "@/lib/templates";
 interface MenuBarProps {
   viewRef: React.MutableRefObject<EditorView | null>;
   schema: any;
-  pageMarginCm?: number;
+  pageMarginCm: number;
+  onPageMarginChange: (cm: number) => void;
   pageOrientation: "portrait" | "landscape";
   onPageOrientationChange: (o: "portrait" | "landscape") => void;
   onPrint?: () => void;
@@ -95,6 +96,7 @@ const TEXT_COLORS = ["#000000", "#e11d48", "#ea580c", "#ca8a04", "#16a34a", "#25
 const HIGHLIGHTS = ["#fef08a", "#bbf7d0", "#bfdbfe", "#fbcfe8", "#fed7aa", "#e9d5ff"];
 const SYMBOLS = ["©", "®", "™", "§", "¶", "•", "–", "—", "…", "€", "£", "¥", "°", "±", "×", "÷", "≈", "≠", "≤", "≥", "→", "←", "↑", "↓", "✓", "★"];
 const ZOOM_LEVELS = [50, 75, 90, 100, 110, 125, 150];
+const MARGIN_PRESETS = [0.5, 1, 1.5, 2];
 const LINE_SPACINGS: Array<{ key: "single" | "num" | "double" | "reset"; num?: string; value: number | null }> = [
   { key: "single", value: 1 },
   { key: "num", num: "1.15", value: 1.15 },
@@ -131,6 +133,7 @@ const SPELL_LANGS: Array<{ value: string; label: string }> = [
 
 export default function MenuBar({
   viewRef, schema, onPrint,
+  pageMarginCm, onPageMarginChange,
   pageOrientation, onPageOrientationChange,
   docTitle, onTitleChange, onNewDoc, onShowHome, onNewFromTemplate, onOpenFile, onExport,
   onSave, onCopyLink, onRenameDoc, onDeleteDoc, onReplace,
@@ -376,8 +379,9 @@ export default function MenuBar({
             </MenubarSubContent>
           </MenubarSub>
           <MenubarSeparator />
+          {/* Everything about the paper itself lives in one place. */}
           <MenubarSub>
-            <MenubarSubTrigger>{t.file.pageOrientation}</MenubarSubTrigger>
+            <MenubarSubTrigger>{t.file.pageSetup}</MenubarSubTrigger>
             <MenubarSubContent>
               <MenubarCheckboxItem
                 checked={pageOrientation === "portrait"}
@@ -391,6 +395,16 @@ export default function MenuBar({
               >
                 {t.file.landscape}
               </MenubarCheckboxItem>
+              <MenubarSeparator />
+              {MARGIN_PRESETS.map((m) => (
+                <MenubarCheckboxItem
+                  key={m}
+                  checked={pageMarginCm === m}
+                  onClick={() => onPageMarginChange(m)}
+                >
+                  {t.status.pageMargin}: {m} cm
+                </MenubarCheckboxItem>
+              ))}
             </MenubarSubContent>
           </MenubarSub>
           <MenubarCheckboxItem checked={printHeaderFooter} onClick={onTogglePrintHeaderFooter}>
@@ -474,15 +488,29 @@ export default function MenuBar({
             </MenubarSubContent>
           </MenubarSub>
           <MenubarSeparator />
+          {/* What is visible around the page */}
           <MenubarCheckboxItem checked={showToolbar} onClick={onToggleToolbar}>
             {t.view.toolbar}
           </MenubarCheckboxItem>
           <MenubarCheckboxItem checked={showRuler} onClick={onToggleRuler}>
             {t.view.ruler}
           </MenubarCheckboxItem>
+          <MenubarSeparator />
+          {/* Spellcheck and its language belong together */}
           <MenubarCheckboxItem checked={spellcheckOn} onClick={onToggleSpellcheck}>
             {t.view.spellcheck}
           </MenubarCheckboxItem>
+          <MenubarSub>
+            <MenubarSubTrigger>{t.view.spellcheckLanguage}</MenubarSubTrigger>
+            <MenubarSubContent>
+              {SPELL_LANGS.map((l) => (
+                <MenubarCheckboxItem key={l.value} checked={spellLang === l.value} onClick={() => onSpellLangChange(l.value)}>
+                  {l.value === "auto" ? t.view.automatic : l.label}
+                </MenubarCheckboxItem>
+              ))}
+            </MenubarSubContent>
+          </MenubarSub>
+          <MenubarSeparator />
           <MenubarSub>
             <MenubarSubTrigger>{t.locale.label}</MenubarSubTrigger>
             <MenubarSubContent>
@@ -497,23 +525,14 @@ export default function MenuBar({
               ))}
             </MenubarSubContent>
           </MenubarSub>
-          <MenubarSub>
-            <MenubarSubTrigger>{t.view.spellcheckLanguage}</MenubarSubTrigger>
-            <MenubarSubContent>
-              {SPELL_LANGS.map((l) => (
-                <MenubarCheckboxItem key={l.value} checked={spellLang === l.value} onClick={() => onSpellLangChange(l.value)}>
-                  {l.value === "auto" ? t.view.automatic : l.label}
-                </MenubarCheckboxItem>
-              ))}
-            </MenubarSubContent>
-          </MenubarSub>
+          <MenubarSeparator />
+          {/* Reading / writing modes */}
           <MenubarCheckboxItem checked={isDark} onClick={onToggleDark}>
             {t.view.darkMode}
           </MenubarCheckboxItem>
           <MenubarCheckboxItem checked={focusMode} onClick={onToggleFocusMode}>
             {t.view.focusMode}
           </MenubarCheckboxItem>
-          <MenubarSeparator />
           <MenubarCheckboxItem checked={readingAloud} onClick={onToggleReadAloud}>
             {t.view.readAloud}
           </MenubarCheckboxItem>

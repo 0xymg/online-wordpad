@@ -36,6 +36,7 @@ export const zh: Dictionary = {
     exportHtml: "网页 (.html)",
     exportMd: "Markdown (.md)",
     exportTxt: "纯文本 (.txt)",
+    pageSetup: "页面设置",
     pageOrientation: "页面方向",
     portrait: "纵向",
     landscape: "横向",

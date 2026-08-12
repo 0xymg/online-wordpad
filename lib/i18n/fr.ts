@@ -36,6 +36,7 @@ export const fr: Dictionary = {
     exportHtml: "Page web (.html)",
     exportMd: "Markdown (.md)",
     exportTxt: "Texte brut (.txt)",
+    pageSetup: "Mise en page",
     pageOrientation: "Orientation de la page",
     portrait: "Portrait",
     landscape: "Paysage",

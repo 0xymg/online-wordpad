@@ -249,8 +249,8 @@ export default function WelcomeScreen({
             </div>
           )}
 
-          {/* Everything else, only worth a section once there is more to show */}
-          {files.length > RECENT_COUNT && (
+          {/* The full library, always available below the recent few */}
+          {files.length > 0 && (
             <>
               <h2 className="mb-2 mt-8 text-sm font-medium text-muted-foreground">
                 {t.welcome.allDocuments} <span className="text-xs font-normal">({files.length})</span>
