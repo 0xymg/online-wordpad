@@ -3,6 +3,7 @@
 import { useEffect } from "react";
 import { FileText, Plus, UploadSimple, X, SignIn, LinkSimple } from "@phosphor-icons/react";
 import { TEMPLATES, type DocTemplate } from "@/lib/templates";
+import { useT } from "./I18nProvider";
 
 export type WelcomeFile = { id: string; name: string; folder?: string | null };
 
@@ -23,12 +24,12 @@ interface WelcomeScreenProps {
   onSignIn: () => void;
 }
 
-function greeting() {
+function greeting(t: ReturnType<typeof useT>) {
   const h = new Date().getHours();
-  if (h < 6) return "Working late";
-  if (h < 12) return "Good morning";
-  if (h < 18) return "Good afternoon";
-  return "Good evening";
+  if (h < 6) return t.welcome.greetingNight;
+  if (h < 12) return t.welcome.greetingMorning;
+  if (h < 18) return t.welcome.greetingAfternoon;
+  return t.welcome.greetingEvening;
 }
 
 /* Miniature of an A4 page rendering the template's own HTML, scaled down.
@@ -59,6 +60,7 @@ export default function WelcomeScreen({
   open, onClose, isAuthed, userName, files, activeId,
   onNewDocument, onOpenFile, onPickTemplate, onOpenDocument, onCopyLink, docHref, onSignIn,
 }: WelcomeScreenProps) {
+  const t = useT();
   useEffect(() => {
     if (!open) return;
     const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") onClose(); };
@@ -74,7 +76,7 @@ export default function WelcomeScreen({
     <div
       role="dialog"
       aria-modal="true"
-      aria-label="Welcome"
+      aria-label={t.welcome.ariaLabel}
       className="fixed inset-0 z-[1400] overflow-y-auto bg-background text-foreground"
     >
       {/* Top bar */}
@@ -88,21 +90,21 @@ export default function WelcomeScreen({
           onClick={onClose}
           className="flex items-center gap-1.5 rounded-md border border-input px-3 py-1.5 text-sm hover:bg-accent focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-ring"
         >
-          Skip to editor <X size={14} />
+          {t.welcome.skipToEditor} <X size={14} />
         </button>
       </div>
 
       <div className="mx-auto max-w-4xl px-5 pb-16 pt-10">
         {/* Greeting */}
         <h1 className="text-2xl font-semibold tracking-tight">
-          {firstName ? `${greeting()}, ${firstName}!` : "Welcome to EDTRpad"}
+          {firstName ? t.welcome.greetingWith(greeting(t), firstName) : t.welcome.titleGuest}
         </h1>
         <p className="mt-1 text-sm text-muted-foreground">
-          Free word processor in your browser — no installation, no sign-up required.
+          {t.welcome.subtitle}
         </p>
 
         {/* Start new */}
-        <h2 className="mb-3 mt-8 text-sm font-medium text-muted-foreground">Start a new document</h2>
+        <h2 className="mb-3 mt-8 text-sm font-medium text-muted-foreground">{t.welcome.startNew}</h2>
         <div className="flex gap-4 overflow-x-auto pb-2">
           <button
             type="button"
@@ -115,21 +117,21 @@ export default function WelcomeScreen({
             >
               <Plus size={26} className="text-gray-400" />
             </div>
-            <p className="mt-2 truncate text-center text-xs font-medium">Blank document</p>
+            <p className="mt-2 truncate text-center text-xs font-medium">{t.welcome.blankDocument}</p>
           </button>
-          {TEMPLATES.map((t) => (
+          {TEMPLATES.map((tpl) => (
             <button
-              key={t.id}
+              key={tpl.id}
               type="button"
-              onClick={() => { onPickTemplate(t); onClose(); }}
-              title={t.description}
+              onClick={() => { onPickTemplate(tpl); onClose(); }}
+              title={tpl.description}
               className="group w-[124px] shrink-0 text-left focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
             >
               <div className="transition group-hover:-translate-y-0.5">
-                <TemplateThumb html={t.html} />
+                <TemplateThumb html={tpl.html} />
               </div>
-              <p className="mt-2 truncate text-center text-xs font-medium">{t.name}</p>
-              <p className="mt-0.5 line-clamp-2 text-center text-[11px] leading-tight text-muted-foreground">{t.description}</p>
+              <p className="mt-2 truncate text-center text-xs font-medium">{tpl.name}</p>
+              <p className="mt-0.5 line-clamp-2 text-center text-[11px] leading-tight text-muted-foreground">{tpl.description}</p>
             </button>
           ))}
         </div>
@@ -139,17 +141,17 @@ export default function WelcomeScreen({
           onClick={() => { onOpenFile(); onClose(); }}
           className="mt-4 flex items-center gap-2 rounded-md border border-input px-3 py-2 text-sm hover:bg-accent focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-ring"
         >
-          <UploadSimple size={16} /> Open a file from your device
-          <span className="text-xs text-muted-foreground">(.docx, .txt, .md, .html)</span>
+          <UploadSimple size={16} /> {t.welcome.openFile}
+          <span className="text-xs text-muted-foreground">{t.welcome.openFileFormats}</span>
         </button>
 
         {/* Recent documents */}
         <h2 className="mb-2 mt-10 text-sm font-medium text-muted-foreground">
-          {isAuthed ? "Recent documents" : "Continue where you left off"}
+          {isAuthed ? t.welcome.recentDocuments : t.welcome.continueWhereLeftOff}
         </h2>
         {files.length === 0 ? (
           <p className="rounded-md border border-dashed border-border px-4 py-6 text-center text-sm text-muted-foreground">
-            No documents yet — start with a blank page or a template above.
+            {t.welcome.noDocuments}
           </p>
         ) : (
           <div className="divide-y divide-border overflow-hidden rounded-md border border-border">
@@ -168,17 +170,17 @@ export default function WelcomeScreen({
                   className="flex min-w-0 flex-1 items-center gap-3 px-4 py-2.5 text-left focus-visible:bg-accent/60 focus-visible:outline-none"
                 >
                   <FileText size={18} className="shrink-0 text-muted-foreground" />
-                  <span className="min-w-0 flex-1 truncate text-sm">{f.name || "Untitled"}</span>
+                  <span className="min-w-0 flex-1 truncate text-sm">{f.name || t.sidebar.untitled}</span>
                   {f.folder && <span className="shrink-0 text-xs text-muted-foreground">{f.folder}</span>}
                   {f.id === activeId && (
-                    <span className="shrink-0 rounded bg-accent px-1.5 py-0.5 text-[10px] font-medium text-accent-foreground">Last opened</span>
+                    <span className="shrink-0 rounded bg-accent px-1.5 py-0.5 text-[10px] font-medium text-accent-foreground">{t.welcome.lastOpened}</span>
                   )}
                 </a>
                 <button
                   type="button"
                   onClick={() => onCopyLink(f.id)}
-                  aria-label={`Copy link to ${f.name || "Untitled"}`}
-                  title="Copy link"
+                  aria-label={t.welcome.copyLinkTo(f.name || t.sidebar.untitled)}
+                  title={t.sidebar.copyLink}
                   className="mr-2 shrink-0 rounded p-1.5 text-muted-foreground opacity-0 transition hover:bg-accent hover:text-foreground focus-visible:opacity-100 focus-visible:outline-2 focus-visible:outline-ring group-hover:opacity-100"
                 >
                   <LinkSimple size={15} />
@@ -192,14 +194,14 @@ export default function WelcomeScreen({
         {!isAuthed && (
           <div className="mt-10 flex flex-wrap items-center justify-between gap-3 rounded-lg border border-border bg-card px-4 py-3">
             <p className="text-sm text-muted-foreground">
-              Documents are stored in this browser. Sign in to keep multiple documents and sync across devices.
+              {t.welcome.guestNudge}
             </p>
             <button
               type="button"
               onClick={() => { onClose(); onSignIn(); }}
               className="flex shrink-0 items-center gap-1.5 rounded-md bg-primary px-3 py-1.5 text-sm text-primary-foreground hover:opacity-90 focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-ring"
             >
-              <SignIn size={15} /> Sign in — it&apos;s free
+              <SignIn size={15} /> {t.welcome.signInFree}
             </button>
           </div>
         )}

@@ -2,6 +2,8 @@
 
 import { useState, useEffect, useRef } from "react";
 import { authClient } from "@/lib/auth-client";
+import { useT } from "./I18nProvider";
+import type { Dictionary } from "@/lib/i18n";
 import {
   GoogleLogo, Eye, EyeSlash, CloudArrowUp, Files, ShieldCheck, CircleNotch,
 } from "@phosphor-icons/react";
@@ -10,30 +12,34 @@ const GOOGLE_ENABLED = process.env.NEXT_PUBLIC_GOOGLE_ENABLED === "true";
 
 export type AuthMode = "login" | "signup" | "forgot";
 
-export const AUTH_COPY: Record<AuthMode, { title: string; sub: string; cta: string }> = {
-  login: { title: "Welcome back", sub: "Sign in to access your documents.", cta: "Log in" },
-  signup: { title: "Create your free account", sub: "Keep your documents safe and use them on any device.", cta: "Create account" },
-  forgot: { title: "Reset your password", sub: "Enter your email and we'll send you a reset link.", cta: "Send reset link" },
-};
+export function authCopy(t: Dictionary, mode: AuthMode): { title: string; sub: string; cta: string } {
+  if (mode === "signup") return { title: t.auth.signupTitle, sub: t.auth.signupSub, cta: t.auth.signupCta };
+  if (mode === "forgot") return { title: t.auth.forgotTitle, sub: t.auth.forgotSub, cta: t.auth.forgotCta };
+  return { title: t.auth.loginTitle, sub: t.auth.loginSub, cta: t.auth.loginCta };
+}
 
-const SIGNUP_BENEFITS = [
-  { Icon: CloudArrowUp, text: "Sync documents across all your devices" },
-  { Icon: Files, text: "Unlimited documents, safely backed up" },
-  { Icon: ShieldCheck, text: "Private — your content is never shared" },
-];
+function signupBenefits(t: Dictionary) {
+  return [
+    { Icon: CloudArrowUp, text: t.auth.benefitSync },
+    { Icon: Files, text: t.auth.benefitUnlimited },
+    { Icon: ShieldCheck, text: t.auth.benefitPrivate },
+  ];
+}
 
-function friendlyError(message: string): string {
+// Server messages are English; map the ones we recognise onto localized copy
+// and fall back to a generic line rather than showing raw backend text.
+function friendlyError(t: Dictionary, message: string): string {
   const m = message.toLowerCase();
   if (m.includes("invalid email or password") || m.includes("invalid password") || m.includes("credential")) {
-    return "Incorrect email or password. Please try again.";
+    return t.auth.errWrongCredentials;
   }
   if (m.includes("user already exists") || m.includes("already exists")) {
-    return "An account with this email already exists. Try logging in instead.";
+    return t.auth.errExists;
   }
   if (m.includes("fetch") || m.includes("network")) {
-    return "Could not reach the server. Check your connection and try again.";
+    return t.auth.errNetwork;
   }
-  return message;
+  return message || t.auth.errGeneric;
 }
 
 interface AuthFormProps {
@@ -55,6 +61,8 @@ interface AuthFormProps {
 export default function AuthForm({
   mode, onModeChange, onSuccess, callbackURL = "/pad", footerSlot, autoFocus = true,
 }: AuthFormProps) {
+  const t = useT();
+  const copy = authCopy(t, mode);
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -90,7 +98,7 @@ export default function AuthForm({
           redirectTo: "/reset-password",
         });
         if (error) throw new Error(error.message || "Failed to send reset email");
-        setSuccess("Check your inbox — we've sent a password reset link.");
+        setSuccess(t.auth.resetSent);
       } else if (mode === "signup") {
         const { error } = await authClient.signUp.email({
           email,
@@ -106,7 +114,7 @@ export default function AuthForm({
         onSuccess();
       }
     } catch (err) {
-      setError(friendlyError(err instanceof Error ? err.message : "Something went wrong"));
+      setError(friendlyError(t, err instanceof Error ? err.message : ""));
     } finally {
       setLoading(false);
     }
@@ -119,7 +127,7 @@ export default function AuthForm({
       await authClient.signIn.social({ provider: "google", callbackURL });
     } catch {
       setGoogleLoading(false);
-      setError("Google sign-in failed. Please try again.");
+      setError(t.auth.errGoogle);
     }
   };
 
@@ -128,12 +136,12 @@ export default function AuthForm({
 
   return (
     <>
-      <h2 className="mb-1 text-lg font-semibold">{AUTH_COPY[mode].title}</h2>
-      <p className="mb-4 text-sm text-muted-foreground">{AUTH_COPY[mode].sub}</p>
+      <h2 className="mb-1 text-lg font-semibold">{copy.title}</h2>
+      <p className="mb-4 text-sm text-muted-foreground">{copy.sub}</p>
 
       {mode === "signup" && (
         <ul className="mb-4 space-y-1.5">
-          {SIGNUP_BENEFITS.map(({ Icon, text }) => (
+          {signupBenefits(t).map(({ Icon, text }) => (
             <li key={text} className="flex items-center gap-2 text-[13px] text-muted-foreground">
               <Icon size={15} className="shrink-0 text-foreground/70" />
               {text}
@@ -153,10 +161,10 @@ export default function AuthForm({
             {googleLoading
               ? <CircleNotch size={18} className="animate-spin" />
               : <GoogleLogo size={18} weight="bold" />}
-            Continue with Google
+            {t.auth.google}
           </button>
           <div className="mb-3 flex items-center gap-2 text-xs text-muted-foreground">
-            <div className="h-px flex-1 bg-border" /> or <div className="h-px flex-1 bg-border" />
+            <div className="h-px flex-1 bg-border" /> {t.auth.or} <div className="h-px flex-1 bg-border" />
           </div>
         </>
       )}
@@ -165,7 +173,7 @@ export default function AuthForm({
         {mode === "signup" && (
           <input
             className={INPUT}
-            placeholder="Name (optional)"
+            placeholder={t.auth.namePlaceholder}
             value={name}
             onChange={(e) => setName(e.target.value)}
             autoComplete="name"
@@ -175,7 +183,7 @@ export default function AuthForm({
           ref={emailRef}
           className={INPUT}
           type="email"
-          placeholder="Email"
+          placeholder={t.auth.emailPlaceholder}
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           required
@@ -187,7 +195,7 @@ export default function AuthForm({
               <input
                 className={`${INPUT} pr-9`}
                 type={showPassword ? "text" : "password"}
-                placeholder="Password"
+                placeholder={t.auth.passwordPlaceholder}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
@@ -197,7 +205,7 @@ export default function AuthForm({
               <button
                 type="button"
                 onClick={() => setShowPassword((s) => !s)}
-                aria-label={showPassword ? "Hide password" : "Show password"}
+                aria-label={showPassword ? t.auth.hidePassword : t.auth.showPassword}
                 tabIndex={-1}
                 className="absolute right-2 top-1/2 -translate-y-1/2 rounded p-1 text-muted-foreground hover:text-foreground"
               >
@@ -205,7 +213,7 @@ export default function AuthForm({
               </button>
             </div>
             {mode === "signup" && (
-              <p className="text-[11px] text-muted-foreground">At least 8 characters.</p>
+              <p className="text-[11px] text-muted-foreground">{t.auth.passwordHint}</p>
             )}
             {mode === "login" && (
               <div className="text-right">
@@ -214,7 +222,7 @@ export default function AuthForm({
                   onClick={() => switchMode("forgot")}
                   className="text-xs text-muted-foreground underline-offset-2 hover:underline"
                 >
-                  Forgot password?
+                  {t.auth.forgotLink}
                 </button>
               </div>
             )}
@@ -228,31 +236,31 @@ export default function AuthForm({
           className="flex w-full items-center justify-center gap-2 rounded-md bg-primary px-3 py-2 text-sm font-medium text-primary-foreground hover:opacity-90 disabled:opacity-60"
         >
           {loading && <CircleNotch size={16} className="animate-spin" />}
-          {loading ? "Please wait…" : AUTH_COPY[mode].cta}
+          {loading ? t.auth.pleaseWait : copy.cta}
         </button>
       </form>
 
       <p className="mt-4 text-center text-sm text-muted-foreground">
         {mode === "forgot" ? (
           <>
-            Remember your password?{" "}
+            {t.auth.rememberPassword}{" "}
             <button
               type="button"
               onClick={() => switchMode("login")}
               className="font-medium text-foreground underline-offset-2 hover:underline"
             >
-              Log in
+              {t.auth.logInLink}
             </button>
           </>
         ) : (
           <>
-            {mode === "login" ? "Don't have an account? " : "Already have an account? "}
+            {mode === "login" ? `${t.auth.noAccount} ` : `${t.auth.haveAccount} `}
             <button
               type="button"
               onClick={() => switchMode(mode === "login" ? "signup" : "login")}
               className="font-medium text-foreground underline-offset-2 hover:underline"
             >
-              {mode === "login" ? "Sign up" : "Log in"}
+              {mode === "login" ? t.auth.signUpLink : t.auth.logInLink}
             </button>
           </>
         )}

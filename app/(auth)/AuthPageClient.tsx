@@ -4,6 +4,9 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import AuthForm, { type AuthMode } from "@/app/components/AuthForm";
+import { useT, useLocale } from "@/app/components/I18nProvider";
+import { LOCALES, LOCALE_NAMES } from "@/lib/i18n";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useSession } from "@/lib/auth-client";
 
 /**
@@ -12,6 +15,8 @@ import { useSession } from "@/lib/auth-client";
  * modal inside the editor.
  */
 export default function AuthPageClient({ initialMode }: { initialMode: AuthMode }) {
+  const t = useT();
+  const { locale, setLocale } = useLocale();
   const [mode, setMode] = useState<AuthMode>(initialMode);
   const router = useRouter();
   const { data: session, isPending } = useSession();
@@ -37,12 +42,30 @@ export default function AuthPageClient({ initialMode }: { initialMode: AuthMode 
             <span className="text-2xl font-bold tracking-tight">EDTR</span>
             <span className="text-lg font-semibold tracking-wider text-[var(--pad-ink-50)]">PAD</span>
           </Link>
-          <Link
-            href="/pad"
-            className="rounded-full border border-[var(--pad-border-strong)] px-4 py-2 text-[13px] font-medium transition-colors hover:border-[var(--pad-ink)]"
-          >
-            Continue without an account →
-          </Link>
+          <div className="flex items-center gap-2">
+            <Select value={locale} onValueChange={(v) => setLocale(v as typeof locale)}>
+              <SelectTrigger
+                size="sm"
+                aria-label={t.locale.label}
+                className="h-8 border-[var(--pad-border)] bg-transparent px-2 text-[13px] shadow-none"
+              >
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent align="end">
+                {LOCALES.map((code) => (
+                  <SelectItem key={code} value={code} className="text-[13px]">
+                    {LOCALE_NAMES[code]}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Link
+              href="/pad"
+              className="rounded-full border border-[var(--pad-border-strong)] px-4 py-2 text-[13px] font-medium transition-colors hover:border-[var(--pad-ink)]"
+            >
+              {t.auth.continueWithout}
+            </Link>
+          </div>
         </div>
       </header>
 
@@ -57,15 +80,9 @@ export default function AuthPageClient({ initialMode }: { initialMode: AuthMode 
       </main>
 
       <footer className="border-t border-[var(--pad-border)] px-6 py-6 text-center text-xs text-[var(--pad-ink-50)]">
-        Part of project EDTR, brought to you by{" "}
-        <a
-          href="https://ymg.digital"
-          target="_blank"
-          rel="noopener"
-          className="font-medium text-[var(--pad-ink)] hover:opacity-70"
-        >
-          ymg.digital
-        </a>
+        {t.landing.footerCredit
+          .replace("{project}", "Project EDTR")
+          .replace("{by}", "ymg.digital")}
       </footer>
     </div>
   );

@@ -2,7 +2,8 @@
 
 import { useState, useEffect } from "react";
 import { X } from "@phosphor-icons/react";
-import AuthForm, { AUTH_COPY, type AuthMode } from "./AuthForm";
+import AuthForm, { authCopy, type AuthMode } from "./AuthForm";
+import { useT } from "./I18nProvider";
 
 export default function AuthModal({
   open,
@@ -11,6 +12,7 @@ export default function AuthModal({
   open: boolean;
   onClose: () => void;
 }) {
+  const t = useT();
   const [mode, setMode] = useState<AuthMode>("login");
 
   useEffect(() => {
@@ -28,7 +30,7 @@ export default function AuthModal({
       onMouseDown={onClose}
       role="dialog"
       aria-modal="true"
-      aria-label={AUTH_COPY[mode].title}
+      aria-label={authCopy(t, mode).title}
     >
       <div
         className="w-full max-w-sm rounded-xl border border-border bg-background p-6 shadow-2xl"
@@ -39,7 +41,7 @@ export default function AuthModal({
             <span className="text-xl font-bold tracking-tight text-foreground">EDTR</span>
             <span className="text-base font-semibold tracking-wider text-muted-foreground">PAD</span>
           </div>
-          <button type="button" onClick={onClose} aria-label="Close" className="absolute right-0 rounded p-1 hover:bg-accent">
+          <button type="button" onClick={onClose} aria-label={t.dialog.close} className="absolute right-0 rounded p-1 hover:bg-accent">
             <X size={16} />
           </button>
         </div>
@@ -55,7 +57,7 @@ export default function AuthModal({
                 onClick={onClose}
                 className="mt-3 w-full text-center text-xs text-muted-foreground underline-offset-2 hover:underline"
               >
-                Continue without an account →
+                {t.auth.continueWithout}
               </button>
             ) : null
           }

@@ -30,6 +30,7 @@ import {
   replaceCurrent, replaceAll, clearSearch, getSearchState,
 } from "./searchPlugin";
 import { Popover, PopoverAnchor, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import {
   ArrowClockwise, Crop, FlipHorizontal, FlipVertical,
   TextAlignLeft, TextAlignCenter, TextAlignRight,
@@ -49,6 +50,8 @@ import AuthModal from "./AuthModal";
 import WelcomeScreen from "./WelcomeScreen";
 import { toast, Toaster } from "./toast";
 import { useAskDialogs } from "./AskDialogs";
+import { useT, useLocale } from "./I18nProvider";
+import { isLocale, type Dictionary } from "@/lib/i18n";
 import {
   listDocuments, createDocument, updateDocument, renameDocument, deleteDocument,
   getPreferences, savePreferences, setDocumentFolder,
@@ -732,6 +735,9 @@ export { mySchema };
 
 // ── File management ─────────────────────────────────────────────────────────
 type FileItem = { id: string; name: string; html: string; folder?: string | null };
+const ZOOM_PRESETS = [50, 75, 90, 100, 110, 125, 150];
+const MARGIN_PRESETS = [0.5, 1, 1.5, 2];
+
 const FILES_KEY = "wordpad-files";
 const ACTIVE_KEY = "wordpad-active";
 
@@ -819,29 +825,29 @@ const SLASH_COMMANDS: Array<{ id: SlashCommandId; title: string; hint: string; k
   { id: "emoji", title: "Emoji", hint: "Insert 😀 emoji", keywords: ["emoji", "smile", "icon"] },
 ];
 
-function prettySelectionType(state: EditorState): string {
+function prettySelectionType(state: EditorState, t: Dictionary): string {
   const sel = state.selection;
   if (sel instanceof NodeSelection) {
     const nodeName = sel.node.type.name;
-    if (nodeName === "image") return "Image";
-    if (nodeName === "table") return "Table";
+    if (nodeName === "image") return t.blockType.image;
+    if (nodeName === "table") return t.blockType.table;
     return nodeName;
   }
   const parent = sel.$from.parent;
-  if (parent.type.name === "paragraph") return "Paragraph";
-  if (parent.type.name === "heading") return `Heading ${parent.attrs.level || ""}`.trim();
-  if (parent.type.name === "blockquote") return "Blockquote";
-  if (parent.type.name === "code_block") return "Code Block";
-  if (parent.type.name === "list_item") return "List Item";
+  if (parent.type.name === "paragraph") return t.blockType.paragraph;
+  if (parent.type.name === "heading") return t.blockType.heading(parent.attrs.level || "");
+  if (parent.type.name === "blockquote") return t.blockType.blockquote;
+  if (parent.type.name === "code_block") return t.blockType.codeBlock;
+  if (parent.type.name === "list_item") return t.blockType.listItem;
   return parent.type.name;
 }
 
-function computeDocInfo(state: EditorState): DocInfo {
+function computeDocInfo(state: EditorState, t: Dictionary): DocInfo {
   const text = state.doc.textBetween(0, state.doc.content.size, " ", " ").trim();
   const words = text ? text.split(/\s+/).length : 0;
   const characters = text.length;
   return {
-    selectedType: prettySelectionType(state),
+    selectedType: prettySelectionType(state, t),
     words,
     characters,
   };
@@ -976,6 +982,12 @@ const DEFAULT_REF_CONTENT = `
 `;
 
 export default function Editor() {
+  const t = useT();
+  const { locale, setLocale } = useLocale();
+  // Read inside ProseMirror callbacks, which are created once and would
+  // otherwise close over the dictionary from the first render.
+  const tRef = useRef(t);
+  tRef.current = t;
   const editorRef = useRef<HTMLDivElement>(null);
   const viewRef   = useRef<EditorView | null>(null);
   const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -1244,11 +1256,11 @@ export default function Editor() {
   // Selection type updates instantly (cheap); word/char counts are debounced so
   // large documents aren't re-scanned on every keystroke.
   const refreshDocInfo = useCallback((state: EditorState) => {
-    setDocInfo((prev) => ({ ...prev, selectedType: prettySelectionType(state) }));
+    setDocInfo((prev) => ({ ...prev, selectedType: prettySelectionType(state, tRef.current) }));
     if (docInfoTimer.current) clearTimeout(docInfoTimer.current);
     docInfoTimer.current = setTimeout(() => {
       const v = viewRef.current;
-      if (v) setDocInfo(computeDocInfo(v.state));
+      if (v) setDocInfo(computeDocInfo(v.state, tRef.current));
     }, 300);
   }, []);
 
@@ -1269,9 +1281,9 @@ export default function Editor() {
     const url = `${window.location.origin}${docUrl(id)}`;
     try {
       await navigator.clipboard.writeText(url);
-      toast.success("Link copied — it opens this document directly.");
+      toast.success(t.toast.linkCopied);
     } catch {
-      toast.error("Could not copy the link. Your browser blocked clipboard access.");
+      toast.error(t.toast.linkCopyFailed);
     }
   }, [docUrl]);
 
@@ -1354,6 +1366,13 @@ export default function Editor() {
     };
   }, [flushSave]);
 
+  // The block-type label in the status bar is derived text, so it has to be
+  // recomputed when the language changes.
+  useEffect(() => {
+    const v = viewRef.current;
+    if (v) setDocInfo(computeDocInfo(v.state, t));
+  }, [t]);
+
   useEffect(() => {
     editorHandlers.flushSave = flushSave;
     return () => { editorHandlers.flushSave = undefined; };
@@ -1422,7 +1441,7 @@ export default function Editor() {
         setDocTitle(doc.name);
         syncUrlToDoc(doc.id);
       } catch {
-        toast.error("Could not create the document — check your connection and try again.");
+        toast.error(t.toast.createFailed);
       }
     } else {
       const v = viewRef.current;
@@ -1430,10 +1449,9 @@ export default function Editor() {
       const hasContent =
         !!v && active?.html !== DEFAULT_REF_CONTENT && v.state.doc.textContent.trim().length > 0;
       if (hasContent && !(await confirmDialog({
-        title: "Replace your current document?",
-        description:
-          "Without an account you have a single document, so starting a new one replaces it. A snapshot is kept in version history. Export first if you want a file copy.",
-        confirmLabel: "Replace document",
+        title: t.dialog.replaceDocTitle,
+        description: t.dialog.replaceDocBody,
+        confirmLabel: t.dialog.replaceDocConfirm,
         destructive: true,
       }))) return;
       if (saveTimer.current) { clearTimeout(saveTimer.current); saveTimer.current = null; }
@@ -1472,7 +1490,7 @@ export default function Editor() {
         setDocTitle(doc.name);
         syncUrlToDoc(doc.id);
       } catch {
-        toast.error("Could not restore the document — check your connection.");
+        toast.error(t.toast.restoreFailed);
       }
     } else {
       applyFiles([target, ...filesRef.current.filter((f) => f.id !== target.id)], target.id);
@@ -1493,13 +1511,13 @@ export default function Editor() {
     let list = filesRef.current.filter((f) => f.id !== id);
     const notifyDeleted = () => {
       if (!target) return;
-      toast(`Deleted "${target.name || "Untitled"}"`, {
-        action: { label: "Undo", onClick: () => restoreDeleted(target) },
+      toast(t.toast.deleted(target.name || t.sidebar.untitled), {
+        action: { label: t.toast.undo, onClick: () => restoreDeleted(target) },
       });
     };
     if (isAuthedRef.current) {
       deleteDocument(id).catch(() => {
-        toast.error("Could not delete on the server — the document may reappear after reload.");
+        toast.error(t.toast.deleteFailed);
       });
       if (list.length === 0) {
         try {
@@ -1530,7 +1548,7 @@ export default function Editor() {
     if (id === activeIdRef.current) setDocTitle(clean);
     applyFiles(filesRef.current.map((f) => (f.id === id ? { ...f, name: clean } : f)));
     if (isAuthedRef.current) renameDocument(id, clean).catch(() => {
-      toast.error("Could not save the new name — check your connection.");
+      toast.error(t.toast.renameFailed);
     });
   }, [applyFiles]);
 
@@ -1573,7 +1591,7 @@ export default function Editor() {
   const moveToFolder = useCallback((id: string, folder: string | null) => {
     applyFiles(filesRef.current.map((f) => (f.id === id ? { ...f, folder } : f)));
     if (isAuthedRef.current) setDocumentFolder(id, folder).catch(() => {
-      toast.error("Could not move the document — check your connection.");
+      toast.error(t.toast.moveFailed);
     });
   }, [applyFiles]);
 
@@ -1608,7 +1626,7 @@ export default function Editor() {
     const html = await loadVersionHtml(versionId);
     if (html === null) {
       setVersionPreview(null);
-      toast.error("Could not load this version.");
+      toast.error(t.toast.versionLoadFailed);
       return;
     }
     setVersionPreview({ id: versionId, html });
@@ -1628,7 +1646,7 @@ export default function Editor() {
     setDocFromHtml(html);
     if (viewRef.current) persistDoc(id, viewRef.current.state);
     setVersionsOpen(false);
-    toast.success("Version restored — the previous state was saved to history.");
+    toast.success(t.toast.versionRestored);
   }, [loadVersionHtml, persistDoc, setDocFromHtml]);
 
   const exportFile = useCallback(async (file: FileItem, fmt: "html" | "txt" | "docx" | "rtf" | "md") => {
@@ -1654,7 +1672,7 @@ export default function Editor() {
         downloadBlob(new Blob([docToRtf(doc)], { type: "application/rtf" }), `${safe}.rtf`);
       }
     }
-    toast.success(`Downloaded ${safe}.${fmt}`);
+    toast.success(t.toast.downloaded(`${safe}.${fmt}`));
   }, []);
 
   // Export the document currently open in the editor (used by the File menu).
@@ -1673,7 +1691,7 @@ export default function Editor() {
       const { html, name } = await fileToHtml(file);
       await addNewDocument(name, html);
     } catch {
-      toast.error("Could not open this file. Supported formats: .txt, .md, .html, .docx");
+      toast.error(t.toast.openFailed);
     }
   }, [addNewDocument]);
 
@@ -1713,9 +1731,9 @@ export default function Editor() {
     if (!authUser?.email) return;
     try {
       await authClient.sendVerificationEmail({ email: authUser.email, callbackURL: "/pad" });
-      toast.success("Verification email sent — check your inbox.");
+      toast.success(t.toast.verificationSent);
     } catch {
-      toast.error("Could not send verification email.");
+      toast.error(t.toast.verificationFailed);
     }
   }, [authUser?.email]);
 
@@ -1889,7 +1907,8 @@ export default function Editor() {
     if (typeof p.spellcheck === "boolean") setSpellcheckOn(p.spellcheck);
     if (typeof p.toolbar === "boolean") setShowToolbar(p.toolbar);
     if (typeof p.ruler === "boolean") setShowRuler(p.ruler);
-  }, []);
+    if (isLocale(p.locale)) setLocale(p.locale);
+  }, [setLocale]);
 
   // Load documents + preferences once the session resolves (DB when signed in, localStorage for guests).
   useEffect(() => {
@@ -1923,7 +1942,7 @@ export default function Editor() {
         const deepLinkId = takeDeepLinkId();
         const deepLinked = deepLinkId ? docs.find((d) => d.id === deepLinkId) : undefined;
         if (deepLinkId && !deepLinked) {
-          toast.warning("That document link is no longer available — opening your latest document.");
+          toast.warning(t.toast.deepLinkMissing);
         }
         const active = deepLinked ?? docs[0];
         filesRef.current = docs; activeIdRef.current = active.id;
@@ -1984,16 +2003,17 @@ export default function Editor() {
         spellcheck: spellcheckOn,
         toolbar: showToolbar,
         ruler: showRuler,
+        locale,
       }).catch(() => {
         // Warn once per session — repeating it on every settings tweak would nag.
         if (prefsErrorShownRef.current) return;
         prefsErrorShownRef.current = true;
-        toast.error("Could not save your editor settings — they may not carry over to your next visit.");
+        toast.error(t.toast.prefsSaveFailed);
       });
     }, 700);
   }, [
     isAuthed, isDark, zoomPercent, pageMarginCm, paperBgColor, sidebarOpen,
-    spellLang, printHeaderFooter, spellcheckOn, showToolbar, showRuler,
+    spellLang, printHeaderFooter, spellcheckOn, showToolbar, showRuler, locale,
   ]);
 
   const handleInsertTable = useCallback((rows: number, cols: number) => {
@@ -2014,7 +2034,7 @@ export default function Editor() {
     const v = viewRef.current;
     if (!v) return;
     if (v.state.selection.empty) {
-      toast.warning("Select the text you want to link first.");
+      toast.warning(t.toast.selectTextToLink);
       return;
     }
     // Prefill with an existing link's href when editing.
@@ -2165,10 +2185,10 @@ export default function Editor() {
       return;
     }
     const next = await promptDialog({
-      title: "Rename document",
-      label: "Document name",
+      title: t.dialog.renameTitle,
+      label: t.dialog.renameLabel,
       defaultValue: docTitle,
-      confirmLabel: "Rename",
+      confirmLabel: t.dialog.renameConfirm,
     });
     if (next) renameActive(next);
   }, [docTitle, promptDialog, renameActive]);
@@ -2214,7 +2234,7 @@ export default function Editor() {
     const v = viewRef.current;
     if (!v) return;
     const { from, to, empty } = v.state.selection;
-    if (empty) { toast.warning("Select some text first."); return; }
+    if (empty) { toast.warning(t.toast.selectTextFirst); return; }
     const tr = v.state.tr;
     v.state.doc.nodesBetween(from, to, (node, pos) => {
       if (!node.isText || !node.text) return true;
@@ -2244,7 +2264,7 @@ export default function Editor() {
       }
     });
     if (!entries.length) {
-      toast.warning("Add some headings first — the table of contents is built from headings (H1–H3).");
+      toast.warning(t.toast.needHeadings);
       return;
     }
     const nodes: PMNode[] = [
@@ -2272,7 +2292,7 @@ export default function Editor() {
     const v = viewRef.current;
     if (!v) return;
     if (!("speechSynthesis" in window)) {
-      toast.error("Read aloud isn't supported in this browser.");
+      toast.error(t.toast.readAloudUnsupported);
       return;
     }
     const sel = v.state.selection;
@@ -2412,7 +2432,7 @@ export default function Editor() {
     if (!cropper) return;
     const canvas = cropper.getCanvas();
     if (!canvas) {
-      toast.error("Could not crop this image.");
+      toast.error(t.toast.cropFailed);
       return;
     }
     try {
@@ -2421,7 +2441,7 @@ export default function Editor() {
       setCropDialogOpen(false);
       setCropSource(null);
     } catch {
-      toast.error("This image can't be cropped because it comes from another site.");
+      toast.error(t.toast.cropCrossOrigin);
     }
   }, [updateSelectedImageAttrs]);
 
@@ -2597,7 +2617,7 @@ export default function Editor() {
               onClick={createFile}
               className="flex w-full items-center justify-center gap-2 rounded-md border border-sidebar-border px-2.5 py-2 text-sm font-medium hover:bg-sidebar-accent hover:text-sidebar-accent-foreground transition-colors"
             >
-              <Plus size={16} weight="bold" /> New document
+              <Plus size={16} weight="bold" /> {t.sidebar.newDocument}
             </button>
           </div>
 
@@ -2608,7 +2628,7 @@ export default function Editor() {
               <input
                 value={fileSearch}
                 onChange={(e) => setFileSearch(e.target.value)}
-                placeholder="Search documents"
+                placeholder={t.sidebar.search}
                 className="min-w-0 flex-1 bg-transparent py-1.5 text-sm outline-none placeholder:text-muted-foreground"
               />
             </div>
@@ -2655,13 +2675,13 @@ export default function Editor() {
                             className="flex min-w-0 flex-1 items-center gap-2 py-1.5 text-left text-sm"
                           >
                             <FileText size={16} className="shrink-0 opacity-70" />
-                            <span className="truncate">{f.name || "Untitled"}</span>
+                            <span className="truncate">{f.name || t.sidebar.untitled}</span>
                           </button>
                           <button
                             type="button"
                             onClick={() => deleteFile(f.id)}
-                            title="Delete document"
-                            aria-label="Delete document"
+                            title={t.sidebar.deleteDocument}
+                            aria-label={t.sidebar.deleteDocument}
                             className="shrink-0 rounded p-1 opacity-0 group-hover:opacity-100 focus-visible:opacity-100 focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-ring hover:bg-destructive/15 hover:text-destructive transition"
                           >
                             <Trash size={14} />
@@ -2672,17 +2692,17 @@ export default function Editor() {
                   </ContextMenuTrigger>
                   <ContextMenuContent className="w-48">
                     <ContextMenuItem onClick={() => { switchFile(f.id); setRenamingId(f.id); }}>
-                      <PencilSimple size={15} /> Rename
+                      <PencilSimple size={15} /> {t.sidebar.rename}
                     </ContextMenuItem>
                     <ContextMenuItem onClick={() => { switchFile(f.id); openVersions(); }}>
-                      <ClockCounterClockwise size={15} /> Version history
+                      <ClockCounterClockwise size={15} /> {t.sidebar.versionHistory}
                     </ContextMenuItem>
                     <ContextMenuItem onClick={() => copyDocLink(f.id)}>
-                      <LinkSimple size={15} /> Copy link
+                      <LinkSimple size={15} /> {t.sidebar.copyLink}
                     </ContextMenuItem>
                     <ContextMenuSub>
                       <ContextMenuSubTrigger>
-                        <FolderSimple size={15} /> Move to folder
+                        <FolderSimple size={15} /> {t.sidebar.moveToFolder}
                       </ContextMenuSubTrigger>
                       <ContextMenuSubContent>
                         {allFolders.map((folder) => (
@@ -2694,26 +2714,26 @@ export default function Editor() {
                         <ContextMenuItem
                           onClick={async () => {
                             const name = await promptDialog({
-                              title: "New folder",
-                              label: "Folder name",
-                              placeholder: "e.g. Work",
-                              confirmLabel: "Create",
+                              title: t.dialog.newFolderTitle,
+                              label: t.dialog.newFolderLabel,
+                              placeholder: t.dialog.newFolderPlaceholder,
+                              confirmLabel: t.dialog.create,
                             });
                             if (name) moveToFolder(f.id, name);
                           }}
                         >
-                          New folder…
+                          {t.sidebar.newFolder}
                         </ContextMenuItem>
                         {f.folder && (
                           <ContextMenuItem onClick={() => moveToFolder(f.id, null)}>
-                            Remove from folder
+                            {t.sidebar.removeFromFolder}
                           </ContextMenuItem>
                         )}
                       </ContextMenuSubContent>
                     </ContextMenuSub>
                     <ContextMenuSub>
                       <ContextMenuSubTrigger>
-                        <DownloadSimple size={15} /> Export
+                        <DownloadSimple size={15} /> {t.sidebar.export}
                       </ContextMenuSubTrigger>
                       <ContextMenuSubContent>
                         <ContextMenuItem onClick={() => exportFile(f, "docx")}>Word (.docx)</ContextMenuItem>
@@ -2725,7 +2745,7 @@ export default function Editor() {
                     </ContextMenuSub>
                     <ContextMenuSeparator />
                     <ContextMenuItem variant="destructive" onClick={() => deleteFile(f.id)}>
-                      <Trash size={15} /> Delete
+                      <Trash size={15} /> {t.sidebar.delete}
                     </ContextMenuItem>
                   </ContextMenuContent>
                 </ContextMenu>
@@ -2749,7 +2769,7 @@ export default function Editor() {
                   <div className="flex flex-col gap-0.5">
                     {visible.filter((f) => !f.folder).map(renderItem)}
                     {visible.length === 0 && (
-                      <p className="px-2.5 py-2 text-xs text-muted-foreground">No documents</p>
+                      <p className="px-2.5 py-2 text-xs text-muted-foreground">{t.sidebar.noDocuments}</p>
                     )}
                   </div>
                 </>
@@ -2803,7 +2823,7 @@ export default function Editor() {
         onTitleChange={renameActive}
         onNewDoc={createFile}
         onShowHome={() => setWelcomeOpen(true)}
-        onSave={() => { flushSave(); toast.success("Saved"); }}
+        onSave={() => { flushSave(); toast.success(t.toast.saved); }}
         onCopyLink={() => copyDocLink(activeIdRef.current)}
         onRenameDoc={renameActiveDoc}
         onDeleteDoc={() => deleteFile(activeIdRef.current)}
@@ -2917,10 +2937,10 @@ export default function Editor() {
         <button
           type="button"
           onClick={() => setFocusMode(false)}
-          title="Exit focus mode (Esc)"
+          title={`${t.status.exitFocusMode} (Esc)`}
           className="fixed right-4 top-4 z-[1100] flex items-center gap-1.5 rounded-full border border-border bg-card/90 px-3 py-1.5 text-xs text-muted-foreground shadow-md backdrop-blur hover:text-foreground"
         >
-          <ArrowsInSimple size={14} /> Exit focus (Esc)
+          <ArrowsInSimple size={14} /> {t.status.exitFocusMode}
         </button>
       )}
       {imagePopover && (
@@ -2968,9 +2988,9 @@ export default function Editor() {
       )}
       {cropDialogOpen && cropSource && (
         <div className="fixed inset-0 z-[1300] flex items-center justify-center bg-black/40 p-4">
-          <div role="dialog" aria-modal="true" aria-label="Crop image" className="w-full max-w-4xl rounded-lg border border-border bg-card text-card-foreground p-4 shadow-2xl">
+          <div role="dialog" aria-modal="true" aria-label={t.dialog.cropImage} className="w-full max-w-4xl rounded-lg border border-border bg-card text-card-foreground p-4 shadow-2xl">
             <div className="mb-3 flex items-center justify-between">
-              <h3 className="text-sm font-semibold">Crop Image</h3>
+              <h3 className="text-sm font-semibold">{t.dialog.cropImage}</h3>
               <button
                 type="button"
                 className="rounded border border-input px-2 py-1 text-xs hover:bg-accent/70"
@@ -2979,11 +2999,11 @@ export default function Editor() {
                   setCropSource(null);
                 }}
               >
-                Close
+                {t.dialog.close}
               </button>
             </div>
             <div className="h-[520px] w-full overflow-hidden rounded border border-border bg-muted">
-              <Suspense fallback={<div className="flex h-full items-center justify-center text-sm text-muted-foreground">Loading cropper…</div>}>
+              <Suspense fallback={<div className="flex h-full items-center justify-center text-sm text-muted-foreground">{t.dialog.loadingCropper}</div>}>
                 <Cropper
                   ref={cropperRef}
                   src={cropSource}
@@ -3000,14 +3020,14 @@ export default function Editor() {
                   setCropSource(null);
                 }}
               >
-                Cancel
+                {t.dialog.cancel}
               </button>
               <button
                 type="button"
                 className="rounded bg-primary px-3 py-1.5 text-sm text-primary-foreground hover:opacity-90"
                 onClick={applyCrop}
               >
-                Apply Crop
+                {t.dialog.applyCrop}
               </button>
             </div>
           </div>
@@ -3018,9 +3038,9 @@ export default function Editor() {
           className="fixed inset-0 z-[1300] flex items-center justify-center bg-black/40 p-4"
           onMouseDown={(e) => { if (e.target === e.currentTarget) setLinkDialog(null); }}
         >
-          <div role="dialog" aria-modal="true" aria-label={linkDialog.mode === "link" ? "Insert link" : "Insert image from URL"} className="w-full max-w-sm rounded-lg border border-border bg-popover text-popover-foreground p-4 shadow-2xl">
+          <div role="dialog" aria-modal="true" aria-label={linkDialog.mode === "link" ? t.dialog.insertLink : t.dialog.insertImageUrl} className="w-full max-w-sm rounded-lg border border-border bg-popover text-popover-foreground p-4 shadow-2xl">
             <h3 className="mb-2 text-sm font-semibold">
-              {linkDialog.mode === "link" ? "Insert link" : "Insert image from URL"}
+              {linkDialog.mode === "link" ? t.dialog.insertLink : t.dialog.insertImageUrl}
             </h3>
             <input
               autoFocus
@@ -3030,7 +3050,7 @@ export default function Editor() {
                 if (e.key === "Enter") { e.preventDefault(); applyLinkDialog(); }
                 else if (e.key === "Escape") { e.preventDefault(); setLinkDialog(null); }
               }}
-              placeholder={linkDialog.mode === "link" ? "https://example.com" : "https://example.com/image.png"}
+              placeholder={linkDialog.mode === "link" ? t.dialog.linkPlaceholder : t.dialog.imagePlaceholder}
               className="w-full rounded border border-input bg-background px-2 py-1.5 text-sm outline-none focus:ring-1 focus:ring-ring"
             />
             <div className="mt-3 flex items-center justify-end gap-2">
@@ -3040,7 +3060,7 @@ export default function Editor() {
                   onClick={removeLink}
                   className="mr-auto rounded px-2 py-1.5 text-xs text-destructive hover:bg-destructive/10"
                 >
-                  Remove link
+                  {t.dialog.removeLink}
                 </button>
               )}
               <button
@@ -3048,14 +3068,14 @@ export default function Editor() {
                 onClick={() => setLinkDialog(null)}
                 className="rounded border border-input px-3 py-1.5 text-sm hover:bg-accent/70"
               >
-                Cancel
+                {t.dialog.cancel}
               </button>
               <button
                 type="button"
                 onClick={applyLinkDialog}
                 className="rounded bg-primary px-3 py-1.5 text-sm text-primary-foreground hover:opacity-90"
               >
-                Apply
+                {t.dialog.apply}
               </button>
             </div>
           </div>
@@ -3121,7 +3141,7 @@ export default function Editor() {
                   closeFind();
                 }
               }}
-              placeholder="Find"
+              placeholder={t.find.findPlaceholder}
               className="flex-1 rounded border border-input bg-background px-2 py-1 text-sm outline-none focus:ring-1 focus:ring-ring"
             />
             <span className="text-[11px] tabular-nums text-muted-foreground w-12 text-center shrink-0">
@@ -3142,26 +3162,26 @@ export default function Editor() {
               ref={replaceInputRef}
               value={replaceText}
               onChange={(e) => setReplaceText(e.target.value)}
-              placeholder="Replace with"
+              placeholder={t.find.replacePlaceholder}
               className="flex-1 rounded border border-input bg-background px-2 py-1 text-sm outline-none focus:ring-1 focus:ring-ring"
             />
             <button type="button"
               className="h-7 rounded border border-input bg-background px-2 text-xs hover:bg-accent/70 shrink-0"
-              onClick={() => { const v = viewRef.current; if (v) replaceCurrent(v, replaceText); }}>Replace</button>
+              onClick={() => { const v = viewRef.current; if (v) replaceCurrent(v, replaceText); }}>{t.find.replace}</button>
             <button type="button"
               className="h-7 rounded border border-input bg-background px-2 text-xs hover:bg-accent/70 shrink-0"
-              onClick={() => { const v = viewRef.current; if (v) replaceAll(v, replaceText); }}>All</button>
+              onClick={() => { const v = viewRef.current; if (v) replaceAll(v, replaceText); }}>{t.find.replaceAll}</button>
           </div>
           <div className="flex items-center gap-3">
             <label className="flex items-center gap-1.5 text-[11px] text-muted-foreground select-none">
               <input type="checkbox" checked={caseSensitive}
                 onChange={(e) => setCaseSensitive(e.target.checked)} />
-              Match case
+              {t.find.matchCase}
             </label>
             <label className="flex items-center gap-1.5 text-[11px] text-muted-foreground select-none">
               <input type="checkbox" checked={wholeWord}
                 onChange={(e) => setWholeWord(e.target.checked)} />
-              Whole word
+              {t.find.wholeWord}
             </label>
           </div>
         </div>
@@ -3208,7 +3228,7 @@ export default function Editor() {
                 viewRef.current?.focus();
               }
             }}
-            placeholder="Search commands..."
+            placeholder={t.slash.placeholder}
             role="combobox"
             aria-expanded="true"
             aria-controls="slash-menu-list"
@@ -3216,7 +3236,7 @@ export default function Editor() {
             className="mb-1 w-full rounded border border-input bg-background px-2 py-1.5 text-sm outline-none focus:ring-1 focus:ring-ring"
           />
           {slashItems.length === 0 ? (
-            <div className="px-2 py-2 text-xs text-muted-foreground">No command found</div>
+            <div className="px-2 py-2 text-xs text-muted-foreground">{t.slash.noResults}</div>
           ) : (
             <div ref={slashListRef} id="slash-menu-list" role="listbox" className="max-h-[132px] overflow-y-auto">
               {slashItems.map((item, idx) => (
@@ -3251,8 +3271,8 @@ export default function Editor() {
         <div className="relative z-10 flex items-center justify-between gap-2">
           <div className="flex items-center gap-2 text-muted-foreground">
             <span className="max-[520px]:hidden"><span className="font-medium text-foreground">{docInfo.selectedType}</span></span>
-            <span>Words: <span className="font-medium text-foreground">{docInfo.words}</span></span>
-            <span className="max-[520px]:hidden">Chars: <span className="font-medium text-foreground">{docInfo.characters}</span></span>
+            <span>{t.status.words}: <span className="font-medium text-foreground">{docInfo.words}</span></span>
+            <span className="max-[520px]:hidden">{t.status.chars}: <span className="font-medium text-foreground">{docInfo.characters}</span></span>
             {saveStatus !== "idle" && (
               <>
                 <span
@@ -3261,9 +3281,9 @@ export default function Editor() {
                     saveStatus === "error" ? "font-medium text-destructive" : "text-muted-foreground"
                   )}
                 >
-                  {saveStatus === "saving" && "Saving…"}
-                  {saveStatus === "saved" && "Saved"}
-                  {saveStatus === "error" && (isAuthed ? "Not saved — check your connection" : "Not saved — storage is full, export your work")}
+                  {saveStatus === "saving" && t.status.saving}
+                  {saveStatus === "saved" && t.status.saved}
+                  {saveStatus === "error" && (isAuthed ? t.status.notSavedConnection : t.status.notSavedStorage)}
                 </span>
                 {/* Compact form for narrow screens — save failures must stay visible on phones. */}
                 <span
@@ -3272,49 +3292,47 @@ export default function Editor() {
                     saveStatus === "error" ? "font-medium text-destructive" : "text-muted-foreground"
                   )}
                 >
-                  {saveStatus === "saving" && "Saving…"}
-                  {saveStatus === "saved" && "Saved"}
-                  {saveStatus === "error" && "Not saved!"}
+                  {saveStatus === "saving" && t.status.saving}
+                  {saveStatus === "saved" && t.status.saved}
+                  {saveStatus === "error" && t.status.notSavedShort}
                 </span>
               </>
             )}
           </div>
           <div className="flex items-center gap-2">
-            <label className="flex items-center gap-1.5">
-              <span className="text-muted-foreground">Zoom</span>
-              <select
-                className="h-6 rounded border border-input bg-background px-1.5 text-[11px]"
-                value={String(zoomPercent)}
-                onChange={(e) => setZoomPercent(Number(e.target.value))}
-              >
-                {![50, 75, 90, 100, 110, 125, 150].includes(zoomPercent) && (
-                  <option value={String(zoomPercent)}>{zoomPercent}%</option>
-                )}
-                <option value="50">50%</option>
-                <option value="75">75%</option>
-                <option value="90">90%</option>
-                <option value="100">100%</option>
-                <option value="110">110%</option>
-                <option value="125">125%</option>
-                <option value="150">150%</option>
-              </select>
-            </label>
-            <label className="flex items-center gap-1.5 max-[799px]:hidden">
-              <span className="text-muted-foreground">Page Margin</span>
-              <select
-                className="h-6 rounded border border-input bg-background px-1.5 text-[11px]"
-                value={String(pageMarginCm)}
-                onChange={(e) => setPageMarginCm(Number(e.target.value))}
-              >
-                <option value="0.5">0.5 cm</option>
-                <option value="1">1 cm</option>
-                <option value="1.5">1.5 cm</option>
-                <option value="2">2 cm</option>
-              </select>
-            </label>
+            <div className="flex items-center gap-1.5">
+              <span className="text-muted-foreground">{t.status.zoom}</span>
+              <Select value={String(zoomPercent)} onValueChange={(v) => setZoomPercent(Number(v))}>
+                <SelectTrigger size="sm" aria-label={t.status.zoom} className="h-6 w-[76px] px-1.5 text-[11px]">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent align="end">
+                  {/* A zoom restored from preferences may not be one of the presets. */}
+                  {!ZOOM_PRESETS.includes(zoomPercent) && (
+                    <SelectItem value={String(zoomPercent)} className="text-xs">{zoomPercent}%</SelectItem>
+                  )}
+                  {ZOOM_PRESETS.map((z) => (
+                    <SelectItem key={z} value={String(z)} className="text-xs">{z}%</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="flex items-center gap-1.5 max-[799px]:hidden">
+              <span className="text-muted-foreground">{t.status.pageMargin}</span>
+              <Select value={String(pageMarginCm)} onValueChange={(v) => setPageMarginCm(Number(v))}>
+                <SelectTrigger size="sm" aria-label={t.status.pageMargin} className="h-6 w-[82px] px-1.5 text-[11px]">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent align="end">
+                  {MARGIN_PRESETS.map((m) => (
+                    <SelectItem key={m} value={String(m)} className="text-xs">{m} cm</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
             {!isDark && (
             <label className="flex items-center gap-1.5 max-[799px]:hidden">
-              <span className="text-muted-foreground">Background</span>
+              <span className="text-muted-foreground">{t.status.background}</span>
               <Popover>
                 <PopoverTrigger asChild>
                   <button
@@ -3376,28 +3394,28 @@ export default function Editor() {
           <div
             role="dialog"
             aria-modal="true"
-            aria-label="Version history"
+            aria-label={t.dialog.versionHistory}
             className={cn(
               "w-full rounded-lg border border-border bg-popover text-popover-foreground p-4 shadow-2xl",
               versionPreview ? "max-w-2xl" : "max-w-sm"
             )}
           >
             <div className="mb-1 flex items-center justify-between">
-              <h3 className="text-sm font-semibold">Version history</h3>
-              <button type="button" onClick={() => setVersionsOpen(false)} aria-label="Close" className="rounded p-1 hover:bg-accent">
+              <h3 className="text-sm font-semibold">{t.dialog.versionHistory}</h3>
+              <button type="button" onClick={() => setVersionsOpen(false)} aria-label={t.dialog.close} className="rounded p-1 hover:bg-accent">
                 <X size={14} />
               </button>
             </div>
             <p className="mb-3 text-xs text-muted-foreground">
               {isAuthed
-                ? "Versions are saved automatically every few minutes while you edit. Click one to preview it."
-                : "The last 5 versions are kept on this device. Click one to preview it. Sign in to keep more."}
+                ? t.dialog.versionsMember
+                : t.dialog.versionsGuest}
             </p>
             {versions === null ? (
-              <p className="py-4 text-center text-sm text-muted-foreground">Loading…</p>
+              <p className="py-4 text-center text-sm text-muted-foreground">{t.dialog.loading}</p>
             ) : versions.length === 0 ? (
               <p className="py-4 text-center text-sm text-muted-foreground">
-                No versions yet — keep editing and they will appear here.
+                {t.dialog.versionsEmpty}
               </p>
             ) : (
               <div className={cn("flex gap-3", !versionPreview && "flex-col")}>
@@ -3422,7 +3440,7 @@ export default function Editor() {
                         onClick={() => restoreVersion(ver.id)}
                         className="shrink-0 rounded border border-input px-2 py-1 text-xs hover:bg-accent/70"
                       >
-                        Restore
+                        {t.dialog.restore}
                       </button>
                     </div>
                   ))}
@@ -3430,7 +3448,7 @@ export default function Editor() {
                 {versionPreview && (
                   <div className="min-w-0 flex-1 overflow-hidden rounded-md border border-border bg-white text-black">
                     {versionPreview.html === null ? (
-                      <p className="py-10 text-center text-sm text-muted-foreground">Loading preview…</p>
+                      <p className="py-10 text-center text-sm text-muted-foreground">{t.dialog.loadingPreview}</p>
                     ) : (
                       <div
                         className="version-preview max-h-72 overflow-y-auto px-4 py-3"
@@ -3449,10 +3467,10 @@ export default function Editor() {
           className="fixed inset-0 z-[1300] flex items-center justify-center bg-black/40 p-4"
           onMouseDown={(e) => { if (e.target === e.currentTarget) setShortcutsOpen(false); }}
         >
-          <div role="dialog" aria-modal="true" aria-label="Keyboard shortcuts" className="w-full max-w-md rounded-lg border border-border bg-popover text-popover-foreground p-4 shadow-2xl">
+          <div role="dialog" aria-modal="true" aria-label={t.dialog.shortcuts} className="w-full max-w-md rounded-lg border border-border bg-popover text-popover-foreground p-4 shadow-2xl">
             <div className="mb-3 flex items-center justify-between">
-              <h3 className="text-sm font-semibold">Keyboard shortcuts</h3>
-              <button type="button" onClick={() => setShortcutsOpen(false)} aria-label="Close" className="rounded p-1 hover:bg-accent">
+              <h3 className="text-sm font-semibold">{t.dialog.shortcuts}</h3>
+              <button type="button" onClick={() => setShortcutsOpen(false)} aria-label={t.dialog.close} className="rounded p-1 hover:bg-accent">
                 <X size={14} />
               </button>
             </div>

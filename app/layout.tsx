@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import { I18nProvider } from "./components/I18nProvider";
 import { Analytics } from "@vercel/analytics/next";
 import "./globals.css";
 
@@ -69,9 +70,11 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        <TooltipProvider delayDuration={400}>
-          {children}
-        </TooltipProvider>
+        <I18nProvider>
+          <TooltipProvider delayDuration={400}>
+            {children}
+          </TooltipProvider>
+        </I18nProvider>
         <Analytics />
       </body>
     </html>

@@ -10,6 +10,7 @@ import { undo, redo } from "prosemirror-history";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 import ColorPicker from "./ColorPicker";
+import { useT } from "./I18nProvider";
 import type { EmojiClickData } from "emoji-picker-react";
 
 // Emoji picker is a large chunk — load it only when the popover opens.
@@ -59,14 +60,7 @@ const FONTS = [
 
 const FONT_SIZES = ["8","9","10","11","12","14","16","18","20","24","28","36","48","72"];
 
-const BLOCK_STYLES = [
-  { value: "paragraph",  label: "Normal" },
-  { value: "h1",         label: "Heading 1" },
-  { value: "h2",         label: "Heading 2" },
-  { value: "h3",         label: "Heading 3" },
-  { value: "h4",         label: "Heading 4" },
-  { value: "code_block", label: "Code" },
-];
+const BLOCK_VALUES = ["paragraph", "h1", "h2", "h3", "h4", "code_block"] as const;
 
 /* ── Button ─────────────────────────────────────────────────────────────── */
 const BTN = cn(
@@ -122,7 +116,7 @@ function Sep() {
 }
 
 /* ── TablePicker ─────────────────────────────────────────────────────────── */
-function TablePicker({ onPick }: { onPick: (rows: number, cols: number) => void }) {
+function TablePicker({ onPick, t }: { onPick: (rows: number, cols: number) => void; t: ReturnType<typeof useT> }) {
   const [hovered, setHovered] = useState({ r: 0, c: 0 });
   const [open, setOpen] = useState(false);
   const pick = (r: number, c: number) => { setOpen(false); onPick(r, c); };
@@ -132,12 +126,12 @@ function TablePicker({ onPick }: { onPick: (rows: number, cols: number) => void 
       <Tooltip>
         <TooltipTrigger asChild>
           <PopoverTrigger asChild>
-            <button type="button" aria-label="Insert table" onMouseDown={(e) => e.preventDefault()} className={cn(BTN, open && "bg-accent text-accent-foreground")}>
+            <button type="button" aria-label={t.toolbar.insertTable} onMouseDown={(e) => e.preventDefault()} className={cn(BTN, open && "bg-accent text-accent-foreground")}>
               <Table size={16} />
             </button>
           </PopoverTrigger>
         </TooltipTrigger>
-        <TooltipContent side="bottom" className="text-xs">Insert table</TooltipContent>
+        <TooltipContent side="bottom" className="text-xs">{t.toolbar.insertTable}</TooltipContent>
       </Tooltip>
       <PopoverContent side="bottom" align="start" className="w-auto p-2 space-y-1.5"
         onOpenAutoFocus={(e) => e.preventDefault()} onCloseAutoFocus={(e) => e.preventDefault()}>
@@ -148,7 +142,7 @@ function TablePicker({ onPick }: { onPick: (rows: number, cols: number) => void 
               const active = ri < hovered.r && ci < hovered.c;
               return (
                 <button key={`${ri}-${ci}`} type="button"
-                  aria-label={`Insert ${ri + 1} × ${ci + 1} table`}
+                  aria-label={t.tableMenu.insertSized(ri + 1, ci + 1)}
                   className={cn("w-5 h-5 border rounded-sm cursor-pointer transition-colors",
                     "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
                     active ? "bg-blue-500 border-blue-600" : "bg-background border-border hover:border-blue-400")}
@@ -162,7 +156,7 @@ function TablePicker({ onPick }: { onPick: (rows: number, cols: number) => void 
           )}
         </div>
         <p className="text-xs text-center text-muted-foreground">
-          {hovered.r > 0 && hovered.c > 0 ? `${hovered.r} × ${hovered.c}` : "Select table size"}
+          {hovered.r > 0 && hovered.c > 0 ? t.tableMenu.rowsByCols(hovered.r, hovered.c) : t.tableMenu.selectSize}
         </p>
       </PopoverContent>
     </Popover>
@@ -184,6 +178,11 @@ interface ToolbarProps {
 export default function Toolbar({
   viewRef, schema, onInsertTable, onPageBreakAdd, onLinkAdd, onImageAdd, tick,
 }: ToolbarProps) {
+  const t = useT();
+  const blockLabel = (value: string) =>
+    value === "paragraph" ? t.toolbar.normal
+      : value === "code_block" ? t.toolbar.code
+      : t.toolbar.heading(Number(value[1]));
   const [textColor, setTextColor] = useState("#000000");
   const [bgColor,   setBgColor]   = useState("#ffff00");
   const SZ = 22;
@@ -286,24 +285,24 @@ export default function Toolbar({
     <div className="max-w-[850px] mx-auto px-3 pt-1.5 pb-1 flex items-stretch justify-center gap-0">
 
       {/* ── History ── */}
-      <Group label="History">
+      <Group label={t.toolbar.groupHistory}>
         <Row>
-          <TBtn onClick={() => cmd(undo)} tip="Undo (Ctrl+Z)"><ArrowCounterClockwise size={SZ} /></TBtn>
-          <TBtn onClick={() => cmd(redo)} tip="Redo (Ctrl+Y)"><ArrowClockwise size={SZ} /></TBtn>
+          <TBtn onClick={() => cmd(undo)} tip={`${t.edit.undo} (Ctrl+Z)`}><ArrowCounterClockwise size={SZ} /></TBtn>
+          <TBtn onClick={() => cmd(redo)} tip={`${t.edit.redo} (Ctrl+Y)`}><ArrowClockwise size={SZ} /></TBtn>
         </Row>
       </Group>
 
       <Sep />
 
       {/* ── Font ── */}
-      <Group label="Font">
+      <Group label={t.toolbar.groupFont}>
         {/* Row 1: font family + size + highlight */}
         <Row between>
           <select className={cn(SEL, "w-[120px]")}
             onChange={(e) => applyMark("fontFamily", { family: e.target.value })}
             value={FONTS.some(f => f.value === currentFontFamily) ? currentFontFamily : ""}
-            aria-label="Font family" title="Font family">
-            <option value="" disabled>Font</option>
+            aria-label={t.toolbar.fontFamily} title={t.toolbar.fontFamily}>
+            <option value="" disabled>{t.toolbar.fontPlaceholder}</option>
             <optgroup label="Classic">
               {FONTS.slice(0, 7).map(f => <option key={f.value} value={f.value}>{f.label}</option>)}
             </optgroup>
@@ -322,26 +321,26 @@ export default function Toolbar({
           </select>
           <select className={cn(SEL, "w-[54px]")}
             onChange={(e) => applyMark("fontSize", { size: e.target.value + "pt" })}
-            value={currentFontSize} aria-label="Font size" title="Font size">
+            value={currentFontSize} aria-label={t.toolbar.fontSize} title={t.toolbar.fontSize}>
             {FONT_SIZES.includes(currentFontSize) ? null : <option value={currentFontSize}>{currentFontSize}</option>}
             {FONT_SIZES.map(s => <option key={s} value={s}>{s}</option>)}
           </select>
-          <ColorPicker color={bgColor}   onChange={(c) => { setBgColor(c);   applyMark("bgColor",   { color: c }); }} tip="Highlight color" icon={<Highlighter size={18} />} />
+          <ColorPicker color={bgColor}   onChange={(c) => { setBgColor(c);   applyMark("bgColor",   { color: c }); }} tip={t.toolbar.highlightColor} icon={<Highlighter size={18} />} />
         </Row>
         {/* Row 2: B I U S + text color */}
         <Row between>
-          <TBtn onClick={() => cmd(toggleMark(schema.marks.strong))}        active={isActive("strong")}        tip="Bold (Ctrl+B)">      <TextB size={SZ} weight="bold" /></TBtn>
-          <TBtn onClick={() => cmd(toggleMark(schema.marks.em))}            active={isActive("em")}            tip="Italic (Ctrl+I)">    <TextItalic size={SZ} /></TBtn>
-          <TBtn onClick={() => cmd(toggleMark(schema.marks.underline))}     active={isActive("underline")}     tip="Underline (Ctrl+U)"> <TextUnderline size={SZ} /></TBtn>
-          <TBtn onClick={() => cmd(toggleMark(schema.marks.strikethrough))} active={isActive("strikethrough")} tip="Strikethrough">       <TextStrikethrough size={SZ} /></TBtn>
-          <ColorPicker color={textColor} onChange={(c) => { setTextColor(c); applyMark("textColor", { color: c }); }} tip="Text color"      icon={<TextT size={18} />} />
+          <TBtn onClick={() => cmd(toggleMark(schema.marks.strong))}        active={isActive("strong")}        tip={`${t.format.bold} (Ctrl+B)`}>      <TextB size={SZ} weight="bold" /></TBtn>
+          <TBtn onClick={() => cmd(toggleMark(schema.marks.em))}            active={isActive("em")}            tip={`${t.format.italic} (Ctrl+I)`}>    <TextItalic size={SZ} /></TBtn>
+          <TBtn onClick={() => cmd(toggleMark(schema.marks.underline))}     active={isActive("underline")}     tip={`${t.format.underline} (Ctrl+U)`}> <TextUnderline size={SZ} /></TBtn>
+          <TBtn onClick={() => cmd(toggleMark(schema.marks.strikethrough))} active={isActive("strikethrough")} tip={t.format.strikethrough}>       <TextStrikethrough size={SZ} /></TBtn>
+          <ColorPicker color={textColor} onChange={(c) => { setTextColor(c); applyMark("textColor", { color: c }); }} tip={t.toolbar.textColor}      icon={<TextT size={18} />} />
         </Row>
       </Group>
 
       <Sep />
 
       {/* ── Paragraph ── */}
-      <Group label="Paragraph">
+      <Group label={t.toolbar.groupParagraph}>
         {/* Row 1: block style + alignment */}
         <Row>
           <select className={cn(SEL, "w-[80px]")}
@@ -351,36 +350,38 @@ export default function Toolbar({
               else if (/^h\d$/.test(val))    cmd(setBlockType(nodes.heading, { level: +val[1] }));
               else if (val === "code_block") cmd(setBlockType(nodes.code_block));
             }}
-            value={BLOCK_STYLES.some(s => s.value === currentBlock) ? currentBlock : "paragraph"}
-            aria-label="Block style" title="Block style">
-            {BLOCK_STYLES.map(s => <option key={s.value} value={s.value}>{s.label}</option>)}
+            value={(BLOCK_VALUES as readonly string[]).includes(currentBlock) ? currentBlock : "paragraph"}
+            aria-label={t.toolbar.blockStyle} title={t.toolbar.blockStyle}>
+            {BLOCK_VALUES.map((v) => (
+              <option key={v} value={v}>{blockLabel(v)}</option>
+            ))}
           </select>
-          <TBtn onClick={() => setTextAlign("left")}    active={currentAlign === "left"}    tip="Align left">    <TextAlignLeft size={SZ} /></TBtn>
-          <TBtn onClick={() => setTextAlign("center")}  active={currentAlign === "center"}  tip="Align center">  <TextAlignCenter size={SZ} /></TBtn>
-          <TBtn onClick={() => setTextAlign("right")}   active={currentAlign === "right"}   tip="Align right">   <TextAlignRight size={SZ} /></TBtn>
-          <TBtn onClick={() => setTextAlign("justify")} active={currentAlign === "justify"} tip="Justify">       <TextAlignJustify size={SZ} /></TBtn>
+          <TBtn onClick={() => setTextAlign("left")}    active={currentAlign === "left"}    tip={t.format.alignLeft}>    <TextAlignLeft size={SZ} /></TBtn>
+          <TBtn onClick={() => setTextAlign("center")}  active={currentAlign === "center"}  tip={t.format.alignCenter}>  <TextAlignCenter size={SZ} /></TBtn>
+          <TBtn onClick={() => setTextAlign("right")}   active={currentAlign === "right"}   tip={t.format.alignRight}>   <TextAlignRight size={SZ} /></TBtn>
+          <TBtn onClick={() => setTextAlign("justify")} active={currentAlign === "justify"} tip={t.format.alignJustify}>       <TextAlignJustify size={SZ} /></TBtn>
         </Row>
         {/* Row 2: list + indent + code + quote */}
         <Row>
-          <TBtn onClick={() => cmd(wrapInList(schema.nodes.bullet_list))}  tip="Bulleted list">   <ListBullets size={SZ} /></TBtn>
-          <TBtn onClick={() => cmd(wrapInList(schema.nodes.ordered_list))} tip="Numbered list">  <ListNumbers size={SZ} /></TBtn>
-          <TBtn onClick={() => adjustIndent(-1)}                           tip="Decrease indent"> <TextOutdent size={SZ} /></TBtn>
-          <TBtn onClick={() => adjustIndent(1)}                            tip="Increase indent"> <TextIndent size={SZ} /></TBtn>
-          <TBtn onClick={() => cmd(setBlockType(schema.nodes.code_block))} tip="Code block">     <Code size={SZ} /></TBtn>
-          <TBtn onClick={() => cmd(wrapIn(schema.nodes.blockquote))}       tip="Blockquote">     <Quotes size={SZ} /></TBtn>
+          <TBtn onClick={() => cmd(wrapInList(schema.nodes.bullet_list))}  tip={t.toolbar.bulletedList}>   <ListBullets size={SZ} /></TBtn>
+          <TBtn onClick={() => cmd(wrapInList(schema.nodes.ordered_list))} tip={t.toolbar.numberedList}>  <ListNumbers size={SZ} /></TBtn>
+          <TBtn onClick={() => adjustIndent(-1)}                           tip={t.format.decreaseIndent}> <TextOutdent size={SZ} /></TBtn>
+          <TBtn onClick={() => adjustIndent(1)}                            tip={t.format.increaseIndent}> <TextIndent size={SZ} /></TBtn>
+          <TBtn onClick={() => cmd(setBlockType(schema.nodes.code_block))} tip={t.toolbar.codeBlock}>     <Code size={SZ} /></TBtn>
+          <TBtn onClick={() => cmd(wrapIn(schema.nodes.blockquote))}       tip={t.toolbar.blockquote}>     <Quotes size={SZ} /></TBtn>
         </Row>
       </Group>
 
       <Sep />
 
       {/* ── Insert ── */}
-      <Group label="Insert">
+      <Group label={t.toolbar.groupInsert}>
         {/* Row 1: link image divider pagebreak */}
         <Row>
-          <TBtn onClick={onLinkAdd}      tip="Insert link">       <Link size={SZ} /></TBtn>
-          <TBtn onClick={onImageAdd}     tip="Insert image">      <ImageSquare size={SZ} /></TBtn>
-          <TBtn onClick={insertDivider}  tip="Insert divider">    <Minus size={SZ} /></TBtn>
-          <TBtn onClick={onPageBreakAdd} tip="Insert page break">
+          <TBtn onClick={onLinkAdd}      tip={t.toolbar.insertLink}>       <Link size={SZ} /></TBtn>
+          <TBtn onClick={onImageAdd}     tip={t.toolbar.insertImage}>      <ImageSquare size={SZ} /></TBtn>
+          <TBtn onClick={insertDivider}  tip={t.toolbar.insertDivider}>    <Minus size={SZ} /></TBtn>
+          <TBtn onClick={onPageBreakAdd} tip={t.toolbar.insertPageBreak}>
             <span className="text-[9px] font-bold leading-none tracking-tight">PB</span>
           </TBtn>
         </Row>
@@ -390,20 +391,20 @@ export default function Toolbar({
             <Tooltip>
               <TooltipTrigger asChild>
                 <PopoverTrigger asChild>
-                  <button type="button" aria-label="Insert emoji" onMouseDown={(e) => e.preventDefault()} className={BTN}>
+                  <button type="button" aria-label={t.toolbar.insertEmoji} onMouseDown={(e) => e.preventDefault()} className={BTN}>
                     <Smiley size={SZ} />
                   </button>
                 </PopoverTrigger>
               </TooltipTrigger>
-              <TooltipContent side="bottom" className="text-xs">Insert emoji</TooltipContent>
+              <TooltipContent side="bottom" className="text-xs">{t.toolbar.insertEmoji}</TooltipContent>
             </Tooltip>
             <PopoverContent side="bottom" align="start" className="w-auto p-0">
-              <Suspense fallback={<div className="flex h-[300px] w-[300px] items-center justify-center text-sm text-muted-foreground">Loading…</div>}>
+              <Suspense fallback={<div className="flex h-[300px] w-[300px] items-center justify-center text-sm text-muted-foreground">{t.dialog.loading}</div>}>
                 <EmojiPicker onEmojiClick={insertEmoji} autoFocusSearch={false} skinTonesDisabled lazyLoadEmojis />
               </Suspense>
             </PopoverContent>
           </Popover>
-          <TablePicker onPick={(r, c) => onInsertTable(r, c)} />
+          <TablePicker t={t} onPick={(r, c) => onInsertTable(r, c)} />
         </Row>
       </Group>
 

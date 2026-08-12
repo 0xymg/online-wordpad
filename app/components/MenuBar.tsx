@@ -27,7 +27,10 @@ import {
 import { setTextAlign, adjustIndent } from "@/lib/editor-commands";
 import { SidebarSimple, SignIn, SignOut, House, PencilSimple } from "@phosphor-icons/react";
 import { toast } from "./toast";
+import { useT, useLocale } from "./I18nProvider";
+import { LOCALES, LOCALE_NAMES } from "@/lib/i18n";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
 import { TEMPLATES } from "@/lib/templates";
 
@@ -93,21 +96,21 @@ const TEXT_COLORS = ["#000000", "#e11d48", "#ea580c", "#ca8a04", "#16a34a", "#25
 const HIGHLIGHTS = ["#fef08a", "#bbf7d0", "#bfdbfe", "#fbcfe8", "#fed7aa", "#e9d5ff"];
 const SYMBOLS = ["©", "®", "™", "§", "¶", "•", "–", "—", "…", "€", "£", "¥", "°", "±", "×", "÷", "≈", "≠", "≤", "≥", "→", "←", "↑", "↓", "✓", "★"];
 const ZOOM_LEVELS = [50, 75, 90, 100, 110, 125, 150];
-const LINE_SPACINGS: Array<{ label: string; value: number | null }> = [
-  { label: "Single (1.0)", value: 1 },
-  { label: "1.15", value: 1.15 },
-  { label: "1.5", value: 1.5 },
-  { label: "Double (2.0)", value: 2 },
-  { label: "Reset", value: null },
+const LINE_SPACINGS: Array<{ key: "single" | "num" | "double" | "reset"; num?: string; value: number | null }> = [
+  { key: "single", value: 1 },
+  { key: "num", num: "1.15", value: 1.15 },
+  { key: "num", num: "1.5", value: 1.5 },
+  { key: "double", value: 2 },
+  { key: "reset", value: null },
 ];
 
-function SidebarBtn({ onClick, className }: { onClick: () => void; className?: string }) {
+function SidebarBtn({ onClick, className, label }: { onClick: () => void; className?: string; label: string }) {
   return (
     <button
       type="button"
       onClick={onClick}
-      title="Toggle sidebar"
-      aria-label="Toggle sidebar"
+      title={label}
+      aria-label={label}
       className={cn(
         "inline-flex h-7 w-7 items-center justify-center rounded shrink-0 text-foreground/70 hover:bg-accent hover:text-accent-foreground transition-colors",
         className
@@ -119,13 +122,13 @@ function SidebarBtn({ onClick, className }: { onClick: () => void; className?: s
 }
 
 /** Back to the start screen — documents, templates, and recent files. */
-function HomeBtn({ onClick }: { onClick: () => void }) {
+function HomeBtn({ onClick, label }: { onClick: () => void; label: string }) {
   return (
     <button
       type="button"
       onClick={onClick}
-      title="Home — documents and templates"
-      aria-label="Home — documents and templates"
+      title={label}
+      aria-label={label}
       className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded text-foreground/70 transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-ring"
     >
       <House size={17} weight="regular" />
@@ -134,7 +137,7 @@ function HomeBtn({ onClick }: { onClick: () => void }) {
 }
 
 const SPELL_LANGS: Array<{ value: string; label: string }> = [
-  { value: "auto", label: "Automatic" },
+  { value: "auto", label: "" }, // filled from the dictionary at render time
   { value: "en", label: "English" },
   { value: "tr", label: "Türkçe" },
   { value: "de", label: "Deutsch" },
@@ -165,6 +168,8 @@ export default function MenuBar({
   canUseSidebar,
   user, onLogin, onLogout,
 }: MenuBarProps) {
+  const t = useT();
+  const { locale, setLocale } = useLocale();
   const cmd = (command: (state: EditorState, dispatch?: (tr: Transaction) => void) => boolean) => {
     const v = viewRef.current;
     if (!v) return;
@@ -213,7 +218,7 @@ export default function MenuBar({
       const text = await navigator.clipboard.readText();
       if (text) v.pasteText(text);
     } catch {
-      toast.warning("Your browser blocked programmatic paste. Press Ctrl+V (⌘V) instead.");
+      toast.warning(t.toast.pasteBlocked);
     }
   };
 
@@ -232,7 +237,7 @@ export default function MenuBar({
       const text = await navigator.clipboard.readText();
       if (text) v.pasteText(text);
     } catch {
-      toast.warning("Your browser blocked programmatic paste. Press Ctrl+Shift+V (⇧⌘V) instead.");
+      toast.warning(t.toast.pastePlainBlocked);
     }
   };
 
@@ -254,7 +259,7 @@ export default function MenuBar({
       {/* Top bar: brand on the left, document title centered, account on the right */}
       <div className="relative flex h-9 items-center border-b border-border/60 px-3">
         <div className="flex min-w-0 items-center gap-1.5">
-          {canUseSidebar && <SidebarBtn onClick={onToggleSidebar} />}
+          {canUseSidebar && <SidebarBtn onClick={onToggleSidebar} label={t.header.toggleSidebar} />}
           <span className="font-brand shrink-0 select-none leading-none">
             <span className="text-lg font-bold tracking-tight text-foreground dark:text-[#FFFFE3]">EDTR</span>
             <span className="text-sm font-semibold tracking-wider text-muted-foreground dark:text-[#FFFFE3]/70">PAD</span>
@@ -268,12 +273,12 @@ export default function MenuBar({
               onChange={(e) => onTitleChange(e.target.value)}
               onFocus={(e) => e.target.select()}
               spellCheck={false}
-              aria-label="Document title"
+              aria-label={t.header.documentTitle}
               className="w-[220px] max-w-[42vw] truncate rounded border border-transparent bg-transparent px-2 py-0.5 text-center text-[13px] text-foreground/80 outline-none hover:border-border focus:border-border focus:bg-background"
             />
             <button
               type="button"
-              aria-label="Rename document"
+              aria-label={t.header.renameDocument}
               onClick={() => { titleInputRef.current?.focus(); titleInputRef.current?.select(); }}
               className="ml-0.5 rounded p-1 text-muted-foreground opacity-60 transition-opacity hover:bg-accent hover:text-foreground group-focus-within:opacity-0 group-hover:opacity-100 focus-visible:opacity-100 focus-visible:outline-2 focus-visible:outline-ring"
             >
@@ -281,14 +286,31 @@ export default function MenuBar({
             </button>
           </div>
         </div>
-        <div className="ml-auto flex items-center">
+        <div className="ml-auto flex items-center gap-1.5">
+          <Select value={locale} onValueChange={(v) => setLocale(v as typeof locale)}>
+            <SelectTrigger
+              size="sm"
+              aria-label={t.locale.label}
+              title={t.locale.label}
+              className="h-6 border-transparent bg-transparent px-1.5 text-[11px] text-foreground/70 shadow-none hover:border-border hover:bg-background"
+            >
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent align="end">
+              {LOCALES.map((code) => (
+                <SelectItem key={code} value={code} className="text-xs">
+                  {LOCALE_NAMES[code]}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
           {user ? (
             <Popover>
               <PopoverTrigger asChild>
                 <button
                   type="button"
                   title={user.name}
-                  aria-label="Account"
+                  aria-label={t.header.account}
                   className="flex h-6 w-6 select-none items-center justify-center rounded-full bg-primary text-[10px] font-semibold text-primary-foreground"
                 >
                   {user.initials}
@@ -297,7 +319,7 @@ export default function MenuBar({
               <PopoverContent align="end" sideOffset={6} className="w-48 p-1">
                 <div className="px-2 py-1.5">
                   <div className="truncate text-sm font-medium">{user.name}</div>
-                  <div className="truncate text-[11px] text-muted-foreground">Free plan</div>
+                  <div className="truncate text-[11px] text-muted-foreground">{t.header.freePlan}</div>
                 </div>
                 <div className="my-1 h-px bg-border" />
                 <button
@@ -305,7 +327,7 @@ export default function MenuBar({
                   onClick={onLogout}
                   className="flex w-full items-center gap-2 rounded-sm px-2 py-1.5 text-sm hover:bg-accent hover:text-accent-foreground"
                 >
-                  <SignOut size={15} /> Log out
+                  <SignOut size={15} /> {t.header.logOut}
                 </button>
               </PopoverContent>
             </Popover>
@@ -315,7 +337,7 @@ export default function MenuBar({
               onClick={onLogin}
               className="flex items-center gap-1 rounded px-2 py-0.5 text-xs transition-colors hover:bg-accent hover:text-accent-foreground"
             >
-              <SignIn size={13} /> Log in
+              <SignIn size={13} /> {t.header.logIn}
             </button>
           )}
         </div>
@@ -323,16 +345,16 @@ export default function MenuBar({
       {/* Menu row */}
       <Menubar className="h-8 rounded-none border-0 bg-transparent px-0">
       <div className="max-w-[800px] w-full mx-auto flex items-center gap-[15px]">
-      <HomeBtn onClick={goHome} />
+      <HomeBtn onClick={goHome} label={t.header.home} />
       {/* File */}
       <MenubarMenu>
-        <MenubarTrigger className={TRIGGER}>File</MenubarTrigger>
+        <MenubarTrigger className={TRIGGER}>{t.menu.file}</MenubarTrigger>
         <MenubarContent>
-          <MenubarItem onClick={goHome}>Home</MenubarItem>
+          <MenubarItem onClick={goHome}>{t.file.home}</MenubarItem>
           <MenubarSeparator />
-          <MenubarItem onClick={onNewDoc}>New</MenubarItem>
+          <MenubarItem onClick={onNewDoc}>{t.file.new}</MenubarItem>
           <MenubarSub>
-            <MenubarSubTrigger>New from template</MenubarSubTrigger>
+            <MenubarSubTrigger>{t.file.newFromTemplate}</MenubarSubTrigger>
             <MenubarSubContent>
               {TEMPLATES.map((t) => (
                 <MenubarItem key={t.id} onClick={() => onNewFromTemplate({ name: t.name, html: t.html })}>
@@ -345,80 +367,80 @@ export default function MenuBar({
             </MenubarSubContent>
           </MenubarSub>
           <MenubarItem onClick={onOpenFile}>
-            Open… <MenubarShortcut>Ctrl+O</MenubarShortcut>
+            {t.file.open} <MenubarShortcut>Ctrl+O</MenubarShortcut>
           </MenubarItem>
           <MenubarSeparator />
           <MenubarItem onClick={onSave}>
-            Save now <MenubarShortcut>Ctrl+S</MenubarShortcut>
+            {t.file.saveNow} <MenubarShortcut>Ctrl+S</MenubarShortcut>
           </MenubarItem>
-          <MenubarItem onClick={onShowVersions}>Version history…</MenubarItem>
+          <MenubarItem onClick={onShowVersions}>{t.file.versionHistory}</MenubarItem>
           <MenubarSeparator />
-          <MenubarItem onClick={onRenameDoc}>Rename…</MenubarItem>
-          <MenubarItem onClick={onCopyLink}>Copy link to this document</MenubarItem>
+          <MenubarItem onClick={onRenameDoc}>{t.file.rename}</MenubarItem>
+          <MenubarItem onClick={onCopyLink}>{t.file.copyLink}</MenubarItem>
           <MenubarSeparator />
           <MenubarSub>
-            <MenubarSubTrigger>Export</MenubarSubTrigger>
+            <MenubarSubTrigger>{t.file.export}</MenubarSubTrigger>
             <MenubarSubContent>
-              <MenubarItem onClick={() => onExport("docx")}>Word (.docx)</MenubarItem>
-              <MenubarItem onClick={() => onExport("rtf")}>Rich Text (.rtf)</MenubarItem>
-              <MenubarItem onClick={() => onExport("html")}>Web page (.html)</MenubarItem>
-              <MenubarItem onClick={() => onExport("md")}>Markdown (.md)</MenubarItem>
-              <MenubarItem onClick={() => onExport("txt")}>Plain text (.txt)</MenubarItem>
+              <MenubarItem onClick={() => onExport("docx")}>{t.file.exportDocx}</MenubarItem>
+              <MenubarItem onClick={() => onExport("rtf")}>{t.file.exportRtf}</MenubarItem>
+              <MenubarItem onClick={() => onExport("html")}>{t.file.exportHtml}</MenubarItem>
+              <MenubarItem onClick={() => onExport("md")}>{t.file.exportMd}</MenubarItem>
+              <MenubarItem onClick={() => onExport("txt")}>{t.file.exportTxt}</MenubarItem>
             </MenubarSubContent>
           </MenubarSub>
           <MenubarSeparator />
           <MenubarCheckboxItem checked={printHeaderFooter} onClick={onTogglePrintHeaderFooter}>
-            Print header &amp; footer
+            {t.file.printHeaderFooter}
           </MenubarCheckboxItem>
           <MenubarItem onClick={print}>
-            Print <MenubarShortcut>Ctrl+P</MenubarShortcut>
+            {t.file.print} <MenubarShortcut>Ctrl+P</MenubarShortcut>
           </MenubarItem>
           {/* Browsers only expose PDF export through the print dialog, so this
               opens print and says where to find it rather than pretending. */}
           <MenubarItem
             onClick={() => {
-              toast("In the print dialog, set the destination to “Save as PDF”.");
+              toast(t.toast.pdfHint);
               print();
             }}
           >
-            Save as PDF…
+            {t.file.saveAsPdf}
           </MenubarItem>
           <MenubarSeparator />
           <MenubarItem variant="destructive" onClick={onDeleteDoc}>
-            Delete this document
+            {t.file.deleteDoc}
           </MenubarItem>
         </MenubarContent>
       </MenubarMenu>
 
       {/* Edit */}
       <MenubarMenu>
-        <MenubarTrigger className={TRIGGER}>Edit</MenubarTrigger>
+        <MenubarTrigger className={TRIGGER}>{t.menu.edit}</MenubarTrigger>
         <MenubarContent>
           <MenubarItem onClick={() => cmd(undo)}>
-            Undo <MenubarShortcut>Ctrl+Z</MenubarShortcut>
+            {t.edit.undo} <MenubarShortcut>Ctrl+Z</MenubarShortcut>
           </MenubarItem>
           <MenubarItem onClick={() => cmd(redo)}>
-            Redo <MenubarShortcut>Ctrl+Y</MenubarShortcut>
+            {t.edit.redo} <MenubarShortcut>Ctrl+Y</MenubarShortcut>
           </MenubarItem>
           <MenubarSeparator />
           <MenubarItem onClick={() => cutOrCopy("cut")}>
-            Cut <MenubarShortcut>Ctrl+X</MenubarShortcut>
+            {t.edit.cut} <MenubarShortcut>Ctrl+X</MenubarShortcut>
           </MenubarItem>
           <MenubarItem onClick={() => cutOrCopy("copy")}>
-            Copy <MenubarShortcut>Ctrl+C</MenubarShortcut>
+            {t.edit.copy} <MenubarShortcut>Ctrl+C</MenubarShortcut>
           </MenubarItem>
           <MenubarItem onClick={pasteFromClipboard}>
-            Paste <MenubarShortcut>Ctrl+V</MenubarShortcut>
+            {t.edit.paste} <MenubarShortcut>Ctrl+V</MenubarShortcut>
           </MenubarItem>
           <MenubarItem onClick={pastePlainFromClipboard}>
-            Paste without formatting <MenubarShortcut>Ctrl+Shift+V</MenubarShortcut>
+            {t.edit.pastePlain} <MenubarShortcut>Ctrl+Shift+V</MenubarShortcut>
           </MenubarItem>
           <MenubarSeparator />
           <MenubarItem onClick={onFind}>
-            Find <MenubarShortcut>Ctrl+F</MenubarShortcut>
+            {t.edit.find} <MenubarShortcut>Ctrl+F</MenubarShortcut>
           </MenubarItem>
           <MenubarItem onClick={onReplace}>
-            Replace <MenubarShortcut>Ctrl+H</MenubarShortcut>
+            {t.edit.replace} <MenubarShortcut>Ctrl+H</MenubarShortcut>
           </MenubarItem>
           <MenubarSeparator />
           <MenubarItem onClick={() => {
@@ -428,17 +450,17 @@ export default function MenuBar({
             v.dispatch(tr.setSelection(new AllSelection(doc)));
             v.focus();
           }}>
-            Select All <MenubarShortcut>Ctrl+A</MenubarShortcut>
+            {t.edit.selectAll} <MenubarShortcut>Ctrl+A</MenubarShortcut>
           </MenubarItem>
         </MenubarContent>
       </MenubarMenu>
 
       {/* View */}
       <MenubarMenu>
-        <MenubarTrigger className={TRIGGER}>View</MenubarTrigger>
+        <MenubarTrigger className={TRIGGER}>{t.menu.view}</MenubarTrigger>
         <MenubarContent>
           <MenubarSub>
-            <MenubarSubTrigger>Zoom</MenubarSubTrigger>
+            <MenubarSubTrigger>{t.view.zoom}</MenubarSubTrigger>
             <MenubarSubContent>
               {ZOOM_LEVELS.map((z) => (
                 <MenubarCheckboxItem key={z} checked={zoomPercent === z} onClick={() => onZoomChange(z)}>
@@ -449,33 +471,47 @@ export default function MenuBar({
           </MenubarSub>
           <MenubarSeparator />
           <MenubarCheckboxItem checked={showToolbar} onClick={onToggleToolbar}>
-            Toolbar
+            {t.view.toolbar}
           </MenubarCheckboxItem>
           <MenubarCheckboxItem checked={showRuler} onClick={onToggleRuler}>
-            Ruler
+            {t.view.ruler}
           </MenubarCheckboxItem>
           <MenubarCheckboxItem checked={spellcheckOn} onClick={onToggleSpellcheck}>
-            Spellcheck
+            {t.view.spellcheck}
           </MenubarCheckboxItem>
           <MenubarSub>
-            <MenubarSubTrigger>Spellcheck language</MenubarSubTrigger>
+            <MenubarSubTrigger>{t.locale.label}</MenubarSubTrigger>
+            <MenubarSubContent>
+              {LOCALES.map((code) => (
+                <MenubarCheckboxItem
+                  key={code}
+                  checked={locale === code}
+                  onClick={() => setLocale(code)}
+                >
+                  {LOCALE_NAMES[code]}
+                </MenubarCheckboxItem>
+              ))}
+            </MenubarSubContent>
+          </MenubarSub>
+          <MenubarSub>
+            <MenubarSubTrigger>{t.view.spellcheckLanguage}</MenubarSubTrigger>
             <MenubarSubContent>
               {SPELL_LANGS.map((l) => (
                 <MenubarCheckboxItem key={l.value} checked={spellLang === l.value} onClick={() => onSpellLangChange(l.value)}>
-                  {l.label}
+                  {l.value === "auto" ? t.view.automatic : l.label}
                 </MenubarCheckboxItem>
               ))}
             </MenubarSubContent>
           </MenubarSub>
           <MenubarCheckboxItem checked={isDark} onClick={onToggleDark}>
-            Dark mode
+            {t.view.darkMode}
           </MenubarCheckboxItem>
           <MenubarCheckboxItem checked={focusMode} onClick={onToggleFocusMode}>
-            Focus mode
+            {t.view.focusMode}
           </MenubarCheckboxItem>
           <MenubarSeparator />
           <MenubarCheckboxItem checked={readingAloud} onClick={onToggleReadAloud}>
-            Read aloud
+            {t.view.readAloud}
           </MenubarCheckboxItem>
           <MenubarSeparator />
           <MenubarItem
@@ -484,28 +520,28 @@ export default function MenuBar({
               else document.documentElement.requestFullscreen?.();
             }}
           >
-            Full screen <MenubarShortcut>F11</MenubarShortcut>
+            {t.view.fullScreen} <MenubarShortcut>F11</MenubarShortcut>
           </MenubarItem>
         </MenubarContent>
       </MenubarMenu>
 
       {/* Insert */}
       <MenubarMenu>
-        <MenubarTrigger className={TRIGGER}>Insert</MenubarTrigger>
+        <MenubarTrigger className={TRIGGER}>{t.menu.insert}</MenubarTrigger>
         <MenubarContent>
           <MenubarItem onClick={onLinkAdd}>
-            Link <MenubarShortcut>Ctrl+K</MenubarShortcut>
+            {t.insert.link} <MenubarShortcut>Ctrl+K</MenubarShortcut>
           </MenubarItem>
-          <MenubarItem onClick={onImageAdd}>Picture from file…</MenubarItem>
-          <MenubarItem onClick={onImageUrlAdd}>Picture from URL…</MenubarItem>
-          <MenubarItem onClick={() => onInsertTable(3, 3)}>Table (3 × 3)</MenubarItem>
-          <MenubarItem onClick={onInsertTOC}>Table of contents</MenubarItem>
+          <MenubarItem onClick={onImageAdd}>{t.insert.pictureFile}</MenubarItem>
+          <MenubarItem onClick={onImageUrlAdd}>{t.insert.pictureUrl}</MenubarItem>
+          <MenubarItem onClick={() => onInsertTable(3, 3)}>{`${t.insert.table} (${t.tableMenu.rowsByCols(3, 3)})`}</MenubarItem>
+          <MenubarItem onClick={onInsertTOC}>{t.insert.tableOfContents}</MenubarItem>
           <MenubarSeparator />
-          <MenubarItem onClick={onInsertDivider}>Horizontal line</MenubarItem>
-          <MenubarItem onClick={onPageBreakAdd}>Page break</MenubarItem>
+          <MenubarItem onClick={onInsertDivider}>{t.insert.horizontalLine}</MenubarItem>
+          <MenubarItem onClick={onPageBreakAdd}>{t.insert.pageBreak}</MenubarItem>
           <MenubarSeparator />
           <MenubarSub>
-            <MenubarSubTrigger>Symbol</MenubarSubTrigger>
+            <MenubarSubTrigger>{t.insert.symbol}</MenubarSubTrigger>
             <MenubarSubContent className="min-w-0">
               <div className="grid grid-cols-6 gap-0.5 p-1">
                 {SYMBOLS.map((sym) => (
@@ -518,44 +554,44 @@ export default function MenuBar({
               </div>
             </MenubarSubContent>
           </MenubarSub>
-          <MenubarItem onClick={onInsertDate}>Date &amp; time</MenubarItem>
+          <MenubarItem onClick={onInsertDate}>{t.insert.dateTime}</MenubarItem>
         </MenubarContent>
       </MenubarMenu>
 
       {/* Format */}
       <MenubarMenu>
-        <MenubarTrigger className={TRIGGER}>Format</MenubarTrigger>
+        <MenubarTrigger className={TRIGGER}>{t.menu.format}</MenubarTrigger>
         <MenubarContent>
           <MenubarItem onClick={() => cmd(toggleMark(schema.marks.strong))}>
-            Bold <MenubarShortcut>Ctrl+B</MenubarShortcut>
+            {t.format.bold} <MenubarShortcut>Ctrl+B</MenubarShortcut>
           </MenubarItem>
           <MenubarItem onClick={() => cmd(toggleMark(schema.marks.em))}>
-            Italic <MenubarShortcut>Ctrl+I</MenubarShortcut>
+            {t.format.italic} <MenubarShortcut>Ctrl+I</MenubarShortcut>
           </MenubarItem>
           <MenubarItem onClick={() => cmd(toggleMark(schema.marks.underline))}>
-            Underline <MenubarShortcut>Ctrl+U</MenubarShortcut>
+            {t.format.underline} <MenubarShortcut>Ctrl+U</MenubarShortcut>
           </MenubarItem>
           <MenubarItem onClick={() => cmd(toggleMark(schema.marks.strikethrough))}>
-            Strikethrough
+            {t.format.strikethrough}
           </MenubarItem>
           <MenubarItem onClick={() => cmd(toggleMark(schema.marks.superscript))}>
-            Superscript <MenubarShortcut>Ctrl+.</MenubarShortcut>
+            {t.format.superscript} <MenubarShortcut>Ctrl+.</MenubarShortcut>
           </MenubarItem>
           <MenubarItem onClick={() => cmd(toggleMark(schema.marks.subscript))}>
-            Subscript <MenubarShortcut>Ctrl+,</MenubarShortcut>
+            {t.format.subscript} <MenubarShortcut>Ctrl+,</MenubarShortcut>
           </MenubarItem>
           <MenubarSub>
-            <MenubarSubTrigger>Change case</MenubarSubTrigger>
+            <MenubarSubTrigger>{t.format.changeCase}</MenubarSubTrigger>
             <MenubarSubContent>
-              <MenubarItem onClick={() => onChangeCase("sentence")}>Sentence case</MenubarItem>
-              <MenubarItem onClick={() => onChangeCase("lower")}>lowercase</MenubarItem>
-              <MenubarItem onClick={() => onChangeCase("upper")}>UPPERCASE</MenubarItem>
-              <MenubarItem onClick={() => onChangeCase("title")}>Title Case</MenubarItem>
+              <MenubarItem onClick={() => onChangeCase("sentence")}>{t.format.sentenceCase}</MenubarItem>
+              <MenubarItem onClick={() => onChangeCase("lower")}>{t.format.lowercase}</MenubarItem>
+              <MenubarItem onClick={() => onChangeCase("upper")}>{t.format.uppercase}</MenubarItem>
+              <MenubarItem onClick={() => onChangeCase("title")}>{t.format.titleCase}</MenubarItem>
             </MenubarSubContent>
           </MenubarSub>
           <MenubarSeparator />
           <MenubarSub>
-            <MenubarSubTrigger>Text color</MenubarSubTrigger>
+            <MenubarSubTrigger>{t.format.textColor}</MenubarSubTrigger>
             <MenubarSubContent className="min-w-0">
               <div className="grid grid-cols-4 gap-1 p-1.5">
                 {TEXT_COLORS.map((c) => (
@@ -566,11 +602,11 @@ export default function MenuBar({
                 ))}
               </div>
               <MenubarSeparator />
-              <MenubarItem onClick={() => removeColor("textColor")}>Automatic</MenubarItem>
+              <MenubarItem onClick={() => removeColor("textColor")}>{t.format.automatic}</MenubarItem>
             </MenubarSubContent>
           </MenubarSub>
           <MenubarSub>
-            <MenubarSubTrigger>Highlight</MenubarSubTrigger>
+            <MenubarSubTrigger>{t.format.highlight}</MenubarSubTrigger>
             <MenubarSubContent className="min-w-0">
               <div className="grid grid-cols-3 gap-1 p-1.5">
                 {HIGHLIGHTS.map((c) => (
@@ -581,103 +617,107 @@ export default function MenuBar({
                 ))}
               </div>
               <MenubarSeparator />
-              <MenubarItem onClick={() => removeColor("bgColor")}>No highlight</MenubarItem>
+              <MenubarItem onClick={() => removeColor("bgColor")}>{t.format.noHighlight}</MenubarItem>
             </MenubarSubContent>
           </MenubarSub>
           <MenubarSeparator />
           <MenubarSub>
-            <MenubarSubTrigger>Align</MenubarSubTrigger>
+            <MenubarSubTrigger>{t.format.align}</MenubarSubTrigger>
             <MenubarSubContent>
               <MenubarItem onClick={() => setTextAlign(viewRef.current, schema, "left")}>
-                Left <MenubarShortcut>Ctrl+Shift+L</MenubarShortcut>
+                {t.format.alignLeft} <MenubarShortcut>Ctrl+Shift+L</MenubarShortcut>
               </MenubarItem>
               <MenubarItem onClick={() => setTextAlign(viewRef.current, schema, "center")}>
-                Center <MenubarShortcut>Ctrl+Shift+E</MenubarShortcut>
+                {t.format.alignCenter} <MenubarShortcut>Ctrl+Shift+E</MenubarShortcut>
               </MenubarItem>
               <MenubarItem onClick={() => setTextAlign(viewRef.current, schema, "right")}>
-                Right <MenubarShortcut>Ctrl+Shift+R</MenubarShortcut>
+                {t.format.alignRight} <MenubarShortcut>Ctrl+Shift+R</MenubarShortcut>
               </MenubarItem>
               <MenubarItem onClick={() => setTextAlign(viewRef.current, schema, "justify")}>
-                Justify <MenubarShortcut>Ctrl+Shift+J</MenubarShortcut>
+                {t.format.alignJustify} <MenubarShortcut>Ctrl+Shift+J</MenubarShortcut>
               </MenubarItem>
             </MenubarSubContent>
           </MenubarSub>
           <MenubarItem onClick={() => adjustIndent(viewRef.current, schema, 1)}>
-            Increase indent <MenubarShortcut>Tab</MenubarShortcut>
+            {t.format.increaseIndent} <MenubarShortcut>Tab</MenubarShortcut>
           </MenubarItem>
           <MenubarItem onClick={() => adjustIndent(viewRef.current, schema, -1)}>
-            Decrease indent <MenubarShortcut>Shift+Tab</MenubarShortcut>
+            {t.format.decreaseIndent} <MenubarShortcut>Shift+Tab</MenubarShortcut>
           </MenubarItem>
           <MenubarSeparator />
           <MenubarItem onClick={() => cmd(wrapInList(schema.nodes.bullet_list))}>
-            Bullet list
+            {t.format.bulletList}
           </MenubarItem>
           <MenubarItem onClick={() => cmd(wrapInList(schema.nodes.ordered_list))}>
-            Numbered list
+            {t.format.numberedList}
           </MenubarItem>
           <MenubarSub>
-            <MenubarSubTrigger>Line spacing</MenubarSubTrigger>
+            <MenubarSubTrigger>{t.format.lineSpacing}</MenubarSubTrigger>
             <MenubarSubContent>
-              {LINE_SPACINGS.map((ls) => (
-                <MenubarItem key={ls.label} onClick={() => onLineSpacing(ls.value)}>
-                  {ls.label}
-                </MenubarItem>
-              ))}
+              {LINE_SPACINGS.map((ls) => {
+                const label =
+                  ls.key === "single" ? `${t.format.single} (1.0)`
+                  : ls.key === "double" ? "2.0"
+                  : ls.key === "reset" ? t.format.default
+                  : ls.num!;
+                return (
+                  <MenubarItem key={label} onClick={() => onLineSpacing(ls.value)}>
+                    {label}
+                  </MenubarItem>
+                );
+              })}
             </MenubarSubContent>
           </MenubarSub>
           <MenubarSeparator />
           <MenubarItem onClick={onClearFormatting}>
-            Clear formatting
+            {t.format.clearFormatting}
           </MenubarItem>
         </MenubarContent>
       </MenubarMenu>
 
       {/* Table */}
       <MenubarMenu>
-        <MenubarTrigger className={TRIGGER}>Table</MenubarTrigger>
+        <MenubarTrigger className={TRIGGER}>{t.menu.table}</MenubarTrigger>
         <MenubarContent>
           <MenubarSub>
-            <MenubarSubTrigger>Insert table</MenubarSubTrigger>
+            <MenubarSubTrigger>{t.tableMenu.insertTable}</MenubarSubTrigger>
             <MenubarSubContent>
-              <MenubarItem onClick={() => onInsertTable(2, 2)}>2 × 2</MenubarItem>
-              <MenubarItem onClick={() => onInsertTable(3, 3)}>3 × 3</MenubarItem>
-              <MenubarItem onClick={() => onInsertTable(4, 4)}>4 × 4</MenubarItem>
-              <MenubarItem onClick={() => onInsertTable(5, 3)}>5 rows × 3 columns</MenubarItem>
+              <MenubarItem onClick={() => onInsertTable(2, 2)}>{t.tableMenu.rowsByCols(2, 2)}</MenubarItem>
+              <MenubarItem onClick={() => onInsertTable(3, 3)}>{t.tableMenu.rowsByCols(3, 3)}</MenubarItem>
+              <MenubarItem onClick={() => onInsertTable(4, 4)}>{t.tableMenu.rowsByCols(4, 4)}</MenubarItem>
+              <MenubarItem onClick={() => onInsertTable(5, 3)}>{t.tableMenu.rowsByCols(5, 3)}</MenubarItem>
             </MenubarSubContent>
           </MenubarSub>
           <MenubarSeparator />
-          <MenubarItem onClick={() => cmd(addRowBefore)}>Insert row above</MenubarItem>
-          <MenubarItem onClick={() => cmd(addRowAfter)}>Insert row below</MenubarItem>
-          <MenubarItem onClick={() => cmd(addColumnBefore)}>Insert column left</MenubarItem>
-          <MenubarItem onClick={() => cmd(addColumnAfter)}>Insert column right</MenubarItem>
+          <MenubarItem onClick={() => cmd(addRowBefore)}>{t.tableMenu.rowAbove}</MenubarItem>
+          <MenubarItem onClick={() => cmd(addRowAfter)}>{t.tableMenu.rowBelow}</MenubarItem>
+          <MenubarItem onClick={() => cmd(addColumnBefore)}>{t.tableMenu.columnLeft}</MenubarItem>
+          <MenubarItem onClick={() => cmd(addColumnAfter)}>{t.tableMenu.columnRight}</MenubarItem>
           <MenubarSeparator />
-          <MenubarItem onClick={() => cmd(mergeCells)}>Merge cells</MenubarItem>
-          <MenubarItem onClick={() => cmd(splitCell)}>Split cell</MenubarItem>
+          <MenubarItem onClick={() => cmd(mergeCells)}>{t.tableMenu.mergeCells}</MenubarItem>
+          <MenubarItem onClick={() => cmd(splitCell)}>{t.tableMenu.splitCell}</MenubarItem>
           <MenubarSeparator />
-          <MenubarItem onClick={() => cmd(toggleHeaderRow)}>Toggle header row</MenubarItem>
-          <MenubarItem onClick={() => cmd(toggleHeaderColumn)}>Toggle header column</MenubarItem>
+          <MenubarItem onClick={() => cmd(toggleHeaderRow)}>{t.tableMenu.toggleHeaderRow}</MenubarItem>
+          <MenubarItem onClick={() => cmd(toggleHeaderColumn)}>{t.tableMenu.toggleHeaderColumn}</MenubarItem>
           <MenubarSeparator />
-          <MenubarItem onClick={() => cmd(deleteRow)}>Delete row</MenubarItem>
-          <MenubarItem onClick={() => cmd(deleteColumn)}>Delete column</MenubarItem>
-          <MenubarItem variant="destructive" onClick={() => cmd(deleteTable)}>Delete table</MenubarItem>
+          <MenubarItem onClick={() => cmd(deleteRow)}>{t.tableMenu.deleteRow}</MenubarItem>
+          <MenubarItem onClick={() => cmd(deleteColumn)}>{t.tableMenu.deleteColumn}</MenubarItem>
+          <MenubarItem variant="destructive" onClick={() => cmd(deleteTable)}>{t.tableMenu.deleteTable}</MenubarItem>
         </MenubarContent>
       </MenubarMenu>
 
       {/* Help */}
       <MenubarMenu>
-        <MenubarTrigger className={TRIGGER}>Help</MenubarTrigger>
+        <MenubarTrigger className={TRIGGER}>{t.menu.help}</MenubarTrigger>
         <MenubarContent>
-          <MenubarItem onClick={onShowShortcuts}>Keyboard shortcuts</MenubarItem>
+          <MenubarItem onClick={onShowShortcuts}>{t.help.shortcuts}</MenubarItem>
           <MenubarSeparator />
           <MenubarItem
             onClick={() =>
-              toast(
-                "EDTRpad is a free online word processor at wordpad.info. It is an independent project, not affiliated with Microsoft.",
-                { position: "top", duration: 6000 }
-              )
+              toast(t.help.aboutText, { position: "top", duration: 6000 })
             }
           >
-            About EDTRpad
+            {t.help.about}
           </MenubarItem>
         </MenubarContent>
       </MenubarMenu>
