@@ -4,7 +4,7 @@ import Link from "next/link";
 import { Fragment, type ReactNode } from "react";
 import {
   TextB, Table, ImageSquare, Article, Export, Printer, Clock, Lock,
-  Command, CloudArrowUp, Files, Moon, MagnifyingGlass,
+  Command, CloudArrowUp, Files, Moon, MagnifyingGlass, Lightning,
 } from "./components/icons";
 import ToolbarPreviewClient from "./components/ToolbarPreviewClient";
 import { useT, useLocale } from "./components/I18nProvider";
@@ -226,6 +226,19 @@ export default function LandingClient() {
             {/* gap-px divider grid — keep the feature count divisible by both 2
                 and 3, or the empty cells in the last row show as dark blocks. */}
             <div className="mt-14 grid gap-px overflow-hidden rounded-2xl border border-[var(--pad-border)] bg-[var(--pad-border)] sm:grid-cols-2 lg:grid-cols-3">
+              {/* Speed is the headline feature: a full-row card keeps the
+                  12-card grid below divisible by both 2 and 3. */}
+              <div className="bg-[var(--pad-bg)] p-6 transition-colors hover:bg-[var(--pad-surface)] sm:col-span-2 lg:col-span-3">
+                <div className="flex items-start gap-4">
+                  <div className="flex size-10 shrink-0 items-center justify-center rounded-lg border border-[var(--pad-border)] bg-[var(--pad-surface-2)]">
+                    <Lightning size={20} weight="duotone" />
+                  </div>
+                  <div>
+                    <h3 className="mb-1.5 font-semibold">{t.features.speedTitle}</h3>
+                    <p className="max-w-2xl text-sm leading-relaxed text-[var(--pad-ink-50)]">{t.features.speedDesc}</p>
+                  </div>
+                </div>
+              </div>
               {featureList(t).map((f) => (
                 <div
                   key={f.title}
