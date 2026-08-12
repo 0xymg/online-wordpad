@@ -182,40 +182,44 @@ export default function WelcomeScreen({
           <span className="text-lg font-bold tracking-tight text-foreground dark:text-[#FFFFE3]">EDTR</span>
           <span className="text-sm font-semibold tracking-wider text-muted-foreground dark:text-[#FFFFE3]/70">PAD</span>
         </span>
-        <div className="flex items-center gap-2">
-          {isAuthed && onOpenProfile && (
-            <button
-              type="button"
-              onClick={onOpenProfile}
-              title={t.profile.title}
-              aria-label={t.profile.title}
-              className="flex h-8 w-8 select-none items-center justify-center bg-primary text-[11px] font-semibold text-primary-foreground transition-opacity hover:opacity-85 focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-ring"
-            >
-              {(userName || "").trim().split(/\s+/).map((s) => s[0]).slice(0, 2).join("").toUpperCase() || "?"}
-            </button>
-          )}
-          {canClose && (
-            <button
-              type="button"
-              onClick={onClose}
-              className="flex items-center gap-1.5 rounded-md border border-input px-3 py-1.5 text-sm hover:bg-accent focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-ring"
-            >
-              {t.welcome.skipToEditor} <X size={14} />
-            </button>
-          )}
-        </div>
+        {canClose && (
+          <button
+            type="button"
+            onClick={onClose}
+            className="flex items-center gap-1.5 rounded-md border border-input px-3 py-1.5 text-sm hover:bg-accent focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-ring"
+          >
+            {t.welcome.skipToEditor} <X size={14} />
+          </button>
+        )}
       </div>
 
       {/* The template strip gets the wider container; the document lists below
           sit in a narrower one so the eye lands on "start something" first. */}
       <div className="mx-auto max-w-6xl px-5 pb-16 pt-10">
-        {/* Greeting */}
-        <h1 className="font-serif text-3xl font-normal tracking-tight">
-          {firstName ? t.welcome.greetingWith(greeting(t), firstName) : t.welcome.titleGuest}
-        </h1>
-        <p className="mt-1 text-sm text-muted-foreground">
-          {t.welcome.subtitle}
-        </p>
+        {/* Greeting on the left, account entry on the right, same line */}
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <h1 className="font-serif text-3xl font-normal tracking-tight">
+              {firstName ? t.welcome.greetingWith(greeting(t), firstName) : t.welcome.titleGuest}
+            </h1>
+            <p className="mt-1 text-sm text-muted-foreground">
+              {t.welcome.subtitle}
+            </p>
+          </div>
+          {isAuthed && onOpenProfile && (
+            <button
+              type="button"
+              onClick={onOpenProfile}
+              title={t.profile.title}
+              className="flex shrink-0 items-center gap-2.5 border border-transparent px-2.5 py-1.5 transition-colors hover:border-border hover:bg-accent/60 focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-ring"
+            >
+              <span className="flex h-8 w-8 select-none items-center justify-center bg-primary text-[11px] font-semibold text-primary-foreground">
+                {(userName || "").trim().split(/\s+/).map((s) => s[0]).slice(0, 2).join("").toUpperCase() || "?"}
+              </span>
+              <span className="max-w-[180px] truncate text-sm">{userName}</span>
+            </button>
+          )}
+        </div>
 
         {/* Start new */}
         <h2 className="mb-3 mt-8 text-sm font-medium text-muted-foreground">{t.welcome.startNew}</h2>
