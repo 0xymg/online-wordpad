@@ -365,7 +365,7 @@ export const tr: Dictionary = {
     announcementNew: "Yeni",
     announcementText: "İsteğe bağlı hesaplar. Belgelerinizi cihazlar arasında eşitleyin, yine ücretsiz.",
     announcementCta: "Hesap oluşturun →",
-    navSlash: "Slash menu",
+    navSlash: "Slash menüsü",
     navFeatures: "Özellikler",
     navHow: "Nasıl çalışır",
     navVs: "Karşılaştırma",
@@ -374,30 +374,30 @@ export const tr: Dictionary = {
     openEditor: "Editörü aç →",
     heroTitle: "Zaten açık olan online kelime işlemci.",
     heroSubtitle:
-      "A free Word and WordPad alternative in your browser, with a slash menu instead of a ribbon. Type / and every command is right where your cursor is. No download, no license, no account.",
+      "Tarayıcınızda çalışan, şerit yerine slash menüsü olan ücretsiz bir Word ve WordPad alternatifi. / yazın, her komut imlecinizin tam olduğu yerde. İndirme yok, lisans yok, hesap yok.",
     heroCtaPrimary: "Yazmaya başla →",
     heroCtaSecondary: ".docx dosyası açın",
     heroMicrocopy: "Sonsuza dek ücretsiz · Kurulum yok · Kayıt yok",
-    heroEditorHintPre: "Start typing. Or press ",
-    heroEditorHintPost: " to see everything this can do.",
-    heroEditorHintMobile: "Tap here and start typing.",
+    heroEditorHintPre: "Yazmaya başlayın. Ya da ",
+    heroEditorHintPost: " tuşuna basın, neler yapabildiğini görün.",
+    heroEditorHintMobile: "Buraya dokunun ve yazmaya başlayın.",
     trustItems: [
-      "Type / for any command",
-      "Ready in about a second",
-      "No account",
-      "Opens and exports .docx",
+      "Her komut için / yazın",
+      "Yaklaşık bir saniyede hazır",
+      "Hesap yok",
+      ".docx açar ve dışa aktarır",
     ],
-    slashTitle: "No ribbon. No toolbar hunting. Just a slash.",
+    slashTitle: "Şerit yok. Düğme avı yok. Sadece bir /.",
     slashP1:
-      "Every command in EDTRpad lives behind one key. Type / anywhere in your document and the menu opens right where your cursor is: headings, tables, images, lists, page breaks, formatting, export. Keep typing to filter it, press Enter to insert.",
+      "EDTRpad'de her komut tek bir tuşun arkasında. Belgenin herhangi bir yerinde / yazın, menü imlecinizin tam olduğu yerde açılır: başlıklar, tablolar, görseller, listeler, sayfa sonları, biçimlendirme, dışa aktarma. Yazmaya devam ederek filtreleyin, Enter ile ekleyin.",
     slashP2:
-      "If you've used Notion, your hands already know this. If you haven't, here's what it means in practice: you never take your hands off the keyboard to insert a table, and you never go looking for a button again.",
+      "Notion kullandıysanız, elleriniz bunu zaten biliyor. Kullanmadıysanız, pratikte anlamı şu: tablo eklemek için ellerinizi klavyeden hiç kaldırmazsınız ve bir daha asla düğme aramaya çıkmazsınız.",
     slashP3:
-      "This is the real reason writing here is faster than Word. Not because the page loads quicker, though it does. Because the distance between wanting a table and having a table is four keystrokes: [[/tab]] and [[Enter]].",
-    slashTryLink: "Try it, press / in the editor →",
+      "Burada yazmanın Word'den hızlı olmasının asıl nedeni bu. Sayfa daha hızlı yüklendiği için değil, gerçi o da doğru. Bir tablo istemekle o tabloya sahip olmak arasındaki mesafe dört tuş vuruşu olduğu için: [[/tab]] ve [[Enter]].",
+    slashTryLink: "Deneyin, editörde / tuşuna basın →",
     frictionTitle: "Tek bir sayfa yazacaktınız. Bu size beş dakikaya mal olmamalı.",
     frictionP1:
-      "You know the sequence. Open Word and wait for it to load, then dismiss the sign-in prompt, then skip a template gallery you didn't ask for. Or open Google Docs, sign into the right account, wait for the file list, click New.",
+      "Sırayı bilirsiniz. Word'ü açıp yüklenmesini bekleyin, sonra oturum açma istemini kapatın, sonra istemediğiniz bir şablon galerisini geçin. Ya da Google Docs'u açın, doğru hesaba giriş yapın, dosya listesini bekleyin, Yeni'ye tıklayın.",
     frictionP2:
       "EDTRpad bunların hepsini atlar. **Zaten editörün içindesiniz.** Yazın, biçimlendirin, yazdırın ya da dışa aktarın, sekmeyi kapatın. Bütün iş, yazmanın sürdüğü kadar sürer.",
     frictionP3:
@@ -407,12 +407,12 @@ export const tr: Dictionary = {
     goneP1:
       "Microsoft, yaklaşık otuz yılın ardından WordPad'i 24H2 güncellemesiyle Windows'tan kaldırdı. Geri getirecek bir ayar da resmi bir yedek de yok. Bu da tuhaf bir boşluk bırakıyor, çünkü Notepad bir kelimeyi kalın yapamıyor, Word ise abonelik istiyor.",
     goneP2:
-      "EDTRpad, WordPad'in yaptıklarını karşılar: zengin metin, tablolar, görseller, sayfa sonları ve yazdırma. Kurulu bir pencere yerine tarayıcı sekmesinde çalışır. Bu yüzden Mac'te, Chromebook'ta, telefonda ya da yazılım kurma izninizin olmadığı bir bilgisayarda da işinizi görür. And it's a good deal faster to drive, because there's no menu bar between you and the thing you want.",
+      "EDTRpad, WordPad'in yaptıklarını karşılar: zengin metin, tablolar, görseller, sayfa sonları ve yazdırma. Kurulu bir pencere yerine tarayıcı sekmesinde çalışır. Bu yüzden Mac'te, Chromebook'ta, telefonda ya da yazılım kurma izninizin olmadığı bir bilgisayarda da işinizi görür. Üstelik kullanımı epey daha hızlı, çünkü sizinle istediğiniz şey arasında bir menü çubuğu yok.",
     goneCta: "Editörü açın →",
     compareTitle: "Nereye oturuyor",
     compareCols: ["EDTRpad", "Microsoft Word", "Word Online", "Google Docs", "WordPad"],
     compareRows: [
-      { label: "Slash (/) command menu", cells: ["Yes", "No", "No", "Partly (@ menu)", "No"] },
+      { label: "Slash (/) komut menüsü", cells: ["Evet", "Hayır", "Hayır", "Kısmen (@ menüsü)", "Hayır"] },
       { label: "Fiyat", cells: ["Ücretsiz", "Abonelik", "Ücretsiz sürüm", "Ücretsiz", "Windows'tan kaldırıldı"] },
       { label: "Kurulum gerekir mi", cells: ["Hayır", "Evet", "Hayır", "Hayır", "–"] },
       { label: "Hesap gerekir mi", cells: ["Hayır", "Evet", "Evet", "Evet", "–"] },
@@ -423,14 +423,14 @@ export const tr: Dictionary = {
       { label: "Hassas yazdırma kenar boşlukları", cells: ["Evet", "Evet", "Evet", "Sınırlı", "Evet"] },
       { label: "Dosyanız cihazınızdan çıkar mı", cells: ["Hayır", "Hayır", "Evet", "Evet", "Hayır"] },
     ],
-    compareCaption: "EDTRpad is an independent product and is not affiliated with Microsoft, Google or Notion.",
+    compareCaption: "EDTRpad bağımsız bir üründür; Microsoft, Google veya Notion ile ilişkili değildir.",
     featuresTitle: "Beklediğiniz her şey. Öğrenmeniz gereken hiçbir şey.",
-    featuresAlsoLabel: "Also in there:",
+    featuresAlsoLabel: "Ayrıca içinde:",
     featuresAlsoItems: [
-      "Find & Replace",
-      "unlimited undo and redo",
-      "dark mode",
-      "autosave on every keystroke, so there's no save button to remember",
+      "Bul ve Değiştir",
+      "sınırsız geri alma ve yineleme",
+      "koyu tema",
+      "her tuş vuruşunda otomatik kayıt, yani akılda tutulacak bir kaydet düğmesi yok",
     ],
     privacyTitle: "Belgeniz tarayıcınızda kalır.",
     privacyP1:
@@ -453,7 +453,7 @@ export const tr: Dictionary = {
       "Sayfadasınız, yani editör yüklü. Yazmaya başla'ya tıklayın, imleç sizin.",
     howStep2Title: "Yaz",
     howStep2Desc:
-      "Type / for anything you need to insert. Everything saves as you go.",
+      "Eklemek istediğiniz her şey için / yazın. Her şey siz yazdıkça kaydedilir.",
     howStep3Title: "Dışa aktar veya yazdır",
     howStep3Desc:
       ".docx, .html veya .txt olarak indirin ya da ayarladığınız kenar boşluklarıyla doğrudan yazıcıya gönderin.",
@@ -468,7 +468,7 @@ export const tr: Dictionary = {
       "Sizin olmayan bir bilgisayarda hızlıca bir belge",
     ],
     faqTitle: "Yanıtlamaya değer sorular",
-    ctaTitle: "Nothing to install. Nothing to sign. Press / and go.",
+    ctaTitle: "Kurulacak bir şey yok. İmzalanacak bir şey yok. / tuşuna basın ve başlayın.",
     ctaButton: "Yazmaya başlayın →",
     ctaMicrocopy: "Sonsuza dek ücretsiz · Yaklaşık bir saniyede hazır · Belgeniz cihazınızda kalır",
     footerTagline: "Ücretsiz online kelime işlemci. WordPad, tarayıcı için yeniden yapıldı.",
@@ -481,18 +481,18 @@ export const tr: Dictionary = {
     footerMd: "EDTR.md · Markdown editörü",
     footerPlus: "EDTR.plus · Notepad++ alternatifi",
     footerCredit: "{project} ailesinin bir parçası, {by} tarafından sunulur",
-    footerCopyright: (year: number) => `© ${year} EDTRpad. Not affiliated with Microsoft, Google or Notion.`,
-    footerTrademark: "Microsoft Word and WordPad are trademarks of Microsoft Corporation.",
+    footerCopyright: (year: number) => `© ${year} EDTRpad. Microsoft, Google veya Notion ile ilişkili değildir.`,
+    footerTrademark: "Microsoft Word ve WordPad, Microsoft Corporation'ın ticari markalarıdır.",
   },
 
   features: {
-    f1Title: "Every command behind one key",
+    f1Title: "Her komut tek bir tuşun arkasında",
     f1Desc:
-      "Type / and the menu comes to your cursor. Filter by typing, insert with Enter. Full keyboard shortcuts for everything else, so a whole document can happen without touching the mouse.",
-    f2Title: "A real word processor, not a text box",
+      "/ yazın, menü imlecinize gelsin. Yazarak filtreleyin, Enter ile ekleyin. Geri kalan her şey için eksiksiz klavye kısayolları; yani koca bir belge fareye hiç dokunmadan çıkabilir.",
+    f2Title: "Gerçek bir kelime işlemci, bir metin kutusu değil",
     f2Desc:
       "Kalın, italik, altı çizili, üstü çizili. Yazı tipleri, boyutlar, metin rengi, vurgu rengi. Madde işaretli ve numaralı listeler. Görsel ızgara seçiciyle tablolar. Yapıştırıp yeniden boyutlandırabileceğiniz, kırpabileceğiniz, döndürebileceğiniz, çevirebileceğiniz ve hizalayabileceğiniz görseller. Ekranda da baskıda da yerini koruyan gerçek sayfa sonları.",
-    f3Title: "Opens what you already have",
+    f3Title: "Elinizdekini açar",
     f3Desc:
       ".docx, .txt veya .html dosyanızı sürükleyin, olduğu yerde açılır. Word .docx, HTML veya düz metin olarak geri dışa aktarın; .docx, Word, Google Docs, LibreOffice ve Pages'te sorunsuz açılır. Yükleme adımı yok, dönüştürme kuyruğu yok, \"dosyanız işleniyor\" ekranı yok.",
     f4Title: "Web sayfası gibi değil, kâğıt gibi yazdırır",
@@ -501,10 +501,10 @@ export const tr: Dictionary = {
   },
 
   faq: {
-    q1: "What's the slash menu?",
-    a1: "Press / while writing and a searchable menu opens at your cursor with every command in the editor: headings, tables, images, lists, page breaks, export. Type to filter, Enter to insert. It replaces the toolbar for almost everything.",
-    q2: "I use Notion. Will this feel familiar?",
-    a2: "Yes, that's the idea. Same / reflex, same get-out-of-the-way editing. The difference is what comes out the other end: Notion gives you a page in a workspace, EDTRpad gives you a document. Real page breaks, exact print margins, and a .docx you can email to someone who's never heard of any of this.",
+    q1: "Slash menüsü nedir?",
+    a1: "Yazarken / tuşuna basın; imlecinizde, editördeki her komutu içeren aranabilir bir menü açılır: başlıklar, tablolar, görseller, listeler, sayfa sonları, dışa aktarma. Yazarak filtreleyin, Enter ile ekleyin. Hemen her iş için araç çubuğunun yerini alır.",
+    q2: "Notion kullanıyorum. Burası tanıdık gelir mi?",
+    a2: "Evet, amaç da bu. Aynı / refleksi, aynı araya girmeyen yazma deneyimi. Fark, işin sonunda elinize geçende: Notion size bir çalışma alanında bir sayfa verir, EDTRpad ise bir belge. Gerçek sayfa sonları, hassas yazdırma kenar boşlukları ve bunların hiçbirini duymamış birine e-postayla gönderebileceğiniz bir .docx.",
     q3: "Hesap gerekiyor mu?",
     a3: "Hayır. Editörü açın ve yazın. Hesap isteğe bağlıdır ve yalnızca cihazlar arası eşitleme için vardır.",
     q4: "Sekmeyi kapatırsam çalışmam kaybolur mu?",
