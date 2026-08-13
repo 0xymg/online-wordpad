@@ -135,6 +135,12 @@ const CM_TO_PX = 96 / 2.54;
 // pattern as editorHandlers). Updated from React state; read at measure time.
 const pageLayoutConfig: PageLayoutConfig = { pageHeightPx: 1123, marginPx: CM_TO_PX };
 
+/* How long the account dialog's close animation runs. Declared here rather
+   than imported from ProfileDialog, which is lazy — a static import for one
+   number would pull the whole chunk into the initial bundle. Must match
+   .dialog-panel-out / .dialog-overlay-out in globals.css. */
+const PROFILE_EXIT_MS = 180;
+
 /** Shown in Help ▸ About. Must be a mailbox that actually receives. */
 const CONTACT_EMAIL = "hello@wordpad.info";
 
@@ -837,7 +843,14 @@ export default function Editor({
   const htmlFetchRef = useRef<string | null>(null);
   const [authOpen, setAuthOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
+  // Kept mounted for the length of the exit animation after `profileOpen`
+  // flips off — the dialog is lazy, so unmounting it immediately would cut the
+  // close animation off at the first frame.
+  const [profileMounted, setProfileMounted] = useState(false);
   const [hasPassword, setHasPassword] = useState(false);
+  // The account's sign-in methods are fetched when the dialog opens; until they
+  // land the password section would guess wrong, so it shows a skeleton.
+  const [accountsLoading, setAccountsLoading] = useState(false);
   const [welcomeOpen, setWelcomeOpen] = useState(initialHome);
   // Documents whose server-side deletion is in flight (welcome-screen rows).
   const [deletingIds, setDeletingIds] = useState<string[]>([]);
@@ -1723,14 +1736,24 @@ export default function Editor({
   // Which credentials the account actually has decides what the profile dialog
   // can offer: a Google-only user has no current password to confirm against.
   const openProfile = useCallback(async () => {
+    setProfileMounted(true);
     setProfileOpen(true);
+    setAccountsLoading(true);
     try {
       const { data } = await authClient.listAccounts();
       setHasPassword(!!data?.some((a) => a.providerId === "credential"));
     } catch {
       setHasPassword(false);
+    } finally {
+      setAccountsLoading(false);
     }
   }, []);
+
+  useEffect(() => {
+    if (profileOpen || !profileMounted) return;
+    const timer = setTimeout(() => setProfileMounted(false), PROFILE_EXIT_MS);
+    return () => clearTimeout(timer);
+  }, [profileOpen, profileMounted]);
 
   // The account and every document behind it are gone — reload into the guest
   // experience rather than leaving a dead session in memory.
@@ -3445,11 +3468,12 @@ export default function Editor({
           <AuthModal open={authOpen} onClose={closeAuth} googleEnabled={googleEnabled} />
         </Suspense>
       )}
-      {profileOpen && (
+      {profileMounted && (
         <Suspense fallback={null}>
           <ProfileDialog
             open={profileOpen}
             onClose={closeProfile}
+            loading={accountsLoading}
             user={user}
             hasPassword={hasPassword}
             onDeleted={onAccountDeleted}

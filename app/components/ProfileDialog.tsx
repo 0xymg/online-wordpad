@@ -20,9 +20,6 @@ interface ProfileDialogProps {
 const INPUT =
   "w-full rounded-md border border-input bg-background px-3 py-2 text-sm outline-none focus:ring-1 focus:ring-ring";
 const SECTION = "border-t border-border pt-5";
-/** Must match .dialog-panel-out / .dialog-overlay-out in globals.css. */
-export const PROFILE_EXIT_MS = 180;
-
 /** Placeholder block, sized to whatever it stands in for. */
 function Bar({ className }: { className: string }) {
   return <div className={`bg-accent ${className}`} />;
@@ -91,6 +88,7 @@ export default function ProfileDialog({ open, onClose, loading = false, user, ha
 
   const saveProfile = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!user) return;
     setBusy("profile");
     try {
       const cleanName = name.trim();
@@ -116,6 +114,7 @@ export default function ProfileDialog({ open, onClose, loading = false, user, ha
 
   const savePassword = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!user) return;
     setBusy("password");
     try {
       if (hasPassword) {
@@ -145,6 +144,7 @@ export default function ProfileDialog({ open, onClose, loading = false, user, ha
   };
 
   const deleteAccount = async () => {
+    if (!user) return;
     setBusy("delete");
     try {
       const { error } = await authClient.deleteUser(
@@ -163,28 +163,43 @@ export default function ProfileDialog({ open, onClose, loading = false, user, ha
 
   return (
     <div
-      className="fixed inset-0 z-[1450] flex items-start justify-center overflow-y-auto bg-black/40 p-4 py-10"
+      className={`fixed inset-0 z-[1450] flex items-start justify-center overflow-y-auto bg-black/40 p-4 py-10 ${
+        open ? "dialog-overlay-in" : "dialog-overlay-out"
+      }`}
       onMouseDown={onClose}
       role="dialog"
       aria-modal="true"
       aria-label={t.profile.title}
     >
       <div
-        className="w-full max-w-xl rounded-xl border border-border bg-background p-6 shadow-2xl"
+        className={`w-full max-w-2xl rounded-xl border border-border bg-background p-6 shadow-2xl ${
+          open ? "dialog-panel-in" : "dialog-panel-out"
+        }`}
         onMouseDown={(e) => e.stopPropagation()}
       >
         <div className="mb-5 flex items-center gap-3">
-          <div className="flex h-10 w-10 shrink-0 select-none items-center justify-center rounded-full bg-primary text-sm font-semibold text-primary-foreground">
-            {user.initials}
-          </div>
+          {user ? (
+            <div className="flex h-10 w-10 shrink-0 select-none items-center justify-center rounded-full bg-primary text-sm font-semibold text-primary-foreground">
+              {user.initials}
+            </div>
+          ) : (
+            <div className="h-10 w-10 shrink-0 animate-pulse rounded-full bg-accent" aria-hidden="true" />
+          )}
           <div className="min-w-0 flex-1">
             <h2 className="truncate text-base font-semibold">{t.profile.title}</h2>
-            <p className="truncate text-xs text-muted-foreground">{user.email}</p>
+            {user ? (
+              <p className="truncate text-xs text-muted-foreground">{user.email}</p>
+            ) : (
+              <div className="mt-1 h-3 w-40 max-w-full animate-pulse bg-accent" aria-hidden="true" />
+            )}
           </div>
           <button type="button" onClick={onClose} aria-label={t.dialog.close} className="rounded p-1 hover:bg-accent">
             <X size={16} />
           </button>
         </div>
+
+        {pending ? <BodySkeleton /> : (
+        <>
 
         {/* Profile */}
         <form onSubmit={saveProfile} className="space-y-3">
@@ -293,6 +308,8 @@ export default function ProfileDialog({ open, onClose, loading = false, user, ha
             </div>
           )}
         </div>
+        </>
+        )}
       </div>
     </div>
   );
