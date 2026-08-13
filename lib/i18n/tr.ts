@@ -365,6 +365,7 @@ export const tr: Dictionary = {
     announcementNew: "Yeni",
     announcementText: "İsteğe bağlı hesaplar. Belgelerinizi cihazlar arasında eşitleyin, yine ücretsiz.",
     announcementCta: "Hesap oluşturun →",
+    navSlash: "Slash menu",
     navFeatures: "Özellikler",
     navHow: "Nasıl çalışır",
     navVs: "Karşılaştırma",
@@ -373,21 +374,30 @@ export const tr: Dictionary = {
     openEditor: "Editörü aç →",
     heroTitle: "Zaten açık olan online kelime işlemci.",
     heroSubtitle:
-      "Tarayıcınızda çalışan ücretsiz bir Word ve WordPad alternatifi. Zengin metin, tablolar, görseller, .docx ve gerçek yazdırma. İndirme yok, lisans yok, hesap yok. Aşağıdaki sayfaya tıklayın ve yazmaya başlayın.",
+      "A free Word and WordPad alternative in your browser, with a slash menu instead of a ribbon. Type / and every command is right where your cursor is. No download, no license, no account.",
     heroCtaPrimary: "Yazmaya başla →",
     heroCtaSecondary: ".docx dosyası açın",
     heroMicrocopy: "Sonsuza dek ücretsiz · Kurulum yok · Kayıt yok",
-    heroEditorPlaceholder:
-      "Bu, editörün ta kendisi. Buraya tıklayın ve yazmaya başlayın.",
+    heroEditorHintPre: "Start typing. Or press ",
+    heroEditorHintPost: " to see everything this can do.",
+    heroEditorHintMobile: "Tap here and start typing.",
     trustItems: [
-      "Yaklaşık bir saniyede yazmaya hazır",
-      "Hesap gerekmez",
-      ".docx açar ve dışa aktarır",
-      "Belgeniz cihazınızda kalır",
+      "Type / for any command",
+      "Ready in about a second",
+      "No account",
+      "Opens and exports .docx",
     ],
+    slashTitle: "No ribbon. No toolbar hunting. Just a slash.",
+    slashP1:
+      "Every command in EDTRpad lives behind one key. Type / anywhere in your document and the menu opens right where your cursor is: headings, tables, images, lists, page breaks, formatting, export. Keep typing to filter it, press Enter to insert.",
+    slashP2:
+      "If you've used Notion, your hands already know this. If you haven't, here's what it means in practice: you never take your hands off the keyboard to insert a table, and you never go looking for a button again.",
+    slashP3:
+      "This is the real reason writing here is faster than Word. Not because the page loads quicker, though it does. Because the distance between wanting a table and having a table is four keystrokes: [[/tab]] and [[Enter]].",
+    slashTryLink: "Try it, press / in the editor →",
     frictionTitle: "Tek bir sayfa yazacaktınız. Bu size beş dakikaya mal olmamalı.",
     frictionP1:
-      "Sırayı bilirsiniz. Word'ü açıp yüklenmesini beklersiniz, sonra oturum açma istemini kapatırsınız, sonra istemediğiniz bir şablon seçersiniz. Ya da Google Docs'u açar, doğru hesaba girer, dosya listesini bekler, Yeni'ye tıklarsınız.",
+      "You know the sequence. Open Word and wait for it to load, then dismiss the sign-in prompt, then skip a template gallery you didn't ask for. Or open Google Docs, sign into the right account, wait for the file list, click New.",
     frictionP2:
       "EDTRpad bunların hepsini atlar. **Zaten editörün içindesiniz.** Yazın, biçimlendirin, yazdırın ya da dışa aktarın, sekmeyi kapatın. Bütün iş, yazmanın sürdüğü kadar sürer.",
     frictionP3:
