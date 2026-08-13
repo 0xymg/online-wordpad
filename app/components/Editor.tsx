@@ -56,9 +56,7 @@ import { toast, Toaster } from "./toast";
 import { useAskDialogs } from "./AskDialogs";
 import { useT, useLocale } from "./I18nProvider";
 import { isLocale, LOCALE_TAGS, type Dictionary } from "@/lib/i18n";
-import {
-  DATE_FORMATS, VARIABLE_INPUT_RULE, resolveVariable, type VariableContext,
-} from "@/lib/doc-variables";
+import { VARIABLE_INPUT_RULE, resolveVariable, type VariableContext } from "@/lib/doc-variables";
 import {
   listDocuments, createDocument, updateDocument, renameDocument, deleteDocument,
   getDocumentHtml, getPreferences, savePreferences,
@@ -1415,6 +1413,12 @@ export default function Editor({
     if (isAuthedRef.current) {
       const list = commitCurrent(filesRef.current);
       lastAutoNameRef.current = null;
+      // The start screen closes the moment a template is picked, so without the
+      // skeleton the previous document sits there in full view for as long as
+      // the round trip takes. Clearing the fetch ref supersedes any in-flight
+      // html load so its `finally` can't clear the skeleton out from under us.
+      htmlFetchRef.current = null;
+      setInitialLoading(true);
       try {
         const doc = await createDocument(name, html);
         applyFiles([doc, ...list], doc.id);
@@ -1424,6 +1428,8 @@ export default function Editor({
         syncUrlToDoc(doc.id);
       } catch {
         toast.error(t.toast.createFailed);
+      } finally {
+        setInitialLoading(false);
       }
     } else {
       const v = viewRef.current;
