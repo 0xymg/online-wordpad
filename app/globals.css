@@ -526,6 +526,13 @@ body {
   width: 4px;
 }
 
+/* prosemirror-tables sütun kenarına gelince editöre .resize-cursor ekler;
+   sürükleme boyunca da kalır — imleç her yerde col-resize görünmeli. */
+.pm-page .ProseMirror.resize-cursor,
+.pm-page .ProseMirror.resize-cursor * {
+  cursor: col-resize !important;
+}
+
 /* ── Link ── */
 .pm-page .ProseMirror a {
   color: #0078D7;
