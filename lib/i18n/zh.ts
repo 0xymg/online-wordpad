@@ -327,6 +327,8 @@ export const zh: Dictionary = {
     pageRange: (from: number, to: number, total: number) => `第 ${from}–${to} 项，共 ${total} 项`,
     prevPage: "上一页",
     nextPage: "下一页",
+    downloadDocument: "下载为 Word (.docx)",
+    downloadDocumentNamed: (name: string) => `将 ${name} 下载为 Word`,
     deleteDocument: "删除文稿",
     deleteDocumentNamed: (name: string) => `删除 ${name}`,
     selectAll: "全选",

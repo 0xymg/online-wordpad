@@ -332,6 +332,8 @@ export const en = {
     pageRange: (from: number, to: number, total: number) => `${from}–${to} of ${total}`,
     prevPage: "Previous page",
     nextPage: "Next page",
+    downloadDocument: "Download as Word (.docx)",
+    downloadDocumentNamed: (name: string) => `Download ${name} as Word`,
     deleteDocument: "Delete document",
     deleteDocumentNamed: (name: string) => `Delete ${name}`,
     selectAll: "Select all",

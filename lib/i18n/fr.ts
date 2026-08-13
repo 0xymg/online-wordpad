@@ -330,6 +330,8 @@ export const fr: Dictionary = {
     pageRange: (from: number, to: number, total: number) => `${from}–${to} sur ${total}`,
     prevPage: "Page précédente",
     nextPage: "Page suivante",
+    downloadDocument: "Télécharger en Word (.docx)",
+    downloadDocumentNamed: (name: string) => `Télécharger ${name} en Word`,
     deleteDocument: "Supprimer le document",
     deleteDocumentNamed: (name: string) => `Supprimer ${name}`,
     selectAll: "Tout sélectionner",

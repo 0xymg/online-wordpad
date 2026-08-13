@@ -1806,6 +1806,12 @@ export default function Editor({
     exportFile({ ...file, name: docTitle || file.name }, fmt);
   }, [exportFile, docTitle]);
 
+  /** Single-row download — a lone .docx, no archive around it. */
+  const downloadFile = useCallback((id: string) => {
+    const file = filesRef.current.find((f) => f.id === id);
+    if (file) exportFile(file, "docx");
+  }, [exportFile]);
+
   // ── File open (.txt / .md / .html / .docx) ────────────────────────────────
   const openFileDialog = useCallback(() => openInputRef.current?.click(), []);
 
@@ -3605,6 +3611,7 @@ export default function Editor({
         onOpenDocument={switchFile}
         onCopyLink={copyDocLink}
         onDeleteDocument={deleteFile}
+        onDownloadDocument={downloadFile}
         onDownloadDocuments={downloadFiles}
         onDeleteDocuments={deleteFiles}
         bulkBusy={bulkBusy}

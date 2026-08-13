@@ -20,6 +20,7 @@ interface WelcomeScreenProps {
   onOpenDocument: (id: string) => void;
   onCopyLink: (id: string) => void;
   onDeleteDocument: (id: string) => void;
+  onDownloadDocument: (id: string) => void;
   /** Bulk actions over the "All documents" selection. */
   onDownloadDocuments: (ids: string[]) => void;
   onDeleteDocuments: (ids: string[]) => void;
@@ -103,7 +104,7 @@ function TemplateThumb({ html }: { html: string }) {
 /** One row of the document lists: open, copy link, delete. */
 function DocRow({
   f, t, activeId, docHref, onOpen, onCopyLink, onDelete, deleting = false,
-  selected, onToggleSelected,
+  selected, onToggleSelected, onDownload,
 }: {
   f: WelcomeFile;
   t: ReturnType<typeof useT>;
@@ -116,6 +117,8 @@ function DocRow({
   /** Only the "All documents" list is selectable — omitted elsewhere. */
   selected?: boolean;
   onToggleSelected?: (id: string) => void;
+  /** Same: the per-row download only appears in "All documents". */
+  onDownload?: (id: string) => void;
 }) {
   if (deleting) {
     // Row stays visible but inert while the server deletion is in flight.
@@ -159,6 +162,17 @@ function DocRow({
             <span className="shrink-0 rounded bg-accent px-1.5 py-0.5 text-[10px] font-medium text-accent-foreground">{t.welcome.lastOpened}</span>
           )}
         </a>
+        {onDownload && (
+          <button
+            type="button"
+            onClick={() => onDownload(f.id)}
+            aria-label={t.welcome.downloadDocumentNamed(f.name || t.sidebar.untitled)}
+            title={t.welcome.downloadDocument}
+            className="shrink-0 rounded p-1.5 text-muted-foreground opacity-0 transition hover:bg-accent hover:text-foreground focus-visible:opacity-100 focus-visible:outline-2 focus-visible:outline-ring group-hover:opacity-100"
+          >
+            <DownloadSimple size={15} />
+          </button>
+        )}
         <button
           type="button"
           onClick={() => onCopyLink(f.id)}
@@ -194,7 +208,7 @@ function DocRowSkeleton() {
 export default function WelcomeScreen({
   open, onClose, isAuthed, userName, files, activeId,
   onNewDocument, onOpenFile, onPickTemplate, onOpenDocument, onCopyLink, onDeleteDocument,
-  onDownloadDocuments, onDeleteDocuments, bulkBusy = false,
+  onDownloadDocument, onDownloadDocuments, onDeleteDocuments, bulkBusy = false,
   docHref, onSignIn, onOpenProfile, userEmail, deletingIds = [], loading = false, sessionLoading = false,
 }: WelcomeScreenProps) {
   const t = useT();
@@ -484,7 +498,10 @@ export default function WelcomeScreen({
               {/* Select-all covers the rows you can actually see — with the list
                   paginated, a checkbox that quietly reached past this page would
                   be a nasty thing to hand a Delete button. */}
-              <div className="flex flex-wrap items-center gap-3 border border-b-0 border-border bg-muted/40 px-4 py-2 text-xs">
+              {/* min-height, not padding: the row is the same height whether or not the
+                  action buttons are in it, so selecting a document doesn't shove
+                  the list down. */}
+              <div className="flex min-h-11 flex-wrap items-center gap-3 border border-b-0 border-border bg-muted/40 px-4 py-1.5 text-xs">
                 <label className="flex cursor-pointer items-center gap-2">
                   <input
                     type="checkbox"
@@ -537,6 +554,7 @@ export default function WelcomeScreen({
                     deleting={deletingIds.includes(f.id)}
                     selected={selection.includes(f.id)}
                     onToggleSelected={toggleSelected}
+                    onDownload={onDownloadDocument}
                   />
                 ))}
               </div>

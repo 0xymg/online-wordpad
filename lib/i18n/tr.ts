@@ -330,6 +330,8 @@ export const tr: Dictionary = {
     pageRange: (from: number, to: number, total: number) => `${total} belgeden ${from}–${to}`,
     prevPage: "Önceki sayfa",
     nextPage: "Sonraki sayfa",
+    downloadDocument: "Word (.docx) olarak indir",
+    downloadDocumentNamed: (name: string) => `${name} belgesini Word olarak indir`,
     deleteDocument: "Belgeyi sil",
     deleteDocumentNamed: (name: string) => `${name} belgesini sil`,
     selectAll: "Tümünü seç",
