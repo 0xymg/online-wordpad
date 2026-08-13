@@ -2612,10 +2612,12 @@ export default function Editor({
       <div
         className={cn(
           "grid shrink-0 transition-[grid-template-rows,opacity] duration-300 ease-in-out motion-reduce:transition-none",
-          // Height-based, not width: the point is to win back vertical space on
-          // short viewports (laptops at 768p, phones in landscape).
+          // Height-based, not width: the point is to win back vertical space
+          // where it is scarce. 900px covers laptop viewports (a 13-16" screen
+          // leaves ~750-870px after browser chrome) while leaving desktop
+          // monitors alone.
           chromeCollapsed
-            ? "[@media(max-height:700px)]:grid-rows-[0fr] [@media(max-height:700px)]:opacity-0"
+            ? "[@media(max-height:900px)]:grid-rows-[0fr] [@media(max-height:900px)]:opacity-0"
             : "grid-rows-[1fr] opacity-100"
         )}
       >
