@@ -878,14 +878,11 @@ export default function Editor({
   const lastSnapAtRef = useRef<Record<string, number>>({});
   const [shortcutsOpen, setShortcutsOpen] = useState(false);
   const [focusMode, setFocusMode] = useState(false);
-  // On short viewports the menu bar collapses while scrolling down so the
-  // toolbar sits right under the top edge; it comes back on scroll up.
+  // The menu bar collapses while scrolling down so the toolbar sits right
+  // under the top edge; it comes back on scroll up. Applies at every viewport
+  // height, not just short ones.
   const [chromeCollapsed, setChromeCollapsed] = useState(false);
   const chromeCollapsedRef = useRef(false);
-  // 900px covers laptop viewports (a 13-16" screen leaves ~750-870px after
-  // browser chrome) while leaving desktop monitors alone. Matched in JS rather
-  // than CSS so the collapsed bar can also be taken out of the tab order.
-  const [shortViewport, setShortViewport] = useState(false);
   const editorShellRef = useRef<HTMLDivElement>(null);
   const [printHeaderFooter, setPrintHeaderFooter] = useState(false);
   const lastAutoNameRef = useRef<string | null>(null);
@@ -1234,14 +1231,6 @@ export default function Editor({
     const v = viewRef.current;
     if (v) setDocInfo(computeDocInfo(v.state, t));
   }, [t]);
-
-  useEffect(() => {
-    const mq = window.matchMedia("(max-height: 900px)");
-    const apply = () => setShortViewport(mq.matches);
-    apply();
-    mq.addEventListener("change", apply);
-    return () => mq.removeEventListener("change", apply);
-  }, []);
 
   // Scrolling happens inside .editor-shell rather than the window, so the
   // direction is read from that element. Small deltas are ignored to avoid
@@ -2610,7 +2599,6 @@ export default function Editor({
   const searchInfo = findOpen && viewRef.current ? getSearchState(viewRef.current) : undefined;
   const matchTotal = searchInfo?.matches.length ?? 0;
   const matchCurrent = matchTotal > 0 ? (searchInfo!.current + 1) : 0;
-  const chromeHidden = shortViewport && chromeCollapsed;
 
   return (
     <div className="flex h-screen">
@@ -2639,19 +2627,17 @@ export default function Editor({
       />
       {/* Main column */}
       <div className="flex h-screen flex-1 min-w-0 flex-col overflow-hidden">
-      {/* grid-rows 1fr→0fr animates to the row's natural height, so the collapse
-          stays smooth without hard-coding the menu bar's height. */}
       {!focusMode && (
       <div
         className={cn(
+          // grid-rows 1fr→0fr animates to the row's natural height, so the
+          // collapse stays smooth without hard-coding the menu bar's height.
           "grid shrink-0 transition-[grid-template-rows,opacity] duration-300 ease-in-out motion-reduce:transition-none",
-          // Height-based, not width: the point is to win back vertical space
-          // where it is scarce (see the shortViewport media query).
-          chromeHidden ? "grid-rows-[0fr] opacity-0" : "grid-rows-[1fr] opacity-100"
+          chromeCollapsed ? "grid-rows-[0fr] opacity-0" : "grid-rows-[1fr] opacity-100"
         )}
         // Collapsed but still in the DOM — keep the title input and menus out
         // of the tab order while they're invisible.
-        inert={chromeHidden}
+        inert={chromeCollapsed}
       >
       <div className="min-h-0 overflow-hidden">
       <MenuBar
