@@ -95,6 +95,10 @@ export const CaretDown = /* @__PURE__ */ makeIcon("CaretDown", {
   regular: "M213.66,101.66l-80,80a8,8,0,0,1-11.32,0l-80-80A8,8,0,0,1,53.66,90.34L128,164.69l74.34-74.35a8,8,0,0,1,11.32,11.32Z",
 });
 
+export const CaretLeft = /* @__PURE__ */ makeIcon("CaretLeft", {
+  regular: "M165.66,202.34a8,8,0,0,1-11.32,11.32l-80-80a8,8,0,0,1,0-11.32l80-80a8,8,0,0,1,11.32,11.32L91.31,128Z",
+});
+
 export const CaretRight = /* @__PURE__ */ makeIcon("CaretRight", {
   regular: "M181.66,133.66l-80,80a8,8,0,0,1-11.32-11.32L164.69,128,90.34,53.66a8,8,0,0,1,11.32-11.32l80,80A8,8,0,0,1,181.66,133.66Z",
 });
