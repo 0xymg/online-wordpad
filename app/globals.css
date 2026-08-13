@@ -264,6 +264,27 @@ body {
   .welcome-screen-out { animation-duration: 1ms; }
 }
 
+/* ── Modal dialog geçişleri (hesap ayarları) ── */
+/* EXIT_MS in ProfileDialog.tsx must match the fade-out duration. */
+@keyframes dialog-overlay-in  { from { opacity: 0 } to { opacity: 1 } }
+@keyframes dialog-overlay-out { from { opacity: 1 } to { opacity: 0 } }
+@keyframes dialog-panel-in {
+  from { opacity: 0; transform: translateY(8px) scale(0.98); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+@keyframes dialog-panel-out {
+  from { opacity: 1; transform: translateY(0) scale(1); }
+  to   { opacity: 0; transform: translateY(4px) scale(0.985); }
+}
+.dialog-overlay-in  { animation: dialog-overlay-in 180ms ease-out both; }
+.dialog-overlay-out { animation: dialog-overlay-out 160ms ease-in both; pointer-events: none; }
+.dialog-panel-in    { animation: dialog-panel-in 220ms cubic-bezier(0.22, 1, 0.36, 1) both; }
+.dialog-panel-out   { animation: dialog-panel-out 160ms cubic-bezier(0.4, 0, 1, 1) both; }
+@media (prefers-reduced-motion: reduce) {
+  .dialog-overlay-in, .dialog-overlay-out,
+  .dialog-panel-in, .dialog-panel-out { animation-duration: 1ms; }
+}
+
 /* ── Sayfa arası boşluk (pagination spacer, decoration) ── */
 /* Ölçüm sırasında spacer'lar akıştan çıkarılır (paginationPlugin). */
 .pm-measuring .pm-page-spacer { display: none !important; }

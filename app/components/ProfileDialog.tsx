@@ -9,6 +9,8 @@ import { toast } from "./toast";
 interface ProfileDialogProps {
   open: boolean;
   onClose: () => void;
+  /** True while the account details behind the dialog are still being fetched. */
+  loading?: boolean;
   user: { name: string; email: string; initials: string; emailVerified: boolean } | null;
   /** True when the account was created with a password (Google-only users have none). */
   hasPassword: boolean;
@@ -18,12 +20,43 @@ interface ProfileDialogProps {
 const INPUT =
   "w-full rounded-md border border-input bg-background px-3 py-2 text-sm outline-none focus:ring-1 focus:ring-ring";
 const SECTION = "border-t border-border pt-5";
+/** Must match .dialog-panel-out / .dialog-overlay-out in globals.css. */
+export const PROFILE_EXIT_MS = 180;
+
+/** Placeholder block, sized to whatever it stands in for. */
+function Bar({ className }: { className: string }) {
+  return <div className={`bg-accent ${className}`} />;
+}
+
+/* Mirrors the real body's rhythm — two labelled fields and a button, then the
+   password section — so nothing jumps when the content arrives. */
+function BodySkeleton() {
+  return (
+    <div className="animate-pulse space-y-3" aria-hidden="true">
+      <div className="space-y-1">
+        <Bar className="h-3 w-16" />
+        <Bar className="h-9 w-full" />
+      </div>
+      <div className="space-y-1">
+        <Bar className="h-3 w-20" />
+        <Bar className="h-9 w-full" />
+      </div>
+      <Bar className="h-9 w-20" />
+      <div className="mt-6 space-y-3 border-t border-border pt-5">
+        <Bar className="h-4 w-28" />
+        <Bar className="h-9 w-full" />
+        <Bar className="h-9 w-full" />
+        <Bar className="h-9 w-36" />
+      </div>
+    </div>
+  );
+}
 
 /**
  * Account settings: profile fields, password, and account deletion.
  * Each section submits on its own so a failure in one does not discard the others.
  */
-export default function ProfileDialog({ open, onClose, user, hasPassword, onDeleted }: ProfileDialogProps) {
+export default function ProfileDialog({ open, onClose, loading = false, user, hasPassword, onDeleted }: ProfileDialogProps) {
   const t = useT();
   const [name, setName] = useState(user?.name ?? "");
   const [email, setEmail] = useState(user?.email ?? "");
@@ -51,7 +84,7 @@ export default function ProfileDialog({ open, onClose, user, hasPassword, onDele
     return () => window.removeEventListener("keydown", onKey);
   }, [open, onClose]);
 
-  if (!open || !user) return null;
+  const pending = loading || !user;
 
   const errText = (e: unknown, fallback: string) =>
     (e instanceof Error && e.message) || fallback;
