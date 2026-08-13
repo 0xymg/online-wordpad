@@ -135,6 +135,9 @@ const CM_TO_PX = 96 / 2.54;
 // pattern as editorHandlers). Updated from React state; read at measure time.
 const pageLayoutConfig: PageLayoutConfig = { pageHeightPx: 1123, marginPx: CM_TO_PX };
 
+/** Shown in Help ▸ About. Must be a mailbox that actually receives. */
+const CONTACT_EMAIL = "hello@wordpad.info";
+
 function setTextAlignCmd(align: "left" | "center" | "right" | "justify") {
   return (state: EditorState, dispatch?: (tr: Transaction) => void): boolean => {
     const { from, to } = state.selection;
@@ -898,6 +901,7 @@ export default function Editor({
   }, [initialDeepLinkId]);
   const lastSnapAtRef = useRef<Record<string, number>>({});
   const [shortcutsOpen, setShortcutsOpen] = useState(false);
+  const [aboutOpen, setAboutOpen] = useState(false);
   const [focusMode, setFocusMode] = useState(false);
   // Scrolling down thins the toolbar out — shorter buttons, smaller icons — to
   // hand the page a little vertical space back; scrolling up restores it. The
@@ -1744,6 +1748,7 @@ export default function Editor({
   // React.memo can't skip its ~700-line render. Former inline arrows live here.
   const showHome = useCallback(() => openHome(), [openHome]);
   const showShortcuts = useCallback(() => setShortcutsOpen(true), []);
+  const showAbout = useCallback(() => setAboutOpen(true), []);
   const toggleToolbar = useCallback(() => setShowToolbar((s) => !s), []);
   const toggleRuler = useCallback(() => setShowRuler((s) => !s), []);
   const toggleSpellcheck = useCallback(() => setSpellcheckOn((s) => !s), []);
@@ -2614,13 +2619,13 @@ export default function Editor({
 
   // Esc closes the version-history / shortcuts dialogs
   useEffect(() => {
-    if (!versionsOpen && !shortcutsOpen) return;
+    if (!versionsOpen && !shortcutsOpen && !aboutOpen) return;
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") { setVersionsOpen(false); setShortcutsOpen(false); }
+      if (e.key === "Escape") { setVersionsOpen(false); setShortcutsOpen(false); setAboutOpen(false); }
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [versionsOpen, shortcutsOpen]);
+  }, [versionsOpen, shortcutsOpen, aboutOpen]);
 
   // Small screens: fit the A4 page to the viewport once on load
   useEffect(() => {
@@ -2692,6 +2697,7 @@ export default function Editor({
         onExport={exportActive}
         onShowVersions={openVersions}
         onShowShortcuts={showShortcuts}
+        onShowAbout={showAbout}
         onFind={openFind}
         onInsertTable={handleInsertTable}
         onPageBreakAdd={handleInsertPageBreak}
@@ -3388,6 +3394,47 @@ export default function Editor({
                 </div>
               ))}
             </div>
+          </div>
+        </div>
+      )}
+      {aboutOpen && (
+        <div
+          className="fixed inset-0 z-[1300] flex items-center justify-center bg-black/40 p-4"
+          onMouseDown={(e) => { if (e.target === e.currentTarget) setAboutOpen(false); }}
+        >
+          <div role="dialog" aria-modal="true" aria-label={t.help.about} className="w-full max-w-md rounded-lg border border-border bg-popover text-popover-foreground p-6 shadow-2xl">
+            <div className="mb-4 flex items-start justify-between gap-4">
+              <div>
+                <span className="font-brand select-none leading-none">
+                  <span className="text-2xl font-bold tracking-tight text-foreground">EDTR</span>
+                  <span className="text-lg font-semibold tracking-wider text-muted-foreground">PAD</span>
+                </span>
+                <p className="mt-1 text-sm text-muted-foreground">{t.help.aboutTagline}</p>
+              </div>
+              <button type="button" onClick={() => setAboutOpen(false)} aria-label={t.dialog.close} className="-mr-1 -mt-1 shrink-0 rounded p-1 hover:bg-accent">
+                <X size={14} />
+              </button>
+            </div>
+            <p className="text-sm leading-relaxed text-muted-foreground">{t.help.aboutBody}</p>
+            <p className="mt-3 text-xs leading-relaxed text-muted-foreground">{t.help.aboutText}</p>
+            <dl className="mt-5 space-y-2 border-t border-border pt-4 text-sm">
+              <div className="flex items-baseline justify-between gap-4">
+                <dt className="text-muted-foreground">{t.help.aboutContact}</dt>
+                <dd>
+                  <a href={`mailto:${CONTACT_EMAIL}`} className="underline underline-offset-2 hover:no-underline">
+                    {CONTACT_EMAIL}
+                  </a>
+                </dd>
+              </div>
+              <div className="flex items-baseline justify-between gap-4">
+                <dt className="text-muted-foreground">{t.help.aboutMadeBy}</dt>
+                <dd>
+                  <a href="https://ymg.digital" target="_blank" rel="noopener" className="underline underline-offset-2 hover:no-underline">
+                    ymg.digital
+                  </a>
+                </dd>
+              </div>
+            </dl>
           </div>
         </div>
       )}

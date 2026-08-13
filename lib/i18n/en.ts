@@ -143,6 +143,11 @@ export const en = {
     about: "About EDTRpad",
     aboutText:
       "EDTRpad is a free online word processor at wordpad.info. It is an independent project, not affiliated with Microsoft.",
+    aboutTagline: "A word processor that's already open.",
+    aboutBody:
+      "Write, format and print documents straight from the browser. Nothing to install, no account needed, and your work is saved as you type. Documents open from .docx, .txt, .md and .html, and export back to Word, PDF, RTF, Markdown and plain text.",
+    aboutContact: "Questions, bugs, ideas",
+    aboutMadeBy: "Made by",
   },
 
   toolbar: {

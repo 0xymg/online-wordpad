@@ -141,6 +141,11 @@ export const zh: Dictionary = {
     about: "关于 EDTRpad",
     aboutText:
       "EDTRpad 是 wordpad.info 上的免费在线文字处理器。本产品为独立项目，与 Microsoft 无关。",
+    aboutTagline: "一个早已打开的文字处理器。",
+    aboutBody:
+      "直接在浏览器里撰写、排版和打印文稿。无需安装，无需账户，边打字边保存。可打开 .docx、.txt、.md 和 .html 文件，并导出为 Word、PDF、RTF、Markdown 和纯文本。",
+    aboutContact: "问题、缺陷、建议",
+    aboutMadeBy: "作者",
   },
 
   toolbar: {

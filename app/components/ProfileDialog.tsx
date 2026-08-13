@@ -137,7 +137,7 @@ export default function ProfileDialog({ open, onClose, user, hasPassword, onDele
       aria-label={t.profile.title}
     >
       <div
-        className="w-full max-w-md rounded-xl border border-border bg-background p-6 shadow-2xl"
+        className="w-full max-w-xl rounded-xl border border-border bg-background p-6 shadow-2xl"
         onMouseDown={(e) => e.stopPropagation()}
       >
         <div className="mb-5 flex items-center gap-3">

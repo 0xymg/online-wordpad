@@ -141,6 +141,11 @@ export const tr: Dictionary = {
     about: "EDTRpad hakkında",
     aboutText:
       "EDTRpad, wordpad.info adresinde çalışan ücretsiz bir çevrimiçi kelime işlemcidir. Bağımsız bir projedir ve Microsoft ile ilişkisi yoktur.",
+    aboutTagline: "Zaten açık olan kelime işlemci.",
+    aboutBody:
+      "Belgelerinizi doğrudan tarayıcıda yazın, biçimlendirin ve yazdırın. Kurulum yok, hesap gerekmiyor, yazdıkça kaydediliyor. .docx, .txt, .md ve .html dosyaları açılıyor; Word, PDF, RTF, Markdown ve düz metin olarak dışa aktarılıyor.",
+    aboutContact: "Soru, hata, öneri",
+    aboutMadeBy: "Yapan",
   },
 
   toolbar: {

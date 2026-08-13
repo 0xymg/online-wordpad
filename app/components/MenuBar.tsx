@@ -56,6 +56,7 @@ interface MenuBarProps {
   onExport: (fmt: "html" | "txt" | "docx" | "rtf" | "md" | "pdf") => void;
   onShowVersions: () => void;
   onShowShortcuts: () => void;
+  onShowAbout: () => void;
   onFind: () => void;
   onInsertTable: (rows: number, cols: number) => void;
   onPageBreakAdd: () => void;
@@ -147,7 +148,7 @@ function MenuBar({
   pageOrientation, onPageOrientationChange,
   docTitle, onTitleChange, onNewDoc, onShowHome, onNewFromTemplate, onOpenFile, onExport,
   onSave, onCopyLink, onRenameDoc, onDeleteDoc, onReplace,
-  onShowVersions, onShowShortcuts, onFind,
+  onShowVersions, onShowShortcuts, onShowAbout, onFind,
   onInsertTable, onPageBreakAdd, onLinkAdd, onImageAdd, onImageUrlAdd,
   onInsertDivider, onInsertSymbol, onInsertDate, onInsertVariable,
   onLineSpacing, onClearFormatting,
@@ -760,13 +761,7 @@ function MenuBar({
         <MenubarContent>
           <MenubarItem onClick={onShowShortcuts}>{t.help.shortcuts}</MenubarItem>
           <MenubarSeparator />
-          <MenubarItem
-            onClick={() =>
-              toast(t.help.aboutText, { position: "top", duration: 6000 })
-            }
-          >
-            {t.help.about}
-          </MenubarItem>
+          <MenubarItem onClick={onShowAbout}>{t.help.about}</MenubarItem>
         </MenubarContent>
       </MenubarMenu>
       </div>

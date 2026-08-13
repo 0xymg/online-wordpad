@@ -141,6 +141,11 @@ export const fr: Dictionary = {
     about: "À propos d'EDTRpad",
     aboutText:
       "EDTRpad est un traitement de texte en ligne gratuit disponible sur wordpad.info. C'est un projet indépendant, sans aucun lien avec Microsoft.",
+    aboutTagline: "Un traitement de texte déjà ouvert.",
+    aboutBody:
+      "Écrivez, mettez en forme et imprimez vos documents directement depuis le navigateur. Rien à installer, aucun compte requis, et votre travail est enregistré au fil de la frappe. Ouvre les fichiers .docx, .txt, .md et .html, et exporte en Word, PDF, RTF, Markdown et texte brut.",
+    aboutContact: "Questions, bugs, idées",
+    aboutMadeBy: "Réalisé par",
   },
 
   toolbar: {
