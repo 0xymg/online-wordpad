@@ -12,9 +12,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
    and order live here while the words come from the active locale. */
 function featureList(t: Dictionary) {
   return [
-    { Icon: TextB,   title: t.features.f1Title, desc: t.features.f1Desc },
-    { Icon: Files,   title: t.features.f2Title, desc: t.features.f2Desc },
-    { Icon: Command, title: t.features.f3Title, desc: t.features.f3Desc },
+    { Icon: Command, title: t.features.f1Title, desc: t.features.f1Desc },
+    { Icon: TextB,   title: t.features.f2Title, desc: t.features.f2Desc },
+    { Icon: Files,   title: t.features.f3Title, desc: t.features.f3Desc },
     { Icon: Printer, title: t.features.f4Title, desc: t.features.f4Desc },
   ];
 }
@@ -32,7 +32,47 @@ function faqList(t: Dictionary) {
     { q: t.faq.q9, a: t.faq.a9 },
     { q: t.faq.q10, a: t.faq.a10 },
     { q: t.faq.q11, a: t.faq.a11 },
+    { q: t.faq.q12, a: t.faq.a12 },
   ];
+}
+
+/* Demo-strip chips: each inserts its command into the hero editor through the
+   window event ToolbarPreview listens for. /export has nothing to export in the
+   preview, so it opens the real editor instead (rendered as a link below). */
+const DEMO_CHIPS: Array<{ label: string; command: string }> = [
+  { label: "/heading", command: "h1" },
+  { label: "/table", command: "table" },
+  { label: "/image", command: "image" },
+  { label: "/list", command: "bullet" },
+  { label: "/divider", command: "divider" },
+  { label: "/pagebreak", command: "page_break" },
+];
+
+/* Scroll the hero editor into view, then (once the scroll has settled) tell the
+   lazy ToolbarPreview chunk to focus and, optionally, run a command. */
+function heroCommand(command: string) {
+  if (typeof window === "undefined") return;
+  document.getElementById("hero-editor")?.scrollIntoView({ behavior: "smooth", block: "center" });
+  window.setTimeout(() => {
+    window.dispatchEvent(new CustomEvent("edtr-hero", { detail: { command } }));
+  }, 280);
+}
+
+/* Copy carries [[…]] tokens that should render as keyboard-key chips
+   (slash-menu paragraph 3). */
+function renderKbd(text: string): ReactNode {
+  return text.split(/(\[\[[^\]]+\]\])/).map((part, i) =>
+    part.startsWith("[[") && part.endsWith("]]") ? (
+      <kbd
+        key={i}
+        className="mx-0.5 inline-block border border-[var(--pad-border-strong)] px-1.5 py-0.5 font-mono text-[0.85em] text-[var(--pad-ink)]"
+      >
+        {part.slice(2, -2)}
+      </kbd>
+    ) : (
+      <Fragment key={i}>{part}</Fragment>
+    )
+  );
 }
 
 /* Copy carries **bold** spans inline (friction paragraph, account bullets), so
@@ -126,8 +166,8 @@ export default function LandingClient() {
             <span className="text-lg font-semibold tracking-wider text-[var(--pad-ink-50)]">PAD</span>
           </span>
           <nav className="absolute left-1/2 hidden -translate-x-1/2 items-center gap-8 text-[13px] text-[var(--pad-ink-50)] sm:flex">
+            <a href="#slash-menu" className="transition-colors hover:text-[var(--pad-ink)]">{t.landing.navSlash}</a>
             <a href="#features" className="transition-colors hover:text-[var(--pad-ink)]">{t.landing.navFeatures}</a>
-            <a href="#how" className="transition-colors hover:text-[var(--pad-ink)]">{t.landing.navHow}</a>
             <a href="#comparison" className="transition-colors hover:text-[var(--pad-ink)]">{t.landing.navVs}</a>
             <a href="#faq" className="transition-colors hover:text-[var(--pad-ink)]">{t.landing.navFaq}</a>
             <Link href="/guides" className="transition-colors hover:text-[var(--pad-ink)]">{t.landing.navGuides}</Link>
@@ -172,7 +212,7 @@ export default function LandingClient() {
           </div>
 
           {/* ── Live editor preview ── */}
-          <div className="relative mx-auto mt-16 max-w-5xl">
+          <div id="hero-editor" className="relative mx-auto mt-16 max-w-5xl scroll-mt-24">
             {/* text-gray-900 matters: the surrounding page is cream-on-dark and
                 the preview's icons inherit currentColor. */}
             <div
@@ -201,8 +241,54 @@ export default function LandingClient() {
           </div>
         </section>
 
-        {/* ── Friction: the heart of the page ── */}
-        <section className="px-6 py-24">
+        {/* ── Slash menu: the heart of the page ── */}
+        <section id="slash-menu" className="scroll-mt-16 px-6 py-24">
+          <div className="mx-auto max-w-3xl">
+            <div className="mx-auto flex size-14 items-center justify-center border border-[var(--pad-border)] bg-[var(--pad-surface)]">
+              <Command size={26} weight="duotone" />
+            </div>
+            <h2 className="pad-display mt-6 text-center text-[clamp(2rem,5vw,3rem)]">
+              {t.landing.slashTitle}
+            </h2>
+            <div className="mt-8 space-y-5 leading-relaxed text-[var(--pad-ink-70)]">
+              <p>{t.landing.slashP1}</p>
+              <p>{t.landing.slashP2}</p>
+              <p>{renderKbd(t.landing.slashP3)}</p>
+            </div>
+
+            {/* Demo strip: each chip inserts its thing into the hero editor. */}
+            <div className="mt-10 flex flex-wrap items-center justify-center gap-3">
+              {DEMO_CHIPS.map((chip) => (
+                <button
+                  key={chip.label}
+                  type="button"
+                  onClick={() => heroCommand(chip.command)}
+                  className="border border-[var(--pad-border-strong)] px-4 py-2 font-mono text-sm text-[var(--pad-ink-70)] transition-colors hover:border-[var(--pad-ink)] hover:text-[var(--pad-ink)]"
+                >
+                  {chip.label}
+                </button>
+              ))}
+              <Link
+                href="/pad"
+                className="border border-[var(--pad-border-strong)] px-4 py-2 font-mono text-sm text-[var(--pad-ink-50)] transition-colors hover:border-[var(--pad-ink)] hover:text-[var(--pad-ink)]"
+              >
+                /export
+              </Link>
+            </div>
+            <div className="mt-6 text-center">
+              <button
+                type="button"
+                onClick={() => heroCommand("focus")}
+                className="font-medium underline underline-offset-4 decoration-[var(--pad-border-strong)] transition-colors hover:decoration-current"
+              >
+                {t.landing.slashTryLink}
+              </button>
+            </div>
+          </div>
+        </section>
+
+        {/* ── Friction ── */}
+        <section className="border-t border-[var(--pad-border)] px-6 py-24">
           <div className="mx-auto max-w-3xl">
             <div className="mx-auto flex size-14 items-center justify-center border border-[var(--pad-border)] bg-[var(--pad-surface)]">
               <Lightning size={26} weight="duotone" />
@@ -303,6 +389,10 @@ export default function LandingClient() {
                   <p className="text-sm leading-relaxed text-[var(--pad-ink-50)]">{f.desc}</p>
                 </div>
               ))}
+            </div>
+            <div className="mt-10 flex flex-wrap items-center justify-center gap-x-2 gap-y-2 text-center text-sm text-[var(--pad-ink-50)]">
+              <span className="font-medium text-[var(--pad-ink-70)]">{t.landing.featuresAlsoLabel}</span>
+              <DotSeparated items={t.landing.featuresAlsoItems} />
             </div>
           </div>
         </section>

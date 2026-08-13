@@ -3,9 +3,9 @@ import LandingClient from "./LandingClient";
 import { en } from "@/lib/i18n/en";
 
 export const metadata: Metadata = {
-  title: "Online Word Processor: Free Word & WordPad Alternative | EDTRpad",
+  title: "Online Word Processor with a Slash Menu: Free Word Alternative | EDTRpad",
   description:
-    "Write a document in your browser in about a second. Free online Word and WordPad alternative with rich text, tables, images, .docx export and printing. No download, no account.",
+    "A free online Word and WordPad alternative with a Notion-style slash menu. Type / for tables, images, headings and export. No download, no account, ready in a second.",
   keywords: [
     "online word processor",
     "free online word processor",
@@ -31,7 +31,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: "The online word processor that's already open.",
     description:
-      "Write a document in your browser in about a second. Free online Word and WordPad alternative with rich text, tables, images, .docx export and printing. No download, no account.",
+      "A free online Word and WordPad alternative with a Notion-style slash menu. Type / for tables, images, headings and export. No download, no account, ready in a second.",
     type: "website",
     url: "https://wordpad.info",
     siteName: "EDTRpad",
@@ -40,7 +40,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "The online word processor that's already open.",
     description:
-      "Write a document in your browser in about a second. Free online Word and WordPad alternative with rich text, tables, images, .docx export and printing. No download, no account.",
+      "A free online Word and WordPad alternative with a Notion-style slash menu. Type / for tables, images, headings and export. No download, no account, ready in a second.",
   },
   alternates: {
     canonical: "https://wordpad.info",
@@ -63,6 +63,7 @@ const jsonLdSoftwareApp = {
   description:
     "Free online word processor and Word alternative that runs in your browser. Rich text, tables, images, page breaks, .docx import and export, and exact print margins. No download, no account.",
   featureList: [
+    "Slash command menu",
     "Rich text formatting (bold, italic, underline, strikethrough)",
     "Font families, font sizes, text color, highlight color",
     "Bulleted and numbered lists",
@@ -92,6 +93,7 @@ const faqs = [
   { q: en.faq.q9, a: en.faq.a9 },
   { q: en.faq.q10, a: en.faq.a10 },
   { q: en.faq.q11, a: en.faq.a11 },
+  { q: en.faq.q12, a: en.faq.a12 },
 ];
 
 const jsonLdFaq = {

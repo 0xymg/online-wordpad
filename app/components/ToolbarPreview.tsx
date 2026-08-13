@@ -15,7 +15,7 @@ import { EditorState, Plugin, type Transaction } from "prosemirror-state";
 import { EditorView, Decoration, DecorationSet } from "prosemirror-view";
 import { history, undo, redo } from "prosemirror-history";
 import { keymap } from "prosemirror-keymap";
-import { baseKeymap, toggleMark, setBlockType, wrapIn } from "prosemirror-commands";
+import { baseKeymap, toggleMark, setBlockType } from "prosemirror-commands";
 import { wrapInList } from "prosemirror-schema-list";
 import Toolbar from "./Toolbar";
 import { mySchema } from "./editor-schema";
