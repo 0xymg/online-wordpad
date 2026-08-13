@@ -881,6 +881,11 @@ export default function Editor({
   // On short viewports the menu bar collapses while scrolling down so the
   // toolbar sits right under the top edge; it comes back on scroll up.
   const [chromeCollapsed, setChromeCollapsed] = useState(false);
+  const chromeCollapsedRef = useRef(false);
+  // 900px covers laptop viewports (a 13-16" screen leaves ~750-870px after
+  // browser chrome) while leaving desktop monitors alone. Matched in JS rather
+  // than CSS so the collapsed bar can also be taken out of the tab order.
+  const [shortViewport, setShortViewport] = useState(false);
   const editorShellRef = useRef<HTMLDivElement>(null);
   const [printHeaderFooter, setPrintHeaderFooter] = useState(false);
   const lastAutoNameRef = useRef<string | null>(null);
@@ -1230,6 +1235,14 @@ export default function Editor({
     if (v) setDocInfo(computeDocInfo(v.state, t));
   }, [t]);
 
+  useEffect(() => {
+    const mq = window.matchMedia("(max-height: 900px)");
+    const apply = () => setShortViewport(mq.matches);
+    apply();
+    mq.addEventListener("change", apply);
+    return () => mq.removeEventListener("change", apply);
+  }, []);
+
   // Scrolling happens inside .editor-shell rather than the window, so the
   // direction is read from that element. Small deltas are ignored to avoid
   // flicker, and near the top the chrome is always shown.
@@ -1237,15 +1250,34 @@ export default function Editor({
     const el = editorShellRef.current;
     if (!el) return;
     let lastY = el.scrollTop;
-    const onScroll = () => {
+    let raf = 0;
+    // Collapsing gives the shell ~72px more height, so the browser clamps
+    // scrollTop and fires a scroll event pointing the other way — which would
+    // expand the bar again, and so on. Ignore events for the length of the
+    // transition after a toggle so the two can't chase each other.
+    let settleUntil = 0;
+    const read = () => {
+      raf = 0;
       const y = el.scrollTop;
+      const now = performance.now();
+      if (now < settleUntil) { lastY = y; return; }
       const delta = y - lastY;
       if (Math.abs(delta) < 8) return;
       lastY = y;
-      setChromeCollapsed(y > 48 && delta > 0);
+      // Nothing to win back on a document that barely scrolls.
+      if (el.scrollHeight - el.clientHeight < 160) return;
+      const next = y > 48 && delta > 0;
+      if (next === chromeCollapsedRef.current) return;
+      chromeCollapsedRef.current = next;
+      settleUntil = now + 350;
+      setChromeCollapsed(next);
     };
+    const onScroll = () => { if (!raf) raf = requestAnimationFrame(read); };
     el.addEventListener("scroll", onScroll, { passive: true });
-    return () => el.removeEventListener("scroll", onScroll);
+    return () => {
+      el.removeEventListener("scroll", onScroll);
+      if (raf) cancelAnimationFrame(raf);
+    };
   }, []);
 
   useEffect(() => {
@@ -2578,6 +2610,7 @@ export default function Editor({
   const searchInfo = findOpen && viewRef.current ? getSearchState(viewRef.current) : undefined;
   const matchTotal = searchInfo?.matches.length ?? 0;
   const matchCurrent = matchTotal > 0 ? (searchInfo!.current + 1) : 0;
+  const chromeHidden = shortViewport && chromeCollapsed;
 
   return (
     <div className="flex h-screen">
@@ -2613,13 +2646,12 @@ export default function Editor({
         className={cn(
           "grid shrink-0 transition-[grid-template-rows,opacity] duration-300 ease-in-out motion-reduce:transition-none",
           // Height-based, not width: the point is to win back vertical space
-          // where it is scarce. 900px covers laptop viewports (a 13-16" screen
-          // leaves ~750-870px after browser chrome) while leaving desktop
-          // monitors alone.
-          chromeCollapsed
-            ? "[@media(max-height:900px)]:grid-rows-[0fr] [@media(max-height:900px)]:opacity-0"
-            : "grid-rows-[1fr] opacity-100"
+          // where it is scarce (see the shortViewport media query).
+          chromeHidden ? "grid-rows-[0fr] opacity-0" : "grid-rows-[1fr] opacity-100"
         )}
+        // Collapsed but still in the DOM — keep the title input and menus out
+        // of the tab order while they're invisible.
+        inert={chromeHidden}
       >
       <div className="min-h-0 overflow-hidden">
       <MenuBar
