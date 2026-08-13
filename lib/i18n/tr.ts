@@ -32,6 +32,7 @@ export const tr: Dictionary = {
     copyLink: "Bu belgenin bağlantısını kopyala",
     export: "Dışa aktar",
     exportDocx: "Word (.docx)",
+    exportPdf: "PDF (.pdf)",
     exportRtf: "Zengin Metin (.rtf)",
     exportHtml: "Web sayfası (.html)",
     exportMd: "Markdown (.md)",
@@ -42,7 +43,6 @@ export const tr: Dictionary = {
     landscape: "Yatay",
     printHeaderFooter: "Üst bilgi ve alt bilgiyi de yazdır",
     print: "Yazdır",
-    saveAsPdf: "PDF olarak kaydet…",
     deleteDoc: "Bu belgeyi sil",
   },
 
@@ -339,7 +339,6 @@ export const tr: Dictionary = {
     cropCrossOrigin: "Bu resim başka bir siteden geldiği için kırpılamıyor.",
     pasteBlocked: "Tarayıcınız program aracılığıyla yapıştırmayı engelledi. Bunun yerine Ctrl+V (⌘V) tuşlarına basın.",
     pastePlainBlocked: "Tarayıcınız program aracılığıyla yapıştırmayı engelledi. Bunun yerine Ctrl+Shift+V (⇧⌘V) tuşlarına basın.",
-    pdfHint: "Yazdırma penceresinde hedefi “PDF olarak kaydet” seçeneğine ayarlayın.",
     verificationSent: "Doğrulama e-postası gönderildi — gelen kutunuzu kontrol edin.",
     verificationFailed: "Doğrulama e-postası gönderilemedi.",
     deepLinkMissing: "Bu belge bağlantısı artık geçerli değil — en son belgeniz açılıyor.",

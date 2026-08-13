@@ -1530,7 +1530,7 @@ export default function Editor({
     toast.success(t.toast.versionRestored);
   }, [loadVersionHtml, persistDoc, setDocFromHtml]);
 
-  const exportFile = useCallback(async (file: FileItem, fmt: "html" | "txt" | "docx" | "rtf" | "md") => {
+  const exportFile = useCallback(async (file: FileItem, fmt: "html" | "txt" | "docx" | "rtf" | "md" | "pdf") => {
     const v = viewRef.current;
     // Compare against the doc the editor actually holds (not just the active
     // id) so a doc whose html is still being fetched exports from the DB.
@@ -1565,6 +1565,15 @@ export default function Editor({
       const doc = isActiveDoc ? v!.state.doc : parseHtmlToDoc(html);
       if (fmt === "docx") {
         downloadBlob(await docToDocxBlob(doc, file.name || "Document", pageOrientation), `${safe}.docx`);
+      } else if (fmt === "pdf") {
+        // Real client-side PDF export — loaded on demand like the other exporters.
+        const { docToPdfBlob } = await import("@/lib/pdf-export");
+        downloadBlob(await docToPdfBlob(doc, {
+          title: file.name || "Document",
+          orientation: pageOrientation,
+          marginCm: pageMarginCm,
+          headerFooter: printHeaderFooter,
+        }), `${safe}.pdf`);
       } else if (fmt === "md") {
         downloadBlob(new Blob([docToMarkdown(doc)], { type: "text/markdown" }), `${safe}.md`);
       } else {
@@ -1572,10 +1581,10 @@ export default function Editor({
       }
     }
     toast.success(t.toast.downloaded(`${safe}.${fmt}`));
-  }, [pageOrientation]);
+  }, [pageOrientation, pageMarginCm, printHeaderFooter]);
 
   // Export the document currently open in the editor (used by the File menu).
-  const exportActive = useCallback((fmt: "html" | "txt" | "docx" | "rtf" | "md") => {
+  const exportActive = useCallback((fmt: "html" | "txt" | "docx" | "rtf" | "md" | "pdf") => {
     const id = activeIdRef.current;
     const file = filesRef.current.find((f) => f.id === id) || { id, name: docTitle, html: "" };
     exportFile({ ...file, name: docTitle || file.name }, fmt);

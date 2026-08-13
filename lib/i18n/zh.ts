@@ -32,6 +32,7 @@ export const zh: Dictionary = {
     copyLink: "复制本文档链接",
     export: "导出",
     exportDocx: "Word 文档 (.docx)",
+    exportPdf: "PDF (.pdf)",
     exportRtf: "富文本 (.rtf)",
     exportHtml: "网页 (.html)",
     exportMd: "Markdown (.md)",
@@ -42,7 +43,6 @@ export const zh: Dictionary = {
     landscape: "横向",
     printHeaderFooter: "打印页眉和页脚",
     print: "打印",
-    saveAsPdf: "另存为 PDF…",
     deleteDoc: "删除本文档",
   },
 
@@ -337,7 +337,6 @@ export const zh: Dictionary = {
     cropCrossOrigin: "此图片来自其他网站，无法裁剪。",
     pasteBlocked: "浏览器阻止了程序粘贴，请改用 Ctrl+V (⌘V)。",
     pastePlainBlocked: "浏览器阻止了程序粘贴，请改用 Ctrl+Shift+V (⇧⌘V)。",
-    pdfHint: "在打印对话框中，将目标打印机设置为“另存为 PDF”。",
     verificationSent: "验证邮件已发送，请查收您的邮箱。",
     verificationFailed: "无法发送验证邮件。",
     deepLinkMissing: "该文档链接已失效，正在打开您最近的文档。",

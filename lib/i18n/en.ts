@@ -34,6 +34,7 @@ export const en = {
     copyLink: "Copy link to this document",
     export: "Export",
     exportDocx: "Word (.docx)",
+    exportPdf: "PDF (.pdf)",
     exportRtf: "Rich Text (.rtf)",
     exportHtml: "Web page (.html)",
     exportMd: "Markdown (.md)",
@@ -44,7 +45,6 @@ export const en = {
     landscape: "Landscape",
     printHeaderFooter: "Print header & footer",
     print: "Print",
-    saveAsPdf: "Save as PDF…",
     deleteDoc: "Delete this document",
   },
 
@@ -341,7 +341,6 @@ export const en = {
     cropCrossOrigin: "This image can't be cropped because it comes from another site.",
     pasteBlocked: "Your browser blocked programmatic paste. Press Ctrl+V (⌘V) instead.",
     pastePlainBlocked: "Your browser blocked programmatic paste. Press Ctrl+Shift+V (⇧⌘V) instead.",
-    pdfHint: "In the print dialog, set the destination to “Save as PDF”.",
     verificationSent: "Verification email sent — check your inbox.",
     verificationFailed: "Could not send verification email.",
     deepLinkMissing: "That document link is no longer available — opening your latest document.",

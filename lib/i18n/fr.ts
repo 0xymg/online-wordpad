@@ -32,6 +32,7 @@ export const fr: Dictionary = {
     copyLink: "Copier le lien vers ce document",
     export: "Exporter",
     exportDocx: "Word (.docx)",
+    exportPdf: "PDF (.pdf)",
     exportRtf: "Texte enrichi (.rtf)",
     exportHtml: "Page web (.html)",
     exportMd: "Markdown (.md)",
@@ -42,7 +43,6 @@ export const fr: Dictionary = {
     landscape: "Paysage",
     printHeaderFooter: "En-tête et pied de page à l'impression",
     print: "Imprimer",
-    saveAsPdf: "Enregistrer au format PDF…",
     deleteDoc: "Supprimer ce document",
   },
 
@@ -339,7 +339,6 @@ export const fr: Dictionary = {
     cropCrossOrigin: "Cette image ne peut pas être rognée car elle provient d'un autre site.",
     pasteBlocked: "Votre navigateur a bloqué le collage automatique. Utilisez plutôt Ctrl+V (⌘V).",
     pastePlainBlocked: "Votre navigateur a bloqué le collage automatique. Utilisez plutôt Ctrl+Shift+V (⇧⌘V).",
-    pdfHint: "Dans la boîte de dialogue d'impression, choisissez « Enregistrer au format PDF » comme destination.",
     verificationSent: "E-mail de vérification envoyé — consultez votre boîte de réception.",
     verificationFailed: "Impossible d'envoyer l'e-mail de vérification.",
     deepLinkMissing: "Ce lien de document n'est plus disponible — ouverture de votre document le plus récent.",

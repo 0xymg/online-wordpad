@@ -52,7 +52,7 @@ interface MenuBarProps {
   onReplace: () => void;
   onNewFromTemplate: (t: { name: string; html: string }) => void;
   onOpenFile: () => void;
-  onExport: (fmt: "html" | "txt" | "docx" | "rtf" | "md") => void;
+  onExport: (fmt: "html" | "txt" | "docx" | "rtf" | "md" | "pdf") => void;
   onShowVersions: () => void;
   onShowShortcuts: () => void;
   onFind: () => void;
@@ -374,6 +374,7 @@ function MenuBar({
             <MenubarSubTrigger>{t.file.export}</MenubarSubTrigger>
             <MenubarSubContent>
               <MenubarItem onClick={() => onExport("docx")}>{t.file.exportDocx}</MenubarItem>
+              <MenubarItem onClick={() => onExport("pdf")}>{t.file.exportPdf}</MenubarItem>
               <MenubarItem onClick={() => onExport("rtf")}>{t.file.exportRtf}</MenubarItem>
               <MenubarItem onClick={() => onExport("html")}>{t.file.exportHtml}</MenubarItem>
               <MenubarItem onClick={() => onExport("md")}>{t.file.exportMd}</MenubarItem>
@@ -417,16 +418,6 @@ function MenuBar({
           </MenubarItem>
           <MenubarItem onClick={print}>
             {t.file.print} <MenubarShortcut>Ctrl+P</MenubarShortcut>
-          </MenubarItem>
-          {/* Browsers only expose PDF export through the print dialog, so this
-              opens print and says where to find it rather than pretending. */}
-          <MenubarItem
-            onClick={() => {
-              toast(t.toast.pdfHint);
-              print();
-            }}
-          >
-            {t.file.saveAsPdf}
           </MenubarItem>
           <MenubarSeparator />
           <MenubarItem variant="destructive" onClick={onDeleteDoc}>
