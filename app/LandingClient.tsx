@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { Fragment, type ReactNode } from "react";
-import { TextB, Files, WifiSlash, Printer, Lock, CloudArrowUp, Check } from "./components/icons";
+import { TextB, Files, Command, Printer, Lock, CloudArrowUp, Check, Lightning } from "./components/icons";
 import ToolbarPreviewClient from "./components/ToolbarPreviewClient";
 import { useT, useLocale } from "./components/I18nProvider";
 import { LOCALES, LOCALE_NAMES, type Dictionary } from "@/lib/i18n";
@@ -12,10 +12,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
    and order live here while the words come from the active locale. */
 function featureList(t: Dictionary) {
   return [
-    { Icon: TextB,     title: t.features.f1Title, desc: t.features.f1Desc },
-    { Icon: Files,     title: t.features.f2Title, desc: t.features.f2Desc },
-    { Icon: WifiSlash, title: t.features.f3Title, desc: t.features.f3Desc },
-    { Icon: Printer,   title: t.features.f4Title, desc: t.features.f4Desc },
+    { Icon: TextB,   title: t.features.f1Title, desc: t.features.f1Desc },
+    { Icon: Files,   title: t.features.f2Title, desc: t.features.f2Desc },
+    { Icon: Command, title: t.features.f3Title, desc: t.features.f3Desc },
+    { Icon: Printer, title: t.features.f4Title, desc: t.features.f4Desc },
   ];
 }
 
@@ -31,7 +31,22 @@ function faqList(t: Dictionary) {
     { q: t.faq.q8, a: t.faq.a8 },
     { q: t.faq.q9, a: t.faq.a9 },
     { q: t.faq.q10, a: t.faq.a10 },
+    { q: t.faq.q11, a: t.faq.a11 },
   ];
+}
+
+/* Copy carries **bold** spans inline (friction paragraph, account bullets), so
+   the emphasis lives in the translation string and renders as <strong> here. */
+function renderEmphasis(text: string): ReactNode {
+  return text.split(/(\*\*[^*]+\*\*)/).map((part, i) =>
+    part.startsWith("**") && part.endsWith("**") ? (
+      <strong key={i} className="font-semibold text-[var(--pad-ink)]">
+        {part.slice(2, -2)}
+      </strong>
+    ) : (
+      <Fragment key={i}>{part}</Fragment>
+    )
+  );
 }
 
 /* Renders "item · item · item" lines (hero microcopy, trust bar, use cases)
@@ -113,7 +128,7 @@ export default function LandingClient() {
           <nav className="absolute left-1/2 hidden -translate-x-1/2 items-center gap-8 text-[13px] text-[var(--pad-ink-50)] sm:flex">
             <a href="#features" className="transition-colors hover:text-[var(--pad-ink)]">{t.landing.navFeatures}</a>
             <a href="#how" className="transition-colors hover:text-[var(--pad-ink)]">{t.landing.navHow}</a>
-            <a href="#vs-wordpad" className="transition-colors hover:text-[var(--pad-ink)]">{t.landing.navVs}</a>
+            <a href="#comparison" className="transition-colors hover:text-[var(--pad-ink)]">{t.landing.navVs}</a>
             <a href="#faq" className="transition-colors hover:text-[var(--pad-ink)]">{t.landing.navFaq}</a>
             <Link href="/guides" className="transition-colors hover:text-[var(--pad-ink)]">{t.landing.navGuides}</Link>
           </nav>
@@ -186,30 +201,33 @@ export default function LandingClient() {
           </div>
         </section>
 
-        {/* ── WordPad is gone ── */}
+        {/* ── Friction: the heart of the page ── */}
         <section className="px-6 py-24">
           <div className="mx-auto max-w-3xl">
-            <h2 className="pad-display text-center text-[clamp(2rem,5vw,3rem)]">
-              {t.landing.goneTitle}
+            <div className="mx-auto flex size-14 items-center justify-center border border-[var(--pad-border)] bg-[var(--pad-surface)]">
+              <Lightning size={26} weight="duotone" />
+            </div>
+            <h2 className="pad-display mt-6 text-center text-[clamp(2rem,5vw,3rem)]">
+              {t.landing.frictionTitle}
             </h2>
             <div className="mt-8 space-y-5 leading-relaxed text-[var(--pad-ink-70)]">
-              <p>{t.landing.goneP1}</p>
-              <p>{t.landing.goneP2}</p>
-              <p>{t.landing.goneP3}</p>
+              <p>{t.landing.frictionP1}</p>
+              <p>{renderEmphasis(t.landing.frictionP2)}</p>
+              <p>{t.landing.frictionP3}</p>
             </div>
             <div className="mt-8 text-center">
               <Link
                 href="/pad"
                 className="font-medium underline underline-offset-4 decoration-[var(--pad-border-strong)] transition-colors hover:decoration-current"
               >
-                {t.landing.goneCta}
+                {t.landing.frictionCta}
               </Link>
             </div>
           </div>
         </section>
 
         {/* ── Comparison table ── */}
-        <section id="vs-wordpad" className="border-t border-[var(--pad-border)] px-6 py-24">
+        <section id="comparison" className="border-t border-[var(--pad-border)] px-6 py-24">
           <div className="mx-auto max-w-4xl">
             <h2 className="pad-display text-center text-[clamp(2rem,5vw,3rem)]">
               {t.landing.compareTitle}
@@ -286,15 +304,6 @@ export default function LandingClient() {
                 </div>
               ))}
             </div>
-            {/* Small-print strip */}
-            <div className="mt-6 border border-[var(--pad-border)] bg-[var(--pad-surface)] px-6 py-4 text-center">
-              <span className="text-xs font-semibold uppercase tracking-wide text-[var(--pad-ink-50)]">
-                {t.features.smallTitle}
-              </span>
-              <p className="mt-2 flex flex-wrap items-center justify-center gap-y-1 text-[13px] text-[var(--pad-ink-70)]">
-                <DotSeparated items={t.features.smallItems} />
-              </p>
-            </div>
           </div>
         </section>
 
@@ -331,7 +340,7 @@ export default function LandingClient() {
               {[t.landing.accountsB1, t.landing.accountsB2, t.landing.accountsB3].map((b) => (
                 <li key={b} className="flex items-start gap-3">
                   <Check size={18} className="mt-1 shrink-0 text-[var(--pad-ink)]" />
-                  <span>{b}</span>
+                  <span>{renderEmphasis(b)}</span>
                 </li>
               ))}
             </ul>
@@ -389,6 +398,27 @@ export default function LandingClient() {
                   {useCase}
                 </span>
               ))}
+            </div>
+          </div>
+        </section>
+
+        {/* ── WordPad section (supporting, SEO) ── */}
+        <section className="border-t border-[var(--pad-border)] px-6 py-24">
+          <div className="mx-auto max-w-3xl">
+            <h2 className="pad-display text-center text-[clamp(2rem,5vw,3rem)]">
+              {t.landing.goneTitle}
+            </h2>
+            <div className="mt-8 space-y-5 leading-relaxed text-[var(--pad-ink-70)]">
+              <p>{t.landing.goneP1}</p>
+              <p>{t.landing.goneP2}</p>
+            </div>
+            <div className="mt-8 text-center">
+              <Link
+                href="/pad"
+                className="font-medium underline underline-offset-4 decoration-[var(--pad-border-strong)] transition-colors hover:decoration-current"
+              >
+                {t.landing.goneCta}
+              </Link>
             </div>
           </div>
         </section>
@@ -470,6 +500,7 @@ export default function LandingClient() {
               <Link href="/pad" className="transition-colors hover:text-[var(--pad-ink)]">{t.landing.footerEditor}</Link>
               <Link href="/guides" className="transition-colors hover:text-[var(--pad-ink)]">{t.landing.footerGuides}</Link>
               <Link href="/guides/wordpad-alternative" className="transition-colors hover:text-[var(--pad-ink)]">{t.landing.footerWordAlt}</Link>
+              <Link href="/guides/wordpad-online" className="transition-colors hover:text-[var(--pad-ink)]">{t.landing.footerWordpadOnline}</Link>
               <Link href="/guides/export-to-word-docx-online" className="transition-colors hover:text-[var(--pad-ink)]">{t.landing.footerOpenDocx}</Link>
               <a href="/llms.txt" className="transition-colors hover:text-[var(--pad-ink)]">llms.txt</a>
             </div>

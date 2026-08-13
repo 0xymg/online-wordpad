@@ -3,45 +3,44 @@ import LandingClient from "./LandingClient";
 import { en } from "@/lib/i18n/en";
 
 export const metadata: Metadata = {
-  title: "WordPad Online: Free Word Processor in Your Browser | EDTRpad",
+  title: "Online Word Processor: Free Word & WordPad Alternative | EDTRpad",
   description:
-    "Microsoft removed WordPad from Windows. EDTRpad is the free online replacement: rich text, tables, images, .docx export, offline. No download, no account.",
+    "Write a document in your browser in about a second. Free online Word and WordPad alternative with rich text, tables, images, .docx export and printing. No download, no account.",
   keywords: [
-    "online wordpad",
-    "wordpad online",
-    "free wordpad",
-    "wordpad removed windows 11",
-    "wordpad replacement",
-    "wordpad alternative",
-    "wordpad in browser",
     "online word processor",
     "free online word processor",
-    "online word editor",
-    "online text editor",
     "word alternative",
     "microsoft word alternative",
+    "free word processor",
     "browser word processor",
-    "free online wordpad",
+    "online word editor",
+    "online text editor",
     "rich text editor online",
     "online document editor",
-    "no install word processor",
     "word editor online no download",
+    "no install word processor",
     "open docx online",
     "docx editor online",
+    "wordpad alternative",
+    "wordpad online",
+    "online wordpad",
+    "free wordpad",
+    "wordpad replacement",
+    "wordpad removed windows 11",
   ],
   openGraph: {
-    title: "Windows took WordPad away. Here it is, in your browser.",
+    title: "The online word processor that's already open.",
     description:
-      "EDTRpad is the free online WordPad replacement: rich text, tables, images, .docx export, offline. No download, no account.",
+      "Write a document in your browser in about a second. Free online Word and WordPad alternative with rich text, tables, images, .docx export and printing. No download, no account.",
     type: "website",
     url: "https://wordpad.info",
     siteName: "EDTRpad",
   },
   twitter: {
     card: "summary_large_image",
-    title: "Windows took WordPad away. Here it is, in your browser.",
+    title: "The online word processor that's already open.",
     description:
-      "EDTRpad is the free online WordPad replacement: rich text, tables, images, .docx export, offline. No download, no account.",
+      "Write a document in your browser in about a second. Free online Word and WordPad alternative with rich text, tables, images, .docx export and printing. No download, no account.",
   },
   alternates: {
     canonical: "https://wordpad.info",
@@ -54,7 +53,7 @@ const jsonLdSoftwareApp = {
   name: "EDTRpad",
   alternateName: ["Online WordPad", "WordPad Online", "Free WordPad Replacement"],
   url: "https://wordpad.info",
-  applicationCategory: "ProductivityApplication",
+  applicationCategory: "WordProcessor",
   operatingSystem: "Web",
   offers: {
     "@type": "Offer",
@@ -62,7 +61,7 @@ const jsonLdSoftwareApp = {
     priceCurrency: "USD",
   },
   description:
-    "Free online word processor that replaces the WordPad Microsoft removed from Windows. Rich text, tables, images, page breaks, .docx import and export, exact print margins, and full offline support. No download, no account.",
+    "Free online word processor and Word alternative that runs in your browser. Rich text, tables, images, page breaks, .docx import and export, and exact print margins. No download, no account.",
   featureList: [
     "Rich text formatting (bold, italic, underline, strikethrough)",
     "Font families, font sizes, text color, highlight color",
@@ -72,7 +71,6 @@ const jsonLdSoftwareApp = {
     "Real page breaks on screen and in print",
     "Opens .docx, .txt and .html files",
     "Exports Word (.docx), HTML, and plain text",
-    "Works fully offline as a Progressive Web App",
     "Print with exact page margins (0.5 cm to 2 cm)",
     "Autosave on every keystroke",
     "Unlimited undo and redo",
@@ -93,6 +91,7 @@ const faqs = [
   { q: en.faq.q8, a: en.faq.a8 },
   { q: en.faq.q9, a: en.faq.a9 },
   { q: en.faq.q10, a: en.faq.a10 },
+  { q: en.faq.q11, a: en.faq.a11 },
 ];
 
 const jsonLdFaq = {

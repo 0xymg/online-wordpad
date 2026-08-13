@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { FileText, Plus, UploadSimple, X, SignIn, LinkSimple, Trash } from "./icons";
+import { FileText, Plus, UploadSimple, X, SignIn, LinkSimple, Trash, CircleNotch } from "./icons";
 import { TEMPLATES, type DocTemplate } from "@/lib/templates";
 import { useT } from "./I18nProvider";
 
@@ -20,6 +20,8 @@ interface WelcomeScreenProps {
   onOpenDocument: (id: string) => void;
   onCopyLink: (id: string) => void;
   onDeleteDocument: (id: string) => void;
+  /** Documents whose deletion is in flight — their rows show a spinner. */
+  deletingIds?: string[];
   /** True while the document list is still being fetched. */
   loading?: boolean;
   /** Shareable/bookmarkable URL for a document, used as the row's href. */
@@ -72,7 +74,7 @@ function TemplateThumb({ html }: { html: string }) {
 
 /** One row of the document lists: open, copy link, delete. */
 function DocRow({
-  f, t, activeId, docHref, onOpen, onCopyLink, onDelete,
+  f, t, activeId, docHref, onOpen, onCopyLink, onDelete, deleting = false,
 }: {
   f: WelcomeFile;
   t: ReturnType<typeof useT>;
@@ -81,7 +83,21 @@ function DocRow({
   onOpen: (id: string) => void;
   onCopyLink: (id: string) => void;
   onDelete: (id: string) => void;
+  deleting?: boolean;
 }) {
+  if (deleting) {
+    // Row stays visible but inert while the server deletion is in flight.
+    return (
+      <div className="flex items-center gap-3 px-4 py-2.5 opacity-60" aria-busy="true">
+        <FileText size={18} className="shrink-0 text-muted-foreground" />
+        <span className="min-w-0 flex-1 truncate text-sm line-through">{f.name || t.sidebar.untitled}</span>
+        <span className="flex shrink-0 items-center gap-1.5 text-xs text-muted-foreground">
+          <CircleNotch size={14} className="animate-spin" />
+          {t.welcome.deleting}
+        </span>
+      </div>
+    );
+  }
   return (
       <div className="group flex items-center hover:bg-accent/60">
         {/* Real link so it can be bookmarked, middle-clicked, or copied;
@@ -137,7 +153,7 @@ function DocRowSkeleton() {
 export default function WelcomeScreen({
   open, onClose, isAuthed, userName, files, activeId,
   onNewDocument, onOpenFile, onPickTemplate, onOpenDocument, onCopyLink, onDeleteDocument,
-  docHref, onSignIn, onOpenProfile, userEmail, loading = false, sessionLoading = false,
+  docHref, onSignIn, onOpenProfile, userEmail, deletingIds = [], loading = false, sessionLoading = false,
 }: WelcomeScreenProps) {
   const t = useT();
   // Stay mounted through the closing animation so the editor fades in behind
@@ -309,7 +325,7 @@ export default function WelcomeScreen({
             </p>
           ) : (
             <div className="divide-y divide-border overflow-hidden rounded-md border border-border">
-              {files.slice(0, RECENT_COUNT).map((f) => <DocRow key={f.id} {...rowProps} f={f} />)}
+              {files.slice(0, RECENT_COUNT).map((f) => <DocRow key={f.id} {...rowProps} f={f} deleting={deletingIds.includes(f.id)} />)}
             </div>
           )}
 
@@ -328,7 +344,7 @@ export default function WelcomeScreen({
                 {t.welcome.allDocuments} <span className="text-xs font-normal">({files.length})</span>
               </h2>
               <div className="max-h-80 divide-y divide-border overflow-y-auto rounded-md border border-border">
-                {files.map((f) => <DocRow key={f.id} {...rowProps} f={f} />)}
+                {files.map((f) => <DocRow key={f.id} {...rowProps} f={f} deleting={deletingIds.includes(f.id)} />)}
               </div>
             </>
           )}

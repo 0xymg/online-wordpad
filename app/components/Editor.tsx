@@ -815,6 +815,8 @@ export default function Editor({
   const [profileOpen, setProfileOpen] = useState(false);
   const [hasPassword, setHasPassword] = useState(false);
   const [welcomeOpen, setWelcomeOpen] = useState(initialHome);
+  // Documents whose server-side deletion is in flight (welcome-screen rows).
+  const [deletingIds, setDeletingIds] = useState<string[]>([]);
   // True until the first document (DB or localStorage) lands in the editor,
   // so visitors see a loading page instead of a flash of empty paper.
   const [initialLoading, setInitialLoading] = useState(true);
@@ -1408,11 +1410,16 @@ export default function Editor({
     const list = filesRef.current.filter((f) => f.id !== id);
 
     if (isAuthedRef.current) {
+      // The row stays in the list with a "deleting" badge until the server
+      // confirms; only then is it removed (or restored with an error toast).
+      setDeletingIds((ids) => [...ids, id]);
       try {
         await deleteDocument(id);
       } catch {
         toast.error(t.toast.deleteFailed);
         return;
+      } finally {
+        setDeletingIds((ids) => ids.filter((x) => x !== id));
       }
     } else {
       removeGuestVersions(id);
@@ -3322,6 +3329,7 @@ export default function Editor({
         onOpenDocument={switchFile}
         onCopyLink={copyDocLink}
         onDeleteDocument={deleteFile}
+        deletingIds={deletingIds}
         loading={initialLoading}
         docHref={docUrl}
         onSignIn={openAuth}

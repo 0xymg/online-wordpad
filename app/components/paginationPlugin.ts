@@ -127,6 +127,12 @@ function computeLayout(
   const pageContentH = cfg.pageHeightPx - 2 * cfg.marginPx;
   if (pageContentH <= 60 || !dom.offsetWidth) return { breaks: [], lastPagePadPx: 0 };
 
+  // Hiding the spacers momentarily collapses the content height; the browser
+  // clamps/anchors the scroll position DURING that layout even though nothing
+  // paints, which read as "clicking the page jumps to the top". Save and
+  // restore the scroll container's position around the measurement.
+  const scroller = dom.closest(".editor-shell") as HTMLElement | null;
+  const savedScrollTop = scroller?.scrollTop ?? 0;
   dom.classList.add("pm-measuring");
   try {
     const scale = dom.getBoundingClientRect().width / dom.offsetWidth;
@@ -198,6 +204,9 @@ function computeLayout(
     return { breaks, lastPagePadPx };
   } finally {
     dom.classList.remove("pm-measuring");
+    if (scroller && scroller.scrollTop !== savedScrollTop) {
+      scroller.scrollTop = savedScrollTop;
+    }
   }
 }
 

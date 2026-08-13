@@ -307,6 +307,7 @@ export const en = {
     continueWhereLeftOff: "Continue where you left off",
     noDocuments: "No documents yet — start with a blank page or a template above.",
     lastOpened: "Last opened",
+    deleting: "Deleting…",
     skipToEditor: "Skip to editor",
     copyLinkTo: (name: string) => `Copy link to ${name}`,
     guestNudge:

@@ -324,12 +324,15 @@ function Toolbar({
 
   // Mirror the cursor's formatting in the selects/buttons. Recomputed per editor
   // transaction (tick) in an effect — refs must not be read during render.
-  const [selFmt, setSelFmt] = useState({ fontFamily: "", fontSize: "12", block: "paragraph", align: "left" });
+  // No fontFamily mark means the editor's base font (Arial) — show it in the
+  // select instead of an empty placeholder.
+  const DEFAULT_FONT = FONTS[0].value;
+  const [selFmt, setSelFmt] = useState({ fontFamily: DEFAULT_FONT, fontSize: "12", block: "paragraph", align: "left" });
   useEffect(() => {
     const v = viewRef.current; if (!v) return;
     const parent = v.state.selection.$from.parent;
     setSelFmt({
-      fontFamily: activeMarkAttrs("fontFamily")?.family ?? "",
+      fontFamily: activeMarkAttrs("fontFamily")?.family ?? DEFAULT_FONT,
       fontSize: (activeMarkAttrs("fontSize")?.size ?? "12pt").replace("pt", ""),
       block: parent.type === schema.nodes.heading ? `h${parent.attrs.level}`
         : parent.type === schema.nodes.code_block ? "code_block"
