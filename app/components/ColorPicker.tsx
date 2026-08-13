@@ -40,8 +40,12 @@ export default function ColorPicker({ color, onChange, tip, icon }: ColorPickerP
               aria-label={tip}
               onMouseDown={(e) => e.preventDefault()}
               className={cn(
-                "inline-flex flex-col items-center justify-center w-10 h-10 rounded shrink-0 cursor-pointer",
-                "hover:bg-accent hover:text-accent-foreground transition-colors",
+                // Sized from the toolbar's --tb-ctl like every other control —
+                // left at a fixed 40px it stayed the tallest thing in the bar
+                // and every other group inherited the slack.
+                "inline-flex flex-col items-center justify-center size-[var(--tb-ctl,2.5rem)] rounded shrink-0 cursor-pointer",
+                "transition-[width,height,color,background-color] duration-300 ease-in-out motion-reduce:transition-none",
+                "hover:bg-accent hover:text-accent-foreground",
                 "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset",
                 open && "bg-accent text-accent-foreground"
               )}

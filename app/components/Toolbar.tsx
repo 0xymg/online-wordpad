@@ -124,7 +124,7 @@ function Group({ label, children }: { label: string; children: React.ReactNode }
   return (
     <div className="flex flex-col justify-between shrink-0 self-stretch">
       <div className="flex flex-col gap-0.5">{children}</div>
-      <span className="text-[9px] leading-none text-center text-muted-foreground tracking-wide select-none pt-1">
+      <span className="text-[9px] leading-none text-center text-muted-foreground tracking-wide select-none pt-(--tb-label-pt,0.25rem) transition-[padding] duration-300 ease-in-out motion-reduce:transition-none">
         {label}
       </span>
     </div>
@@ -396,19 +396,19 @@ function Toolbar({
 
   return (
     <div className="border-b border-border bg-card select-none overflow-x-auto">
-    {/* Scrolled down the bar thins out: shorter controls, smaller icons, less
-        padding. Control boxes size off --tb-ctl (one variable beats threading a
-        prop through every group); icon sizes are passed explicitly, because a
-        CSS rule broad enough to reach them also reaches the select triggers'
-        carets, which must keep their own size. */}
+    {/* Scrolled down the bar thins out: shorter controls, smaller icons. Control
+        boxes size off --tb-ctl (one variable beats threading a prop through
+        every group); icon sizes are passed explicitly, because a CSS rule broad
+        enough to reach them also reaches the select triggers' carets, which
+        must keep their own size. */}
     <div
-      className={cn(
-        "max-w-[850px] mx-auto px-3 flex items-stretch justify-center gap-0",
-        "transition-[padding] duration-300 ease-in-out motion-reduce:transition-none",
-        compact ? "pt-1 pb-1" : "pt-1.5 pb-1"
-      )}
+      // The bar's own vertical padding is fixed — only the controls inside it
+      // change size, so the bar never shifts on its own.
+      className="max-w-[850px] mx-auto px-3 pt-1.5 pb-1 flex items-stretch justify-center gap-0"
       style={{
         "--tb-ctl": compact ? "1.75rem" : "2.5rem",
+        // The strip between the last button row and the group labels.
+        "--tb-label-pt": compact ? "0.125rem" : "0.25rem",
       } as React.CSSProperties}
     >
 
