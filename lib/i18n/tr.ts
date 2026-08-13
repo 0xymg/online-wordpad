@@ -265,6 +265,9 @@ export const tr: Dictionary = {
     deleteDocBody: (name: string) =>
       `“${name}” ve sürüm geçmişi kalıcı olarak silinecek. Bu işlem geri alınamaz.`,
     deleteDocConfirm: "Kalıcı olarak sil",
+    deleteDocsTitle: (n: number) => `${n} belge silinsin mi?`,
+    deleteDocsBody: (n: number) =>
+      `${n} belge ve sürüm geçmişleri kalıcı olarak silinecek. Bu işlem geri alınamaz.`,
     renameTitle: "Belgeyi yeniden adlandır",
     renameLabel: "Belge adı",
     renameConfirm: "Yeniden adlandır",
@@ -329,6 +332,14 @@ export const tr: Dictionary = {
     nextPage: "Sonraki sayfa",
     deleteDocument: "Belgeyi sil",
     deleteDocumentNamed: (name: string) => `${name} belgesini sil`,
+    selectAll: "Tümünü seç",
+    selectDocument: (name: string) => `${name} belgesini seç`,
+    selectedCount: (n: number) => `${n} seçili`,
+    clearSelection: "Seçimi temizle",
+    downloadSelected: "İndir",
+    deleteSelected: "Sil",
+    preparingZip: "Hazırlanıyor…",
+    downloadPartial: (n: number) => `${n} belge arşive eklenemedi.`,
   },
 
   toast: {
@@ -336,6 +347,8 @@ export const tr: Dictionary = {
     undo: "Geri al",
     saved: "Kaydedildi",
     deleted: (name: string) => `"${name}" silindi`,
+    deletedCount: (n: number) => `${n} belge silindi`,
+    downloadFailed: "Arşiv oluşturulamadı — tekrar deneyin veya belgeleri tek tek dışa aktarın.",
     linkCopied: "Bağlantı kopyalandı — doğrudan bu belgeyi açar.",
     linkCopyFailed: "Bağlantı kopyalanamadı. Tarayıcınız pano erişimini engelledi.",
     downloaded: (file: string) => `${file} indirildi`,

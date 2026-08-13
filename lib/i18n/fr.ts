@@ -265,6 +265,9 @@ export const fr: Dictionary = {
     deleteDocBody: (name: string) =>
       `« ${name} » et son historique de versions seront supprimés définitivement. Cette action est irréversible.`,
     deleteDocConfirm: "Supprimer définitivement",
+    deleteDocsTitle: (n: number) => `Supprimer ${n} document${n === 1 ? "" : "s"} ?`,
+    deleteDocsBody: (n: number) =>
+      `${n} document${n === 1 ? "" : "s"} et leur historique de versions seront supprimés définitivement. Cette action est irréversible.`,
     renameTitle: "Renommer le document",
     renameLabel: "Nom du document",
     renameConfirm: "Renommer",
@@ -329,6 +332,14 @@ export const fr: Dictionary = {
     nextPage: "Page suivante",
     deleteDocument: "Supprimer le document",
     deleteDocumentNamed: (name: string) => `Supprimer ${name}`,
+    selectAll: "Tout sélectionner",
+    selectDocument: (name: string) => `Sélectionner ${name}`,
+    selectedCount: (n: number) => `${n} sélectionné${n === 1 ? "" : "s"}`,
+    clearSelection: "Effacer la sélection",
+    downloadSelected: "Télécharger",
+    deleteSelected: "Supprimer",
+    preparingZip: "Préparation…",
+    downloadPartial: (n: number) => `${n} document${n === 1 ? "" : "s"} n'ont pas pu être ajoutés à l'archive.`,
   },
 
   toast: {
@@ -336,6 +347,8 @@ export const fr: Dictionary = {
     undo: "Annuler",
     saved: "Enregistré",
     deleted: (name: string) => `« ${name} » supprimé`,
+    deletedCount: (n: number) => `${n} document${n === 1 ? "" : "s"} supprimé${n === 1 ? "" : "s"}`,
+    downloadFailed: "Impossible de créer l'archive — réessayez, ou exportez les documents un par un.",
     linkCopied: "Lien copié — il ouvre directement ce document.",
     linkCopyFailed: "Impossible de copier le lien. Votre navigateur a bloqué l'accès au presse-papiers.",
     downloaded: (file: string) => `${file} téléchargé`,

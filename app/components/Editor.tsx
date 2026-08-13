@@ -141,6 +141,9 @@ const pageLayoutConfig: PageLayoutConfig = { pageHeightPx: 1123, marginPx: CM_TO
    .dialog-panel-out / .dialog-overlay-out in globals.css. */
 const PROFILE_EXIT_MS = 180;
 
+/** Filename for the bulk "download selected" archive. */
+const ZIP_NAME = "edtrpad-documents.zip";
+
 /** Shown in Help ▸ About. Must be a mailbox that actually receives. */
 const CONTACT_EMAIL = "hello@wordpad.info";
 
@@ -854,6 +857,8 @@ export default function Editor({
   const [welcomeOpen, setWelcomeOpen] = useState(initialHome);
   // Documents whose server-side deletion is in flight (welcome-screen rows).
   const [deletingIds, setDeletingIds] = useState<string[]>([]);
+  // True while a bulk zip is being built, so the start screen can say so.
+  const [bulkBusy, setBulkBusy] = useState(false);
   // True until the first document (DB or localStorage) lands in the editor,
   // so visitors see a loading page instead of a flash of empty paper.
   const [initialLoading, setInitialLoading] = useState(true);
@@ -1539,6 +1544,113 @@ export default function Editor({
       }
     }
     toast.success(t.toast.deleted(label));
+  }, [applyFiles, clearDocUrl, confirmDialog, loadIntoEditor, openHome, setDocFromHtml, syncUrlToDoc, t]);
+
+  /**
+   * Resolve a document's html the same way `exportFile` does: the open document
+   * comes from the editor (so unsaved keystrokes are included), a visited one
+   * from the cached list, and anything else is fetched.
+   */
+  const htmlForFile = useCallback(async (file: FileItem): Promise<string | null> => {
+    const v = viewRef.current;
+    if (file.id === loadedIdRef.current && v) return serializeDoc(v.state.doc);
+    if (file.html !== undefined) return file.html;
+    return await getDocumentHtml(file.id).catch(() => null);
+  }, []);
+
+  /** Bulk download: one .docx per selected document, delivered as a zip. */
+  const downloadFiles = useCallback(async (ids: string[]) => {
+    const targets = filesRef.current.filter((f) => ids.includes(f.id));
+    if (!targets.length) return;
+    setBulkBusy(true);
+    try {
+      const [{ default: JSZip }, { docToDocxBlob, downloadBlob }] = await Promise.all([
+        import("jszip"),
+        import("@/lib/doc-export"),
+      ]);
+      const zip = new JSZip();
+      // Two documents may share a name; a zip with duplicate entries silently
+      // loses all but one, so collisions get a numeric suffix.
+      const used = new Set<string>();
+      let failed = 0;
+      for (const file of targets) {
+        const html = await htmlForFile(file);
+        if (html === null) { failed++; continue; }
+        const base = (file.name || "document").replace(/[^\w.\- ]+/g, "").trim() || "document";
+        let entry = `${base}.docx`;
+        for (let n = 2; used.has(entry); n++) entry = `${base} (${n}).docx`;
+        used.add(entry);
+        zip.file(entry, await docToDocxBlob(parseHtmlToDoc(html), file.name || "Document", pageOrientation));
+      }
+      if (used.size === 0) {
+        toast.error(tRef.current.toast.openFailed);
+        return;
+      }
+      downloadBlob(await zip.generateAsync({ type: "blob" }), ZIP_NAME);
+      // Partial success is still a download — say what didn't make it in.
+      if (failed) toast.warning(tRef.current.welcome.downloadPartial(failed));
+    } catch {
+      toast.error(tRef.current.toast.downloadFailed);
+    } finally {
+      setBulkBusy(false);
+    }
+  }, [htmlForFile, pageOrientation]);
+
+  /** Bulk delete: one confirmation for the whole selection, not one per row. */
+  const deleteFiles = useCallback(async (ids: string[]) => {
+    const targets = filesRef.current.filter((f) => ids.includes(f.id));
+    if (!targets.length) return;
+    if (!(await confirmDialog({
+      title: t.dialog.deleteDocsTitle(targets.length),
+      description: t.dialog.deleteDocsBody(targets.length),
+      confirmLabel: t.dialog.deleteDocConfirm,
+      destructive: true,
+    }))) return;
+
+    const doomed = new Set(targets.map((f) => f.id));
+    if (pendingSaveRef.current && doomed.has(pendingSaveRef.current.id)) {
+      if (saveTimer.current) { clearTimeout(saveTimer.current); saveTimer.current = null; }
+      pendingSaveRef.current = null;
+    }
+    const wasActive = doomed.has(activeIdRef.current);
+
+    let removed: string[];
+    if (isAuthedRef.current) {
+      setDeletingIds((current) => [...current, ...doomed]);
+      try {
+        // Settled, not all: one failure shouldn't strand the rest in the
+        // "deleting" state, and whatever did go through is really gone.
+        const results = await Promise.allSettled(targets.map((f) => deleteDocument(f.id)));
+        removed = targets.filter((_, i) => results[i].status === "fulfilled").map((f) => f.id);
+        if (removed.length < targets.length) toast.error(t.toast.deleteFailed);
+      } finally {
+        setDeletingIds((current) => current.filter((x) => !doomed.has(x)));
+      }
+    } else {
+      targets.forEach((f) => removeGuestVersions(f.id));
+      removed = targets.map((f) => f.id);
+    }
+    if (!removed.length) return;
+
+    const gone = new Set(removed);
+    const list = filesRef.current.filter((f) => !gone.has(f.id));
+    const stillActive = wasActive && gone.has(activeIdRef.current);
+    const nextActive = stillActive ? (list[0]?.id ?? "") : activeIdRef.current;
+    applyFiles(list, nextActive);
+    if (stillActive) {
+      const next = list.find((f) => f.id === nextActive);
+      if (next) {
+        loadIntoEditor(next);
+        syncUrlToDoc(next.id);
+      } else {
+        loadedIdRef.current = "";
+        setDocFromHtml("<p></p>");
+        setDocTitle("");
+        clearDocUrl();
+        openHome(false);
+      }
+    }
+    toast.success(t.toast.deletedCount(removed.length));
   }, [applyFiles, clearDocUrl, confirmDialog, loadIntoEditor, openHome, setDocFromHtml, syncUrlToDoc, t]);
 
   // Live title input: reflect typing immediately, debounce the persisted rename.

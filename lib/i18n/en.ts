@@ -267,6 +267,9 @@ export const en = {
     deleteDocBody: (name: string) =>
       `“${name}” and its version history will be deleted permanently. This cannot be undone.`,
     deleteDocConfirm: "Delete permanently",
+    deleteDocsTitle: (n: number) => `Delete ${n} document${n === 1 ? "" : "s"}?`,
+    deleteDocsBody: (n: number) =>
+      `${n} document${n === 1 ? "" : "s"} and their version history will be deleted permanently. This cannot be undone.`,
     renameTitle: "Rename document",
     renameLabel: "Document name",
     renameConfirm: "Rename",
@@ -331,6 +334,14 @@ export const en = {
     nextPage: "Next page",
     deleteDocument: "Delete document",
     deleteDocumentNamed: (name: string) => `Delete ${name}`,
+    selectAll: "Select all",
+    selectDocument: (name: string) => `Select ${name}`,
+    selectedCount: (n: number) => `${n} selected`,
+    clearSelection: "Clear selection",
+    downloadSelected: "Download",
+    deleteSelected: "Delete",
+    preparingZip: "Preparing…",
+    downloadPartial: (n: number) => `${n} document${n === 1 ? "" : "s"} could not be added to the archive.`,
   },
 
   toast: {
@@ -338,6 +349,8 @@ export const en = {
     undo: "Undo",
     saved: "Saved",
     deleted: (name: string) => `Deleted "${name}"`,
+    deletedCount: (n: number) => `Deleted ${n} document${n === 1 ? "" : "s"}`,
+    downloadFailed: "Could not build the archive — try again, or export the documents one by one.",
     linkCopied: "Link copied — it opens this document directly.",
     linkCopyFailed: "Could not copy the link. Your browser blocked clipboard access.",
     downloaded: (file: string) => `Downloaded ${file}`,
