@@ -901,9 +901,9 @@ export default function Editor({
   const lastSnapAtRef = useRef<Record<string, number>>({});
   const [shortcutsOpen, setShortcutsOpen] = useState(false);
   const [focusMode, setFocusMode] = useState(false);
-  // The menu bar collapses while scrolling down so the toolbar sits right
-  // under the top edge; it comes back on scroll up. Applies at every viewport
-  // height, not just short ones.
+  // Scrolling down thins the toolbar out — shorter buttons, smaller icons — to
+  // hand the page a little vertical space back; scrolling up restores it. The
+  // menu bar above it is left alone.
   const [chromeCollapsed, setChromeCollapsed] = useState(false);
   const chromeCollapsedRef = useRef(false);
   const editorShellRef = useRef<HTMLDivElement>(null);
@@ -1271,9 +1271,9 @@ export default function Editor({
     if (!el) return;
     let lastY = el.scrollTop;
     let raf = 0;
-    // Collapsing gives the shell ~72px more height, so the browser clamps
+    // Shrinking the bars gives the shell more height, so the browser clamps
     // scrollTop and fires a scroll event pointing the other way — which would
-    // expand the bar again, and so on. Ignore events for the length of the
+    // restore them again, and so on. Ignore events for the length of the
     // transition after a toggle so the two can't chase each other.
     let settleUntil = 0;
     const read = () => {
@@ -2664,18 +2664,6 @@ export default function Editor({
       {/* Main column */}
       <div className="flex h-screen flex-1 min-w-0 flex-col overflow-hidden">
       {!focusMode && (
-      <div
-        className={cn(
-          // grid-rows 1fr→0fr animates to the row's natural height, so the
-          // collapse stays smooth without hard-coding the menu bar's height.
-          "grid shrink-0 transition-[grid-template-rows,opacity] duration-300 ease-in-out motion-reduce:transition-none",
-          chromeCollapsed ? "grid-rows-[0fr] opacity-0" : "grid-rows-[1fr] opacity-100"
-        )}
-        // Collapsed but still in the DOM — keep the title input and menus out
-        // of the tab order while they're invisible.
-        inert={chromeCollapsed}
-      >
-      <div className="min-h-0 overflow-hidden">
       <MenuBar
         viewRef={viewRef}
         schema={mySchema}
@@ -2735,8 +2723,6 @@ export default function Editor({
         onLogout={logout}
         onOpenProfile={openProfile}
       />
-      </div>
-      </div>
       )}
       {user && !user.emailVerified && !verifyDismissed && (
         <div className="flex items-center gap-2 border-b border-amber-300/60 bg-amber-50 px-3 py-1.5 text-[12px] text-amber-900 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-200">

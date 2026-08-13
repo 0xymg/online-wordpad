@@ -64,6 +64,8 @@ const jsonLdSoftwareApp = {
     "Free online word processor and Word alternative that runs in your browser. Rich text, tables, images, page breaks, .docx import and export, and exact print margins. No download, no account.",
   featureList: [
     "Slash command menu",
+    "Document variables that fill themselves in ([[name]], [[email]], [[today]])",
+    "Date variables in any format, e.g. [[today::DD.MM.YYYY]]",
     "Rich text formatting (bold, italic, underline, strikethrough)",
     "Font families, font sizes, text color, highlight color",
     "Bulleted and numbered lists",

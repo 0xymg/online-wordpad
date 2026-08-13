@@ -1,6 +1,6 @@
 "use client";
 
-import { memo, useCallback, useRef, useState, useEffect, lazy, Suspense } from "react";
+import { memo, useCallback, useState, useEffect, lazy, Suspense } from "react";
 import { EditorView } from "prosemirror-view";
 import { EditorState, Transaction, TextSelection } from "prosemirror-state";
 import { toggleMark, setBlockType, wrapIn } from "prosemirror-commands";
@@ -74,11 +74,18 @@ const FONT_GROUPS = [
 
 const BLOCK_VALUES = ["paragraph", "h1", "h2", "h3", "h4", "code_block"] as const;
 
-const SZ = 22;
+/** Icon sizes, full-size and compact. The button box stays flex-centred, so a
+    smaller icon sits in the same place — nothing else has to move. */
+const SZ = 22, SZ_COMPACT = 16;
+const SZ_MD = 18, SZ_MD_COMPACT = 13;   // colour-picker glyphs
+const SZ_SM = 16, SZ_SM_COMPACT = 12;   // table picker
 
 /* ── Button ─────────────────────────────────────────────────────────────── */
+// Sized from --tb-ctl, which the toolbar root sets — that is the whole of the
+// compact switch, so the memoized groups never need to know about it.
 const BTN = cn(
-  "inline-flex items-center justify-center w-10 h-10 rounded cursor-pointer shrink-0 transition-colors",
+  "inline-flex items-center justify-center size-(--tb-ctl) rounded cursor-pointer shrink-0",
+  "transition-[width,height,color,background-color] duration-300 ease-in-out motion-reduce:transition-none",
   "hover:bg-accent hover:text-accent-foreground",
   "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset"
 );
@@ -132,7 +139,7 @@ function Sep() {
 /* ── TablePicker ─────────────────────────────────────────────────────────── */
 // Memoized: `onPick` and `t` are stable, so the 80-cell grid is not re-rendered
 // on every editor transaction.
-const TablePicker = memo(function TablePicker({ onPick, t }: { onPick: (rows: number, cols: number) => void; t: ReturnType<typeof useT> }) {
+const TablePicker = memo(function TablePicker({ onPick, t, sz }: { onPick: (rows: number, cols: number) => void; t: ReturnType<typeof useT>; sz: number }) {
   const [hovered, setHovered] = useState({ r: 0, c: 0 });
   const [open, setOpen] = useState(false);
   const pick = (r: number, c: number) => { setOpen(false); onPick(r, c); };
@@ -143,7 +150,7 @@ const TablePicker = memo(function TablePicker({ onPick, t }: { onPick: (rows: nu
         <TooltipTrigger asChild>
           <PopoverTrigger asChild>
             <button type="button" aria-label={t.toolbar.insertTable} onMouseDown={(e) => e.preventDefault()} className={cn(BTN, open && "bg-accent text-accent-foreground")}>
-              <Table size={16} />
+              <Table size={sz} />
             </button>
           </PopoverTrigger>
         </TooltipTrigger>
@@ -181,14 +188,14 @@ const TablePicker = memo(function TablePicker({ onPick, t }: { onPick: (rows: nu
 
 /* ── HistoryGroup ────────────────────────────────────────────────────────── */
 // No active-state to mirror — memoized so per-tick renders skip it entirely.
-const HistoryGroup = memo(function HistoryGroup({ onUndo, onRedo, t }: {
-  onUndo: () => void; onRedo: () => void; t: ReturnType<typeof useT>;
+const HistoryGroup = memo(function HistoryGroup({ onUndo, onRedo, t, sz }: {
+  onUndo: () => void; onRedo: () => void; t: ReturnType<typeof useT>; sz: number;
 }) {
   return (
     <Group label={t.toolbar.groupHistory}>
       <Row>
-        <TBtn onClick={onUndo} tip={`${t.edit.undo} (Ctrl+Z)`}><ArrowCounterClockwise size={SZ} /></TBtn>
-        <TBtn onClick={onRedo} tip={`${t.edit.redo} (Ctrl+Y)`}><ArrowClockwise size={SZ} /></TBtn>
+        <TBtn onClick={onUndo} tip={`${t.edit.undo} (Ctrl+Z)`}><ArrowCounterClockwise size={sz} /></TBtn>
+        <TBtn onClick={onRedo} tip={`${t.edit.redo} (Ctrl+Y)`}><ArrowClockwise size={sz} /></TBtn>
       </Row>
     </Group>
   );
@@ -198,7 +205,7 @@ const HistoryGroup = memo(function HistoryGroup({ onUndo, onRedo, t }: {
 // Static buttons + the emoji popover (lazy chunk) + table grid — none of it
 // depends on the selection, so it is memoized out of the per-tick render.
 const InsertGroup = memo(function InsertGroup({
-  onLinkAdd, onImageAdd, onInsertDivider, onPageBreakAdd, onInsertEmoji, onInsertTable, t,
+  onLinkAdd, onImageAdd, onInsertDivider, onPageBreakAdd, onInsertEmoji, onInsertTable, t, sz,
 }: {
   onLinkAdd: () => void;
   onImageAdd: () => void;
@@ -207,14 +214,15 @@ const InsertGroup = memo(function InsertGroup({
   onInsertEmoji: (emojiData: EmojiClickData) => void;
   onInsertTable: (rows: number, cols: number) => void;
   t: ReturnType<typeof useT>;
+  sz: number;
 }) {
   return (
     <Group label={t.toolbar.groupInsert}>
       {/* Row 1: link image divider pagebreak */}
       <Row>
-        <TBtn onClick={onLinkAdd}       tip={t.toolbar.insertLink}>       <Link size={SZ} /></TBtn>
-        <TBtn onClick={onImageAdd}      tip={t.toolbar.insertImage}>      <ImageSquare size={SZ} /></TBtn>
-        <TBtn onClick={onInsertDivider} tip={t.toolbar.insertDivider}>    <Minus size={SZ} /></TBtn>
+        <TBtn onClick={onLinkAdd}       tip={t.toolbar.insertLink}>       <Link size={sz} /></TBtn>
+        <TBtn onClick={onImageAdd}      tip={t.toolbar.insertImage}>      <ImageSquare size={sz} /></TBtn>
+        <TBtn onClick={onInsertDivider} tip={t.toolbar.insertDivider}>    <Minus size={sz} /></TBtn>
         <TBtn onClick={onPageBreakAdd}  tip={t.toolbar.insertPageBreak}>
           <span className="text-[9px] font-bold leading-none tracking-tight">PB</span>
         </TBtn>
@@ -226,7 +234,7 @@ const InsertGroup = memo(function InsertGroup({
             <TooltipTrigger asChild>
               <PopoverTrigger asChild>
                 <button type="button" aria-label={t.toolbar.insertEmoji} onMouseDown={(e) => e.preventDefault()} className={BTN}>
-                  <Smiley size={SZ} />
+                  <Smiley size={sz} />
                 </button>
               </PopoverTrigger>
             </TooltipTrigger>
@@ -238,7 +246,8 @@ const InsertGroup = memo(function InsertGroup({
             </Suspense>
           </PopoverContent>
         </Popover>
-        <TablePicker t={t} onPick={onInsertTable} />
+        <TablePicker t={t} onPick={onInsertTable} /* the grid glyph is deliberately smaller; keep the ratio */
+          sz={sz === SZ_COMPACT ? SZ_SM_COMPACT : SZ_SM} />
       </Row>
     </Group>
   );
@@ -257,9 +266,6 @@ interface ToolbarProps {
   compact?: boolean;
 }
 
-// Enough to notice, not enough to make the icons hard to hit.
-const COMPACT_SCALE = 0.85;
-
 /* ── Main ────────────────────────────────────────────────────────────────── */
 // Memoized: still re-renders whenever `tick` changes (active marks/block state
 // must track every transaction), but unrelated Editor state (dialogs, toasts,
@@ -268,19 +274,6 @@ function Toolbar({
   viewRef, schema, onInsertTable, onPageBreakAdd, onLinkAdd, onImageAdd, tick, compact,
 }: ToolbarProps) {
   const t = useT();
-  // A transform doesn't shrink the layout box, so the wrapper's height is
-  // driven from the bar's untransformed height. offsetHeight and the observer
-  // both report that pre-transform size, so scaling can't feed back into it.
-  const barRef = useRef<HTMLDivElement>(null);
-  const [naturalHeight, setNaturalHeight] = useState(0);
-  useEffect(() => {
-    const el = barRef.current;
-    if (!el) return;
-    const ro = new ResizeObserver(() => setNaturalHeight(el.offsetHeight));
-    ro.observe(el);
-    return () => ro.disconnect();
-  }, []);
-  const scale = compact ? COMPACT_SCALE : 1;
   const blockLabel = (value: string) =>
     value === "paragraph" ? t.toolbar.normal
       : value === "code_block" ? t.toolbar.code
@@ -393,25 +386,34 @@ function Toolbar({
     v.dispatch(tr.scrollIntoView()); v.focus();
   }, [viewRef, schema]);
 
+  const sz = compact ? SZ_COMPACT : SZ;
+
   /* select shared class */
-  const SEL = "h-10 text-xs border border-input rounded px-1.5 bg-background hover:bg-accent focus:outline-none focus:ring-1 focus:ring-ring shrink-0 cursor-pointer";
+  // Important: shadcn's SelectTrigger carries data-[size=default]:h-9, which
+  // outranks a plain height utility — without this the selects would stay 36px
+  // and set the row height no matter how far the buttons shrank.
+  const SEL = "h-(--tb-ctl)! text-xs border border-input rounded px-1.5 bg-background hover:bg-accent focus:outline-none focus:ring-1 focus:ring-ring shrink-0 cursor-pointer transition-[height] duration-300 ease-in-out motion-reduce:transition-none";
 
   return (
     <div className="border-b border-border bg-card select-none overflow-x-auto">
-    {/* Height and scale share the same duration/easing, so the box tracks the
-        shrinking content exactly and nothing is clipped mid-transition. */}
+    {/* Scrolled down the bar thins out: shorter controls, smaller icons, less
+        padding. Control boxes size off --tb-ctl (one variable beats threading a
+        prop through every group); icon sizes are passed explicitly, because a
+        CSS rule broad enough to reach them also reaches the select triggers'
+        carets, which must keep their own size. */}
     <div
-      className="transition-[height] duration-300 ease-in-out motion-reduce:transition-none"
-      style={naturalHeight ? { height: naturalHeight * scale } : undefined}
-    >
-    <div
-      ref={barRef}
-      className="max-w-[850px] mx-auto px-3 pt-1.5 pb-1 flex items-stretch justify-center gap-0 origin-top transition-transform duration-300 ease-in-out motion-reduce:transition-none"
-      style={{ transform: `scale(${scale})` }}
+      className={cn(
+        "max-w-[850px] mx-auto px-3 flex items-stretch justify-center gap-0",
+        "transition-[padding] duration-300 ease-in-out motion-reduce:transition-none",
+        compact ? "pt-1 pb-1" : "pt-1.5 pb-1"
+      )}
+      style={{
+        "--tb-ctl": compact ? "1.75rem" : "2.5rem",
+      } as React.CSSProperties}
     >
 
       {/* ── History ── */}
-      <HistoryGroup onUndo={onUndo} onRedo={onRedo} t={t} />
+      <HistoryGroup onUndo={onUndo} onRedo={onRedo} t={t} sz={sz} />
 
       <Sep />
 
@@ -463,15 +465,15 @@ function Toolbar({
               ))}
             </SelectContent>
           </Select>
-          <ColorPicker color={bgColor}   onChange={(c) => { setBgColor(c);   applyMark("bgColor",   { color: c }); }} tip={t.toolbar.highlightColor} icon={<Highlighter size={18} />} />
+          <ColorPicker color={bgColor}   onChange={(c) => { setBgColor(c);   applyMark("bgColor",   { color: c }); }} tip={t.toolbar.highlightColor} icon={<Highlighter size={compact ? SZ_MD_COMPACT : SZ_MD} />} />
         </Row>
         {/* Row 2: B I U S + text color */}
         <Row between>
-          <TBtn onClick={() => cmd(toggleMark(schema.marks.strong))}        active={isActive("strong")}        tip={`${t.format.bold} (Ctrl+B)`}>      <TextB size={SZ} weight="bold" /></TBtn>
-          <TBtn onClick={() => cmd(toggleMark(schema.marks.em))}            active={isActive("em")}            tip={`${t.format.italic} (Ctrl+I)`}>    <TextItalic size={SZ} /></TBtn>
-          <TBtn onClick={() => cmd(toggleMark(schema.marks.underline))}     active={isActive("underline")}     tip={`${t.format.underline} (Ctrl+U)`}> <TextUnderline size={SZ} /></TBtn>
-          <TBtn onClick={() => cmd(toggleMark(schema.marks.strikethrough))} active={isActive("strikethrough")} tip={t.format.strikethrough}>       <TextStrikethrough size={SZ} /></TBtn>
-          <ColorPicker color={textColor} onChange={(c) => { setTextColor(c); applyMark("textColor", { color: c }); }} tip={t.toolbar.textColor}      icon={<TextT size={18} />} />
+          <TBtn onClick={() => cmd(toggleMark(schema.marks.strong))}        active={isActive("strong")}        tip={`${t.format.bold} (Ctrl+B)`}>      <TextB size={sz} weight="bold" /></TBtn>
+          <TBtn onClick={() => cmd(toggleMark(schema.marks.em))}            active={isActive("em")}            tip={`${t.format.italic} (Ctrl+I)`}>    <TextItalic size={sz} /></TBtn>
+          <TBtn onClick={() => cmd(toggleMark(schema.marks.underline))}     active={isActive("underline")}     tip={`${t.format.underline} (Ctrl+U)`}> <TextUnderline size={sz} /></TBtn>
+          <TBtn onClick={() => cmd(toggleMark(schema.marks.strikethrough))} active={isActive("strikethrough")} tip={t.format.strikethrough}>       <TextStrikethrough size={sz} /></TBtn>
+          <ColorPicker color={textColor} onChange={(c) => { setTextColor(c); applyMark("textColor", { color: c }); }} tip={t.toolbar.textColor}      icon={<TextT size={compact ? SZ_MD_COMPACT : SZ_MD} />} />
         </Row>
       </Group>
 
@@ -503,19 +505,19 @@ function Toolbar({
               ))}
             </SelectContent>
           </Select>
-          <TBtn onClick={() => setTextAlign("left")}    active={currentAlign === "left"}    tip={t.format.alignLeft}>    <TextAlignLeft size={SZ} /></TBtn>
-          <TBtn onClick={() => setTextAlign("center")}  active={currentAlign === "center"}  tip={t.format.alignCenter}>  <TextAlignCenter size={SZ} /></TBtn>
-          <TBtn onClick={() => setTextAlign("right")}   active={currentAlign === "right"}   tip={t.format.alignRight}>   <TextAlignRight size={SZ} /></TBtn>
-          <TBtn onClick={() => setTextAlign("justify")} active={currentAlign === "justify"} tip={t.format.alignJustify}>       <TextAlignJustify size={SZ} /></TBtn>
+          <TBtn onClick={() => setTextAlign("left")}    active={currentAlign === "left"}    tip={t.format.alignLeft}>    <TextAlignLeft size={sz} /></TBtn>
+          <TBtn onClick={() => setTextAlign("center")}  active={currentAlign === "center"}  tip={t.format.alignCenter}>  <TextAlignCenter size={sz} /></TBtn>
+          <TBtn onClick={() => setTextAlign("right")}   active={currentAlign === "right"}   tip={t.format.alignRight}>   <TextAlignRight size={sz} /></TBtn>
+          <TBtn onClick={() => setTextAlign("justify")} active={currentAlign === "justify"} tip={t.format.alignJustify}>       <TextAlignJustify size={sz} /></TBtn>
         </Row>
         {/* Row 2: list + indent + code + quote */}
         <Row>
-          <TBtn onClick={() => cmd(wrapInList(schema.nodes.bullet_list))}  tip={t.toolbar.bulletedList}>   <ListBullets size={SZ} /></TBtn>
-          <TBtn onClick={() => cmd(wrapInList(schema.nodes.ordered_list))} tip={t.toolbar.numberedList}>  <ListNumbers size={SZ} /></TBtn>
-          <TBtn onClick={() => adjustIndent(-1)}                           tip={t.format.decreaseIndent}> <TextOutdent size={SZ} /></TBtn>
-          <TBtn onClick={() => adjustIndent(1)}                            tip={t.format.increaseIndent}> <TextIndent size={SZ} /></TBtn>
-          <TBtn onClick={() => cmd(setBlockType(schema.nodes.code_block))} tip={t.toolbar.codeBlock}>     <Code size={SZ} /></TBtn>
-          <TBtn onClick={() => cmd(wrapIn(schema.nodes.blockquote))}       tip={t.toolbar.blockquote}>     <Quotes size={SZ} /></TBtn>
+          <TBtn onClick={() => cmd(wrapInList(schema.nodes.bullet_list))}  tip={t.toolbar.bulletedList}>   <ListBullets size={sz} /></TBtn>
+          <TBtn onClick={() => cmd(wrapInList(schema.nodes.ordered_list))} tip={t.toolbar.numberedList}>  <ListNumbers size={sz} /></TBtn>
+          <TBtn onClick={() => adjustIndent(-1)}                           tip={t.format.decreaseIndent}> <TextOutdent size={sz} /></TBtn>
+          <TBtn onClick={() => adjustIndent(1)}                            tip={t.format.increaseIndent}> <TextIndent size={sz} /></TBtn>
+          <TBtn onClick={() => cmd(setBlockType(schema.nodes.code_block))} tip={t.toolbar.codeBlock}>     <Code size={sz} /></TBtn>
+          <TBtn onClick={() => cmd(wrapIn(schema.nodes.blockquote))}       tip={t.toolbar.blockquote}>     <Quotes size={sz} /></TBtn>
         </Row>
       </Group>
 
@@ -530,9 +532,9 @@ function Toolbar({
         onInsertEmoji={insertEmoji}
         onInsertTable={onInsertTable}
         t={t}
+        sz={sz}
       />
 
-    </div>
     </div>
     </div>
   );

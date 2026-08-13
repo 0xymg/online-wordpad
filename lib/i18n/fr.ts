@@ -373,6 +373,7 @@ export const fr: Dictionary = {
     announcementText: "Comptes facultatifs. Synchronisez vos documents entre vos appareils, toujours gratuitement.",
     announcementCta: "Créer un compte →",
     navSlash: "Menu slash",
+    navVariables: "Variables",
     navFeatures: "Fonctionnalités",
     navHow: "Comment ça marche",
     navVs: "Comparatif",
@@ -402,6 +403,16 @@ export const fr: Dictionary = {
     slashP3:
       "C'est la vraie raison pour laquelle écrire ici va plus vite que dans Word. Pas parce que la page se charge plus vite, même si c'est le cas. Parce qu'entre vouloir un tableau et avoir un tableau, il y a quatre frappes : [[/tab]] et [[Enter]].",
     slashTryLink: "Essayez, appuyez sur / dans l'éditeur →",
+    variablesTitle: "Tapez [[today]]. Vous obtenez la date du jour.",
+    variablesP1:
+      "Certaines choses se retapent dans chaque document : votre nom, votre e-mail, la date en haut de la page. Écrivez la variable à la place, et elle se remplit dès que vous fermez les crochets.",
+    variablesP2:
+      "La date accepte le format de votre choix après un double deux-points — DD.MM.YYYY par défaut, ou le mois en toutes lettres, ou la norme ISO. Les noms de mois suivent la langue de l'éditeur. Choisissez-en un dans Insertion ▸ Variable si vous préférez ne pas retenir les codes.",
+    variablesP3:
+      "Ce qui arrive sur la page est du texte brut, pas un champ dynamique. Une lettre écrite en mars dernier dit toujours mars quand vous l'ouvrez aujourd'hui.",
+    variablesTokenName: "le nom de votre compte",
+    variablesTokenEmail: "l'e-mail de votre compte",
+    variablesCta: "Ouvrir l'éditeur et essayer →",
     frictionTitle: "Vous vouliez écrire une page. Cela ne devrait pas vous coûter cinq minutes.",
     frictionP1:
       "Vous connaissez la séquence. Ouvrir Word et attendre qu'il se charge, puis fermer l'invite de connexion, puis passer une galerie de modèles que personne n'a demandée. Ou ouvrir Google Docs, se connecter au bon compte, attendre la liste des fichiers, cliquer sur Nouveau.",

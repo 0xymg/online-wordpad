@@ -87,11 +87,15 @@ export function useAskDialogs() {
             <AlertDialogCancel onClick={() => settleConfirm(false)}>
               {confirmState?.cancelLabel ?? "Cancel"}
             </AlertDialogCancel>
+            {/* Has to go through `variant`, not a className override: the
+                action renders asChild, and Radix's Slot concatenates class
+                strings without tailwind-merge — an overriding bg-destructive
+                would sit alongside the variant's bg-primary and lose or win by
+                stylesheet order. In dark mode that landed as white text on the
+                light default button. */}
             <AlertDialogAction
               onClick={() => settleConfirm(true)}
-              className={confirmState?.destructive
-                ? "bg-destructive text-white hover:bg-destructive/90"
-                : undefined}
+              variant={confirmState?.destructive ? "destructive" : "default"}
             >
               {confirmState?.confirmLabel ?? "Continue"}
             </AlertDialogAction>

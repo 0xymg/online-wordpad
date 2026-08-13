@@ -371,6 +371,7 @@ export const zh: Dictionary = {
     announcementText: "账户可选。跨设备同步文档，依然免费。",
     announcementCta: "创建账户 →",
     navSlash: "斜杠菜单",
+    navVariables: "变量",
     navFeatures: "功能",
     navHow: "使用方法",
     navVs: "对比",
@@ -400,6 +401,16 @@ export const zh: Dictionary = {
     slashP3:
       "在这里写作比 Word 快，真正的原因就在这。不是因为页面加载更快，虽然确实更快。而是因为从想要一个表格到拥有一个表格，只隔四次按键：[[/tab]] 和 [[Enter]]。",
     slashTryLink: "试试看，在编辑器里按下 / →",
+    variablesTitle: "输入 [[today]]，写出今天的日期。",
+    variablesP1:
+      "有些内容你在每份文稿里都要重打一遍：你的姓名、邮箱、页首的日期。改用变量来写，合上方括号的那一刻它就自己填好了。",
+    variablesP2:
+      "日期在双冒号后面可以用任意格式 — 默认 DD.MM.YYYY，也可以把月份写成文字，或者用 ISO 格式。月份名称跟随编辑器的语言。不想记这些代码，就从「插入 ▸ 变量」里挑一个。",
+    variablesP3:
+      "落到页面上的是纯文本，不是动态字段。去年三月写的信，今天打开时依然写着三月。",
+    variablesTokenName: "你账户上的姓名",
+    variablesTokenEmail: "你账户上的邮箱",
+    variablesCta: "打开编辑器试一试 →",
     frictionTitle: "你只想写一页纸，这不该花掉你五分钟。",
     frictionP1:
       "这套流程你很熟。打开 Word，等它加载，关掉登录提示，再跳过一个你没要过的模板库。或者打开 Google Docs，登录对的账号，等文件列表加载，点击新建。",

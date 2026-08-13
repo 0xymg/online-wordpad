@@ -375,6 +375,7 @@ export const en = {
     announcementText: "Optional accounts. Sync your documents across devices, still free.",
     announcementCta: "Create one →",
     navSlash: "Slash menu",
+    navVariables: "Variables",
     navFeatures: "Features",
     navHow: "How it works",
     navVs: "Comparison",
@@ -404,6 +405,16 @@ export const en = {
     slashP3:
       "This is the real reason writing here is faster than Word. Not because the page loads quicker, though it does. Because the distance between wanting a table and having a table is four keystrokes: [[/tab]] and [[Enter]].",
     slashTryLink: "Try it, press / in the editor →",
+    variablesTitle: "Type [[today]]. Get today's date.",
+    variablesP1:
+      "Some things you retype in every document: your name, your email, the date at the top of the page. Write the variable instead and it fills itself in the moment you close the brackets.",
+    variablesP2:
+      "The date takes any format you want after a double colon — DD.MM.YYYY by default, or spell the month out, or go ISO. Month names follow whatever language the editor is in. Pick one from Insert ▸ Variable if you'd rather not remember the tokens.",
+    variablesP3:
+      "What lands on the page is plain text, not a live field. A letter you wrote last March still says March when you open it today.",
+    variablesTokenName: "the name on your account",
+    variablesTokenEmail: "the email on your account",
+    variablesCta: "Open the editor and try it →",
     frictionTitle: "You wanted to write one page. That shouldn't cost you five minutes.",
     frictionP1:
       "You know the sequence. Open Word and wait for it to load, then dismiss the sign-in prompt, then skip a template gallery you didn't ask for. Or open Google Docs, sign into the right account, wait for the file list, click New.",

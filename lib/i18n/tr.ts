@@ -373,6 +373,7 @@ export const tr: Dictionary = {
     announcementText: "İsteğe bağlı hesaplar. Belgelerinizi cihazlar arasında eşitleyin, yine ücretsiz.",
     announcementCta: "Hesap oluşturun →",
     navSlash: "Slash menüsü",
+    navVariables: "Değişkenler",
     navFeatures: "Özellikler",
     navHow: "Nasıl çalışır",
     navVs: "Karşılaştırma",
@@ -402,6 +403,16 @@ export const tr: Dictionary = {
     slashP3:
       "Burada yazmanın Word'den hızlı olmasının asıl nedeni bu. Sayfa daha hızlı yüklendiği için değil, gerçi o da doğru. Bir tablo istemekle o tabloya sahip olmak arasındaki mesafe dört tuş vuruşu olduğu için: [[/tab]] ve [[Enter]].",
     slashTryLink: "Deneyin, editörde / tuşuna basın →",
+    variablesTitle: "[[today]] yazın. Bugünün tarihi gelsin.",
+    variablesP1:
+      "Her belgede yeniden yazdığınız şeyler var: adınız, e-posta adresiniz, sayfanın başındaki tarih. Onun yerine değişkeni yazın; parantezi kapattığınız anda yerini kendisi dolduruyor.",
+    variablesP2:
+      "Tarih, iki üst üste noktadan sonra istediğiniz biçimi alıyor — varsayılan DD.MM.YYYY, isterseniz ayı yazıyla, isterseniz ISO. Ay adları editörün dilini takip ediyor. Kodları aklınızda tutmak istemezseniz Ekle ▸ Değişken menüsünden seçin.",
+    variablesP3:
+      "Sayfaya düşen şey düz metin, canlı bir alan değil. Geçen mart yazdığınız bir mektup bugün açtığınızda hâlâ mart diyor.",
+    variablesTokenName: "hesabınızdaki ad",
+    variablesTokenEmail: "hesabınızdaki e-posta",
+    variablesCta: "Editörü açın, deneyin →",
     frictionTitle: "Tek bir sayfa yazacaktınız. Bu size beş dakikaya mal olmamalı.",
     frictionP1:
       "Sırayı bilirsiniz. Word'ü açıp yüklenmesini bekleyin, sonra oturum açma istemini kapatın, sonra istemediğiniz bir şablon galerisini geçin. Ya da Google Docs'u açın, doğru hesaba giriş yapın, dosya listesini bekleyin, Yeni'ye tıklayın.",

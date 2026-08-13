@@ -1,11 +1,12 @@
 "use client";
 
 import Link from "next/link";
-import { Fragment, type ReactNode } from "react";
-import { TextB, Files, Command, Printer, Lock, CloudArrowUp, Check, Lightning } from "./components/icons";
+import { Fragment, useSyncExternalStore, type ReactNode } from "react";
+import { TextB, Files, Command, Printer, Lock, CloudArrowUp, Check, Lightning, Code } from "./components/icons";
 import ToolbarPreviewClient from "./components/ToolbarPreviewClient";
 import { useT, useLocale } from "./components/I18nProvider";
-import { LOCALES, LOCALE_NAMES, type Dictionary } from "@/lib/i18n";
+import { LOCALES, LOCALE_NAMES, LOCALE_TAGS, type Dictionary } from "@/lib/i18n";
+import { formatDate } from "@/lib/doc-variables";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 /* The feature cards and FAQ read their copy from the dictionary, so the icons
@@ -56,6 +57,19 @@ function heroCommand(command: string) {
   window.setTimeout(() => {
     window.dispatchEvent(new CustomEvent("edtr-hero", { detail: { command } }));
   }, 280);
+}
+
+/* This page is prerendered, so a date computed during render would ship the
+   build date and go stale. The snapshot is null on the server and a cached Date
+   in the browser — which is what useSyncExternalStore is for: the value fills in
+   on hydration, with no setState-in-an-effect and no mismatch to suppress. */
+const neverChanges = () => () => {};
+let cachedToday: Date | null = null;
+const todayInBrowser = () => (cachedToday ??= new Date());
+const todayOnServer = () => null;
+
+function useToday(): Date | null {
+  return useSyncExternalStore(neverChanges, todayInBrowser, todayOnServer);
 }
 
 /* Copy carries [[…]] tokens that should render as keyboard-key chips
@@ -136,6 +150,20 @@ function renderCredit(template: string): ReactNode {
 export default function LandingClient() {
   const t = useT();
   const { locale, setLocale } = useLocale();
+  const today = useToday();
+
+  /* Left column is what you type, right column is what lands on the page. The
+     dates are real ones, formatted the way the editor would format them. */
+  const dateSample = (format: string) =>
+    today ? formatDate(today, format, LOCALE_TAGS[locale]) : "";
+  const variableRows = [
+    { token: "[[name]]",                 value: t.landing.variablesTokenName,  literal: true },
+    { token: "[[email]]",                value: t.landing.variablesTokenEmail, literal: true },
+    { token: "[[today]]",                value: dateSample("DD.MM.YYYY") },
+    { token: "[[today::D MMMM YYYY]]",   value: dateSample("D MMMM YYYY") },
+    { token: "[[today::YYYY-MM-DD]]",    value: dateSample("YYYY-MM-DD") },
+    { token: "[[today::DD.MM.YYYY HH:mm]]", value: dateSample("DD.MM.YYYY HH:mm") },
+  ];
 
   return (
     <div className="pad-marketing min-h-screen font-sans">
@@ -167,6 +195,7 @@ export default function LandingClient() {
           </span>
           <nav className="absolute left-1/2 hidden -translate-x-1/2 items-center gap-8 text-[13px] text-[var(--pad-ink-50)] sm:flex">
             <a href="#slash-menu" className="transition-colors hover:text-[var(--pad-ink)]">{t.landing.navSlash}</a>
+            <a href="#variables" className="transition-colors hover:text-[var(--pad-ink)]">{t.landing.navVariables}</a>
             <a href="#features" className="transition-colors hover:text-[var(--pad-ink)]">{t.landing.navFeatures}</a>
             <a href="#comparison" className="transition-colors hover:text-[var(--pad-ink)]">{t.landing.navVs}</a>
             <a href="#faq" className="transition-colors hover:text-[var(--pad-ink)]">{t.landing.navFaq}</a>
@@ -283,6 +312,54 @@ export default function LandingClient() {
               >
                 {t.landing.slashTryLink}
               </button>
+            </div>
+          </div>
+        </section>
+
+        {/* ── Variables ── */}
+        <section id="variables" className="scroll-mt-16 border-t border-[var(--pad-border)] px-6 py-24">
+          <div className="mx-auto max-w-3xl">
+            <div className="mx-auto flex size-14 items-center justify-center border border-[var(--pad-border)] bg-[var(--pad-surface)]">
+              <Code size={26} weight="duotone" />
+            </div>
+            <h2 className="pad-display mt-6 text-center text-[clamp(2rem,5vw,3rem)]">
+              {renderKbd(t.landing.variablesTitle)}
+            </h2>
+            <div className="mt-8 space-y-5 leading-relaxed text-[var(--pad-ink-70)]">
+              <p>{t.landing.variablesP1}</p>
+              <p>{t.landing.variablesP2}</p>
+              <p>{t.landing.variablesP3}</p>
+            </div>
+
+            <dl className="mt-10 border-y border-[var(--pad-border)]">
+              {variableRows.map((row) => (
+                <div
+                  key={row.token}
+                  className="flex flex-wrap items-baseline justify-between gap-x-6 gap-y-1 border-b border-[var(--pad-border)] py-3 last:border-b-0"
+                >
+                  <dt className="font-mono text-sm text-[var(--pad-ink)]">{row.token}</dt>
+                  <dd
+                    className={
+                      row.literal
+                        ? "text-sm italic text-[var(--pad-ink-50)]"
+                        : "font-mono text-sm text-[var(--pad-ink-70)]"
+                    }
+                  >
+                    {/* Empty until hydration fills the date in — the space keeps
+                        the row from changing height when it arrives. */}
+                    {row.value || "\u00A0"}
+                  </dd>
+                </div>
+              ))}
+            </dl>
+
+            <div className="mt-8 text-center">
+              <Link
+                href="/pad"
+                className="font-medium underline underline-offset-4 decoration-[var(--pad-border-strong)] transition-colors hover:decoration-current"
+              >
+                {t.landing.variablesCta}
+              </Link>
             </div>
           </div>
         </section>
