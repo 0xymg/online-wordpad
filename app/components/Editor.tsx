@@ -878,6 +878,10 @@ export default function Editor({
   const lastSnapAtRef = useRef<Record<string, number>>({});
   const [shortcutsOpen, setShortcutsOpen] = useState(false);
   const [focusMode, setFocusMode] = useState(false);
+  // On narrow screens the menu bar collapses while scrolling down so the
+  // toolbar sits right under the top edge; it comes back on scroll up.
+  const [chromeCollapsed, setChromeCollapsed] = useState(false);
+  const editorShellRef = useRef<HTMLDivElement>(null);
   const [printHeaderFooter, setPrintHeaderFooter] = useState(false);
   const lastAutoNameRef = useRef<string | null>(null);
   const [readingAloud, setReadingAloud] = useState(false);
@@ -1225,6 +1229,24 @@ export default function Editor({
     const v = viewRef.current;
     if (v) setDocInfo(computeDocInfo(v.state, t));
   }, [t]);
+
+  // Scrolling happens inside .editor-shell rather than the window, so the
+  // direction is read from that element. Small deltas are ignored to avoid
+  // flicker, and near the top the chrome is always shown.
+  useEffect(() => {
+    const el = editorShellRef.current;
+    if (!el) return;
+    let lastY = el.scrollTop;
+    const onScroll = () => {
+      const y = el.scrollTop;
+      const delta = y - lastY;
+      if (Math.abs(delta) < 8) return;
+      lastY = y;
+      setChromeCollapsed(y > 48 && delta > 0);
+    };
+    el.addEventListener("scroll", onScroll, { passive: true });
+    return () => el.removeEventListener("scroll", onScroll);
+  }, []);
 
   useEffect(() => {
     editorHandlers.flushSave = flushSave;
@@ -2579,7 +2601,18 @@ export default function Editor({
       />
       {/* Main column */}
       <div className="flex h-screen flex-1 min-w-0 flex-col overflow-hidden">
+      {/* grid-rows 1fr→0fr animates to the row's natural height, so the collapse
+          stays smooth without hard-coding the menu bar's height. */}
       {!focusMode && (
+      <div
+        className={cn(
+          "grid shrink-0 transition-[grid-template-rows,opacity] duration-300 ease-in-out motion-reduce:transition-none",
+          chromeCollapsed
+            ? "max-[799px]:grid-rows-[0fr] max-[799px]:opacity-0"
+            : "grid-rows-[1fr] opacity-100"
+        )}
+      >
+      <div className="min-h-0 overflow-hidden">
       <MenuBar
         viewRef={viewRef}
         schema={mySchema}
@@ -2638,6 +2671,8 @@ export default function Editor({
         onLogout={logout}
         onOpenProfile={openProfile}
       />
+      </div>
+      </div>
       )}
       {user && !user.emailVerified && !verifyDismissed && (
         <div className="flex items-center gap-2 border-b border-amber-300/60 bg-amber-50 px-3 py-1.5 text-[12px] text-amber-900 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-200">
@@ -2677,6 +2712,7 @@ export default function Editor({
         </div>
       )}
       <div
+        ref={editorShellRef}
         className="editor-shell relative"
         style={{ backgroundColor: paperBgColor, ["--shell-bg" as any]: paperBgColor }}
       >
