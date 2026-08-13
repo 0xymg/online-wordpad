@@ -878,7 +878,7 @@ export default function Editor({
   const lastSnapAtRef = useRef<Record<string, number>>({});
   const [shortcutsOpen, setShortcutsOpen] = useState(false);
   const [focusMode, setFocusMode] = useState(false);
-  // On narrow screens the menu bar collapses while scrolling down so the
+  // On short viewports the menu bar collapses while scrolling down so the
   // toolbar sits right under the top edge; it comes back on scroll up.
   const [chromeCollapsed, setChromeCollapsed] = useState(false);
   const editorShellRef = useRef<HTMLDivElement>(null);
@@ -2612,8 +2612,10 @@ export default function Editor({
       <div
         className={cn(
           "grid shrink-0 transition-[grid-template-rows,opacity] duration-300 ease-in-out motion-reduce:transition-none",
+          // Height-based, not width: the point is to win back vertical space on
+          // short viewports (laptops at 768p, phones in landscape).
           chromeCollapsed
-            ? "max-[799px]:grid-rows-[0fr] max-[799px]:opacity-0"
+            ? "[@media(max-height:700px)]:grid-rows-[0fr] [@media(max-height:700px)]:opacity-0"
             : "grid-rows-[1fr] opacity-100"
         )}
       >
