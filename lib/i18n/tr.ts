@@ -307,6 +307,8 @@ export const tr: Dictionary = {
     subtitle:
       "Belgelerinizi doğrudan tarayıcıda yazın, biçimlendirin ve yazdırın. Kurulum yok, hesap gerekmiyor, yazdıkça kaydediliyor.",
     startNew: "Yeni bir belge başlatın",
+    scrollLeft: "Şablonları sola kaydır",
+    scrollRight: "Şablonları sağa kaydır",
     blankDocument: "Boş belge",
     openFile: "Cihazınızdan bir dosya açın",
     openFileFormats: "(.docx, .txt, .md, .html)",

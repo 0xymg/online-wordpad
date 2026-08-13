@@ -179,7 +179,8 @@ export default function ProfileDialog({ open, onClose, loading = false, user, ha
       >
         {/* Title, rule, then who the account belongs to */}
         <div className="flex items-start justify-between gap-4">
-          <h2 className="text-xl font-semibold tracking-tight">{t.profile.title}</h2>
+          {/* Same serif treatment as the start screen's greeting */}
+          <h2 className="font-serif text-2xl font-normal tracking-tight">{t.profile.title}</h2>
           <button type="button" onClick={onClose} aria-label={t.dialog.close} className="-mr-1 shrink-0 rounded p-1 hover:bg-accent">
             <X size={16} />
           </button>

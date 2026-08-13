@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { FileText, Plus, UploadSimple, X, SignIn, LinkSimple, Trash, CircleNotch, CaretLeft, CaretRight } from "./icons";
 import { TEMPLATES, type DocTemplate } from "@/lib/templates";
 import { useT } from "./I18nProvider";
@@ -54,6 +54,28 @@ const SCALE = THUMB_W / PAGE_W;
 /** How many documents the "Last used" list shows before "All documents". */
 const RECENT_COUNT = 5;
 const PAGE_SIZES = [10, 25, 50] as const;
+/** Sub-pixel scroll positions shouldn't leave a chevron enabled at either end. */
+const EDGE_SLACK = 4;
+
+/** Nudges the template strip sideways; hidden when there is nothing that way. */
+function StripChevron({ side, show, onClick, label }: {
+  side: "left" | "right"; show: boolean; onClick: () => void; label: string;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      aria-label={label}
+      tabIndex={show ? 0 : -1}
+      aria-hidden={!show}
+      className={`absolute top-1/2 z-10 flex h-9 w-9 -translate-y-1/2 items-center justify-center border border-border bg-background/95 shadow-sm backdrop-blur transition-opacity hover:bg-accent focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-ring ${
+        side === "left" ? "left-0" : "right-0"
+      } ${show ? "opacity-100" : "pointer-events-none opacity-0"}`}
+    >
+      {side === "left" ? <CaretLeft size={16} /> : <CaretRight size={16} />}
+    </button>
+  );
+}
 /** Keep in sync with the fade-out duration of .welcome-screen below. */
 const EXIT_MS = 220;
 
@@ -176,6 +198,34 @@ export default function WelcomeScreen({
   const pageStart = (currentPage - 1) * pageSize;
   const pagedFiles = files.slice(pageStart, pageStart + pageSize);
 
+  // Template strip: the scrollbar is hidden (in dark mode it read as a slab
+  // across the bottom of the row), so these drive the chevrons that replace it.
+  const stripRef = useRef<HTMLDivElement>(null);
+  const [canScrollLeft, setCanScrollLeft] = useState(false);
+  const [canScrollRight, setCanScrollRight] = useState(false);
+  useEffect(() => {
+    // The screen unmounts its tree while hidden, so the ref points at a fresh
+    // element every time it comes back — re-attach rather than keep a stale one.
+    const el = stripRef.current;
+    if (!el) return;
+    const update = () => {
+      setCanScrollLeft(el.scrollLeft > EDGE_SLACK);
+      setCanScrollRight(el.scrollLeft + el.clientWidth < el.scrollWidth - EDGE_SLACK);
+    };
+    update();
+    el.addEventListener("scroll", update, { passive: true });
+    const ro = new ResizeObserver(update);
+    ro.observe(el);
+    return () => {
+      el.removeEventListener("scroll", update);
+      ro.disconnect();
+    };
+  }, [visible]);
+  const scrollStrip = (direction: -1 | 1) => {
+    const el = stripRef.current;
+    if (el) el.scrollBy({ left: direction * el.clientWidth * 0.8, behavior: "smooth" });
+  };
+
   // With no documents there is nothing to go back to, so the screen stays put
   // until one is created or opened.
   const canClose = files.length > 0;
@@ -280,7 +330,10 @@ export default function WelcomeScreen({
 
         {/* Start new */}
         <h2 className="mb-3 mt-8 text-sm font-medium text-muted-foreground">{t.welcome.startNew}</h2>
-        <div className="flex gap-4 overflow-x-auto pb-2">
+        <div className="relative">
+        <StripChevron side="left"  show={canScrollLeft}  onClick={() => scrollStrip(-1)} label={t.welcome.scrollLeft} />
+        <StripChevron side="right" show={canScrollRight} onClick={() => scrollStrip(1)}  label={t.welcome.scrollRight} />
+        <div ref={stripRef} className="no-scrollbar flex gap-4 overflow-x-auto pb-1">
           <button
             type="button"
             onClick={() => { onNewDocument(); onClose(); }}
@@ -309,6 +362,7 @@ export default function WelcomeScreen({
               <p className="mt-0.5 line-clamp-2 text-center text-[11px] leading-tight text-muted-foreground">{tpl.description}</p>
             </button>
           ))}
+        </div>
         </div>
 
         {/* Stays open behind the file picker — the editor appears once a file is

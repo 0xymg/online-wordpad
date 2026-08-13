@@ -305,6 +305,8 @@ export const zh: Dictionary = {
     titleGuest: "欢迎使用 EDTRpad",
     subtitle: "直接在浏览器里撰写、排版并打印文档。无需安装，不用注册，输入时自动保存。",
     startNew: "新建文档",
+    scrollLeft: "模板向左滚动",
+    scrollRight: "模板向右滚动",
     blankDocument: "空白文档",
     openFile: "从本地设备打开文件",
     openFileFormats: "(.docx, .txt, .md, .html)",

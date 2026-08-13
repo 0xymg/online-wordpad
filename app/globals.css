@@ -264,6 +264,12 @@ body {
   .welcome-screen-out { animation-duration: 1ms; }
 }
 
+/* ── Yatay şerit: kaydırma çubuğu gizli, gezinme chevron'larla ── */
+/* Overlay scrollbar'ı olmayan platformlarda (ve koyu temada) çubuk şeridin
+   altında kalın bir blok gibi duruyordu; chevron butonları onun yerini alıyor. */
+.no-scrollbar { scrollbar-width: none; -ms-overflow-style: none; }
+.no-scrollbar::-webkit-scrollbar { display: none; }
+
 /* ── Modal dialog geçişleri (hesap ayarları) ── */
 /* EXIT_MS in ProfileDialog.tsx must match the fade-out duration. */
 @keyframes dialog-overlay-in  { from { opacity: 0 } to { opacity: 1 } }

@@ -307,6 +307,8 @@ export const fr: Dictionary = {
     subtitle:
       "Rédigez, mettez en forme et imprimez vos documents directement dans votre navigateur. Rien à installer, aucun compte requis, et tout est enregistré au fil de la frappe.",
     startNew: "Créer un nouveau document",
+    scrollLeft: "Faire défiler les modèles vers la gauche",
+    scrollRight: "Faire défiler les modèles vers la droite",
     blankDocument: "Document vierge",
     openFile: "Ouvrir un fichier depuis votre appareil",
     openFileFormats: "(.docx, .txt, .md, .html)",

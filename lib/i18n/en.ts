@@ -309,6 +309,8 @@ export const en = {
     subtitle:
       "Write, format, and print documents straight from your browser. Nothing to install, no account needed, and your work is saved as you type.",
     startNew: "Start a new document",
+    scrollLeft: "Scroll templates left",
+    scrollRight: "Scroll templates right",
     blankDocument: "Blank document",
     openFile: "Open a file from your device",
     openFileFormats: "(.docx, .txt, .md, .html)",
