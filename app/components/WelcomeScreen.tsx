@@ -401,7 +401,10 @@ export default function WelcomeScreen({
         <div className="relative">
         <StripChevron side="left"  show={canScrollLeft}  onClick={() => scrollStrip(-1)} label={t.welcome.scrollLeft} />
         <StripChevron side="right" show={canScrollRight} onClick={() => scrollStrip(1)}  label={t.welcome.scrollRight} />
-        <div ref={stripRef} className="no-scrollbar flex gap-4 overflow-x-auto pb-1">
+        {/* items-start, not the default stretch: a stretched <button> centres its own
+            content vertically (UA behaviour), so the blank card — one caption line
+            against the templates' two — sat lower than the rest of the row. */}
+        <div ref={stripRef} className="no-scrollbar flex items-start gap-4 overflow-x-auto pb-1">
           <button
             type="button"
             onClick={() => { onNewDocument(); onClose(); }}
