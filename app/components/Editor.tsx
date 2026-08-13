@@ -3605,6 +3605,9 @@ export default function Editor({
         onOpenDocument={switchFile}
         onCopyLink={copyDocLink}
         onDeleteDocument={deleteFile}
+        onDownloadDocuments={downloadFiles}
+        onDeleteDocuments={deleteFiles}
+        bulkBusy={bulkBusy}
         deletingIds={deletingIds}
         loading={initialLoading}
         docHref={docUrl}

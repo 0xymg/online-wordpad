@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { FileText, Plus, UploadSimple, X, SignIn, LinkSimple, Trash, CircleNotch, CaretLeft, CaretRight } from "./icons";
+import { FileText, Plus, UploadSimple, X, SignIn, LinkSimple, Trash, CircleNotch, CaretLeft, CaretRight, DownloadSimple } from "./icons";
 import { TEMPLATES, type DocTemplate } from "@/lib/templates";
 import { useT } from "./I18nProvider";
 
@@ -20,6 +20,11 @@ interface WelcomeScreenProps {
   onOpenDocument: (id: string) => void;
   onCopyLink: (id: string) => void;
   onDeleteDocument: (id: string) => void;
+  /** Bulk actions over the "All documents" selection. */
+  onDownloadDocuments: (ids: string[]) => void;
+  onDeleteDocuments: (ids: string[]) => void;
+  /** True while the download archive is being built. */
+  bulkBusy?: boolean;
   /** Documents whose deletion is in flight — their rows show a spinner. */
   deletingIds?: string[];
   /** True while the document list is still being fetched. */
@@ -98,6 +103,7 @@ function TemplateThumb({ html }: { html: string }) {
 /** One row of the document lists: open, copy link, delete. */
 function DocRow({
   f, t, activeId, docHref, onOpen, onCopyLink, onDelete, deleting = false,
+  selected, onToggleSelected,
 }: {
   f: WelcomeFile;
   t: ReturnType<typeof useT>;
@@ -107,6 +113,9 @@ function DocRow({
   onCopyLink: (id: string) => void;
   onDelete: (id: string) => void;
   deleting?: boolean;
+  /** Only the "All documents" list is selectable — omitted elsewhere. */
+  selected?: boolean;
+  onToggleSelected?: (id: string) => void;
 }) {
   if (deleting) {
     // Row stays visible but inert while the server deletion is in flight.
@@ -123,6 +132,15 @@ function DocRow({
   }
   return (
       <div className="group flex items-center hover:bg-accent/60">
+        {onToggleSelected && (
+          <input
+            type="checkbox"
+            checked={!!selected}
+            onChange={() => onToggleSelected(f.id)}
+            aria-label={t.welcome.selectDocument(f.name || t.sidebar.untitled)}
+            className="ml-4 size-4 shrink-0 cursor-pointer accent-primary"
+          />
+        )}
         {/* Real link so it can be bookmarked, middle-clicked, or copied;
             plain clicks are handled in-app to avoid a full reload. */}
         <a
@@ -176,6 +194,7 @@ function DocRowSkeleton() {
 export default function WelcomeScreen({
   open, onClose, isAuthed, userName, files, activeId,
   onNewDocument, onOpenFile, onPickTemplate, onOpenDocument, onCopyLink, onDeleteDocument,
+  onDownloadDocuments, onDeleteDocuments, bulkBusy = false,
   docHref, onSignIn, onOpenProfile, userEmail, deletingIds = [], loading = false, sessionLoading = false,
 }: WelcomeScreenProps) {
   const t = useT();
@@ -197,6 +216,34 @@ export default function WelcomeScreen({
   const currentPage = Math.min(page, pageCount);
   const pageStart = (currentPage - 1) * pageSize;
   const pagedFiles = files.slice(pageStart, pageStart + pageSize);
+
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const toggleSelected = (id: string) =>
+    setSelectedIds((current) =>
+      current.includes(id) ? current.filter((x) => x !== id) : [...current, id]
+    );
+  const selectAllRef = useRef<HTMLInputElement>(null);
+
+  // Filtered on read rather than cleaned up in an effect: a document deleted
+  // (here or in another tab) drops out of the selection on the next render,
+  // with no chance of acting on an id that is already gone.
+  const liveIds = new Set(files.map((f) => f.id));
+  const selection = selectedIds.filter((id) => liveIds.has(id));
+  const pageIds = pagedFiles.map((f) => f.id);
+  const selectedOnPage = pageIds.filter((id) => selection.includes(id));
+  const allOnPageSelected = pageIds.length > 0 && selectedOnPage.length === pageIds.length;
+  const toggleSelectAll = () =>
+    setSelectedIds((current) =>
+      allOnPageSelected
+        ? current.filter((id) => !pageIds.includes(id))
+        : [...new Set([...current, ...pageIds])]
+    );
+  // `indeterminate` is a DOM property with no attribute, so a partly-selected
+  // page can only be shown by reaching for the node.
+  useEffect(() => {
+    const el = selectAllRef.current;
+    if (el) el.indeterminate = selectedOnPage.length > 0 && !allOnPageSelected;
+  }, [selectedOnPage.length, allOnPageSelected]);
 
   // Template strip: the scrollbar is hidden (in dark mode it read as a slab
   // across the bottom of the row), so these drive the chevrons that replace it.
@@ -411,8 +458,59 @@ export default function WelcomeScreen({
               <h2 className="mb-2 mt-8 text-sm font-medium text-muted-foreground">
                 {t.welcome.allDocuments} <span className="text-xs font-normal">({files.length})</span>
               </h2>
+              {/* Select-all covers the rows you can actually see — with the list
+                  paginated, a checkbox that quietly reached past this page would
+                  be a nasty thing to hand a Delete button. */}
+              <div className="flex flex-wrap items-center gap-3 border border-b-0 border-border bg-muted/40 px-4 py-2 text-xs">
+                <label className="flex cursor-pointer items-center gap-2">
+                  <input
+                    type="checkbox"
+                    ref={selectAllRef}
+                    checked={allOnPageSelected}
+                    onChange={toggleSelectAll}
+                    aria-label={t.welcome.selectAll}
+                    className="size-4 cursor-pointer accent-primary"
+                  />
+                  <span className="text-muted-foreground">{t.welcome.selectAll}</span>
+                </label>
+                {selection.length > 0 && (
+                  <>
+                    <span className="text-muted-foreground">{t.welcome.selectedCount(selection.length)}</span>
+                    <div className="ml-auto flex items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={() => onDownloadDocuments(selection)}
+                        disabled={bulkBusy}
+                        className="flex items-center gap-1.5 rounded-md border border-input px-2.5 py-1 font-medium hover:bg-accent disabled:opacity-60"
+                      >
+                        {bulkBusy
+                          ? <CircleNotch size={13} className="animate-spin" />
+                          : <DownloadSimple size={13} />}
+                        {bulkBusy ? t.welcome.preparingZip : t.welcome.downloadSelected}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => onDeleteDocuments(selection)}
+                        disabled={bulkBusy}
+                        className="flex items-center gap-1.5 rounded-md border border-destructive/40 px-2.5 py-1 font-medium text-destructive hover:bg-destructive/10 disabled:opacity-60"
+                      >
+                        <Trash size={13} /> {t.welcome.deleteSelected}
+                      </button>
+                    </div>
+                  </>
+                )}
+              </div>
               <div className="divide-y divide-border overflow-hidden rounded-md border border-border">
-                {pagedFiles.map((f) => <DocRow key={f.id} {...rowProps} f={f} deleting={deletingIds.includes(f.id)} />)}
+                {pagedFiles.map((f) => (
+                  <DocRow
+                    key={f.id}
+                    {...rowProps}
+                    f={f}
+                    deleting={deletingIds.includes(f.id)}
+                    selected={selection.includes(f.id)}
+                    onToggleSelected={toggleSelected}
+                  />
+                ))}
               </div>
               {/* Below the smallest page size there is only one page — the
                   controls would just be furniture. */}
