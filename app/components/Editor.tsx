@@ -899,7 +899,7 @@ export default function Editor({
     pageLayoutConfig.pageHeightPx = pageHeightPx;
     pageLayoutConfig.marginPx = pageMarginCm * CM_TO_PX;
     const v = viewRef.current;
-    if (v) v.dispatch(v.state.tr);
+    if (v && !v.isDestroyed) v.dispatch(v.state.tr);
   }, [pageHeightPx, pageMarginCm]);
 
   const handlePrint = useReactToPrint({
@@ -1862,7 +1862,12 @@ export default function Editor({
     refreshImagePopover(view);
     refreshDocInfo(view.state);
     view.focus();
-    return () => { view.destroy(); };
+    return () => {
+      view.destroy();
+      // Clear the ref too: other effects dispatch through it, and dispatching
+      // into a destroyed view throws inside updateState.
+      if (viewRef.current === view) viewRef.current = null;
+    };
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [refreshDocInfo, refreshImagePopover, refreshSlashMenu, save, insertImageFromFile, maybeAutoName]);
 
