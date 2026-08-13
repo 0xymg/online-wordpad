@@ -407,11 +407,12 @@ export const tr: Dictionary = {
     goneP1:
       "Microsoft, yaklaşık otuz yılın ardından WordPad'i 24H2 güncellemesiyle Windows'tan kaldırdı. Geri getirecek bir ayar da resmi bir yedek de yok. Bu da tuhaf bir boşluk bırakıyor, çünkü Notepad bir kelimeyi kalın yapamıyor, Word ise abonelik istiyor.",
     goneP2:
-      "EDTRpad, WordPad'in yaptıklarını karşılar: zengin metin, tablolar, görseller, sayfa sonları ve yazdırma. Kurulu bir pencere yerine tarayıcı sekmesinde çalışır. Bu yüzden Mac'te, Chromebook'ta, telefonda ya da yazılım kurma izninizin olmadığı bir bilgisayarda da işinizi görür.",
+      "EDTRpad, WordPad'in yaptıklarını karşılar: zengin metin, tablolar, görseller, sayfa sonları ve yazdırma. Kurulu bir pencere yerine tarayıcı sekmesinde çalışır. Bu yüzden Mac'te, Chromebook'ta, telefonda ya da yazılım kurma izninizin olmadığı bir bilgisayarda da işinizi görür. And it's a good deal faster to drive, because there's no menu bar between you and the thing you want.",
     goneCta: "Editörü açın →",
     compareTitle: "Nereye oturuyor",
     compareCols: ["EDTRpad", "Microsoft Word", "Word Online", "Google Docs", "WordPad"],
     compareRows: [
+      { label: "Slash (/) command menu", cells: ["Yes", "No", "No", "Partly (@ menu)", "No"] },
       { label: "Fiyat", cells: ["Ücretsiz", "Abonelik", "Ücretsiz sürüm", "Ücretsiz", "Windows'tan kaldırıldı"] },
       { label: "Kurulum gerekir mi", cells: ["Hayır", "Evet", "Hayır", "Hayır", "–"] },
       { label: "Hesap gerekir mi", cells: ["Hayır", "Evet", "Evet", "Evet", "–"] },
@@ -422,8 +423,15 @@ export const tr: Dictionary = {
       { label: "Hassas yazdırma kenar boşlukları", cells: ["Evet", "Evet", "Evet", "Sınırlı", "Evet"] },
       { label: "Dosyanız cihazınızdan çıkar mı", cells: ["Hayır", "Hayır", "Evet", "Evet", "Hayır"] },
     ],
-    compareCaption: "EDTRpad bağımsız bir üründür, Microsoft veya Google ile bağlantısı yoktur.",
+    compareCaption: "EDTRpad is an independent product and is not affiliated with Microsoft, Google or Notion.",
     featuresTitle: "Beklediğiniz her şey. Öğrenmeniz gereken hiçbir şey.",
+    featuresAlsoLabel: "Also in there:",
+    featuresAlsoItems: [
+      "Find & Replace",
+      "unlimited undo and redo",
+      "dark mode",
+      "autosave on every keystroke, so there's no save button to remember",
+    ],
     privacyTitle: "Belgeniz tarayıcınızda kalır.",
     privacyP1:
       "Hesap olmadan yükleme de olmaz, sunucularımızda kopya da. Yazdıklarınız bu cihazdaki tarayıcınızın yerel depolamasına yazılır ve sekmeye döndüğünüzde hâlâ oradadır.",
@@ -445,7 +453,7 @@ export const tr: Dictionary = {
       "Sayfadasınız, yani editör yüklü. Yazmaya başla'ya tıklayın, imleç sizin.",
     howStep2Title: "Yaz",
     howStep2Desc:
-      "Metni biçimlendirin, tablolar ve görseller ekleyin, sayfa sonları koyun. Her şey siz yazarken kaydedilir.",
+      "Type / for anything you need to insert. Everything saves as you go.",
     howStep3Title: "Dışa aktar veya yazdır",
     howStep3Desc:
       ".docx, .html veya .txt olarak indirin ya da ayarladığınız kenar boşluklarıyla doğrudan yazıcıya gönderin.",
@@ -460,7 +468,7 @@ export const tr: Dictionary = {
       "Sizin olmayan bir bilgisayarda hızlıca bir belge",
     ],
     faqTitle: "Yanıtlamaya değer sorular",
-    ctaTitle: "Kurulacak bir şey yok. İmzalanacak bir şey yok. İmleç çoktan yanıp sönüyor.",
+    ctaTitle: "Nothing to install. Nothing to sign. Press / and go.",
     ctaButton: "Yazmaya başlayın →",
     ctaMicrocopy: "Sonsuza dek ücretsiz · Yaklaşık bir saniyede hazır · Belgeniz cihazınızda kalır",
     footerTagline: "Ücretsiz online kelime işlemci. WordPad, tarayıcı için yeniden yapıldı.",
@@ -473,20 +481,20 @@ export const tr: Dictionary = {
     footerMd: "EDTR.md · Markdown editörü",
     footerPlus: "EDTR.plus · Notepad++ alternatifi",
     footerCredit: "{project} ailesinin bir parçası, {by} tarafından sunulur",
-    footerCopyright: (year: number) => `© ${year} EDTRpad. Microsoft ile bağlantılı değildir.`,
-    footerTrademark: "WordPad ve Microsoft Word, Microsoft Corporation'ın ticari markalarıdır.",
+    footerCopyright: (year: number) => `© ${year} EDTRpad. Not affiliated with Microsoft, Google or Notion.`,
+    footerTrademark: "Microsoft Word and WordPad are trademarks of Microsoft Corporation.",
   },
 
   features: {
-    f1Title: "Gerçek bir kelime işlemci, metin kutusu değil",
+    f1Title: "Every command behind one key",
     f1Desc:
-      "Kalın, italik, altı çizili, üstü çizili. Yazı tipleri, boyutlar, metin rengi, vurgu rengi. Madde işaretli ve numaralı listeler. Görsel ızgara seçiciyle tablolar. Yapıştırıp yeniden boyutlandırabileceğiniz, kırpabileceğiniz, döndürebileceğiniz, çevirebileceğiniz ve hizalayabileceğiniz görseller. Ekranda da baskıda da yerini koruyan gerçek sayfa sonları.",
-    f2Title: "Elinizde ne varsa açar",
+      "Type / and the menu comes to your cursor. Filter by typing, insert with Enter. Full keyboard shortcuts for everything else, so a whole document can happen without touching the mouse.",
+    f2Title: "A real word processor, not a text box",
     f2Desc:
-      ".docx, .txt veya .html dosyanızı sürükleyin, olduğu yerde açılır. Word .docx, HTML veya düz metin olarak geri dışa aktarın; .docx, Word, Google Docs, LibreOffice ve Pages'te sorunsuz açılır. Yükleme adımı yok, dönüştürme kuyruğu yok, \"dosyanız işleniyor\" ekranı yok.",
-    f3Title: "Hızlı, sonra da aradan çekilir",
+      "Kalın, italik, altı çizili, üstü çizili. Yazı tipleri, boyutlar, metin rengi, vurgu rengi. Madde işaretli ve numaralı listeler. Görsel ızgara seçiciyle tablolar. Yapıştırıp yeniden boyutlandırabileceğiniz, kırpabileceğiniz, döndürebileceğiniz, çevirebileceğiniz ve hizalayabileceğiniz görseller. Ekranda da baskıda da yerini koruyan gerçek sayfa sonları.",
+    f3Title: "Opens what you already have",
     f3Desc:
-      "Açılış ekranı yok, gezinilecek şerit yok, oturum açma duvarı yok. Her komuta menülerde aramadan ulaşmak için herhangi bir yere / yazın. Eksiksiz klavye kısayolları. Sınırsız geri al ve yinele. Bul ve Değiştir. Karanlık mod. Her tuş vuruşunda otomatik kayıt, yani hatırlanacak bir kaydet düğmesi yok.",
+      ".docx, .txt veya .html dosyanızı sürükleyin, olduğu yerde açılır. Word .docx, HTML veya düz metin olarak geri dışa aktarın; .docx, Word, Google Docs, LibreOffice ve Pages'te sorunsuz açılır. Yükleme adımı yok, dönüştürme kuyruğu yok, \"dosyanız işleniyor\" ekranı yok.",
     f4Title: "Web sayfası gibi değil, kâğıt gibi yazdırır",
     f4Desc:
       "Sayfa kenar boşluklarını 0.5 cm ile 2 cm arasında dilediğiniz gibi ayarlayın ve tam olarak gördüğünüzü yazdırın. Tarayıcıdan belge yazdırıp düzenin dağılmasını izlediyseniz, fark edeceğiniz kısım burası.",
