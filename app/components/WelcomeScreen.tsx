@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { FileText, Plus, UploadSimple, X, SignIn, LinkSimple, Trash, CircleNotch, CaretLeft, CaretRight, DownloadSimple } from "./icons";
+import { FileText, Plus, UploadSimple, X, SignIn, LinkSimple, Trash, CircleNotch, CaretLeft, CaretRight, DownloadSimple, MagnifyingGlass } from "./icons";
 import { TEMPLATES, type DocTemplate } from "@/lib/templates";
 import { useT } from "./I18nProvider";
 
@@ -212,10 +212,17 @@ export default function WelcomeScreen({
   // switching to a bigger page size) falls back a page without a re-render.
   const [pageSize, setPageSize] = useState<number>(PAGE_SIZES[0]);
   const [page, setPage] = useState(1);
-  const pageCount = Math.max(1, Math.ceil(files.length / pageSize));
+  const [query, setQuery] = useState("");
+  const trimmedQuery = query.trim().toLowerCase();
+  const matchedFiles = trimmedQuery
+    ? files.filter((f) => (f.name || "").toLowerCase().includes(trimmedQuery))
+    : files;
+  const pageCount = Math.max(1, Math.ceil(matchedFiles.length / pageSize));
+  // Clamped on read, so narrowing the search from page 4 lands on the last
+  // page that still exists instead of an empty one.
   const currentPage = Math.min(page, pageCount);
   const pageStart = (currentPage - 1) * pageSize;
-  const pagedFiles = files.slice(pageStart, pageStart + pageSize);
+  const pagedFiles = matchedFiles.slice(pageStart, pageStart + pageSize);
 
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const toggleSelected = (id: string) =>
@@ -455,9 +462,25 @@ export default function WelcomeScreen({
             </>
           ) : files.length > 0 && (
             <>
-              <h2 className="mb-2 mt-8 text-sm font-medium text-muted-foreground">
-                {t.welcome.allDocuments} <span className="text-xs font-normal">({files.length})</span>
-              </h2>
+              <div className="mb-2 mt-8 flex flex-wrap items-center justify-between gap-3">
+                <h2 className="text-sm font-medium text-muted-foreground">
+                  {t.welcome.allDocuments}{" "}
+                  <span className="text-xs font-normal">
+                    ({trimmedQuery ? `${matchedFiles.length}/${files.length}` : files.length})
+                  </span>
+                </h2>
+                <div className="relative">
+                  <MagnifyingGlass size={14} className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground" />
+                  <input
+                    type="search"
+                    value={query}
+                    onChange={(e) => setQuery(e.target.value)}
+                    placeholder={t.welcome.searchDocuments}
+                    aria-label={t.welcome.searchDocuments}
+                    className="w-56 max-w-full rounded-md border border-input bg-background py-1.5 pl-8 pr-2.5 text-xs outline-none focus:ring-1 focus:ring-ring"
+                  />
+                </div>
+              </div>
               {/* Select-all covers the rows you can actually see — with the list
                   paginated, a checkbox that quietly reached past this page would
                   be a nasty thing to hand a Delete button. */}
@@ -500,6 +523,11 @@ export default function WelcomeScreen({
                   </>
                 )}
               </div>
+              {pagedFiles.length === 0 ? (
+                <p className="rounded-md border border-dashed border-border px-4 py-6 text-center text-sm text-muted-foreground">
+                  {t.welcome.noMatches}
+                </p>
+              ) : (
               <div className="divide-y divide-border overflow-hidden rounded-md border border-border">
                 {pagedFiles.map((f) => (
                   <DocRow
@@ -512,9 +540,10 @@ export default function WelcomeScreen({
                   />
                 ))}
               </div>
+              )}
               {/* Below the smallest page size there is only one page — the
                   controls would just be furniture. */}
-              {files.length > PAGE_SIZES[0] && (
+              {matchedFiles.length > PAGE_SIZES[0] && (
                 <div className="mt-2 flex flex-wrap items-center justify-between gap-3 text-xs text-muted-foreground">
                   <label className="flex items-center gap-1.5">
                     {t.welcome.perPage}
@@ -528,7 +557,7 @@ export default function WelcomeScreen({
                   </label>
                   <div className="flex items-center gap-1.5">
                     <span className="tabular-nums">
-                      {t.welcome.pageRange(pageStart + 1, pageStart + pagedFiles.length, files.length)}
+                      {t.welcome.pageRange(pageStart + 1, pageStart + pagedFiles.length, matchedFiles.length)}
                     </span>
                     <button
                       type="button"
