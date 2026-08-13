@@ -1024,6 +1024,10 @@ export default function Editor() {
   const isAuthedRef = useRef(false);
   const prefsLoadedRef = useRef(false);
   const prefsErrorShownRef = useRef(false);
+  // On narrow screens the menu bar collapses while scrolling down so the
+  // toolbar sits directly under the top edge, and comes back on scroll up.
+  const [chromeCollapsed, setChromeCollapsed] = useState(false);
+  const editorShellRef = useRef<HTMLDivElement>(null);
   const user = authUser
     ? {
         name: authUser.name || authUser.email,
@@ -1372,6 +1376,24 @@ export default function Editor() {
     const v = viewRef.current;
     if (v) setDocInfo(computeDocInfo(v.state, t));
   }, [t]);
+
+  // Scrolling happens inside .editor-shell, not the window, so the direction is
+  // read from that element. Small movements are ignored to avoid flicker, and
+  // near the top the chrome is always shown.
+  useEffect(() => {
+    const el = editorShellRef.current;
+    if (!el) return;
+    let lastY = el.scrollTop;
+    const onScroll = () => {
+      const y = el.scrollTop;
+      const delta = y - lastY;
+      if (Math.abs(delta) < 8) return;
+      lastY = y;
+      setChromeCollapsed(y > 48 && delta > 0);
+    };
+    el.addEventListener("scroll", onScroll, { passive: true });
+    return () => el.removeEventListener("scroll", onScroll);
+  }, []);
 
   useEffect(() => {
     editorHandlers.flushSave = flushSave;
@@ -2812,6 +2834,14 @@ export default function Editor() {
       {/* Main column */}
       <div className="flex h-screen flex-1 min-w-0 flex-col overflow-hidden">
       {!focusMode && (
+      <div
+        className={cn(
+          "shrink-0 overflow-hidden transition-[max-height,opacity] duration-200 ease-out",
+          chromeCollapsed
+            ? "max-[799px]:max-h-0 max-[799px]:opacity-0"
+            : "max-h-16 opacity-100"
+        )}
+      >
       <MenuBar
         viewRef={viewRef}
         schema={mySchema}
@@ -2869,6 +2899,7 @@ export default function Editor() {
         onLogin={openAuth}
         onLogout={logout}
       />
+      </div>
       )}
       {user && !user.emailVerified && !verifyDismissed && (
         <div className="flex items-center gap-2 border-b border-amber-300/60 bg-amber-50 px-3 py-1.5 text-[12px] text-amber-900 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-200">
@@ -2907,7 +2938,7 @@ export default function Editor() {
           </div>
         </div>
       )}
-      <div className="editor-shell" style={{ backgroundColor: paperBgColor }}>
+      <div ref={editorShellRef} className="editor-shell" style={{ backgroundColor: paperBgColor }}>
         <TableContextMenu viewRef={viewRef}>
           <div ref={printRef}>
             {printHeaderFooter && (
