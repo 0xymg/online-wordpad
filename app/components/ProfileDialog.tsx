@@ -177,25 +177,35 @@ export default function ProfileDialog({ open, onClose, loading = false, user, ha
         }`}
         onMouseDown={(e) => e.stopPropagation()}
       >
-        <div className="mb-5 flex items-center gap-3">
+        {/* Title, rule, then who the account belongs to */}
+        <div className="flex items-start justify-between gap-4">
+          <h2 className="text-xl font-semibold tracking-tight">{t.profile.title}</h2>
+          <button type="button" onClick={onClose} aria-label={t.dialog.close} className="-mr-1 shrink-0 rounded p-1 hover:bg-accent">
+            <X size={16} />
+          </button>
+        </div>
+
+        <div className="mt-4 mb-5 flex items-center gap-3 border-t border-border pt-5">
           {user ? (
-            <div className="flex h-10 w-10 shrink-0 select-none items-center justify-center rounded-full bg-primary text-sm font-semibold text-primary-foreground">
+            <div className="flex h-11 w-11 shrink-0 select-none items-center justify-center rounded-full bg-primary text-sm font-semibold text-primary-foreground">
               {user.initials}
             </div>
           ) : (
-            <div className="h-10 w-10 shrink-0 animate-pulse rounded-full bg-accent" aria-hidden="true" />
+            <div className="h-11 w-11 shrink-0 animate-pulse rounded-full bg-accent" aria-hidden="true" />
           )}
           <div className="min-w-0 flex-1">
-            <h2 className="truncate text-base font-semibold">{t.profile.title}</h2>
             {user ? (
-              <p className="truncate text-xs text-muted-foreground">{user.email}</p>
+              <>
+                <p className="truncate text-sm font-medium">{user.name}</p>
+                <p className="truncate text-xs text-muted-foreground">{user.email}</p>
+              </>
             ) : (
-              <div className="mt-1 h-3 w-40 max-w-full animate-pulse bg-accent" aria-hidden="true" />
+              <div className="animate-pulse space-y-1.5" aria-hidden="true">
+                <Bar className="h-3.5 w-32 max-w-full" />
+                <Bar className="h-3 w-44 max-w-full" />
+              </div>
             )}
           </div>
-          <button type="button" onClick={onClose} aria-label={t.dialog.close} className="rounded p-1 hover:bg-accent">
-            <X size={16} />
-          </button>
         </div>
 
         {pending ? <BodySkeleton /> : (
