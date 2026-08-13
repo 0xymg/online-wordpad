@@ -149,7 +149,7 @@ class PdfBuilder {
   /** Set by a page_break node; the next rendered block starts a new page. */
   private pendingBreak = false;
 
-  constructor(private contentWidthPt: number) {}
+  constructor(private contentWidthPt: number, private contentHeightPt: number) {}
 
   private k(): string { return `n${this.key++}`; }
 
@@ -204,7 +204,15 @@ class PdfBuilder {
     if (rotate) transforms.push(`rotate(${rotate}deg)`);
     if (a.flipX) transforms.push("scaleX(-1)");
     if (a.flipY) transforms.push("scaleY(-1)");
-    const imgStyle: Style = { width };
+    // Cap the height so a tall image scales down instead of overflowing the
+    // page (react-pdf can't split an image across pages).
+    const imgStyle: Style = {
+      width,
+      // Leave room for the wrapper's bottom margin so a full-height image
+      // still fits on one page.
+      maxHeight: this.contentHeightPt - 0.5 * BASE_FONT_PT,
+      objectFit: "contain",
+    };
     if (transforms.length) imgStyle.transform = transforms.join(" ");
 
     const align = String(a.align || "left");
@@ -448,9 +456,12 @@ export type PdfExportOptions = {
 
 export function buildPdfDocument(doc: PMNode, opts: PdfExportOptions): React.ReactElement<DocumentProps> {
   const marginPt = opts.marginCm * CM_TO_PT;
-  const pageWidthPt = opts.orientation === "landscape" ? A4_LANDSCAPE_WIDTH_PT : A4_PORTRAIT_WIDTH_PT;
+  const landscape = opts.orientation === "landscape";
+  const pageWidthPt = landscape ? A4_LANDSCAPE_WIDTH_PT : A4_PORTRAIT_WIDTH_PT;
+  const pageHeightPt = landscape ? A4_PORTRAIT_WIDTH_PT : A4_LANDSCAPE_WIDTH_PT;
   const contentWidthPt = pageWidthPt - 2 * marginPt;
-  const builder = new PdfBuilder(contentWidthPt);
+  const contentHeightPt = pageHeightPt - 2 * marginPt;
+  const builder = new PdfBuilder(contentWidthPt, contentHeightPt);
   const children = builder.body(doc);
 
   // Header/footer sit inside the margin band ~0.15cm from the paper edge

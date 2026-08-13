@@ -174,7 +174,6 @@ export const zh: Dictionary = {
     logIn: "登录",
     logOut: "退出登录",
     account: "账户",
-    freePlan: "免费版",
   },
 
   sidebar: {

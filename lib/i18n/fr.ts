@@ -174,7 +174,6 @@ export const fr: Dictionary = {
     logIn: "Se connecter",
     logOut: "Se déconnecter",
     account: "Compte",
-    freePlan: "Formule gratuite",
   },
 
   sidebar: {

@@ -86,7 +86,7 @@ interface MenuBarProps {
   onTogglePrintHeaderFooter: () => void;
   isDark: boolean;
   onToggleDark: () => void;
-  user: { name: string; initials: string } | null;
+  user: { name: string; email?: string; initials: string } | null;
   onLogin: () => void;
   onLogout: () => void;
   onOpenProfile: () => void;
@@ -301,10 +301,12 @@ function MenuBar({
                   {user.initials}
                 </button>
               </PopoverTrigger>
-              <PopoverContent align="end" sideOffset={6} className="w-48 p-1">
+              <PopoverContent align="end" sideOffset={6} className="w-56 p-1">
                 <div className="px-2 py-1.5">
                   <div className="truncate text-sm font-medium">{user.name}</div>
-                  <div className="truncate text-[11px] text-muted-foreground">{t.header.freePlan}</div>
+                  {user.email && (
+                    <div className="truncate text-[11px] text-muted-foreground">{user.email}</div>
+                  )}
                 </div>
                 <div className="my-1 h-px bg-border" />
                 <button
