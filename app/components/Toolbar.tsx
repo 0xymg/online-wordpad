@@ -1,6 +1,6 @@
 "use client";
 
-import { memo, useCallback, useState, useEffect, lazy, Suspense } from "react";
+import { memo, useCallback, useRef, useState, useEffect, lazy, Suspense } from "react";
 import { EditorView } from "prosemirror-view";
 import { EditorState, Transaction, TextSelection } from "prosemirror-state";
 import { toggleMark, setBlockType, wrapIn } from "prosemirror-commands";
@@ -253,16 +253,34 @@ interface ToolbarProps {
   onLinkAdd: () => void;
   onImageAdd: () => void;
   tick: number;
+  /** Scrolled down: shrink the bar slightly to give the page more room. */
+  compact?: boolean;
 }
+
+// Enough to notice, not enough to make the icons hard to hit.
+const COMPACT_SCALE = 0.85;
 
 /* ── Main ────────────────────────────────────────────────────────────────── */
 // Memoized: still re-renders whenever `tick` changes (active marks/block state
 // must track every transaction), but unrelated Editor state (dialogs, toasts,
 // save status, word count) no longer reaches it.
 function Toolbar({
-  viewRef, schema, onInsertTable, onPageBreakAdd, onLinkAdd, onImageAdd, tick,
+  viewRef, schema, onInsertTable, onPageBreakAdd, onLinkAdd, onImageAdd, tick, compact,
 }: ToolbarProps) {
   const t = useT();
+  // A transform doesn't shrink the layout box, so the wrapper's height is
+  // driven from the bar's untransformed height. offsetHeight and the observer
+  // both report that pre-transform size, so scaling can't feed back into it.
+  const barRef = useRef<HTMLDivElement>(null);
+  const [naturalHeight, setNaturalHeight] = useState(0);
+  useEffect(() => {
+    const el = barRef.current;
+    if (!el) return;
+    const ro = new ResizeObserver(() => setNaturalHeight(el.offsetHeight));
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
+  const scale = compact ? COMPACT_SCALE : 1;
   const blockLabel = (value: string) =>
     value === "paragraph" ? t.toolbar.normal
       : value === "code_block" ? t.toolbar.code
@@ -380,7 +398,17 @@ function Toolbar({
 
   return (
     <div className="border-b border-border bg-card select-none overflow-x-auto">
-    <div className="max-w-[850px] mx-auto px-3 pt-1.5 pb-1 flex items-stretch justify-center gap-0">
+    {/* Height and scale share the same duration/easing, so the box tracks the
+        shrinking content exactly and nothing is clipped mid-transition. */}
+    <div
+      className="transition-[height] duration-300 ease-in-out motion-reduce:transition-none"
+      style={naturalHeight ? { height: naturalHeight * scale } : undefined}
+    >
+    <div
+      ref={barRef}
+      className="max-w-[850px] mx-auto px-3 pt-1.5 pb-1 flex items-stretch justify-center gap-0 origin-top transition-transform duration-300 ease-in-out motion-reduce:transition-none"
+      style={{ transform: `scale(${scale})` }}
+    >
 
       {/* ── History ── */}
       <HistoryGroup onUndo={onUndo} onRedo={onRedo} t={t} />
@@ -504,6 +532,7 @@ function Toolbar({
         t={t}
       />
 
+    </div>
     </div>
     </div>
   );

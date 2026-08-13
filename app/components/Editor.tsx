@@ -2722,6 +2722,7 @@ export default function Editor({
           onLinkAdd={handleLinkAdd}
           onImageAdd={handleImageAdd}
           tick={tick}
+          compact={chromeCollapsed}
         />
       )}
       {showRuler && !focusMode && (
