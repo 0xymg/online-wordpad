@@ -83,6 +83,9 @@ export const en = {
     pageBreak: "Page break",
     symbol: "Symbol",
     dateTime: "Date & time",
+    variable: "Variable",
+    variableName: "Your name",
+    variableEmail: "Your email",
   },
 
   format: {

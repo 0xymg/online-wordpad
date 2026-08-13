@@ -81,6 +81,9 @@ export const tr: Dictionary = {
     pageBreak: "Sayfa sonu",
     symbol: "Simge",
     dateTime: "Tarih ve saat",
+    variable: "Değişken",
+    variableName: "Adınız",
+    variableEmail: "E-posta adresiniz",
   },
 
   format: {

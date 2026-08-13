@@ -81,6 +81,9 @@ export const zh: Dictionary = {
     pageBreak: "分页符",
     symbol: "符号",
     dateTime: "日期和时间",
+    variable: "变量",
+    variableName: "你的姓名",
+    variableEmail: "你的邮箱",
   },
 
   format: {

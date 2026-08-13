@@ -81,6 +81,9 @@ export const fr: Dictionary = {
     pageBreak: "Saut de page",
     symbol: "Symbole",
     dateTime: "Date et heure",
+    variable: "Variable",
+    variableName: "Votre nom",
+    variableEmail: "Votre e-mail",
   },
 
   format: {

@@ -55,7 +55,10 @@ const ProfileDialog = lazy(() => import("./ProfileDialog"));
 import { toast, Toaster } from "./toast";
 import { useAskDialogs } from "./AskDialogs";
 import { useT, useLocale } from "./I18nProvider";
-import { isLocale, type Dictionary } from "@/lib/i18n";
+import { isLocale, LOCALE_TAGS, type Dictionary } from "@/lib/i18n";
+import {
+  DATE_FORMATS, VARIABLE_INPUT_RULE, resolveVariable, type VariableContext,
+} from "@/lib/doc-variables";
 import {
   listDocuments, createDocument, updateDocument, renameDocument, deleteDocument,
   getDocumentHtml, getPreferences, savePreferences,
@@ -216,8 +219,28 @@ function buildPlugins() {
       autoReplace(/(?:^|[\s{[(<'"‘“])'$/, "‘", 1),
       autoReplace(/'$/, "’", 1),
       autoLinkRule(),
+      variableRule(),
     ]}),
   ];
+}
+
+/**
+ * Session values the `[[name]]`/`[[email]]` variables read. Plugins are built
+ * once per document, so — like `pageLayoutConfig` — this is a module-level box
+ * the Editor keeps current instead of a captured value.
+ */
+const variableContext: VariableContext & { locale?: string } = {};
+
+/** Typing the closing `]]` of a known `[[token]]` swaps it for its value. */
+function variableRule(): InputRule {
+  return new InputRule(VARIABLE_INPUT_RULE, (state, match, start, end) => {
+    if (state.doc.resolve(end).parent.type === mySchema.nodes.code_block) return null;
+    const value = resolveVariable(match[1], match[2], variableContext, variableContext.locale);
+    // Unknown name, or known but empty (a guest has no email): leave the text
+    // as typed rather than silently swallowing it.
+    if (!value) return null;
+    return state.tr.insertText(value, start, end);
+  });
 }
 
 /** Replace the trailing `replacedLen` chars of the match with `replacement`. */
@@ -903,6 +926,14 @@ export default function Editor({
     const v = viewRef.current;
     if (v && !v.isDestroyed) v.dispatch(v.state.tr);
   }, [pageHeightPx, pageMarginCm]);
+
+  // Same idea for the `[[name]]`/`[[email]]`/`[[today]]` input rule: it reads
+  // the box rather than a value captured when the plugins were built.
+  useEffect(() => {
+    variableContext.name = authUser?.name ?? null;
+    variableContext.email = authUser?.email ?? null;
+    variableContext.locale = LOCALE_TAGS[locale];
+  }, [authUser?.name, authUser?.email, locale]);
 
   const handlePrint = useReactToPrint({
     contentRef: printRef,
@@ -2189,6 +2220,11 @@ export default function Editor({
     handleInsertText(stamp);
   }, [handleInsertText]);
 
+  const handleInsertVariable = useCallback((name: string, format?: string) => {
+    const value = resolveVariable(name, format, variableContext, variableContext.locale);
+    if (value) handleInsertText(value);
+  }, [handleInsertText]);
+
   const openFind = useCallback(() => {
     setFindOpen(true);
     requestAnimationFrame(() => {
@@ -2671,6 +2707,7 @@ export default function Editor({
         onInsertDivider={handleInsertDivider}
         onInsertSymbol={handleInsertText}
         onInsertDate={handleInsertDate}
+        onInsertVariable={handleInsertVariable}
         onLineSpacing={setLineSpacing}
         onClearFormatting={clearFormatting}
         zoomPercent={zoomPercent}

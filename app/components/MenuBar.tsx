@@ -28,10 +28,11 @@ import { setTextAlign, adjustIndent } from "@/lib/editor-commands";
 import { SignIn, SignOut, House, PencilSimple, UserCircle, Check } from "./icons";
 import { toast } from "./toast";
 import { useT, useLocale } from "./I18nProvider";
-import { LOCALES, LOCALE_NAMES } from "@/lib/i18n";
+import { LOCALES, LOCALE_NAMES, LOCALE_TAGS } from "@/lib/i18n";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { TEMPLATES } from "@/lib/templates";
+import { DATE_FORMATS, formatDate } from "@/lib/doc-variables";
 
 interface MenuBarProps {
   viewRef: React.MutableRefObject<EditorView | null>;
@@ -64,6 +65,8 @@ interface MenuBarProps {
   onInsertDivider: () => void;
   onInsertSymbol: (text: string) => void;
   onInsertDate: () => void;
+  /** Inserts a document variable's value (see lib/doc-variables). */
+  onInsertVariable: (name: string, format?: string) => void;
   onLineSpacing: (lineHeight: number | null) => void;
   onClearFormatting: () => void;
   zoomPercent: number;
@@ -131,6 +134,11 @@ const SPELL_LANGS: Array<{ value: string; label: string }> = [
   { value: "it", label: "Italiano" },
 ];
 
+/** Shows each date format as today's date, so the menu reads as a preview. */
+function previewDate(format: string, locale: keyof typeof LOCALE_TAGS): string {
+  return formatDate(new Date(), format, LOCALE_TAGS[locale]);
+}
+
 // Memoized so per-keystroke Editor re-renders (tick/docInfo/saveStatus) skip
 // this ~700-line tree — every prop Editor passes is referentially stable.
 function MenuBar({
@@ -141,7 +149,7 @@ function MenuBar({
   onSave, onCopyLink, onRenameDoc, onDeleteDoc, onReplace,
   onShowVersions, onShowShortcuts, onFind,
   onInsertTable, onPageBreakAdd, onLinkAdd, onImageAdd, onImageUrlAdd,
-  onInsertDivider, onInsertSymbol, onInsertDate,
+  onInsertDivider, onInsertSymbol, onInsertDate, onInsertVariable,
   onLineSpacing, onClearFormatting,
   zoomPercent, onZoomChange,
   showToolbar, onToggleToolbar, showRuler, onToggleRuler,
@@ -576,6 +584,25 @@ function MenuBar({
             </MenubarSubContent>
           </MenubarSub>
           <MenubarItem onClick={onInsertDate}>{t.insert.dateTime}</MenubarItem>
+          {/* The same values `[[name]]` / `[[today::…]]` produce while typing —
+              here so the date formats are pickable instead of memorised. */}
+          <MenubarSub>
+            <MenubarSubTrigger>{t.insert.variable}</MenubarSubTrigger>
+            <MenubarSubContent>
+              <MenubarItem onClick={() => onInsertVariable("name")}>
+                {t.insert.variableName} <MenubarShortcut>[[name]]</MenubarShortcut>
+              </MenubarItem>
+              <MenubarItem onClick={() => onInsertVariable("email")}>
+                {t.insert.variableEmail} <MenubarShortcut>[[email]]</MenubarShortcut>
+              </MenubarItem>
+              <MenubarSeparator />
+              {DATE_FORMATS.map((fmt) => (
+                <MenubarItem key={fmt} onClick={() => onInsertVariable("today", fmt)}>
+                  {previewDate(fmt, locale)} <MenubarShortcut>{fmt}</MenubarShortcut>
+                </MenubarItem>
+              ))}
+            </MenubarSubContent>
+          </MenubarSub>
         </MenubarContent>
       </MenubarMenu>
 
