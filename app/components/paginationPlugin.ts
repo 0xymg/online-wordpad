@@ -26,10 +26,10 @@ function numberLabel(page: number, total: number, format: PageNumberFormat): str
   return format === "of" ? `${page} / ${total}` : String(page);
 }
 
-/** A centred number filling one page-margin band. */
-function numberDom(text: string, heightPx: number): HTMLElement {
+/** A number filling one page-margin band; the CSS pins it to the outer edge. */
+function numberDom(text: string, heightPx: number, place: "top" | "bottom"): HTMLElement {
   const el = document.createElement("div");
-  el.className = "pm-page-number";
+  el.className = `pm-page-number pm-page-number-${place}`;
   el.textContent = text;
   el.style.height = `${heightPx}px`;
   return el;
@@ -70,7 +70,7 @@ function spacerDom(
   fill.style.height = `${Math.max(0, fillPx)}px`;
   // …and its bottom margin, kept as its own band so a page number can sit in it.
   const bottomMargin = numbers.position === "bottom"
-    ? numberDom(numbers.closing, marginPx)
+    ? numberDom(numbers.closing, marginPx, "bottom")
     : (() => { const d = document.createElement("div"); d.style.height = `${marginPx}px`; return d; })();
   // The gap between pages. It bleeds past the page's own edges so the single
   // box-shadow around .pm-page doesn't run through the gap; the inner element
@@ -86,7 +86,7 @@ function spacerDom(
   gap.appendChild(edge);
   // Top margin of the page being opened.
   const top = numbers.position === "top"
-    ? numberDom(numbers.opening, marginPx)
+    ? numberDom(numbers.opening, marginPx, "top")
     : (() => { const d = document.createElement("div"); d.style.height = `${marginPx}px`; return d; })();
   el.append(fill, bottomMargin, gap, top);
   return el;

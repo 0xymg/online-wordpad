@@ -220,17 +220,29 @@ body {
    spacers, the first/last are absolute against .pm-page's own padding. */
 .pm-page-number {
   display: flex;
-  align-items: center;
-  justify-content: center;
+  /* Right-aligned, and pinned to the outer edge of the margin band so the
+     number keeps its distance from the text even on a page that ends full. */
+  justify-content: flex-end;
   font-family: Arial, sans-serif;
   font-size: 9pt;
+  line-height: 1;
   color: #777;
   user-select: none;
   pointer-events: none;
 }
-.pm-page-number-edge { position: absolute; left: 0; right: 0; }
-.pm-page-number-top { top: 0; }
-.pm-page-number-bottom { bottom: 0; }
+.pm-page-number-bottom { align-items: flex-end;   padding-bottom: 2px; }
+.pm-page-number-top    { align-items: flex-start; padding-top: 2px; }
+/* The first/last numbers are positioned against .pm-page, whose box includes
+   the margins — inset them so they line up with the content's right edge. */
+.pm-page-number-edge {
+  position: absolute;
+  left: 0;
+  right: 0;
+  padding-left: var(--page-margin);
+  padding-right: var(--page-margin);
+}
+.pm-page-number-edge.pm-page-number-top { top: 0; }
+.pm-page-number-edge.pm-page-number-bottom { bottom: 0; }
 .dark .pm-page-number { color: #9a9a9a; }
 
 /* ── ProseMirror içerik ── */
