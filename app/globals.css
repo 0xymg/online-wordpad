@@ -211,7 +211,27 @@ body {
   padding: var(--page-margin);
   box-shadow: 0 2px 8px rgba(0,0,0,0.18);
   overflow: visible;
+  /* Containing block for the first/last page numbers. */
+  position: relative;
 }
+
+/* ── Sayfa numaraları ── */
+/* Numbers sit inside a page-margin band: the middle ones ride in the pagination
+   spacers, the first/last are absolute against .pm-page's own padding. */
+.pm-page-number {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: Arial, sans-serif;
+  font-size: 9pt;
+  color: #777;
+  user-select: none;
+  pointer-events: none;
+}
+.pm-page-number-edge { position: absolute; left: 0; right: 0; }
+.pm-page-number-top { top: 0; }
+.pm-page-number-bottom { bottom: 0; }
+.dark .pm-page-number { color: #9a9a9a; }
 
 /* ── ProseMirror içerik ── */
 .pm-page .ProseMirror {

@@ -88,6 +88,10 @@ interface MenuBarProps {
   onToggleFocusMode: () => void;
   printHeaderFooter: boolean;
   onTogglePrintHeaderFooter: () => void;
+  pageNumbers: "off" | "bottom" | "top";
+  onPageNumbersChange: (position: "off" | "bottom" | "top") => void;
+  pageNumberFormat: "plain" | "of";
+  onPageNumberFormatChange: (format: "plain" | "of") => void;
   isDark: boolean;
   onToggleDark: () => void;
   user: { name: string; email?: string; initials: string } | null;
@@ -101,6 +105,8 @@ const HIGHLIGHTS = ["#fef08a", "#bbf7d0", "#bfdbfe", "#fbcfe8", "#fed7aa", "#e9d
 const SYMBOLS = ["©", "®", "™", "§", "¶", "•", "–", "—", "…", "€", "£", "¥", "°", "±", "×", "÷", "≈", "≠", "≤", "≥", "→", "←", "↑", "↓", "✓", "★"];
 const ZOOM_LEVELS = [50, 75, 90, 100, 110, 125, 150];
 const MARGIN_PRESETS = [0.5, 1, 1.5, 2];
+const PAGE_NUMBER_POSITIONS = ["off", "bottom", "top"] as const;
+const PAGE_NUMBER_FORMATS = ["plain", "of"] as const;
 const LINE_SPACINGS: Array<{ key: "single" | "num" | "double" | "reset"; num?: string; value: number | null }> = [
   { key: "single", value: 1 },
   { key: "num", num: "1.15", value: 1.15 },
@@ -160,6 +166,7 @@ function MenuBar({
   readingAloud, onToggleReadAloud,
   focusMode, onToggleFocusMode,
   printHeaderFooter, onTogglePrintHeaderFooter,
+  pageNumbers, onPageNumbersChange, pageNumberFormat, onPageNumberFormatChange,
   isDark, onToggleDark,
   user, onLogin, onLogout, onOpenProfile,
 }: MenuBarProps) {
@@ -417,6 +424,31 @@ function MenuBar({
                   onClick={() => onPageMarginChange(m)}
                 >
                   {t.status.pageMargin}: {m} cm
+                </MenubarCheckboxItem>
+              ))}
+            </MenubarSubContent>
+          </MenubarSub>
+          <MenubarSub>
+            <MenubarSubTrigger>{t.file.pageNumbers}</MenubarSubTrigger>
+            <MenubarSubContent>
+              {PAGE_NUMBER_POSITIONS.map((position) => (
+                <MenubarCheckboxItem
+                  key={position}
+                  checked={pageNumbers === position}
+                  onCheckedChange={() => onPageNumbersChange(position)}
+                >
+                  {t.file.pageNumberPosition[position]}
+                </MenubarCheckboxItem>
+              ))}
+              <MenubarSeparator />
+              {PAGE_NUMBER_FORMATS.map((format) => (
+                <MenubarCheckboxItem
+                  key={format}
+                  checked={pageNumberFormat === format}
+                  disabled={pageNumbers === "off"}
+                  onCheckedChange={() => onPageNumberFormatChange(format)}
+                >
+                  {t.file.pageNumberFormat[format]}
                 </MenubarCheckboxItem>
               ))}
             </MenubarSubContent>

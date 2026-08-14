@@ -28,7 +28,10 @@ import { mySchema, sanitizeHref, normalizeIndent } from "./editor-schema";
 import MenuBar from "./MenuBar";
 import Toolbar from "./Toolbar";
 import TableContextMenu from "./TableContextMenu";
-import { paginationPlugin, type PageLayoutConfig } from "./paginationPlugin";
+import {
+  paginationPlugin,
+  type PageLayoutConfig, type PageNumberPosition, type PageNumberFormat,
+} from "./paginationPlugin";
 import {
   searchPlugin, setSearch, findNext, findPrev,
   replaceCurrent, replaceAll, clearSearch, getSearchState,
@@ -133,7 +136,9 @@ const CM_TO_PX = 96 / 2.54;
 
 // Current page geometry for the pagination plugin (single-editor app, same
 // pattern as editorHandlers). Updated from React state; read at measure time.
-const pageLayoutConfig: PageLayoutConfig = { pageHeightPx: 1123, marginPx: CM_TO_PX };
+const pageLayoutConfig: PageLayoutConfig = {
+  pageHeightPx: 1123, marginPx: CM_TO_PX, pageNumbers: "off", pageNumberFormat: "plain",
+};
 
 /* How long the account dialog's close animation runs. Declared here rather
    than imported from ProfileDialog, which is lazy — a static import for one
@@ -928,6 +933,8 @@ export default function Editor({
   const chromeCollapsedRef = useRef(false);
   const editorShellRef = useRef<HTMLDivElement>(null);
   const [printHeaderFooter, setPrintHeaderFooter] = useState(false);
+  const [pageNumbers, setPageNumbers] = useState<PageNumberPosition>("off");
+  const [pageNumberFormat, setPageNumberFormat] = useState<PageNumberFormat>("plain");
   const lastAutoNameRef = useRef<string | null>(null);
   const [readingAloud, setReadingAloud] = useState(false);
   const [wholeWord, setWholeWord] = useState(false);
@@ -943,9 +950,11 @@ export default function Editor({
   useEffect(() => {
     pageLayoutConfig.pageHeightPx = pageHeightPx;
     pageLayoutConfig.marginPx = pageMarginCm * CM_TO_PX;
+    pageLayoutConfig.pageNumbers = pageNumbers;
+    pageLayoutConfig.pageNumberFormat = pageNumberFormat;
     const v = viewRef.current;
     if (v && !v.isDestroyed) v.dispatch(v.state.tr);
-  }, [pageHeightPx, pageMarginCm]);
+  }, [pageHeightPx, pageMarginCm, pageNumbers, pageNumberFormat]);
 
   // Same idea for the `[[name]]`/`[[email]]`/`[[today]]` input rule: it reads
   // the box rather than a value captured when the plugins were built.
@@ -978,6 +987,11 @@ export default function Editor({
       hr.pm-page-break::after { content: "" !important; display: none !important; }
       /* On-screen pagination spacers: print uses real CSS page breaks instead. */
       .pm-page-spacer { display: none !important; }
+      /* The simulated pages are gone in print, so the numbers anchored to them
+         would land in the wrong places. CSS cannot count printed pages
+         (@page margin boxes are unsupported in Chromium) — export to PDF for
+         numbered pages. */
+      .pm-page-number { display: none !important; }
       .pm-page .ProseMirror { padding-bottom: 0 !important; min-height: unset !important; }
       /* position:fixed repeats on every printed page (Chromium/Firefox) */
       .pm-print-header, .pm-print-footer {
@@ -1789,6 +1803,8 @@ export default function Editor({
           orientation: pageOrientation,
           marginCm: pageMarginCm,
           headerFooter: printHeaderFooter,
+          pageNumbers,
+          pageNumberFormat,
         }), `${safe}.pdf`);
       } else if (fmt === "md") {
         downloadBlob(new Blob([docToMarkdown(doc)], { type: "text/markdown" }), `${safe}.md`);
@@ -1797,7 +1813,7 @@ export default function Editor({
       }
     }
     toast.success(t.toast.downloaded(`${safe}.${fmt}`));
-  }, [pageOrientation, pageMarginCm, printHeaderFooter]);
+  }, [pageOrientation, pageMarginCm, printHeaderFooter, pageNumbers, pageNumberFormat]);
 
   // Export the document currently open in the editor (used by the File menu).
   const exportActive = useCallback((fmt: "html" | "txt" | "docx" | "rtf" | "md" | "pdf") => {
@@ -1890,6 +1906,8 @@ export default function Editor({
   const showHome = useCallback(() => openHome(), [openHome]);
   const showShortcuts = useCallback(() => setShortcutsOpen(true), []);
   const showAbout = useCallback(() => setAboutOpen(true), []);
+  const changePageNumbers = useCallback((p: PageNumberPosition) => setPageNumbers(p), []);
+  const changePageNumberFormat = useCallback((f: PageNumberFormat) => setPageNumberFormat(f), []);
   const toggleToolbar = useCallback(() => setShowToolbar((s) => !s), []);
   const toggleRuler = useCallback(() => setShowRuler((s) => !s), []);
   const toggleSpellcheck = useCallback(() => setSpellcheckOn((s) => !s), []);
@@ -2087,6 +2105,12 @@ export default function Editor({
     if (typeof p.bg === "string") setPaperBgColor(p.bg);
     if (typeof p.spellLang === "string") setSpellLang(p.spellLang);
     if (typeof p.printHeader === "boolean") setPrintHeaderFooter(p.printHeader);
+    if (p.pageNumbers === "off" || p.pageNumbers === "bottom" || p.pageNumbers === "top") {
+      setPageNumbers(p.pageNumbers);
+    }
+    if (p.pageNumberFormat === "plain" || p.pageNumberFormat === "of") {
+      setPageNumberFormat(p.pageNumberFormat);
+    }
     if (typeof p.spellcheck === "boolean") setSpellcheckOn(p.spellcheck);
     if (typeof p.toolbar === "boolean") setShowToolbar(p.toolbar);
     if (typeof p.ruler === "boolean") setShowRuler(p.ruler);
@@ -2214,6 +2238,8 @@ export default function Editor({
         bg: paperBgColor,
         spellLang,
         printHeader: printHeaderFooter,
+        pageNumbers,
+        pageNumberFormat,
         spellcheck: spellcheckOn,
         toolbar: showToolbar,
         ruler: showRuler,
@@ -2227,7 +2253,7 @@ export default function Editor({
     }, 700);
   }, [
     isAuthed, isDark, zoomPercent, pageMarginCm, pageOrientation, paperBgColor,
-    spellLang, printHeaderFooter, spellcheckOn, showToolbar, showRuler, locale,
+    spellLang, printHeaderFooter, pageNumbers, pageNumberFormat, spellcheckOn, showToolbar, showRuler, locale,
   ]);
 
   const handleInsertTable = useCallback((rows: number, cols: number) => {
@@ -2867,6 +2893,10 @@ export default function Editor({
         onToggleReadAloud={toggleReadAloud}
         focusMode={focusMode}
         onToggleFocusMode={toggleFocusMode}
+        pageNumbers={pageNumbers}
+        onPageNumbersChange={changePageNumbers}
+        pageNumberFormat={pageNumberFormat}
+        onPageNumberFormatChange={changePageNumberFormat}
         printHeaderFooter={printHeaderFooter}
         onTogglePrintHeaderFooter={togglePrintHeaderFooter}
         isDark={isDark}

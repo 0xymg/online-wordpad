@@ -8,11 +8,31 @@ import { Decoration, DecorationSet } from "prosemirror-view";
 import type { EditorView } from "prosemirror-view";
 import type { Node as PMNode } from "prosemirror-model";
 
+/** Where the page number sits, or "off" for none. */
+export type PageNumberPosition = "off" | "bottom" | "top";
+/** "3" versus "3 / 7". */
+export type PageNumberFormat = "plain" | "of";
+
 export interface PageLayoutConfig {
   /** Full page height in CSS px (A4 portrait: 1123). */
   pageHeightPx: number;
   /** Page margin in CSS px (padding of .pm-page). */
   marginPx: number;
+  pageNumbers: PageNumberPosition;
+  pageNumberFormat: PageNumberFormat;
+}
+
+function numberLabel(page: number, total: number, format: PageNumberFormat): string {
+  return format === "of" ? `${page} / ${total}` : String(page);
+}
+
+/** A centred number filling one page-margin band. */
+function numberDom(text: string, heightPx: number): HTMLElement {
+  const el = document.createElement("div");
+  el.className = "pm-page-number";
+  el.textContent = text;
+  el.style.height = `${heightPx}px`;
+  return el;
 }
 
 interface PageBreakPoint {
@@ -25,21 +45,33 @@ interface PageBreakPoint {
 interface PaginationState {
   breaks: PageBreakPoint[];
   marginPx: number;
+  /** "<position>:<format>" — the numbering settings the decorations were built from. */
+  numbering: string;
   deco: DecorationSet;
 }
+
+/** Total pages implied by a set of break points. */
+export const pageCountOf = (breaks: PageBreakPoint[]) => breaks.length + 1;
 
 /** Height of the gray band drawn between two pages. */
 const PAGE_GAP_PX = 26;
 
 export const paginationKey = new PluginKey<PaginationState>("pagination");
 
-function spacerDom(fillPx: number, marginPx: number): HTMLElement {
+function spacerDom(
+  fillPx: number, marginPx: number,
+  numbers: { position: PageNumberPosition; closing: string; opening: string }
+): HTMLElement {
   const el = document.createElement("div");
   el.className = "pm-page-spacer";
   el.contentEditable = "false";
-  // Rest of the closed page + its bottom margin (stays page-colored).
+  // Rest of the closed page (stays page-colored).
   const fill = document.createElement("div");
-  fill.style.height = `${Math.max(0, fillPx) + marginPx}px`;
+  fill.style.height = `${Math.max(0, fillPx)}px`;
+  // …and its bottom margin, kept as its own band so a page number can sit in it.
+  const bottomMargin = numbers.position === "bottom"
+    ? numberDom(numbers.closing, marginPx)
+    : (() => { const d = document.createElement("div"); d.style.height = `${marginPx}px`; return d; })();
   // The gap between pages. It bleeds past the page's own edges so the single
   // box-shadow around .pm-page doesn't run through the gap; the inner element
   // redraws that shadow as a bottom edge for the closing page and a top edge
@@ -53,9 +85,10 @@ function spacerDom(fillPx: number, marginPx: number): HTMLElement {
   edge.className = "pm-page-spacer-edge";
   gap.appendChild(edge);
   // Top margin of the page being opened.
-  const top = document.createElement("div");
-  top.style.height = `${marginPx}px`;
-  el.append(fill, gap, top);
+  const top = numbers.position === "top"
+    ? numberDom(numbers.opening, marginPx)
+    : (() => { const d = document.createElement("div"); d.style.height = `${marginPx}px`; return d; })();
+  el.append(fill, bottomMargin, gap, top);
   return el;
 }
 
@@ -236,30 +269,52 @@ export function paginationPlugin(getConfig: () => PageLayoutConfig): Plugin {
       (view.dom as HTMLElement).style.paddingBottom =
         lastPagePadPx > 1 ? `${lastPagePadPx}px` : "";
       const cur = paginationKey.getState(view.state);
-      if (cur && sameBreaks(cur.breaks, breaks) && cur.marginPx === cfg.marginPx) return;
-      view.dispatch(view.state.tr.setMeta(paginationKey, { breaks, marginPx: cfg.marginPx }));
+      const numbering = `${cfg.pageNumbers}:${cfg.pageNumberFormat}`;
+      if (
+        cur && sameBreaks(cur.breaks, breaks) &&
+        cur.marginPx === cfg.marginPx && cur.numbering === numbering
+      ) return;
+      view.dispatch(view.state.tr.setMeta(paginationKey, {
+        breaks, marginPx: cfg.marginPx, numbering,
+        pageNumbers: cfg.pageNumbers, pageNumberFormat: cfg.pageNumberFormat,
+      }));
     });
   };
 
   return new Plugin<PaginationState>({
     key: paginationKey,
     state: {
-      init: () => ({ breaks: [], marginPx: 0, deco: DecorationSet.empty }),
+      init: () => ({ breaks: [], marginPx: 0, numbering: "off:plain", deco: DecorationSet.empty }),
       apply(tr, prev, _oldState, newState) {
         const meta = tr.getMeta(paginationKey) as
-          | { breaks: PageBreakPoint[]; marginPx: number }
+          | {
+              breaks: PageBreakPoint[]; marginPx: number; numbering: string;
+              pageNumbers: PageNumberPosition; pageNumberFormat: PageNumberFormat;
+            }
           | undefined;
         if (meta) {
+          const total = pageCountOf(meta.breaks);
           const deco = DecorationSet.create(
             newState.doc,
-            meta.breaks.map((b) =>
-              Decoration.widget(b.pos, () => spacerDom(b.fillPx, meta.marginPx), {
-                side: -1,
-                key: `pgbrk:${b.pos}:${Math.round(b.fillPx)}:${meta.marginPx}`,
-              })
+            meta.breaks.map((b, i) =>
+              Decoration.widget(
+                b.pos,
+                () => spacerDom(b.fillPx, meta.marginPx, {
+                  position: meta.pageNumbers,
+                  // The spacer closes page i+1 and opens page i+2.
+                  closing: numberLabel(i + 1, total, meta.pageNumberFormat),
+                  opening: numberLabel(i + 2, total, meta.pageNumberFormat),
+                }),
+                {
+                  side: -1,
+                  key: `pgbrk:${b.pos}:${Math.round(b.fillPx)}:${meta.marginPx}:${meta.numbering}:${total}`,
+                }
+              )
             )
           );
-          return { breaks: meta.breaks, marginPx: meta.marginPx, deco };
+          return {
+            breaks: meta.breaks, marginPx: meta.marginPx, numbering: meta.numbering, deco,
+          };
         }
         if (tr.docChanged) {
           // Keep spacers roughly in place until the post-update remeasure lands.
@@ -279,6 +334,33 @@ export function paginationPlugin(getConfig: () => PageLayoutConfig): Plugin {
     },
     view(view) {
       measure(view);
+      // The first page's top band and the last page's bottom band are .pm-page's
+      // own padding — no spacer reaches them, so those two numbers are absolutely
+      // positioned against the page element instead of riding in the flow.
+      const page = view.dom.parentElement;
+      const edge = (place: "top" | "bottom") => {
+        const el = document.createElement("div");
+        el.className = `pm-page-number pm-page-number-edge pm-page-number-${place}`;
+        el.setAttribute("aria-hidden", "true");
+        return el;
+      };
+      const firstEdge = edge("top");
+      const lastEdge = edge("bottom");
+      page?.append(firstEdge, lastEdge);
+      const syncEdges = (v: EditorView) => {
+        const cfg = getConfig();
+        const total = pageCountOf(paginationKey.getState(v.state)?.breaks ?? []);
+        const entries: Array<[HTMLElement, boolean, string]> = [
+          [firstEdge, cfg.pageNumbers === "top", numberLabel(1, total, cfg.pageNumberFormat)],
+          [lastEdge, cfg.pageNumbers === "bottom", numberLabel(total, total, cfg.pageNumberFormat)],
+        ];
+        for (const [el, on, text] of entries) {
+          el.style.display = on ? "" : "none";
+          el.style.height = `${cfg.marginPx}px`;
+          if (on) el.textContent = text;
+        }
+      };
+      syncEdges(view);
       // Catches async height changes (image loads, fonts) and layout-affecting
       // config changes (orientation/margins change the editor's width).
       const observer = new ResizeObserver(() => measure(view));
@@ -286,9 +368,12 @@ export function paginationPlugin(getConfig: () => PageLayoutConfig): Plugin {
       return {
         update(v) {
           measure(v);
+          syncEdges(v);
         },
         destroy() {
           observer.disconnect();
+          firstEdge.remove();
+          lastEdge.remove();
         },
       };
     },

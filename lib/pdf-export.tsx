@@ -452,6 +452,9 @@ export type PdfExportOptions = {
   orientation: "portrait" | "landscape";
   marginCm: number;
   headerFooter: boolean;
+  /** Where the page number goes, or "off". */
+  pageNumbers?: "off" | "bottom" | "top";
+  pageNumberFormat?: "plain" | "of";
 };
 
 export function buildPdfDocument(doc: PMNode, opts: PdfExportOptions): React.ReactElement<DocumentProps> {
