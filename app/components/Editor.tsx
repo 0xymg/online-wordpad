@@ -29,7 +29,7 @@ import MenuBar from "./MenuBar";
 import Toolbar from "./Toolbar";
 import TableContextMenu from "./TableContextMenu";
 import {
-  paginationPlugin,
+  paginationPlugin, remeasurePagination,
   type PageLayoutConfig, type PageNumberPosition, type PageNumberFormat,
 } from "./paginationPlugin";
 import {
@@ -1346,10 +1346,25 @@ export default function Editor({
     ensureFontsInHtml(html);
     const dom = new DOMParser().parseFromString(html || "<p></p>", "text/html");
     const doc = PMParser.fromSchema(mySchema).parse(dom.body);
-    const state = EditorState.create({ schema: mySchema, doc, plugins: buildPlugins() });
-    v.updateState(state);
-    refreshDocInfo(state);
+    // Replace the content through a transaction rather than swapping in a fresh
+    // EditorState. A new state means a new plugin set, which tears down and
+    // rebuilds every plugin view — pagination then loses the measurement it had
+    // queued and never re-runs, leaving the page padded out to the *previous*
+    // document's height. Going through a transaction keeps the plugin views
+    // alive, so they see the change and re-measure.
+    // `addToHistory: false` keeps loading a document out of the undo stack.
+    const tr = v.state.tr
+      .replaceWith(0, v.state.doc.content.size, doc.content)
+      .setMeta("addToHistory", false);
+    // Land the cursor inside the first text block, not on the doc node itself.
+    tr.setSelection(TextSelection.near(tr.doc.resolve(0)));
+    v.dispatch(tr);
+    refreshDocInfo(v.state);
     v.focus();
+    // Ask pagination to re-measure directly: after a full-document replacement
+    // its plugin view may have been rebuilt and miss this change, which would
+    // leave the page padded out to the previous document's height.
+    remeasurePagination(v);
   }, [refreshDocInfo]);
 
   // Snapshot the current editor html into the file list, persisting the previous doc if signed in.

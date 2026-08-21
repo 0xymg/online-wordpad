@@ -155,10 +155,10 @@ const MEASURE_EPS = 2;
 function computeLayout(
   view: EditorView,
   cfg: PageLayoutConfig
-): { breaks: PageBreakPoint[]; lastPagePadPx: number } {
+): { breaks: PageBreakPoint[]; lastPagePadPx: number; complete: boolean } {
   const dom = view.dom as HTMLElement;
   const pageContentH = cfg.pageHeightPx - 2 * cfg.marginPx;
-  if (pageContentH <= 60 || !dom.offsetWidth) return { breaks: [], lastPagePadPx: 0 };
+  if (pageContentH <= 60 || !dom.offsetWidth) return { breaks: [], lastPagePadPx: 0, complete: false };
 
   // Hiding the spacers momentarily collapses the content height; the browser
   // clamps/anchors the scroll position DURING that layout even though nothing
@@ -169,10 +169,20 @@ function computeLayout(
   dom.classList.add("pm-measuring");
   try {
     const scale = dom.getBoundingClientRect().width / dom.offsetWidth;
-    if (!scale || !isFinite(scale)) return { breaks: [], lastPagePadPx: 0 };
+    if (!scale || !isFinite(scale)) return { breaks: [], lastPagePadPx: 0, complete: false };
 
     const offsets: number[] = [];
     view.state.doc.forEach((_node, offset) => offsets.push(offset));
+
+    // A stale plugin view (one left over from a previous EditorState) still has
+    // the old document in `view.state` while the DOM already shows the new one.
+    // Measuring then walks a single old block against 13 rendered ones and pads
+    // the page to a wildly wrong height, so bail out and let the live view do it.
+    const renderedBlocks = (Array.from(dom.children) as HTMLElement[])
+      .filter((el) => !el.classList.contains("pm-page-spacer")).length;
+    if (renderedBlocks !== offsets.length) {
+      return { breaks: [], lastPagePadPx: 0, complete: false };
+    }
 
     const breaks: PageBreakPoint[] = [];
     let baseTop: number | null = null;
@@ -234,7 +244,10 @@ function computeLayout(
 
     const usedOnLastPage = positiveModulo(contentBottom - pageStart, pageContentH);
     const lastPagePadPx = usedOnLastPage > MEASURE_EPS ? pageContentH - usedOnLastPage : 0;
-    return { breaks, lastPagePadPx };
+    // Every top-level node had a matching rendered block. When it doesn't (the
+    // DOM and the state can disagree for a frame after a whole-document swap)
+    // the numbers describe only part of the document and must not be trusted.
+    return { breaks, lastPagePadPx, complete: blockIdx === offsets.length };
   } finally {
     dom.classList.remove("pm-measuring");
     if (scroller && scroller.scrollTop !== savedScrollTop) {
@@ -251,23 +264,60 @@ function sameBreaks(a: PageBreakPoint[], b: PageBreakPoint[]): boolean {
   return true;
 }
 
+/** Frames to wait for the DOM to catch up with the state before giving up (~1s). */
+const MAX_REMEASURE_TRIES = 60;
+
+/**
+ * Lets the editor ask for a re-measure directly. Plugin views are torn down and
+ * rebuilt whenever the plugin set changes, and a rebuilt view can miss the
+ * update that follows a whole-document replacement — this gives the app a way
+ * in that does not depend on that lifecycle.
+ */
+let activeMeasure: ((view: EditorView) => void) | null = null;
+
+export function remeasurePagination(view: EditorView | null | undefined): void {
+  if (view && !view.isDestroyed) activeMeasure?.(view);
+}
+
 export function paginationPlugin(getConfig: () => PageLayoutConfig): Plugin {
-  let scheduled = false;
+  let rafId = 0;
+  let tries = 0;
 
   const measure = (view: EditorView) => {
-    if (scheduled) return;
-    scheduled = true;
-    requestAnimationFrame(() => {
-      scheduled = false;
+    // Latest request wins. Skipping while one is pending would drop the
+    // measurement that matters (the one after a document swap) and, if that
+    // frame never fired, would wedge the plugin permanently.
+    if (rafId) cancelAnimationFrame(rafId);
+    rafId = requestAnimationFrame(() => {
+      rafId = 0;
       // View destroyed between the schedule and the frame.
       if (!view.dom.isConnected) return;
       // Redecorating mid-composition would abort IME input; the update after
       // compositionend re-triggers the measure.
       if (view.composing) return;
       const cfg = getConfig();
-      const { breaks, lastPagePadPx } = computeLayout(view, cfg);
+      const { breaks, lastPagePadPx, complete } = computeLayout(view, cfg);
+      // Replacing a whole document (loading a template, switching files) can
+      // leave the rendered blocks a frame behind the state. Measuring then sees
+      // only the outgoing document — one empty paragraph, say — and pads the
+      // page out to a full extra page, which sticks because nothing re-measures
+      // afterwards. Wait for the two to agree instead.
+      if (!complete) {
+        // Never write a padding derived from a partial measurement — that is
+        // exactly what used to stick. Retry a few frames, then leave it alone.
+        if (tries < MAX_REMEASURE_TRIES) { tries++; measure(view); }
+        else tries = 0;
+        return;
+      }
+      tries = 0;
+      // Only a multi-page document needs this: .pm-page carries min-height of a
+      // full sheet, so a single page already stands at full height on its own.
+      // Padding matters once spacers have pushed content past a boundary and
+      // the final page has to be filled out to match. Skipping it when there
+      // are no breaks also means a mis-timed measurement can no longer stretch
+      // a one-page document to twice its height.
       (view.dom as HTMLElement).style.paddingBottom =
-        lastPagePadPx > 1 ? `${lastPagePadPx}px` : "";
+        breaks.length && lastPagePadPx > 1 ? `${lastPagePadPx}px` : "";
       const cur = paginationKey.getState(view.state);
       const numbering = `${cfg.pageNumbers}:${cfg.pageNumberFormat}`;
       if (
@@ -333,6 +383,7 @@ export function paginationPlugin(getConfig: () => PageLayoutConfig): Plugin {
       },
     },
     view(view) {
+      activeMeasure = measure;
       measure(view);
       // The first page's top band and the last page's bottom band are .pm-page's
       // own padding — no spacer reaches them, so those two numbers are absolutely
@@ -371,6 +422,11 @@ export function paginationPlugin(getConfig: () => PageLayoutConfig): Plugin {
           syncEdges(v);
         },
         destroy() {
+          // Deliberately not cancelling a pending frame: a document swap tears
+          // this view down while the measurement it queued is the one the new
+          // content needs. The callback checks isConnected, so a genuinely dead
+          // view still bails out on its own.
+          if (activeMeasure === measure) activeMeasure = null;
           observer.disconnect();
           firstEdge.remove();
           lastEdge.remove();
