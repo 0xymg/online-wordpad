@@ -113,10 +113,10 @@ function WelcomeBackgroundLayer() {
     <>
       <div
         aria-hidden="true"
-        className="welcome-background-image fixed inset-0"
+        className="welcome-background-image absolute inset-0"
         style={{ backgroundImage: `url(${background})` }}
       />
-      <div aria-hidden="true" className="welcome-background-scrim fixed inset-0" />
+      <div aria-hidden="true" className="welcome-background-scrim absolute inset-0" />
     </>
   );
 }
@@ -455,15 +455,19 @@ export default function WelcomeScreen({
           )}
         </div>
 
-        {/* Start new */}
-        <h2 className="mb-3 mt-8 text-sm font-medium text-muted-foreground">{t.welcome.startNew}</h2>
-        <div className="relative">
-        <StripChevron side="left"  show={canScrollLeft}  onClick={() => scrollStrip(-1)} label={t.welcome.scrollLeft} />
-        <StripChevron side="right" show={canScrollRight} onClick={() => scrollStrip(1)}  label={t.welcome.scrollRight} />
-        {/* items-start, not the default stretch: a stretched <button> centres its own
-            content vertically (UA behaviour), so the blank card — one caption line
-            against the templates' two — sat lower than the rest of the row. */}
-        <div ref={stripRef} className="no-scrollbar flex items-start gap-4 overflow-x-auto pb-1">
+        {/* Only the new-document gallery gets the rotating backdrop; the rest
+            of the welcome screen stays quiet and paper-like. */}
+        <section className="welcome-template-panel relative mt-8 overflow-hidden border border-border bg-background/40 px-5 pb-5 pt-4">
+          <WelcomeBackgroundLayer />
+          <div className="relative z-[1]">
+            <h2 className="mb-3 text-sm font-medium text-muted-foreground">{t.welcome.startNew}</h2>
+            <div className="relative">
+              <StripChevron side="left"  show={canScrollLeft}  onClick={() => scrollStrip(-1)} label={t.welcome.scrollLeft} />
+              <StripChevron side="right" show={canScrollRight} onClick={() => scrollStrip(1)}  label={t.welcome.scrollRight} />
+              {/* items-start, not the default stretch: a stretched <button> centres its own
+                  content vertically (UA behaviour), so the blank card — one caption line
+                  against the templates' two — sat lower than the rest of the row. */}
+              <div ref={stripRef} className="no-scrollbar flex items-start gap-4 overflow-x-auto pb-1">
           <button
             type="button"
             onClick={() => { onNewDocument(); onClose(); }}
@@ -492,8 +496,10 @@ export default function WelcomeScreen({
               <p className="mt-0.5 line-clamp-2 text-center text-[11px] leading-tight text-muted-foreground">{tpl.description}</p>
             </button>
           ))}
-        </div>
-        </div>
+              </div>
+            </div>
+          </div>
+        </section>
 
         {/* Stays open behind the file picker — the editor appears once a file is
             actually chosen (and nothing flashes if the picker is cancelled). */}
