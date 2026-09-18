@@ -62,64 +62,6 @@ const RECENT_COUNT = 5;
 const PAGE_SIZES = [10, 25, 50] as const;
 /** Sub-pixel scroll positions shouldn't leave a chevron enabled at either end. */
 const EDGE_SLACK = 4;
-const WELCOME_BACKGROUND_CATEGORIES = [
-  "architecture",
-  "nature",
-  "workspace",
-  "travel",
-  "abstract",
-] as const;
-
-const WELCOME_BACKGROUNDS: Record<(typeof WELCOME_BACKGROUND_CATEGORIES)[number], string[]> = {
-  architecture: [
-    "https://images.unsplash.com/photo-1487958449943-2429e8be8625?auto=format&fit=crop&w=2400&q=82",
-    "https://images.unsplash.com/photo-1503387762-592deb58ef4e?auto=format&fit=crop&w=2400&q=82",
-    "https://images.unsplash.com/photo-1511818966892-d7d671e672a2?auto=format&fit=crop&w=2400&q=82",
-  ],
-  nature: [
-    "https://images.unsplash.com/photo-1470770841072-f978cf4d019e?auto=format&fit=crop&w=2400&q=82",
-    "https://images.unsplash.com/photo-1441974231531-c6227db76b6e?auto=format&fit=crop&w=2400&q=82",
-    "https://images.unsplash.com/photo-1472214103451-9374bd1c798e?auto=format&fit=crop&w=2400&q=82",
-  ],
-  workspace: [
-    "https://images.unsplash.com/photo-1497366216548-37526070297c?auto=format&fit=crop&w=2400&q=82",
-    "https://images.unsplash.com/photo-1497366811353-6870744d04b2?auto=format&fit=crop&w=2400&q=82",
-    "https://images.unsplash.com/photo-1497215842964-222b430dc094?auto=format&fit=crop&w=2400&q=82",
-  ],
-  travel: [
-    "https://images.unsplash.com/photo-1500534623283-312aade485b7?auto=format&fit=crop&w=2400&q=82",
-    "https://images.unsplash.com/photo-1501785888041-af3ef285b470?auto=format&fit=crop&w=2400&q=82",
-    "https://images.unsplash.com/photo-1469474968028-56623f02e42e?auto=format&fit=crop&w=2400&q=82",
-  ],
-  abstract: [
-    "https://images.unsplash.com/photo-1557682250-33bd709cbe85?auto=format&fit=crop&w=2400&q=82",
-    "https://images.unsplash.com/photo-1550859492-d5da9d8e45f3?auto=format&fit=crop&w=2400&q=82",
-    "https://images.unsplash.com/photo-1550745165-9bc0b252726f?auto=format&fit=crop&w=2400&q=82",
-  ],
-};
-
-function randomWelcomeBackground() {
-  const category = WELCOME_BACKGROUND_CATEGORIES[
-    Math.floor(Math.random() * WELCOME_BACKGROUND_CATEGORIES.length)
-  ];
-  const choices = WELCOME_BACKGROUNDS[category];
-  return choices[Math.floor(Math.random() * choices.length)];
-}
-
-/** Remounting with the welcome screen gives every visit a fresh image. */
-function WelcomeBackgroundLayer() {
-  const [background] = useState(randomWelcomeBackground);
-  return (
-    <>
-      <div
-        aria-hidden="true"
-        className="welcome-background-image absolute inset-0"
-        style={{ backgroundImage: `url(${background})` }}
-      />
-      <div aria-hidden="true" className="welcome-background-scrim absolute inset-0" />
-    </>
-  );
-}
 
 /** Nudges the template strip sideways; hidden when there is nothing that way. */
 function StripChevron({ side, show, onClick, label }: {
@@ -383,9 +325,8 @@ export default function WelcomeScreen({
         open ? "welcome-screen-in" : "welcome-screen-out"
       }`}
     >
-      <WelcomeBackgroundLayer />
       {/* Top bar */}
-      <div className="sticky top-0 z-10 flex items-center justify-between border-b border-border bg-background/80 px-5 py-2.5 backdrop-blur-md">
+      <div className="sticky top-0 z-10 flex items-center justify-between border-b border-border bg-background/95 px-5 py-2.5 backdrop-blur">
         <span className="font-brand select-none leading-none">
           <span className="text-lg font-bold tracking-tight text-foreground dark:text-[#FFFFE3]">EDTR</span>
           <span className="text-sm font-semibold tracking-wider text-muted-foreground dark:text-[#FFFFE3]/70">PAD</span>
@@ -403,7 +344,7 @@ export default function WelcomeScreen({
 
       {/* The template strip gets the wider container; the document lists below
           sit in a narrower one so the eye lands on "start something" first. */}
-      <div className="relative z-[1] mx-auto max-w-6xl px-5 pb-16 pt-10">
+      <div className="mx-auto max-w-6xl px-5 pb-16 pt-10">
         {/* Greeting on the left, account entry on the right, same line. The
             greeting is width-capped so the subtitle wraps well before it
             reaches the account block, at any locale's copy length.
@@ -455,19 +396,15 @@ export default function WelcomeScreen({
           )}
         </div>
 
-        {/* Only the new-document gallery gets the rotating backdrop; the rest
-            of the welcome screen stays quiet and paper-like. */}
-        <section className="welcome-template-panel relative mt-8 overflow-hidden border border-border bg-background/40 px-5 pb-5 pt-4">
-          <WelcomeBackgroundLayer />
-          <div className="relative z-[1]">
-            <h2 className="mb-3 text-sm font-medium text-muted-foreground">{t.welcome.startNew}</h2>
-            <div className="relative">
-              <StripChevron side="left"  show={canScrollLeft}  onClick={() => scrollStrip(-1)} label={t.welcome.scrollLeft} />
-              <StripChevron side="right" show={canScrollRight} onClick={() => scrollStrip(1)}  label={t.welcome.scrollRight} />
-              {/* items-start, not the default stretch: a stretched <button> centres its own
-                  content vertically (UA behaviour), so the blank card — one caption line
-                  against the templates' two — sat lower than the rest of the row. */}
-              <div ref={stripRef} className="no-scrollbar flex items-start gap-4 overflow-x-auto pb-1">
+        {/* Start new */}
+        <h2 className="mb-3 mt-8 text-sm font-medium text-muted-foreground">{t.welcome.startNew}</h2>
+        <div className="relative">
+        <StripChevron side="left"  show={canScrollLeft}  onClick={() => scrollStrip(-1)} label={t.welcome.scrollLeft} />
+        <StripChevron side="right" show={canScrollRight} onClick={() => scrollStrip(1)}  label={t.welcome.scrollRight} />
+        {/* items-start, not the default stretch: a stretched <button> centres its own
+            content vertically (UA behaviour), so the blank card — one caption line
+            against the templates' two — sat lower than the rest of the row. */}
+        <div ref={stripRef} className="no-scrollbar flex items-start gap-4 overflow-x-auto pb-1">
           <button
             type="button"
             onClick={() => { onNewDocument(); onClose(); }}
@@ -496,10 +433,8 @@ export default function WelcomeScreen({
               <p className="mt-0.5 line-clamp-2 text-center text-[11px] leading-tight text-muted-foreground">{tpl.description}</p>
             </button>
           ))}
-              </div>
-            </div>
-          </div>
-        </section>
+        </div>
+        </div>
 
         {/* Stays open behind the file picker — the editor appears once a file is
             actually chosen (and nothing flashes if the picker is cancelled). */}
