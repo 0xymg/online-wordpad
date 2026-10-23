@@ -4,6 +4,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { I18nProvider } from "./components/I18nProvider";
 import { Analytics } from "@vercel/analytics/next";
 import { SpeedInsights } from "@vercel/speed-insights/next";
+import Script from "next/script";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -25,6 +26,9 @@ export const metadata: Metadata = {
     "EDTRpad is a free online WordPad: a browser-based word processor with rich text, tables, images, export to DOCX/RTF/HTML/TXT, and print. No install, no login required.",
   metadataBase: new URL("https://wordpad.info"),
   robots: { index: true, follow: true },
+  verification: {
+    other: { "msvalidate.01": "42A53046E5D2A6675BBAE6009BE747A7" },
+  },
   openGraph: {
     siteName: "EDTRpad",
     type: "website",
@@ -78,6 +82,13 @@ export default function RootLayout({
         </I18nProvider>
         <Analytics />
         <SpeedInsights />
+        <Script src="https://www.googletagmanager.com/gtag/js?id=G-7NJ9KXXNT7" strategy="afterInteractive" />
+        <Script id="ga4" strategy="afterInteractive">
+          {`window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', 'G-7NJ9KXXNT7');`}
+        </Script>
       </body>
     </html>
   );
