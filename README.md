@@ -3,7 +3,7 @@
   <h1>EDTRpad</h1>
   <p><strong>The online word processor that's already open.</strong></p>
   <p>A free Word and WordPad alternative in your browser. Write, format, print, and export — no download or account required.</p>
-  <p><a href="https://wordpad.info/pad"><strong>Start writing →</strong></a> · <a href="https://wordpad.info">Explore the features</a> · <a href="https://wordpad.info/ar">العربية</a></p>
+  <p><a href="https://wordpad.info/pad"><strong>Start writing →</strong></a> · <a href="https://wordpad.info">Explore the features</a> · <a href="https://wordpad.info/ar">Arabic version</a></p>
 </div>
 
 ---
@@ -38,7 +38,7 @@ The interface supports **English, Arabic, Chinese, Turkish, and French**. Browse
 
 Arabic includes a right-to-left interface, Arabic starter templates, paragraph direction based on the text, and RTL support in Word and PDF exports. Explicit paragraph alignment is preserved when you mix Arabic and English.
 
-**[محرر نصوص وورد أون لاين مجاني بالعربية ←](https://wordpad.info/ar)**
+**[Try EDTRpad in Arabic →](https://wordpad.info/ar)**
 
 The Arabic landing page has its own URL, server-rendered Arabic content, localized search and social metadata, and language alternatives for Arabic and Saudi Arabia (`ar`, `ar-SA`).
 
