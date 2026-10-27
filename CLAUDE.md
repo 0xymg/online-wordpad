@@ -22,12 +22,15 @@ metadata/içerik "online wordpad" anahtar kelimesini hedefler.
 
 ```
 app/
-  page.tsx                  → Landing page (hero, features, FAQ, CTA)
-  layout.tsx                → Root layout
+  (site)/                   → Mevcut URL’ler: /, /pad, /guides, hesap sayfaları
+    page.tsx                → İngilizce landing page
+    layout.tsx              → İngilizce kök layout
+  ar/                       → Statik Arapça landing, metadata ve RTL kök layout
+  components/RootDocument.tsx → Paylaşılan HTML shell ve global metadata
   globals.css               → Global stiller
   sitemap.ts                → Otomatik sitemap
-  pad/                      → Editör sayfası (/pad)
-  guides/
+  (site)/pad/               → Editör sayfası (/pad)
+  (site)/guides/
     page.tsx                → Guide listesi (/guides)
     [slug]/page.tsx         → Guide detay sayfası — MDX render (/guides/[slug])
   components/               → App-level client componentler (ToolbarPreviewClient vb.)
@@ -46,7 +49,7 @@ public/
   icon-192.png, icon-512.png→ PWA ikonları
 proxy.ts                    → Next 16 proxy (eski middleware): girişli kullanıcıyı / → /pad yönlendirir
 app/manifest.ts             → PWA manifest
-app/pad/layout.tsx          → Editör fontları (Google Fonts) sadece /pad'de yüklenir
+app/(site)/pad/layout.tsx          → Editör fontları (Google Fonts) sadece /pad'de yüklenir
 ```
 
 ---
@@ -130,7 +133,7 @@ npm run lint   # ESLint
 - Görseller eklenirken client-side sıkıştırılır (`lib/image-util.ts`) — localStorage 5MB kotası için kritik.
 - Export'lar (`lib/doc-export.ts`) ve mammoth dynamic import ile yüklenir; ana bundle'a statik olarak import ETME.
 - Guide sayfaları Next.js `generateStaticParams` ile statik olarak oluşturulur (SSG).
-- MDX bileşen override'ları `app/guides/[slug]/page.tsx` içindeki `components` objesinde tanımlı.
+- MDX bileşen override'ları `app/(site)/guides/[slug]/page.tsx` içindeki `components` objesinde tanımlı.
 - Sitemap guide tarihlerini frontmatter `date` alanından okur — guide güncellerken tarihi de güncelle.
 
 ---
@@ -142,7 +145,7 @@ npm run lint   # ESLint
 2. Başka işlem gerekmez — otomatik listelenir ve route oluşturulur.
 
 ### Landing page'e bölüm ekle
-`app/page.tsx` dosyasını düzenle.
+`app/LandingClient.tsx` dosyasını düzenle. Metadata ve JSON-LD için `app/(site)/page.tsx`, `app/ar/page.tsx` ve `app/components/LandingStructuredData.tsx` dosyalarına bak.
 
 ### Stil değiştir
 Tailwind class'larını doğrudan düzenle. Global CSS için `app/globals.css`.

@@ -1,3 +1,4 @@
+import { SOCIAL_IMAGE } from "@/lib/landing-seo";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -26,6 +27,7 @@ export async function generateMetadata({
       canonical: `https://wordpad.info/guides/${slug}`,
     },
     openGraph: {
+    images: [SOCIAL_IMAGE],
       title: guide.title,
       description: guide.description,
       url: `https://wordpad.info/guides/${slug}`,
@@ -33,6 +35,7 @@ export async function generateMetadata({
       siteName: "Online WordPad",
     },
     twitter: {
+    images: [SOCIAL_IMAGE.url],
       card: "summary_large_image",
       title: guide.title,
       description: guide.description,

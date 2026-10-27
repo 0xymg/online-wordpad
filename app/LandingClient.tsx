@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { Fragment, useSyncExternalStore, type ReactNode } from "react";
 import { TextB, Files, Command, Printer, Lock, CloudArrowUp, Check, Lightning, Code } from "./components/icons";
 import ToolbarPreviewClient from "./components/ToolbarPreviewClient";
@@ -148,6 +149,7 @@ function renderCredit(template: string): ReactNode {
 }
 
 export default function LandingClient() {
+  const router = useRouter();
   const t = useT();
   const { locale, setLocale } = useLocale();
   const today = useToday();
@@ -640,7 +642,10 @@ export default function LandingClient() {
               {t.landing.footerTagline}
             </p>
             <div className="mt-4">
-              <Select value={locale} onValueChange={(v) => setLocale(v as typeof locale)}>
+              <Select value={locale} onValueChange={(v) => {
+                setLocale(v as typeof locale);
+                if (v === "ar") router.push("/ar");
+              }}>
                 <SelectTrigger
                   size="sm"
                   aria-label={t.locale.label}
@@ -656,6 +661,10 @@ export default function LandingClient() {
                   ))}
                 </SelectContent>
               </Select>
+              <nav aria-label={t.locale.label} className="mt-3 flex gap-3 text-[13px] text-[var(--pad-ink-50)]">
+                <Link href="/" hrefLang="en" lang="en" onClick={(event) => { event.preventDefault(); setLocale("en"); }} className="underline underline-offset-4">English</Link>
+                <Link href="/ar" hrefLang="ar" lang="ar" className="underline underline-offset-4">العربية</Link>
+              </nav>
             </div>
           </div>
           <div className="flex flex-col gap-10 sm:flex-row sm:gap-20">

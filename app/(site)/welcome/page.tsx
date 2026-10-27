@@ -1,4 +1,4 @@
-import Editor from "../components/Editor";
+import Editor from "@/app/components/Editor";
 import { googleEnabled } from "@/lib/auth-flags";
 
 // The start screen is app UI over the editor, not standalone content — keep it

@@ -1,3 +1,4 @@
+import { SOCIAL_IMAGE } from "@/lib/landing-seo";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { getAllGuides } from "@/lib/guides";
@@ -9,6 +10,7 @@ export const metadata: Metadata = {
   keywords: ["wordpad guides", "online word processor tips", "wordpad alternative guide", "online word editor help"],
   alternates: { canonical: "https://wordpad.info/guides" },
   openGraph: {
+    images: [SOCIAL_IMAGE],
     title: "Guides: WordPad Online, Alternatives & Tips",
     description: "Guides about using an online WordPad, free WordPad alternatives, and browser-based text editing.",
     url: "https://wordpad.info/guides",
@@ -16,6 +18,7 @@ export const metadata: Metadata = {
     siteName: "EDTRpad",
   },
   twitter: {
+    images: [SOCIAL_IMAGE.url],
     card: "summary_large_image",
     title: "Guides: WordPad Online, Alternatives & Tips",
     description: "Guides about using an online WordPad and free browser-based text editing.",

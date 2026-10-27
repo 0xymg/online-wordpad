@@ -1,11 +1,13 @@
+import { SOCIAL_IMAGE } from "@/lib/landing-seo";
 import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import { I18nProvider } from "./components/I18nProvider";
+import { I18nProvider } from "./I18nProvider";
 import { Analytics } from "@vercel/analytics/next";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import Script from "next/script";
-import "./globals.css";
+import "../globals.css";
+import ArabicI18nProvider from "./ArabicI18nProvider";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -30,10 +32,12 @@ export const metadata: Metadata = {
     other: { "msvalidate.01": "42A53046E5D2A6675BBAE6009BE747A7" },
   },
   openGraph: {
+    images: [SOCIAL_IMAGE],
     siteName: "EDTRpad",
     type: "website",
   },
   twitter: {
+    images: [SOCIAL_IMAGE.url],
     card: "summary_large_image",
   },
 };
@@ -56,11 +60,14 @@ const jsonLdOrganization = {
 
 export default function RootLayout({
   children,
+  locale = "en",
 }: Readonly<{
   children: React.ReactNode;
+  locale?: "en" | "ar";
 }>) {
+  const LocaleProvider = locale === "ar" ? ArabicI18nProvider : I18nProvider;
   return (
-    <html lang="en">
+    <html lang={locale} dir={locale === "ar" ? "rtl" : "ltr"}>
       <head>
         <script
           dangerouslySetInnerHTML={{
@@ -75,11 +82,11 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        <I18nProvider>
+        <LocaleProvider>
           <TooltipProvider delayDuration={400}>
             {children}
           </TooltipProvider>
-        </I18nProvider>
+        </LocaleProvider>
         <Analytics />
         <SpeedInsights />
         <Script src="https://www.googletagmanager.com/gtag/js?id=G-7NJ9KXXNT7" strategy="afterInteractive" />

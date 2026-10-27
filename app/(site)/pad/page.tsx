@@ -1,4 +1,5 @@
-import Editor from "../components/Editor";
+import { SOCIAL_IMAGE } from "@/lib/landing-seo";
+import Editor from "@/app/components/Editor";
 import { googleEnabled } from "@/lib/auth-flags";
 
 export const metadata = {
@@ -17,6 +18,7 @@ export const metadata = {
     canonical: "https://wordpad.info/pad",
   },
   openGraph: {
+    images: [SOCIAL_IMAGE],
     title: "EDTRpad Editor — Free Online WordPad",
     description: "Write and format documents in your browser. Export to Word (.docx), RTF, HTML, or TXT. No install.",
     url: "https://wordpad.info/pad",
@@ -24,6 +26,7 @@ export const metadata = {
     siteName: "EDTRpad",
   },
   twitter: {
+    images: [SOCIAL_IMAGE.url],
     card: "summary_large_image" as const,
     title: "EDTRpad Editor — Free Online WordPad",
     description: "Write and format documents in your browser. No install, no login.",

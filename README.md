@@ -1,36 +1,108 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+<div align="center">
+  <img src="public/logo.svg" alt="EDTRpad" width="72" />
+  <h1>EDTRpad</h1>
+  <p><strong>The online word processor that's already open.</strong></p>
+  <p>A free Word and WordPad alternative in your browser. Write, format, print, and export — no download or account required.</p>
+  <p><a href="https://wordpad.info/pad"><strong>Start writing →</strong></a> · <a href="https://wordpad.info">Explore the features</a> · <a href="https://wordpad.info/ar">العربية</a></p>
+</div>
 
-## Getting Started
+---
 
-First, run the development server:
+## Press `/` and keep writing
+
+Headings, tables, images, lists, page breaks, and formatting are a few keystrokes away. Type `/` anywhere in the document, search for an action, and press Enter. Prefer buttons? The toolbar and familiar keyboard shortcuts are there too.
+
+Type a variable instead of repeating yourself:
+
+| Type | Insert |
+| --- | --- |
+| `[[today]]` | Today's date |
+| `[[today::DD.MM.YYYY]]` | A date in your chosen format |
+| `[[name]]` | The name on your account |
+| `[[email]]` | The email on your account |
+
+Variables insert ordinary text. A date in an old letter stays the date you wrote, even when you reopen it later.
+
+## Everyday documents, properly formatted
+
+- **Rich text:** headings, font families and sizes, bold, italic, underline, text colors, highlights, lists, and line spacing.
+- **Tables and images:** insert tables, merge cells, and add, resize, crop, rotate, flip, and align images.
+- **Files you can use elsewhere:** open `.docx`, `.txt`, `.md`, and `.html`; export Word, PDF, RTF, HTML, Markdown, or plain text.
+- **Paper-sized pages:** page orientation, margins, page breaks, and printing.
+- **Less interruption:** autosave, version history, find and replace, dark mode, and focus mode.
+- **A place to start:** letters, résumés, meeting notes, invoices, reports, project plans, and task lists.
+
+## Write in your language
+
+The interface supports **English, Arabic, Chinese, Turkish, and French**. Browser language detection gets you started; the language picker remembers your choice.
+
+Arabic includes a right-to-left interface, Arabic starter templates, paragraph direction based on the text, and RTL support in Word and PDF exports. Explicit paragraph alignment is preserved when you mix Arabic and English.
+
+**[محرر نصوص وورد أون لاين مجاني بالعربية ←](https://wordpad.info/ar)**
+
+The Arabic landing page has its own URL, server-rendered Arabic content, localized search and social metadata, and language alternatives for Arabic and Saudi Arabia (`ar`, `ar-SA`).
+
+## Start without an account
+
+Guest documents stay in the browser's local storage on that device. There is no document upload to our servers in guest mode. Clearing browser data removes those local copies, so export important work.
+
+An optional account keeps multiple documents and syncs them across devices. Account documents are stored on the server. Both modes are free.
+
+## Run locally
+
+Built with **Next.js 16, React 19, TypeScript, Tailwind CSS, ProseMirror, and Radix UI**. Optional accounts use Better Auth and PostgreSQL. Word and PDF exporters load on demand.
 
 ```bash
+npm ci
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [localhost:3000](http://localhost:3000). The guest editor works without account configuration.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+### Optional account configuration
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Configure these environment variables in `.env.local` or your deployment environment:
 
-## Learn More
+| Variable | Purpose |
+| --- | --- |
+| `DATABASE_URL` | PostgreSQL connection for accounts and documents |
+| `BETTER_AUTH_SECRET` | Stable authentication secret; required for production accounts |
+| `BETTER_AUTH_URL` | Base URL for authentication, such as `http://localhost:3000` locally |
+| `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` | Enable Google sign-in when both are set |
+| `RESEND_API_KEY` | Send verification and password-reset emails |
+| `EMAIL_FROM` | Sender address for outgoing email |
 
-To learn more about Next.js, take a look at the following resources:
+Provision the Better Auth tables before enabling accounts. [`scripts/extra-schema.mjs`](scripts/extra-schema.mjs) adds the document table and user metadata after the auth schema exists; it reads `DATABASE_URL` from its process environment. Without a mail provider, development email links are logged to the server console.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+### Commands
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+```bash
+npm run dev     # Development server
+npm run build   # Production build and TypeScript validation
+npm run start   # Serve the production build
+npm run lint    # ESLint
+```
 
-## Deploy on Vercel
+### Project map
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+| Path | Contents |
+| --- | --- |
+| `app/(site)/` | Existing public routes: landing, editor, guides, and account pages |
+| `app/ar/` | Arabic landing page and Arabic document layout |
+| `app/LandingClient.tsx` | Shared interactive landing page |
+| `app/components/` | Editor, toolbar, dialogs, and locale providers |
+| `lib/i18n/` | Typed dictionaries and language preference store |
+| `lib/landing-seo.ts` | Arabic search copy and shared language alternatives |
+| `lib/doc-export.ts`, `lib/pdf-export.tsx` | Word/RTF and PDF export |
+| `content/guides/` | Guides published from MDX |
+| `public/pdf-fonts/` | Embedded PDF fonts and applicable font licenses |
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+The `/ar` page is Arabic in the initial HTML, including `<html lang="ar" dir="rtl">`. Separate root layouts keep that page static while existing URLs retain their browser language preferences. English and Arabic landing pages use self-canonical URLs and reciprocal `hreflang` links, and both appear in the sitemap.
+
+## Deployment
+
+The repository deploys through its Vercel Git integration. Production uses `main`; configure the account environment variables in Vercel when enabling account features. Run a production build and verify the affected pages before pushing.
+
+---
+
+Part of [Project EDTR](https://ymg.digital). EDTRpad is an independent project and is not affiliated with Microsoft, Google, or Notion. Microsoft Word and WordPad are trademarks of Microsoft Corporation.

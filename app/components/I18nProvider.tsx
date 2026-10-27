@@ -1,7 +1,8 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import { Direction } from "radix-ui";
-import { useCallback, useEffect, useSyncExternalStore } from "react";
+import { createContext, useCallback, useContext, useEffect, useSyncExternalStore } from "react";
 import {
   DEFAULT_LOCALE, LOCALE_TAGS, getDictionary, isLocale, loadDictionary, subscribeDictionaries,
   type Dictionary, type Locale,
@@ -10,26 +11,35 @@ import {
   getLocaleSnapshot, getServerLocaleSnapshot, setStoredLocale, subscribeLocale,
 } from "@/lib/i18n/store";
 
-/**
- * Locale is resolved on the client, so the server-rendered HTML (and anything a
- * crawler sees) stays English while the visitor gets their own language after
- * hydration. An explicit choice is stored and always wins over the browser's
- * language list.
- *
- * There is no React context here: the locale lives in a module-level store, so
- * any client component can read it directly with `useT()`.
- */
-export function I18nProvider({ children }: { children: React.ReactNode }) {
+type FixedLocale = { locale: Locale; dictionary: Dictionary };
+const FixedLocaleContext = createContext<FixedLocale | null>(null);
+
+/** URL-specific pages use the same dictionary on the server and client.
+ * Other pages retain browser detection and the shared language preference. */
+export function I18nProvider({ children, fixedLocale, dictionary }: {
+  children: React.ReactNode;
+  fixedLocale?: Locale;
+  dictionary?: Dictionary;
+}) {
+  const fixed = fixedLocale && dictionary ? { locale: fixedLocale, dictionary } : null;
+  return (
+    <FixedLocaleContext.Provider value={fixed}>
+      <LocaleEffects>{children}</LocaleEffects>
+    </FixedLocaleContext.Provider>
+  );
+}
+
+function LocaleEffects({ children }: { children: React.ReactNode }) {
   const locale = useLocaleValue();
+  const fixed = useContext(FixedLocaleContext);
 
   useEffect(() => {
     document.documentElement.lang = LOCALE_TAGS[locale];
     document.documentElement.dir = locale === "ar" ? "rtl" : "ltr";
-  }, [locale]);
+    // Carry a URL's language into /pad when the visitor opens the editor.
+    if (fixed) setStoredLocale(locale);
+  }, [locale, fixed]);
 
-  // Non-English dictionaries are code-split; fetch the active one so `useT()`
-  // consumers swap from the English fallback once it arrives. A failed chunk
-  // load just leaves the UI in English.
   useEffect(() => {
     if (locale !== DEFAULT_LOCALE) loadDictionary(locale).catch(() => {});
   }, [locale]);
@@ -38,29 +48,31 @@ export function I18nProvider({ children }: { children: React.ReactNode }) {
 }
 
 function useLocaleValue(): Locale {
-  return useSyncExternalStore(subscribeLocale, getLocaleSnapshot, getServerLocaleSnapshot);
+  const fixed = useContext(FixedLocaleContext);
+  const detected = useSyncExternalStore(subscribeLocale, getLocaleSnapshot, getServerLocaleSnapshot);
+  return fixed?.locale ?? detected;
 }
 
-/**
- * The active dictionary: `const t = useT(); t.menu.file`
- *
- * Two subscriptions back this: the locale store (re-render on switch) and the
- * dictionary registry (re-render when a lazily loaded dictionary arrives).
- * Until the chunk lands, `getDictionary` serves English, so the return value
- * is always a complete Dictionary — never undefined, never partial.
- */
 export function useT(): Dictionary {
+  const fixed = useContext(FixedLocaleContext);
   const locale = useLocaleValue();
   return useSyncExternalStore(
     subscribeDictionaries,
-    () => getDictionary(locale),
-    () => getDictionary(DEFAULT_LOCALE)
+    () => fixed?.dictionary ?? getDictionary(locale),
+    () => fixed?.dictionary ?? getDictionary(DEFAULT_LOCALE)
   );
 }
 
 export function useLocale(): { locale: Locale; setLocale: (l: Locale) => void } {
   const locale = useLocaleValue();
-  const setLocale = useCallback((next: Locale) => setStoredLocale(next), []);
+  const fixed = useContext(FixedLocaleContext);
+  const router = useRouter();
+  const setLocale = useCallback((next: Locale) => {
+    setStoredLocale(next);
+    // A localized URL must keep its advertised language. Switching languages
+    // explicitly leaves that URL instead of swapping its indexable content.
+    if (fixed && next !== fixed.locale) router.push("/");
+  }, [fixed, router]);
   return { locale, setLocale };
 }
 

@@ -1,4 +1,5 @@
 import type { MetadataRoute } from "next";
+import { LANDING_LANGUAGES } from "@/lib/landing-seo";
 import { getAllGuides } from "@/lib/guides";
 
 export default function sitemap(): MetadataRoute.Sitemap {
@@ -16,9 +17,17 @@ export default function sitemap(): MetadataRoute.Sitemap {
   return [
     {
       url: "https://wordpad.info",
+      alternates: { languages: LANDING_LANGUAGES },
       lastModified: now,
       changeFrequency: "weekly",
       priority: 1,
+    },
+    {
+      url: "https://wordpad.info/ar",
+      lastModified: new Date("2026-10-27T00:00:00Z"),
+      changeFrequency: "weekly",
+      priority: 1,
+      alternates: { languages: LANDING_LANGUAGES },
     },
     {
       url: "https://wordpad.info/pad",
