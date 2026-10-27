@@ -3,7 +3,7 @@
   <h1>EDTRpad</h1>
   <p><strong>The online word processor that's already open.</strong></p>
   <p>A free Word and WordPad alternative in your browser. Write, format, print, and export — no download or account required.</p>
-  <p><a href="https://wordpad.info/pad"><strong>Start writing →</strong></a> · <a href="https://wordpad.info">Explore the features</a> · <a href="https://wordpad.info/ar">Arabic version</a></p>
+  <p><a href="https://wordpad.info/pad"><strong>Start writing →</strong></a> · <a href="https://wordpad.info">Explore the features</a></p>
 </div>
 
 ---
@@ -36,11 +36,7 @@ Variables insert ordinary text. A date in an old letter stays the date you wrote
 
 The interface supports **English, Arabic, Chinese, Turkish, and French**. Browser language detection gets you started; the language picker remembers your choice.
 
-Arabic includes a right-to-left interface, Arabic starter templates, paragraph direction based on the text, and RTL support in Word and PDF exports. Explicit paragraph alignment is preserved when you mix Arabic and English.
-
-**[Try EDTRpad in Arabic →](https://wordpad.info/ar)**
-
-The Arabic landing page has its own URL, server-rendered Arabic content, localized search and social metadata, and language alternatives for Arabic and Saudi Arabia (`ar`, `ar-SA`).
+Right-to-left layouts, automatic paragraph direction, and Word and PDF export support keep mixed-language documents readable. Explicit paragraph alignment is preserved.
 
 ## Start without an account
 
@@ -88,16 +84,14 @@ npm run lint    # ESLint
 | Path | Contents |
 | --- | --- |
 | `app/(site)/` | Existing public routes: landing, editor, guides, and account pages |
-| `app/ar/` | Arabic landing page and Arabic document layout |
+| `app/ar/` | Localized landing page and document layout |
 | `app/LandingClient.tsx` | Shared interactive landing page |
 | `app/components/` | Editor, toolbar, dialogs, and locale providers |
 | `lib/i18n/` | Typed dictionaries and language preference store |
-| `lib/landing-seo.ts` | Arabic search copy and shared language alternatives |
+| `lib/landing-seo.ts` | Search copy and shared language alternatives |
 | `lib/doc-export.ts`, `lib/pdf-export.tsx` | Word/RTF and PDF export |
 | `content/guides/` | Guides published from MDX |
 | `public/pdf-fonts/` | Embedded PDF fonts and applicable font licenses |
-
-The `/ar` page is Arabic in the initial HTML, including `<html lang="ar" dir="rtl">`. Separate root layouts keep that page static while existing URLs retain their browser language preferences. English and Arabic landing pages use self-canonical URLs and reciprocal `hreflang` links, and both appear in the sitemap.
 
 ## Deployment
 
