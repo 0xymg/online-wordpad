@@ -31,7 +31,7 @@ import { useT, useLocale } from "./I18nProvider";
 import { LOCALES, LOCALE_NAMES, LOCALE_TAGS } from "@/lib/i18n";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { TEMPLATES } from "@/lib/templates";
+import { getTemplates } from "@/lib/templates";
 import { DATE_FORMATS, formatDate } from "@/lib/doc-variables";
 
 interface MenuBarProps {
@@ -133,6 +133,7 @@ function HomeBtn({ onClick, label }: { onClick: () => void; label: string }) {
 const SPELL_LANGS: Array<{ value: string; label: string }> = [
   { value: "auto", label: "" }, // filled from the dictionary at render time
   { value: "en", label: "English" },
+  { value: "ar", label: "العربية" },
   { value: "tr", label: "Türkçe" },
   { value: "de", label: "Deutsch" },
   { value: "fr", label: "Français" },
@@ -259,35 +260,37 @@ function MenuBar({
   return (
     <div className="border-b border-border bg-card">
       {/* Top bar: brand on the left, document title centered, account on the right */}
-      <div className="relative flex h-9 items-center border-b border-border/60 px-3">
+      <div className="relative flex min-h-9 flex-wrap items-center border-b border-border/60 px-3 sm:h-9 sm:flex-nowrap">
         <div className="flex min-w-0 items-center gap-1.5">
           <span className="font-brand shrink-0 select-none leading-none">
             <span className="text-lg font-bold tracking-tight text-foreground dark:text-[#FFFFE3]">EDTR</span>
             <span className="text-sm font-semibold tracking-wider text-muted-foreground dark:text-[#FFFFE3]/70">PAD</span>
           </span>
         </div>
-        <div className="pointer-events-none absolute inset-x-0 flex items-center justify-center">
+        <div className="pointer-events-none order-last flex w-full items-center justify-center border-t border-border/60 py-1 sm:absolute sm:inset-x-0 sm:order-none sm:w-auto sm:border-0 sm:py-0">
           <div className="group pointer-events-auto flex items-center">
             <input
               ref={titleInputRef}
+              data-document-title
+              dir="auto"
               value={docTitle}
               onChange={(e) => onTitleChange(e.target.value)}
               onFocus={(e) => e.target.select()}
               spellCheck={false}
               aria-label={t.header.documentTitle}
-              className="w-[220px] max-w-[42vw] truncate rounded border border-transparent bg-transparent px-2 py-0.5 text-center text-[13px] text-foreground/80 outline-none hover:border-border focus:border-border focus:bg-background"
+              className="w-[220px] max-w-[70vw] sm:max-w-[42vw] truncate rounded border border-transparent bg-transparent px-2 py-0.5 text-center text-[13px] text-foreground/80 outline-none hover:border-border focus:border-border focus:bg-background"
             />
             <button
               type="button"
               aria-label={t.header.renameDocument}
               onClick={() => { titleInputRef.current?.focus(); titleInputRef.current?.select(); }}
-              className="ml-0.5 rounded p-1 text-muted-foreground opacity-60 transition-opacity hover:bg-accent hover:text-foreground group-focus-within:opacity-0 group-hover:opacity-100 focus-visible:opacity-100 focus-visible:outline-2 focus-visible:outline-ring"
+              className="ms-0.5 rounded p-1 text-muted-foreground opacity-60 transition-opacity hover:bg-accent hover:text-foreground group-focus-within:opacity-0 group-hover:opacity-100 focus-visible:opacity-100 focus-visible:outline-2 focus-visible:outline-ring"
             >
               <PencilSimple size={13} />
             </button>
           </div>
         </div>
-        <div className="ml-auto flex items-center gap-1.5">
+        <div className="ms-auto flex items-center gap-1.5">
           <Select value={locale} onValueChange={(v) => setLocale(v as typeof locale)}>
             <SelectTrigger
               size="sm"
@@ -366,7 +369,7 @@ function MenuBar({
           <MenubarSub>
             <MenubarSubTrigger>{t.file.newFromTemplate}</MenubarSubTrigger>
             <MenubarSubContent>
-              {TEMPLATES.map((t) => (
+              {getTemplates(locale).map((t) => (
                 <MenubarItem key={t.id} onClick={() => onNewFromTemplate({ name: t.name, html: t.html })}>
                   <div>
                     <div>{t.name}</div>

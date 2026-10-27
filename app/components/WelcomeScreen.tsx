@@ -2,8 +2,8 @@
 
 import { useEffect, useRef, useState } from "react";
 import { FileText, Plus, UploadSimple, X, SignIn, LinkSimple, Trash, CircleNotch, CaretLeft, CaretRight, DownloadSimple, MagnifyingGlass } from "./icons";
-import { TEMPLATES, type DocTemplate } from "@/lib/templates";
-import { useT } from "./I18nProvider";
+import { getTemplates, type DocTemplate } from "@/lib/templates";
+import { useT, useLocale } from "./I18nProvider";
 
 export type WelcomeFile = { id: string; name: string; folder?: string | null };
 
@@ -141,7 +141,7 @@ function DocRow({
             checked={!!selected}
             onChange={() => onToggleSelected(f.id)}
             aria-label={t.welcome.selectDocument(f.name || t.sidebar.untitled)}
-            className="ml-4 size-4 shrink-0 cursor-pointer accent-primary"
+            className="ms-4 size-4 shrink-0 cursor-pointer accent-primary"
           />
         )}
         {/* Real link so it can be bookmarked, middle-clicked, or copied;
@@ -153,7 +153,7 @@ function DocRow({
             e.preventDefault();
             onOpen(f.id);
           }}
-          className="flex min-w-0 flex-1 items-center gap-3 px-4 py-2.5 text-left focus-visible:bg-accent/60 focus-visible:outline-none"
+          className="flex min-w-0 flex-1 items-center gap-3 px-4 py-2.5 text-start focus-visible:bg-accent/60 focus-visible:outline-none"
         >
           <FileText size={18} className="shrink-0 text-muted-foreground" />
           <span className="min-w-0 flex-1 truncate text-sm">{f.name || t.sidebar.untitled}</span>
@@ -187,7 +187,7 @@ function DocRow({
           onClick={() => onDelete(f.id)}
           aria-label={t.welcome.deleteDocumentNamed(f.name || t.sidebar.untitled)}
           title={t.welcome.deleteDocument}
-          className="mr-2 shrink-0 rounded p-1.5 text-muted-foreground opacity-0 transition hover:bg-destructive/15 hover:text-destructive focus-visible:opacity-100 focus-visible:outline-2 focus-visible:outline-ring group-hover:opacity-100"
+          className="me-2 shrink-0 rounded p-1.5 text-muted-foreground opacity-0 transition hover:bg-destructive/15 hover:text-destructive focus-visible:opacity-100 focus-visible:outline-2 focus-visible:outline-ring group-hover:opacity-100"
         >
           <Trash size={15} />
         </button>
@@ -212,6 +212,7 @@ export default function WelcomeScreen({
   docHref, onSignIn, onOpenProfile, userEmail, deletingIds = [], loading = false, sessionLoading = false,
 }: WelcomeScreenProps) {
   const t = useT();
+  const { locale } = useLocale();
   // Stay mounted through the closing animation so the editor fades in behind
   // it instead of snapping into place.
   const [visible, setVisible] = useState(open);
@@ -277,8 +278,11 @@ export default function WelcomeScreen({
     const el = stripRef.current;
     if (!el) return;
     const update = () => {
-      setCanScrollLeft(el.scrollLeft > EDGE_SLACK);
-      setCanScrollRight(el.scrollLeft + el.clientWidth < el.scrollWidth - EDGE_SLACK);
+      const rtl = getComputedStyle(el).direction === "rtl";
+      const start = rtl ? el.clientWidth - el.scrollWidth : 0;
+      const end = rtl ? 0 : el.scrollWidth - el.clientWidth;
+      setCanScrollLeft(el.scrollLeft > start + EDGE_SLACK);
+      setCanScrollRight(el.scrollLeft < end - EDGE_SLACK);
     };
     update();
     el.addEventListener("scroll", update, { passive: true });
@@ -288,7 +292,7 @@ export default function WelcomeScreen({
       el.removeEventListener("scroll", update);
       ro.disconnect();
     };
-  }, [visible]);
+  }, [visible, locale]);
   const scrollStrip = (direction: -1 | 1) => {
     const el = stripRef.current;
     if (el) el.scrollBy({ left: direction * el.clientWidth * 0.8, behavior: "smooth" });
@@ -369,7 +373,7 @@ export default function WelcomeScreen({
           {sessionLoading && (
             <div className="flex shrink-0 animate-pulse items-center gap-2.5 px-2.5 py-1.5" aria-hidden="true">
               <div className="space-y-1.5">
-                <div className="ml-auto h-3.5 w-28 bg-accent" />
+                <div className="ms-auto h-3.5 w-28 bg-accent" />
                 <div className="h-3 w-36 bg-accent" />
               </div>
               <div className="h-9 w-9 bg-accent" />
@@ -383,7 +387,7 @@ export default function WelcomeScreen({
               className="flex shrink-0 items-center gap-2.5 border border-transparent px-2.5 py-1.5 transition-colors hover:border-border hover:bg-accent/60 focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-ring"
             >
               {/* Name and email read first, avatar closes the row on the right */}
-              <span className="flex min-w-0 flex-col items-end text-right">
+              <span className="flex min-w-0 flex-col items-end text-end">
                 <span className="max-w-[220px] truncate text-sm font-medium">{userName}</span>
                 {userEmail && (
                   <span className="max-w-[220px] truncate text-xs text-muted-foreground">{userEmail}</span>
@@ -408,7 +412,7 @@ export default function WelcomeScreen({
           <button
             type="button"
             onClick={() => { onNewDocument(); onClose(); }}
-            className="group w-[124px] shrink-0 text-left focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+            className="group w-[124px] shrink-0 text-start focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
           >
             <div
               className="mx-auto flex items-center justify-center rounded-sm border border-gray-300 bg-white shadow-sm transition group-hover:border-gray-500 group-hover:shadow dark:border-gray-500"
@@ -418,13 +422,13 @@ export default function WelcomeScreen({
             </div>
             <p className="mt-2 truncate text-center text-xs font-medium">{t.welcome.blankDocument}</p>
           </button>
-          {TEMPLATES.map((tpl) => (
+          {getTemplates(locale).map((tpl) => (
             <button
               key={tpl.id}
               type="button"
               onClick={() => { onPickTemplate(tpl); onClose(); }}
               title={tpl.description}
-              className="group w-[124px] shrink-0 text-left focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+              className="group w-[124px] shrink-0 text-start focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
             >
               <div className="transition group-hover:-translate-y-0.5">
                 <TemplateThumb html={tpl.html} />
@@ -487,14 +491,14 @@ export default function WelcomeScreen({
                   </span>
                 </h2>
                 <div className="relative">
-                  <MagnifyingGlass size={14} className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground" />
+                  <MagnifyingGlass size={14} className="pointer-events-none absolute start-2.5 top-1/2 -translate-y-1/2 text-muted-foreground" />
                   <input
                     type="search"
                     value={query}
                     onChange={(e) => setQuery(e.target.value)}
                     placeholder={t.welcome.searchDocuments}
                     aria-label={t.welcome.searchDocuments}
-                    className="w-56 max-w-full rounded-md border border-input bg-background py-1.5 pl-8 pr-2.5 text-xs outline-none focus:ring-1 focus:ring-ring"
+                    className="w-56 max-w-full rounded-md border border-input bg-background py-1.5 ps-8 pr-2.5 text-xs outline-none focus:ring-1 focus:ring-ring"
                   />
                 </div>
               </div>
@@ -519,7 +523,7 @@ export default function WelcomeScreen({
                 {selection.length > 0 && (
                   <>
                     <span className="text-muted-foreground">{t.welcome.selectedCount(selection.length)}</span>
-                    <div className="ml-auto flex items-center gap-2">
+                    <div className="ms-auto flex items-center gap-2">
                       <button
                         type="button"
                         onClick={() => onDownloadDocuments(selection)}

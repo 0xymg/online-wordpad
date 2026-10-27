@@ -1,8 +1,9 @@
 // Turkish dictionary — typed against the English source in ./en.
 
-import type { Dictionary } from "./en";
+import { en, type Dictionary } from "./en";
 
 export const tr: Dictionary = {
+  ui: en.ui,
   locale: {
     label: "Dil",
     en: "English",

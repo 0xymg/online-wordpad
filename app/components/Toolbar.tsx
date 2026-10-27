@@ -1,5 +1,8 @@
 "use client";
 
+import { uiText } from "@/lib/i18n/ui";
+import { resolvedAlignment } from "@/lib/text-direction";
+
 import { memo, useCallback, useState, useEffect, lazy, Suspense } from "react";
 import { EditorView } from "prosemirror-view";
 import { EditorState, Transaction, TextSelection } from "prosemirror-state";
@@ -348,7 +351,7 @@ function Toolbar({
       block: parent.type === schema.nodes.heading ? `h${parent.attrs.level}`
         : parent.type === schema.nodes.code_block ? "code_block"
         : "paragraph",
-      align: (parent.attrs?.textAlign as string) || "left",
+      align: resolvedAlignment(parent.attrs?.textAlign, parent.textContent),
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [tick]);
@@ -435,7 +438,7 @@ function Toolbar({
             <SelectContent>
               {FONT_GROUPS.map((g) => (
                 <SelectGroup key={g.label}>
-                  <SelectLabel>{g.label}</SelectLabel>
+                  <SelectLabel>{uiText(t, g.label)}</SelectLabel>
                   {g.fonts.map((f) => (
                     <SelectItem key={f.value} value={f.value} className="text-xs">
                       <span style={{ fontFamily: f.value }}>{f.label}</span>

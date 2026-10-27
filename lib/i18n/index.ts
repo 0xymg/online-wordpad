@@ -2,7 +2,7 @@ import { en, type Dictionary } from "./en";
 
 export type { Dictionary };
 
-export const LOCALES = ["en", "zh", "tr", "fr"] as const;
+export const LOCALES = ["en", "zh", "tr", "fr", "ar"] as const;
 export type Locale = (typeof LOCALES)[number];
 
 export const DEFAULT_LOCALE: Locale = "en";
@@ -16,6 +16,7 @@ const DICTIONARY_LOADERS: Record<Locale, () => Promise<Dictionary>> = {
   tr: () => import("./tr").then((m) => m.tr),
   zh: () => import("./zh").then((m) => m.zh),
   fr: () => import("./fr").then((m) => m.fr),
+  ar: () => import("./ar").then((m) => m.ar),
 };
 
 const loadedDictionaries: Partial<Record<Locale, Dictionary>> = { en };
@@ -61,6 +62,7 @@ export const LOCALE_NAMES: Record<Locale, string> = {
   zh: "中文",
   tr: "Türkçe",
   fr: "Français",
+  ar: "العربية",
 };
 
 /** BCP-47 tag used for <html lang> and locale-aware formatting. */
@@ -69,6 +71,7 @@ export const LOCALE_TAGS: Record<Locale, string> = {
   zh: "zh-CN",
   tr: "tr",
   fr: "fr",
+  ar: "ar",
 };
 
 /** Names the locale cookie, and the legacy localStorage entry it replaced. */

@@ -19,6 +19,8 @@ import { baseKeymap, toggleMark, setBlockType } from "prosemirror-commands";
 import { wrapInList } from "prosemirror-schema-list";
 import Toolbar from "./Toolbar";
 import { mySchema } from "./editor-schema";
+import { uiText } from "@/lib/i18n/ui";
+import type { Dictionary } from "@/lib/i18n";
 import { useT } from "./I18nProvider";
 
 /* ── Placeholder ──────────────────────────────────────────────────────────
@@ -165,11 +167,11 @@ function applyCommand(view: EditorView, id: MiniCmdId) {
   view.focus();
 }
 
-function filterCommands(query: string) {
+function filterCommands(query: string, t: Dictionary) {
   const q = query.trim().toLowerCase();
   if (!q) return MINI_COMMANDS;
   return MINI_COMMANDS.filter(
-    (c) => c.title.toLowerCase().includes(q) || c.keywords.some((k) => k.includes(q))
+    (c) => uiText(t, c.title).toLowerCase().includes(q) || c.keywords.some((k) => k.includes(q))
   );
 }
 
@@ -188,7 +190,7 @@ export default function ToolbarPreview() {
   const slashRef = useRef<SlashState | null>(null);
   const itemsRef = useRef(MINI_COMMANDS);
   slashRef.current = slash;
-  itemsRef.current = slash ? filterCommands(slash.query) : MINI_COMMANDS;
+  itemsRef.current = slash ? filterCommands(slash.query, t) : MINI_COMMANDS;
 
   const hint: PlaceholderHint = {
     pre: t.landing.heroEditorHintPre,
@@ -355,7 +357,7 @@ export default function ToolbarPreview() {
     v.focus();
   };
 
-  const items = slash ? filterCommands(slash.query) : [];
+  const items = slash ? filterCommands(slash.query, t) : [];
 
   return (
     <div>
@@ -371,7 +373,7 @@ export default function ToolbarPreview() {
       <div className="flex justify-center bg-gray-100 px-6 py-8">
         <div
           ref={mountRef}
-          className="pm-page w-full max-w-lg cursor-text text-left"
+          className="pm-page w-full max-w-lg cursor-text text-start"
           style={PAGE_VARS}
           onClick={() => viewRef.current?.focus()}
         />
@@ -381,12 +383,12 @@ export default function ToolbarPreview() {
       {slash && (
         <div
           role="listbox"
-          aria-label="Slash commands"
+          aria-label={t.landing.navSlash}
           className="fixed z-[60] w-[248px] overflow-hidden border border-gray-200 bg-white text-gray-900 shadow-xl"
           style={{ left: slash.left, top: slash.top, colorScheme: "light" }}
         >
           {items.length === 0 ? (
-            <div className="px-3 py-2 text-xs text-gray-400">No command found</div>
+            <div className="px-3 py-2 text-xs text-gray-400">{t.slash.noResults}</div>
           ) : (
             <div className="max-h-[220px] overflow-y-auto p-1">
               {items.map((item, idx) => (
@@ -398,12 +400,12 @@ export default function ToolbarPreview() {
                   onMouseDown={(e) => e.preventDefault()}
                   onMouseEnter={() => setSlash((p) => (p ? { ...p, selected: idx } : p))}
                   onClick={() => runSlashRef.current(item.id)}
-                  className={`block w-full px-2.5 py-1.5 text-left ${
+                  className={`block w-full px-2.5 py-1.5 text-start ${
                     idx === slash.selected ? "bg-gray-100" : "hover:bg-gray-50"
                   }`}
                 >
-                  <div className="text-[13px] font-medium leading-tight">{item.title}</div>
-                  <div className="text-[11px] leading-tight text-gray-400">{item.hint}</div>
+                  <div className="text-[13px] font-medium leading-tight">{uiText(t, item.title)}</div>
+                  <div className="text-[11px] leading-tight text-gray-400">{uiText(t, item.hint)}</div>
                 </button>
               ))}
             </div>

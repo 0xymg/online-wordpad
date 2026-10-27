@@ -1,8 +1,9 @@
 // Simplified Chinese (zh-CN) dictionary, typed against the English source.
 
-import type { Dictionary } from "./en";
+import { en, type Dictionary } from "./en";
 
 export const zh: Dictionary = {
+  ui: en.ui,
   locale: {
     label: "语言",
     en: "English",

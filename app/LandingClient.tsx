@@ -107,11 +107,11 @@ function renderEmphasis(text: string): ReactNode {
    from a list, so the separator never has to live inside the translations. */
 function DotSeparated({ items, className }: { items: string[]; className?: string }) {
   return (
-    <span className={className}>
+    <span className={`inline-flex max-w-full flex-wrap items-baseline justify-center gap-y-2 ${className ?? ""}`}>
       {items.map((item, i) => (
         <Fragment key={item}>
           {i > 0 && <span aria-hidden className="mx-2 text-[var(--pad-ink-50)]">·</span>}
-          <span className="whitespace-nowrap">{item}</span>
+          <span className="min-w-0 max-w-full break-words">{item}</span>
         </Fragment>
       ))}
     </span>
@@ -253,7 +253,7 @@ export default function LandingClient() {
                 <span className="size-3 rounded-full bg-[#ff5f57]" />
                 <span className="size-3 rounded-full bg-[#febc2e]" />
                 <span className="size-3 rounded-full bg-[#28c840]" />
-                <span className="ml-3 max-w-xs flex-1 bg-white px-3 py-1 text-xs text-gray-400">
+                <span className="ms-3 max-w-xs flex-1 bg-white px-3 py-1 text-xs text-gray-400">
                   wordpad.info/pad
                 </span>
               </div>
@@ -399,7 +399,7 @@ export default function LandingClient() {
               <table className="w-full min-w-[640px] border-collapse text-sm">
                 <thead>
                   <tr className="border-b border-[var(--pad-border)]">
-                    <th scope="col" className="px-4 py-3 text-left font-medium text-[var(--pad-ink-50)]">
+                    <th scope="col" className="px-4 py-3 text-start font-medium text-[var(--pad-ink-50)]">
                       <span className="sr-only">{t.landing.compareTitle}</span>
                     </th>
                     {t.landing.compareCols.map((col, i) => (
@@ -408,8 +408,8 @@ export default function LandingClient() {
                         scope="col"
                         className={
                           i === 0
-                            ? "bg-[var(--pad-surface)] px-4 py-3 text-left font-bold"
-                            : "px-4 py-3 text-left font-medium text-[var(--pad-ink-70)]"
+                            ? "bg-[var(--pad-surface)] px-4 py-3 text-start font-bold"
+                            : "px-4 py-3 text-start font-medium text-[var(--pad-ink-70)]"
                         }
                       >
                         {col}
@@ -420,7 +420,7 @@ export default function LandingClient() {
                 <tbody className="divide-y divide-[var(--pad-border)]">
                   {t.landing.compareRows.map((row) => (
                     <tr key={row.label}>
-                      <th scope="row" className="px-4 py-3 text-left font-medium text-[var(--pad-ink-70)]">
+                      <th scope="row" className="px-4 py-3 text-start font-medium text-[var(--pad-ink-70)]">
                         {row.label}
                       </th>
                       {row.cells.map((cell, i) => (
@@ -503,7 +503,7 @@ export default function LandingClient() {
             <p className="mt-5 text-lg leading-relaxed text-[var(--pad-ink-70)]">
               {t.landing.accountsIntro}
             </p>
-            <ul className="mt-6 space-y-3 text-left leading-relaxed text-[var(--pad-ink-70)]">
+            <ul className="mt-6 space-y-3 text-start leading-relaxed text-[var(--pad-ink-70)]">
               {[t.landing.accountsB1, t.landing.accountsB2, t.landing.accountsB3].map((b) => (
                 <li key={b} className="flex items-start gap-3">
                   <Check size={18} className="mt-1 shrink-0 text-[var(--pad-ink)]" />

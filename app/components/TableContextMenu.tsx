@@ -1,6 +1,9 @@
 "use client";
 
-import { useEffect, useRef, useState, useCallback } from "react";
+import { useT } from "./I18nProvider";
+import { uiText } from "@/lib/i18n/ui";
+import { useState, useCallback } from "react";
+import type { Command } from "prosemirror-state";
 import { EditorView } from "prosemirror-view";
 import {
   isInTable, findTable, CellSelection, TableMap,
@@ -27,6 +30,7 @@ interface TableContextMenuProps {
 }
 
 export default function TableContextMenu({ viewRef, children }: TableContextMenuProps) {
+  const t = useT();
   const [inTable, setInTable] = useState(false);
 
   // Sağ tıkta tablo içinde olup olmadığını kontrol et
@@ -36,7 +40,7 @@ export default function TableContextMenu({ viewRef, children }: TableContextMenu
     setInTable(isInTable(v.state));
   }, [viewRef]);
 
-  const run = (cmd: (state: any, dispatch: any) => boolean) => {
+  const run = (cmd: Command) => {
     const v = viewRef.current;
     if (!v) return;
     cmd(v.state, v.dispatch);
@@ -68,53 +72,53 @@ export default function TableContextMenu({ viewRef, children }: TableContextMenu
           <>
             {/* Sütun işlemleri */}
             <ContextMenuSub>
-              <ContextMenuSubTrigger>Column</ContextMenuSubTrigger>
+              <ContextMenuSubTrigger>{uiText(t, "Column")}</ContextMenuSubTrigger>
               <ContextMenuSubContent>
                 <ContextMenuItem onSelect={() => run(addColumnBefore)}>
-                  Insert column left
+                  {t.tableMenu.columnLeft}
                 </ContextMenuItem>
                 <ContextMenuItem onSelect={() => run(addColumnAfter)}>
-                  Insert column right
+                  {t.tableMenu.columnRight}
                 </ContextMenuItem>
                 <ContextMenuSeparator />
                 <ContextMenuItem
                   onSelect={() => run(deleteColumn)}
                   className="text-destructive focus:text-destructive"
                 >
-                  Delete column
+                  {t.tableMenu.deleteColumn}
                 </ContextMenuItem>
               </ContextMenuSubContent>
             </ContextMenuSub>
 
             {/* Satır işlemleri */}
             <ContextMenuSub>
-              <ContextMenuSubTrigger>Row</ContextMenuSubTrigger>
+              <ContextMenuSubTrigger>{uiText(t, "Row")}</ContextMenuSubTrigger>
               <ContextMenuSubContent>
                 <ContextMenuItem onSelect={() => run(addRowBefore)}>
-                  Insert row above
+                  {t.tableMenu.rowAbove}
                 </ContextMenuItem>
                 <ContextMenuItem onSelect={() => run(addRowAfter)}>
-                  Insert row below
+                  {t.tableMenu.rowBelow}
                 </ContextMenuItem>
                 <ContextMenuSeparator />
                 <ContextMenuItem
                   onSelect={() => run(deleteRow)}
                   className="text-destructive focus:text-destructive"
                 >
-                  Delete row
+                  {t.tableMenu.deleteRow}
                 </ContextMenuItem>
               </ContextMenuSubContent>
             </ContextMenuSub>
 
             {/* Hücre işlemleri */}
             <ContextMenuSub>
-              <ContextMenuSubTrigger>Cell</ContextMenuSubTrigger>
+              <ContextMenuSubTrigger>{uiText(t, "Cell")}</ContextMenuSubTrigger>
               <ContextMenuSubContent>
                 <ContextMenuItem onSelect={() => run(mergeCells)}>
-                  Merge cells
+                  {t.tableMenu.mergeCells}
                 </ContextMenuItem>
                 <ContextMenuItem onSelect={() => run(splitCell)}>
-                  Split cell
+                  {t.tableMenu.splitCell}
                 </ContextMenuItem>
               </ContextMenuSubContent>
             </ContextMenuSub>
@@ -123,17 +127,17 @@ export default function TableContextMenu({ viewRef, children }: TableContextMenu
 
             {/* Tablo seçimi */}
             <ContextMenuItem onSelect={selectWholeTable}>
-              Select entire table
+              {uiText(t, "Select entire table")}
             </ContextMenuItem>
 
             <ContextMenuSeparator />
 
             {/* Başlık işlemleri */}
             <ContextMenuItem onSelect={() => run(toggleHeaderRow)}>
-              Toggle header row
+              {t.tableMenu.toggleHeaderRow}
             </ContextMenuItem>
             <ContextMenuItem onSelect={() => run(toggleHeaderColumn)}>
-              Toggle header column
+              {t.tableMenu.toggleHeaderColumn}
             </ContextMenuItem>
 
             <ContextMenuSeparator />
@@ -142,12 +146,12 @@ export default function TableContextMenu({ viewRef, children }: TableContextMenu
               onSelect={() => run(deleteTable)}
               className="text-destructive focus:text-destructive"
             >
-              Delete table
+              {t.tableMenu.deleteTable}
             </ContextMenuItem>
           </>
         ) : (
           <ContextMenuItem disabled className="text-muted-foreground text-xs">
-            Right-click inside a table for table options
+            {t.tableMenu.hint}
           </ContextMenuItem>
         )}
       </ContextMenuContent>

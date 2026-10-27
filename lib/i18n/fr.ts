@@ -1,8 +1,9 @@
 // French dictionary — typed against the English source so missing keys fail to compile.
 
-import type { Dictionary } from "./en";
+import { en, type Dictionary } from "./en";
 
 export const fr: Dictionary = {
+  ui: en.ui,
   locale: {
     label: "Langue",
     en: "English",

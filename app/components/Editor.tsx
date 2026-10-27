@@ -57,6 +57,7 @@ const AuthModal = lazy(() => import("./AuthModal"));
 const ProfileDialog = lazy(() => import("./ProfileDialog"));
 import { toast, Toaster } from "./toast";
 import { useAskDialogs } from "./AskDialogs";
+import { uiText } from "@/lib/i18n/ui";
 import { useT, useLocale } from "./I18nProvider";
 import { isLocale, LOCALE_TAGS, type Dictionary } from "@/lib/i18n";
 import { VARIABLE_INPUT_RULE, resolveVariable, type VariableContext } from "@/lib/doc-variables";
@@ -313,7 +314,8 @@ class TableNodeView {
   constructor(
     node: PMNode,
     private view: EditorView,
-    private getPos: () => number | undefined
+    private getPos: () => number | undefined,
+    handleTitle: string
   ) {
     // prosemirror-tables TableView'ını kullan (column resizing desteği için)
     this.tableView = new TableView(node, 25);
@@ -327,7 +329,7 @@ class TableNodeView {
     this.handle.className = "pm-table-drag-handle";
     this.handle.setAttribute("contenteditable", "false");
     this.handle.draggable = true;
-    this.handle.title = "Drag to move table";
+    this.handle.title = handleTitle;
     this.handle.innerHTML = `<svg width="14" height="14" viewBox="0 0 14 14" fill="currentColor">
       <circle cx="4" cy="3" r="1.2"/><circle cx="10" cy="3" r="1.2"/>
       <circle cx="4" cy="7" r="1.2"/><circle cx="10" cy="7" r="1.2"/>
@@ -689,14 +691,15 @@ function transformCase(text: string, kind: CaseKind): string {
   }
 }
 
-function timeAgo(t: number): string {
+function timeAgo(t: number, locale: string): string {
+  const relative = new Intl.RelativeTimeFormat(locale, { numeric: "auto" });
   const s = Math.floor((Date.now() - t) / 1000);
-  if (s < 60) return "Just now";
+  if (s < 60) return relative.format(0, "second");
   const m = Math.floor(s / 60);
-  if (m < 60) return `${m} minute${m === 1 ? "" : "s"} ago`;
+  if (m < 60) return relative.format(-m, "minute");
   const h = Math.floor(m / 60);
-  if (h < 24) return `${h} hour${h === 1 ? "" : "s"} ago`;
-  return new Date(t).toLocaleString();
+  if (h < 24) return relative.format(-h, "hour");
+  return new Date(t).toLocaleString(locale);
 }
 
 const SHORTCUT_GROUPS: Array<{ title: string; items: Array<[string, string]> }> = [
@@ -1017,11 +1020,11 @@ export default function Editor({
     const q = (slashMenu?.query || "").trim().toLowerCase();
     if (!q) return SLASH_COMMANDS;
     return SLASH_COMMANDS.filter((item) => {
-      if (item.title.toLowerCase().includes(q)) return true;
-      if (item.hint.toLowerCase().includes(q)) return true;
+      if (uiText(t, item.title).toLowerCase().includes(q)) return true;
+      if (uiText(t, item.hint).toLowerCase().includes(q)) return true;
       return item.keywords.some((k) => k.includes(q));
     });
-  }, [slashMenu?.query]);
+  }, [slashMenu?.query, t]);
 
   const getSlashMenuCoords = useCallback((view: EditorView, pos: number) => {
     const coords = view.coordsAtPos(pos);
@@ -1294,7 +1297,10 @@ export default function Editor({
   // recomputed when the language changes.
   useEffect(() => {
     const v = viewRef.current;
-    if (v) setDocInfo(computeDocInfo(v.state, t));
+    if (v) {
+      setDocInfo(computeDocInfo(v.state, t));
+      v.dom.querySelectorAll<HTMLElement>(".pm-table-drag-handle").forEach((handle) => { handle.title = uiText(t, "Drag to move table"); });
+    }
   }, [t]);
 
   // Scrolling happens inside .editor-shell rather than the window, so the
@@ -1511,8 +1517,8 @@ export default function Editor({
   }, [applyFiles, commitCurrent, confirmDialog, setDocFromHtml, syncUrlToDoc]);
 
   const createFile = useCallback(() => {
-    return addNewDocument("Untitled document", "<p></p>");
-  }, [addNewDocument]);
+    return addNewDocument(t.sidebar.untitled, "<p></p>");
+  }, [addNewDocument, t.sidebar.untitled]);
 
   const createFromTemplate = useCallback((t: { name: string; html: string }) => {
     return addNewDocument(t.name, t.html);
@@ -1691,7 +1697,7 @@ export default function Editor({
     renameTimer.current = setTimeout(() => {
       const clean = name.trim();
       if (clean && isAuthedRef.current) renameDocument(id, clean).catch(() => {
-        toast.error("Could not save the new name — check your connection.");
+        toast.error(uiText(tRef.current, "Could not save the new name — check your connection."));
       });
     }, 600);
   }, [applyFiles]);
@@ -1759,7 +1765,7 @@ export default function Editor({
     if (!v) return;
     const id = activeIdRef.current;
     const html: string | null = await loadVersionHtml(versionId);
-    if (!html) { toast.error("Could not load this version."); return; }
+    if (!html) { toast.error(tRef.current.toast.versionLoadFailed); return; }
     // Safety snapshot of the current state before overwriting it.
     const currentHtml = serializeDoc(v.state.doc);
     if (isAuthedRef.current) saveVersion(id, currentHtml).catch(() => {});
@@ -1957,7 +1963,7 @@ export default function Editor({
     const view = new EditorView(editorRef.current, {
       state,
       nodeViews: {
-        table: (node, v, getPos) => new TableNodeView(node, v, getPos as () => number | undefined),
+        table: (node, v, getPos) => new TableNodeView(node, v, getPos as () => number | undefined, uiText(tRef.current, "Drag to move table")),
         image: (node, v, getPos) => new ImageNodeView(node, v, getPos as () => number | undefined),
       },
       handleClickOn(view, pos, node, _nodePos, event, direct) {
@@ -2216,7 +2222,7 @@ export default function Editor({
         const deepLinkId = takeDeepLinkId();
         const deepLinked = deepLinkId ? list.find((f) => f.id === deepLinkId) : undefined;
         if (deepLinkId && !deepLinked) {
-          toast.warning("That document link is no longer available — opening your latest document.");
+          toast.warning(tRef.current.toast.deepLinkMissing);
         }
         const activeFile = deepLinked ?? list.find((f) => f.id === active) ?? list[0];
         const activeId = activeFile?.id ?? "";
@@ -2438,7 +2444,7 @@ export default function Editor({
   // Rename from the File menu: focus the title input when it's on screen,
   // otherwise fall back to a dialog (narrow screens hide the header input).
   const renameActiveDoc = useCallback(async () => {
-    const input = document.querySelector<HTMLInputElement>('input[aria-label="Document title"]');
+    const input = document.querySelector<HTMLInputElement>('input[data-document-title]');
     if (input && input.offsetParent !== null) {
       input.focus();
       input.select();
@@ -2482,7 +2488,7 @@ export default function Editor({
     v.state.doc.nodesBetween(from, to, (node, pos) => {
       if (node.type === mySchema.nodes.heading || node.type === mySchema.nodes.code_block) {
         tr.setNodeMarkup(pos, mySchema.nodes.paragraph, {
-          textAlign: node.attrs.textAlign ?? "left", indent: node.attrs.indent ?? 0, lineHeight: null,
+          textAlign: node.attrs.textAlign ?? null, indent: node.attrs.indent ?? 0, lineHeight: null,
         });
       }
     });
@@ -2520,7 +2526,7 @@ export default function Editor({
     v.state.doc.forEach((node) => {
       if (node.type === mySchema.nodes.heading && Number(node.attrs.level) <= 3) {
         const text = node.textContent.trim();
-        if (text && text !== "Contents") entries.push({ level: Number(node.attrs.level), text });
+        if (text && text !== t.insert.tableOfContents && text !== "Contents") entries.push({ level: Number(node.attrs.level), text });
       }
     });
     if (!entries.length) {
@@ -2528,7 +2534,7 @@ export default function Editor({
       return;
     }
     const nodes: PMNode[] = [
-      mySchema.nodes.heading.create({ level: 2 }, mySchema.text("Contents")),
+      mySchema.nodes.heading.create({ level: 2 }, mySchema.text(t.insert.tableOfContents)),
       ...entries.map((e) =>
         mySchema.nodes.paragraph.create({ indent: Math.max(0, e.level - 1) }, mySchema.text(e.text))
       ),
@@ -2540,7 +2546,7 @@ export default function Editor({
     tr.insert(insertPos, nodes);
     v.dispatch(tr.scrollIntoView());
     v.focus();
-  }, []);
+  }, [t.insert.tableOfContents, t.toast.needHeadings]);
 
   // ── Read aloud (speechSynthesis) ─────────────────────────────────────────
   const toggleReadAloud = useCallback(() => {
@@ -2599,8 +2605,8 @@ export default function Editor({
 
   // Browser tab title reflects the active document
   useEffect(() => {
-    document.title = `${docTitle || "Untitled document"} — EDTRpad`;
-  }, [docTitle]);
+    document.title = `${docTitle || t.sidebar.untitled} — EDTRpad`;
+  }, [docTitle, t.sidebar.untitled]);
 
   // Keep the search plugin in sync with the find panel inputs
   useEffect(() => {
@@ -2925,11 +2931,11 @@ export default function Editor({
       {user && !user.emailVerified && !verifyDismissed && (
         <div className="flex items-center gap-2 border-b border-amber-300/60 bg-amber-50 px-3 py-1.5 text-[12px] text-amber-900 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-200">
           <Warning size={15} weight="fill" className="shrink-0" />
-          <span className="min-w-0 flex-1">Please verify your email address to secure your account.</span>
+          <span className="min-w-0 flex-1">{t.verify.banner(user.email)}</span>
           <button type="button" onClick={resendVerification} className="shrink-0 font-medium underline-offset-2 hover:underline">
-            Resend
+            {t.verify.resend}
           </button>
-          <button type="button" onClick={() => setVerifyDismissed(true)} aria-label="Dismiss" className="shrink-0 rounded p-0.5 hover:bg-amber-500/20">
+          <button type="button" onClick={() => setVerifyDismissed(true)} aria-label={t.verify.dismiss} className="shrink-0 rounded p-0.5 hover:bg-amber-500/20">
             <X size={13} />
           </button>
         </div>
@@ -2990,7 +2996,7 @@ export default function Editor({
           <div ref={printRef}>
             {printHeaderFooter && (
               <div className="pm-print-header" aria-hidden="true">
-                <span>{docTitle || "Untitled document"}</span>
+                <span>{docTitle || t.sidebar.untitled}</span>
                 <span>{new Date().toLocaleDateString()}</span>
               </div>
             )}
@@ -3040,26 +3046,26 @@ export default function Editor({
           </PopoverAnchor>
           <PopoverContent side="bottom" align="center" sideOffset={8} className="w-auto p-1">
             <div className="flex items-center gap-1">
-              <button type="button" className="h-8 w-8 rounded hover:bg-accent/70" title="Rotate" aria-label="Rotate" onMouseDown={(e) => e.preventDefault()} onClick={rotateImage}>
+              <button type="button" className="h-8 w-8 rounded hover:bg-accent/70" title={t.image.rotate} aria-label={t.image.rotate} onMouseDown={(e) => e.preventDefault()} onClick={rotateImage}>
                 <ArrowClockwise className="mx-auto h-4 w-4" />
               </button>
-              <button type="button" className="h-8 w-8 rounded hover:bg-accent/70" title="Crop" aria-label="Crop" onMouseDown={(e) => e.preventDefault()} onClick={openCropDialog}>
+              <button type="button" className="h-8 w-8 rounded hover:bg-accent/70" title={t.image.crop} aria-label={t.image.crop} onMouseDown={(e) => e.preventDefault()} onClick={openCropDialog}>
                 <Crop className="mx-auto h-4 w-4" />
               </button>
-              <button type="button" className="h-8 w-8 rounded hover:bg-accent/70" title="Flip" aria-label="Flip" onMouseDown={(e) => e.preventDefault()} onClick={flipImageHorizontal}>
+              <button type="button" className="h-8 w-8 rounded hover:bg-accent/70" title={t.image.flipHorizontal} aria-label={t.image.flipHorizontal} onMouseDown={(e) => e.preventDefault()} onClick={flipImageHorizontal}>
                 <FlipHorizontal className="mx-auto h-4 w-4" />
               </button>
-              <button type="button" className="h-8 w-8 rounded hover:bg-accent/70" title="Flip Vertical" aria-label="Flip Vertical" onMouseDown={(e) => e.preventDefault()} onClick={flipImageVertical}>
+              <button type="button" className="h-8 w-8 rounded hover:bg-accent/70" title={t.image.flipVertical} aria-label={t.image.flipVertical} onMouseDown={(e) => e.preventDefault()} onClick={flipImageVertical}>
                 <FlipVertical className="mx-auto h-4 w-4" />
               </button>
               <div className="mx-1 h-5 w-px bg-border" />
-              <button type="button" className="h-8 w-8 rounded hover:bg-accent/70" title="Align Left" aria-label="Align Left" onMouseDown={(e) => e.preventDefault()} onClick={() => setImageAlign("left")}>
+              <button type="button" className="h-8 w-8 rounded hover:bg-accent/70" title={t.image.alignLeft} aria-label={t.image.alignLeft} onMouseDown={(e) => e.preventDefault()} onClick={() => setImageAlign("left")}>
                 <TextAlignLeft className="mx-auto h-4 w-4" />
               </button>
-              <button type="button" className="h-8 w-8 rounded hover:bg-accent/70" title="Align Center" aria-label="Align Center" onMouseDown={(e) => e.preventDefault()} onClick={() => setImageAlign("center")}>
+              <button type="button" className="h-8 w-8 rounded hover:bg-accent/70" title={t.image.alignCenter} aria-label={t.image.alignCenter} onMouseDown={(e) => e.preventDefault()} onClick={() => setImageAlign("center")}>
                 <TextAlignCenter className="mx-auto h-4 w-4" />
               </button>
-              <button type="button" className="h-8 w-8 rounded hover:bg-accent/70" title="Align Right" aria-label="Align Right" onMouseDown={(e) => e.preventDefault()} onClick={() => setImageAlign("right")}>
+              <button type="button" className="h-8 w-8 rounded hover:bg-accent/70" title={t.image.alignRight} aria-label={t.image.alignRight} onMouseDown={(e) => e.preventDefault()} onClick={() => setImageAlign("right")}>
                 <TextAlignRight className="mx-auto h-4 w-4" />
               </button>
             </div>
@@ -3124,6 +3130,7 @@ export default function Editor({
             </h3>
             <input
               autoFocus
+              dir="ltr"
               value={linkDialog.value}
               onChange={(e) => setLinkDialog((prev) => prev ? { ...prev, value: e.target.value } : prev)}
               onKeyDown={(e) => {
@@ -3138,7 +3145,7 @@ export default function Editor({
                 <button
                   type="button"
                   onClick={removeLink}
-                  className="mr-auto rounded px-2 py-1.5 text-xs text-destructive hover:bg-destructive/10"
+                  className="me-auto rounded px-2 py-1.5 text-xs text-destructive hover:bg-destructive/10"
                 >
                   {t.dialog.removeLink}
                 </button>
@@ -3181,7 +3188,7 @@ export default function Editor({
             href={linkCard.href}
             target="_blank"
             rel="noopener noreferrer"
-            aria-label="Open link in new tab"
+            aria-label={uiText(t, "Open link in new tab")}
             className="rounded p-1 hover:bg-accent focus-visible:outline-2 focus-visible:outline-ring"
           >
             <ArrowSquareOut size={14} />
@@ -3189,7 +3196,7 @@ export default function Editor({
           <button
             type="button"
             onClick={editLinkFromCard}
-            aria-label="Edit link"
+            aria-label={uiText(t, "Edit link")}
             className="rounded p-1 hover:bg-accent focus-visible:outline-2 focus-visible:outline-ring"
           >
             <PencilSimple size={14} />
@@ -3197,7 +3204,7 @@ export default function Editor({
           <button
             type="button"
             onClick={removeLinkFromCard}
-            aria-label="Remove link"
+            aria-label={t.dialog.removeLink}
             className="rounded p-1 hover:bg-destructive/15 hover:text-destructive focus-visible:outline-2 focus-visible:outline-ring"
           >
             <LinkBreak size={14} />
@@ -3329,12 +3336,12 @@ export default function Editor({
                   data-slash-index={idx}
                   onMouseDown={(e) => e.preventDefault()}
                   onClick={() => runSlashCommand(item.id)}
-                  className={`w-full text-left rounded px-2 py-1.5 ${
+                  className={`w-full text-start rounded px-2 py-1.5 ${
                     idx === slashMenu.selected ? "bg-accent text-accent-foreground" : "hover:bg-accent/60"
                   }`}
                 >
-                  <div className="text-sm font-medium">{item.title}</div>
-                  <div className="text-xs text-muted-foreground">{item.hint}</div>
+                  <div className="text-sm font-medium">{uiText(t, item.title)}</div>
+                  <div className="text-xs text-muted-foreground">{uiText(t, item.hint)}</div>
                 </button>
               ))}
             </div>
@@ -3418,13 +3425,13 @@ export default function Editor({
                   <button
                     type="button"
                     className="inline-flex h-6 items-center gap-1 rounded border border-input bg-background px-1.5"
-                    title="Paper background color"
+                    title={uiText(t, "Paper background color")}
                   >
                     <span
                       className="inline-block h-3 w-3 rounded border border-black/15"
                       style={{ backgroundColor: paperBgColor }}
                     />
-                    <span className="text-[10px] uppercase text-muted-foreground">{paperBgColor}</span>
+                    <span dir="ltr" className="text-[10px] uppercase text-muted-foreground">{paperBgColor}</span>
                   </button>
                 </PopoverTrigger>
                 <PopoverContent side="top" align="end" className="w-auto p-2 space-y-2">
@@ -3454,7 +3461,7 @@ export default function Editor({
                       className="h-7 rounded border border-input bg-background px-2 text-[11px] hover:bg-accent/70"
                       onClick={() => setPaperBgColor("#ccd6e5")}
                     >
-                      Reset
+                      {uiText(t, "Reset")}
                     </button>
                   </div>
                 </PopoverContent>
@@ -3464,8 +3471,8 @@ export default function Editor({
             <button
               type="button"
               onClick={toggleDark}
-              title={isDark ? "Switch to light mode" : "Switch to dark mode"}
-              aria-label="Toggle dark mode"
+              title={uiText(t, isDark ? "Switch to light mode" : "Switch to dark mode")}
+              aria-label={t.status.toggleDarkMode}
               className="inline-flex h-6 w-6 items-center justify-center rounded border border-input bg-background text-muted-foreground hover:bg-accent/70 hover:text-foreground transition-colors"
             >
               {isDark ? <Sun size={14} /> : <Moon size={14} />}
@@ -3520,9 +3527,9 @@ export default function Editor({
                       <button
                         type="button"
                         onClick={() => previewVersion(ver.id)}
-                        className="min-w-0 flex-1 truncate text-left text-sm hover:underline"
+                        className="min-w-0 flex-1 truncate text-start text-sm hover:underline"
                       >
-                        {timeAgo(ver.t)}
+                        {timeAgo(ver.t, LOCALE_TAGS[locale])}
                       </button>
                       <button
                         type="button"
@@ -3566,11 +3573,11 @@ export default function Editor({
             <div className="max-h-[60vh] space-y-4 overflow-y-auto">
               {SHORTCUT_GROUPS.map((group) => (
                 <div key={group.title}>
-                  <p className="mb-1.5 text-[11px] font-medium uppercase tracking-wide text-muted-foreground">{group.title}</p>
+                  <p className="mb-1.5 text-[11px] font-medium uppercase tracking-wide text-muted-foreground">{uiText(t, group.title)}</p>
                   <div className="space-y-1">
                     {group.items.map(([keys, label]) => (
                       <div key={keys} className="flex items-center justify-between gap-4">
-                        <span className="text-sm">{label}</span>
+                        <span className="text-sm">{uiText(t, label)}</span>
                         <kbd className="shrink-0 rounded border border-border bg-muted px-1.5 py-0.5 font-mono text-[10px] text-muted-foreground">
                           {keys}
                         </kbd>

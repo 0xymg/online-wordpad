@@ -380,7 +380,7 @@ body {
 
 .pm-page .ProseMirror ul,
 .pm-page .ProseMirror ol,
-.pm-page ul, .pm-page ol { padding-left: 2em; margin: 0.5em 0; }
+.pm-page ul, .pm-page ol { padding-inline-start: 2em; margin: 0.5em 0; }
 
 .pm-page .ProseMirror li,
 .pm-page li {
@@ -407,7 +407,7 @@ body {
 .pm-page ul > li::before {
   content: "•";
   position: absolute;
-  left: -1.15em;
+  inset-inline-start: -1.15em;
   top: 0.05em;
 }
 
@@ -434,17 +434,17 @@ body {
 .pm-page ol > li::before {
   content: counter(pm-ol-counter) ".";
   position: absolute;
-  left: -1.55em;
+  inset-inline-start: -1.55em;
   min-width: 1.2em;
-  text-align: right;
+  text-align: end;
   font-weight: 700;
 }
 
 .pm-page .ProseMirror blockquote,
 .pm-page blockquote {
-  border-left: 3px solid #ccc;
-  margin-left: 0;
-  padding-left: 1em;
+  border-inline-start: 3px solid #ccc;
+  margin-inline-start: 0;
+  padding-inline-start: 1em;
   color: #555;
 }
 
@@ -928,7 +928,7 @@ kbd.hero-kbd {
 .template-preview h2 { font-size: 16pt; font-weight: 700; margin: 14px 0 5px; }
 .template-preview h3 { font-size: 13pt; font-weight: 700; margin: 10px 0 4px; }
 .template-preview p { margin: 6px 0; }
-.template-preview ul, .template-preview ol { margin: 6px 0; padding-left: 32px; }
+.template-preview ul, .template-preview ol { margin: 6px 0; padding-inline-start: 32px; }
 .template-preview ul { list-style: disc; }
 .template-preview ol { list-style: decimal; }
 .template-preview hr { margin: 12px 0; border: 0; border-top: 1px solid #c9d3dd; }
@@ -941,13 +941,13 @@ kbd.hero-kbd {
 .template-preview td, .template-preview th {
   border: 1px solid #c9d3dd;
   padding: 4px 8px;
-  text-align: left;
+  text-align: start;
   vertical-align: top;
 }
 .template-preview th { background: #eef3f8; font-weight: 700; }
 .template-preview blockquote {
-  border-left: 3px solid #c9d3dd;
+  border-inline-start: 3px solid #c9d3dd;
   margin: 8px 0;
-  padding-left: 12px;
+  padding-inline-start: 12px;
   color: #4b5563;
 }

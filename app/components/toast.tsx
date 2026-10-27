@@ -1,5 +1,6 @@
 "use client";
 
+import { useT } from "./I18nProvider";
 import { useEffect, useState } from "react";
 import { CheckCircle, Info, Warning, XCircle, X } from "./icons";
 import { cn } from "@/lib/utils";
@@ -72,6 +73,7 @@ const ICONS: Record<ToastVariant, React.ReactNode> = {
 };
 
 export function Toaster() {
+  const dictionary = useT();
   const [items, setItems] = useState<ToastItem[]>([]);
 
   useEffect(() => {
@@ -122,7 +124,7 @@ export function Toaster() {
                 )}
                 <button
                   type="button"
-                  aria-label="Dismiss notification"
+                  aria-label={dictionary.toast.dismiss}
                   className="shrink-0 rounded p-1 text-gray-400 hover:text-gray-700 focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-gray-500 dark:hover:text-gray-200"
                   onClick={() => dismiss(t.id)}
                 >

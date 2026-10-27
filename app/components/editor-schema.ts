@@ -9,10 +9,10 @@ import { addListNodes } from "prosemirror-schema-list";
 import { tableNodes } from "prosemirror-tables";
 
 const normalizeTextAlign = (value: string | null | undefined) => {
-  if (!value) return "left";
+  if (!value) return null;
   const v = value.trim().toLowerCase();
   if (v === "left" || v === "center" || v === "right" || v === "justify") return v;
-  return "left";
+  return null;
 };
 
 export const normalizeIndent = (value: unknown) => {
@@ -41,14 +41,14 @@ const normalizeLineHeight = (value: unknown): string | null => {
 const paragraphNodeSpec = {
   ...basicSchema.spec.nodes.get("paragraph"),
   attrs: {
-    textAlign: { default: "left" },
+    textAlign: { default: null },
     indent: { default: 0 },
     lineHeight: { default: null },
   },
   parseDOM: [{
     tag: "p",
     getAttrs(dom: Node | string) {
-      if (typeof dom === "string") return { textAlign: "left", indent: 0, lineHeight: null };
+      if (typeof dom === "string") return { textAlign: null, indent: 0, lineHeight: null };
       const el = dom as HTMLElement;
       return {
         textAlign: normalizeTextAlign(el.style.textAlign),
@@ -62,10 +62,10 @@ const paragraphNodeSpec = {
     const indent = normalizeIndent(node.attrs.indent);
     const lineHeight = normalizeLineHeight(node.attrs.lineHeight);
     const style: string[] = [];
-    if (textAlign !== "left") style.push(`text-align:${textAlign}`);
+    if (textAlign) style.push(`text-align:${textAlign}`);
     if (indent > 0) style.push(`margin-left:${indent * 24}px`);
     if (lineHeight) style.push(`line-height:${lineHeight}`);
-    const attrs: Record<string, string> = {};
+    const attrs: Record<string, string> = { dir: "auto" };
     if (style.length) attrs.style = style.join(";");
     if (indent > 0) attrs["data-indent"] = String(indent);
     return ["p", attrs, 0];
@@ -76,14 +76,14 @@ const headingNodeSpec = {
   ...basicSchema.spec.nodes.get("heading"),
   attrs: {
     level: { default: 1 },
-    textAlign: { default: "left" },
+    textAlign: { default: null },
     indent: { default: 0 },
     lineHeight: { default: null },
   },
   parseDOM: [1, 2, 3, 4, 5, 6].map((level) => ({
     tag: `h${level}`,
     getAttrs(dom: Node | string) {
-      if (typeof dom === "string") return { level, textAlign: "left", indent: 0, lineHeight: null };
+      if (typeof dom === "string") return { level, textAlign: null, indent: 0, lineHeight: null };
       const el = dom as HTMLElement;
       return {
         level,
@@ -99,10 +99,10 @@ const headingNodeSpec = {
     const indent = normalizeIndent(node.attrs.indent);
     const lineHeight = normalizeLineHeight(node.attrs.lineHeight);
     const style: string[] = [];
-    if (textAlign !== "left") style.push(`text-align:${textAlign}`);
+    if (textAlign) style.push(`text-align:${textAlign}`);
     if (indent > 0) style.push(`margin-left:${indent * 24}px`);
     if (lineHeight) style.push(`line-height:${lineHeight}`);
-    const attrs: Record<string, string> = {};
+    const attrs: Record<string, string> = { dir: "auto" };
     if (style.length) attrs.style = style.join(";");
     if (indent > 0) attrs["data-indent"] = String(indent);
     return [`h${level}`, attrs, 0];

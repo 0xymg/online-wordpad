@@ -1,5 +1,6 @@
 "use client";
 
+import { useT } from "./I18nProvider";
 import { useCallback, useState } from "react";
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
@@ -41,6 +42,7 @@ type PromptState = PromptOpts & { resolve: (value: string | null) => void };
  *   if (!(await confirm({ title: "…" }))) return;
  */
 export function useAskDialogs() {
+  const t = useT();
   const [confirmState, setConfirmState] = useState<ConfirmState | null>(null);
   const [promptState, setPromptState] = useState<PromptState | null>(null);
   const [promptValue, setPromptValue] = useState("");
@@ -85,7 +87,7 @@ export function useAskDialogs() {
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel onClick={() => settleConfirm(false)}>
-              {confirmState?.cancelLabel ?? "Cancel"}
+              {confirmState?.cancelLabel ?? t.dialog.cancel}
             </AlertDialogCancel>
             {/* Has to go through `variant`, not a className override: the
                 action renders asChild, and Radix's Slot concatenates class
@@ -97,7 +99,7 @@ export function useAskDialogs() {
               onClick={() => settleConfirm(true)}
               variant={confirmState?.destructive ? "destructive" : "default"}
             >
-              {confirmState?.confirmLabel ?? "Continue"}
+              {confirmState?.confirmLabel ?? t.dialog.continue}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -133,10 +135,10 @@ export function useAskDialogs() {
             </div>
             <DialogFooter>
               <Button type="button" variant="outline" onClick={() => settlePrompt(null)}>
-                Cancel
+                {t.dialog.cancel}
               </Button>
               <Button type="submit" disabled={!promptValue.trim()}>
-                {promptState?.confirmLabel ?? "Save"}
+                {promptState?.confirmLabel ?? t.dialog.save}
               </Button>
             </DialogFooter>
           </form>

@@ -3,6 +3,7 @@
 // main bundle. Mirrors the on-screen document: A4 geometry, current
 // orientation/margins, and the editor CSS (globals.css .pm-page rules).
 import React from "react";
+import { resolvedAlignment, textDirection } from "./text-direction";
 import type { Node as PMNode, Mark } from "prosemirror-model";
 import { Document, Page, View, Text, Image, Link, Font, pdf, type DocumentProps } from "@react-pdf/renderer";
 import type { Style } from "@react-pdf/types";
@@ -43,6 +44,12 @@ export function registerPdfFonts(resolve: PdfFontResolver): void {
       ],
     });
   }
+  Font.register({ family: "NotoSansArabic", fonts: [
+    { src: resolve("NotoSansArabic.ttf") },
+    { src: resolve("NotoSansArabic.ttf"), fontWeight: 700 },
+    { src: resolve("NotoSansArabic.ttf"), fontStyle: "italic" },
+    { src: resolve("NotoSansArabic.ttf"), fontWeight: 700, fontStyle: "italic" },
+  ] });
   // The editor never hyphenates; keep words whole (react-pdf hyphenates by default).
   Font.registerHyphenationCallback((word) => [word]);
 }
@@ -140,8 +147,7 @@ function spanStyle(p: MarkProps): Style {
 type Align = "left" | "center" | "right" | "justify";
 
 function blockAlign(node: PMNode): Align {
-  const v = String(node.attrs.textAlign || "left");
-  return (v === "center" || v === "right" || v === "justify" ? v : "left") as Align;
+  return resolvedAlignment(node.attrs.textAlign, node.textContent);
 }
 
 class PdfBuilder {
@@ -168,7 +174,10 @@ class PdfBuilder {
     node.forEach((child) => {
       if (child.isText) {
         const p = readMarks(child.marks);
-        const el = <Text key={this.k()} style={spanStyle(p)}>{child.text || ""}</Text>;
+        const style = spanStyle(p);
+        style.direction = textDirection(node.textContent);
+        if (/[\u0590-\u08ff\ufb1d-\ufdff\ufe70-\ufeff]/u.test(child.text || "")) style.fontFamily = "NotoSansArabic";
+        const el = <Text key={this.k()} style={style}>{child.text || ""}</Text>;
         spans.push(p.link
           ? <Link key={this.k()} src={p.link} style={{ color: "#2563eb", textDecoration: "underline" }}>{el}</Link>
           : el);
@@ -234,8 +243,12 @@ class PdfBuilder {
       fontSize,
       lineHeight: !Number.isNaN(lh) && lh > 0 ? lh : BASE_LINE_HEIGHT,
       textAlign: blockAlign(node),
+      direction: textDirection(node.textContent),
     };
-    if (indent > 0) s.marginLeft = indent * INDENT_STEP_PT;
+    if (indent > 0) {
+      if (textDirection(node.textContent) === "rtl") s.marginRight = indent * INDENT_STEP_PT;
+      else s.marginLeft = indent * INDENT_STEP_PT;
+    }
     return s;
   }
 
@@ -496,7 +509,9 @@ export function buildPdfDocument(doc: PMNode, opts: PdfExportOptions): React.Rea
       >
         {opts.headerFooter && (
           <View fixed style={{ ...hfStyle, top: edgeOffsetPt }}>
-            <Text>{opts.title || "Untitled document"}</Text>
+            <Text style={{
+              ...(textDirection(opts.title) === "rtl" ? { fontFamily: "NotoSansArabic", direction: "rtl" } : {}),
+            }}>{opts.title || "Untitled document"}</Text>
             <Text>{new Date().toLocaleDateString()}</Text>
           </View>
         )}

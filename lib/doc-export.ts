@@ -1,5 +1,6 @@
 // Client-side document exporters: ProseMirror doc → .docx (formatted) and .rtf.
 // Loaded on demand via dynamic import so the docx library stays out of the main bundle.
+import { resolvedAlignment, textDirection } from "./text-direction";
 import type { Node as PMNode, Mark } from "prosemirror-model";
 import {
   Document, Packer, Paragraph, TextRun, HeadingLevel, AlignmentType,
@@ -141,6 +142,7 @@ class DocxBuilder {
         const p = readMarks(child.marks);
         const run = new TextRun({
           text: child.text || "",
+          rightToLeft: textDirection(child.text || "") === "rtl",
           bold: p.bold,
           italics: p.italics,
           underline: p.underline ? {} : undefined,
@@ -184,12 +186,14 @@ class DocxBuilder {
   }
 
   private paragraphOpts(node: PMNode) {
-    const align = ALIGN[String(node.attrs.textAlign || "left")];
+    const rtl = textDirection(node.textContent) === "rtl";
+    const align = ALIGN[resolvedAlignment(node.attrs.textAlign, node.textContent)];
     const indent = Number(node.attrs.indent || 0);
     const lh = node.attrs.lineHeight ? Number.parseFloat(String(node.attrs.lineHeight)) : NaN;
     return {
-      alignment: align !== AlignmentType.LEFT ? align : undefined,
-      indent: indent > 0 ? { left: indent * 360 } : undefined,
+      alignment: align,
+      bidirectional: rtl,
+      indent: indent > 0 ? (rtl ? { right: indent * 360 } : { left: indent * 360 }) : undefined,
       spacing: !Number.isNaN(lh) && lh > 0 ? { line: Math.round(lh * 240) } : undefined,
     };
   }

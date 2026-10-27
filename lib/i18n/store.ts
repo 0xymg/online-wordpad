@@ -82,6 +82,7 @@ export function setStoredLocale(next: Locale): void {
     if (requested !== next || current === next) return;
     current = next;
     document.documentElement.lang = LOCALE_TAGS[next];
+    document.documentElement.dir = next === "ar" ? "rtl" : "ltr";
     for (const listener of listeners) listener();
   };
 

@@ -1,5 +1,6 @@
 "use client";
 
+import { Direction } from "radix-ui";
 import { useCallback, useEffect, useSyncExternalStore } from "react";
 import {
   DEFAULT_LOCALE, LOCALE_TAGS, getDictionary, isLocale, loadDictionary, subscribeDictionaries,
@@ -23,6 +24,7 @@ export function I18nProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     document.documentElement.lang = LOCALE_TAGS[locale];
+    document.documentElement.dir = locale === "ar" ? "rtl" : "ltr";
   }, [locale]);
 
   // Non-English dictionaries are code-split; fetch the active one so `useT()`
@@ -32,7 +34,7 @@ export function I18nProvider({ children }: { children: React.ReactNode }) {
     if (locale !== DEFAULT_LOCALE) loadDictionary(locale).catch(() => {});
   }, [locale]);
 
-  return <>{children}</>;
+  return <Direction.Provider dir={locale === "ar" ? "rtl" : "ltr"}>{children}</Direction.Provider>;
 }
 
 function useLocaleValue(): Locale {
