@@ -11,6 +11,11 @@ const nextConfig: NextConfig = {
   // React Compiler (stable in Next 16.3) — auto-memoizes components; coexists
   // with hand-written React.memo/useCallback. Requires babel-plugin-react-compiler.
   reactCompiler: true,
+  experimental: {
+    // Restored Turbopack build caches can emit stale Tailwind/PostCSS output.
+    // Keep production styles fresh until vercel/next.js#100326 is resolved.
+    turbopackFileSystemCacheForBuild: false,
+  },
 };
 
 export default withBundleAnalyzer(nextConfig);
