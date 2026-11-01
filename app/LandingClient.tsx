@@ -1,6 +1,8 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
+import styles from "./LandingClient.module.css";
 import { useRouter } from "next/navigation";
 import { Fragment, useSyncExternalStore, type ReactNode } from "react";
 import { TextB, Files, Command, Printer, Lock, CloudArrowUp, Check, Lightning, Code } from "./components/icons";
@@ -9,6 +11,14 @@ import { useT, useLocale } from "./components/I18nProvider";
 import { LOCALES, LOCALE_NAMES, LOCALE_TAGS, type Dictionary } from "@/lib/i18n";
 import { formatDate } from "@/lib/doc-variables";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+
+const LANGUAGE_FLAGS: Record<(typeof LOCALES)[number], string> = {
+  en: "🇬🇧",
+  zh: "🇨🇳",
+  tr: "🇹🇷",
+  fr: "🇫🇷",
+  ar: "🇸🇦",
+};
 
 /* The feature cards and FAQ read their copy from the dictionary, so the icons
    and order live here while the words come from the active locale. */
@@ -133,12 +143,21 @@ function renderCredit(template: string): ReactNode {
     }
     if (part === "{by}") {
       return (
-        <span
+        <a
           key={i}
-          className="font-medium text-[var(--pad-ink)]"
+          href="https://312.sh"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="inline-block transition-opacity hover:opacity-70"
         >
-          312
-        </span>
+          <Image
+            src="/312-logo.svg"
+            alt="312"
+            width={35}
+            height={11}
+            className="inline-block h-[0.75em] w-auto align-baseline"
+          />
+        </a>
       );
     }
     return <Fragment key={i}>{part}</Fragment>;
@@ -165,11 +184,11 @@ export default function LandingClient() {
   ];
 
   return (
-    <div className="pad-marketing min-h-screen font-sans">
+    <div className={`pad-marketing min-h-screen font-sans ${styles.landing}`}>
       {/* ── Announcement banner ── */}
-      <div className="border-b border-[var(--pad-border)] text-[13px]">
-        <div className="mx-auto flex max-w-6xl items-center justify-center gap-2 px-6 py-2 text-center">
-          <span className="inline-flex items-center gap-2">
+      <div className={`${styles.announcement} border-b border-[var(--pad-border)] text-[13px]`}>
+        <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-center gap-x-3 gap-y-1 px-5 py-2.5 text-center">
+          <span className="inline-flex min-w-0 items-center gap-2">
             <span className="border border-[var(--pad-border-strong)] px-2 py-0.5 text-[11px] font-medium uppercase tracking-wide text-[var(--pad-ink-70)]">
               {t.landing.announcementNew}
             </span>
@@ -192,7 +211,7 @@ export default function LandingClient() {
             <span className="text-2xl font-bold tracking-tight">EDTR</span>
             <span className="text-lg font-semibold tracking-wider text-[var(--pad-ink-50)]">PAD</span>
           </span>
-          <nav className="absolute left-1/2 hidden -translate-x-1/2 items-center gap-8 text-[13px] text-[var(--pad-ink-50)] sm:flex">
+          <nav className="absolute left-1/2 hidden -translate-x-1/2 items-center gap-6 text-[13px] text-[var(--pad-ink-70)] lg:flex">
             <a href="#slash-menu" className="transition-colors hover:text-[var(--pad-ink)]">{t.landing.navSlash}</a>
             <a href="#variables" className="transition-colors hover:text-[var(--pad-ink)]">{t.landing.navVariables}</a>
             <a href="#features" className="transition-colors hover:text-[var(--pad-ink)]">{t.landing.navFeatures}</a>
@@ -211,25 +230,24 @@ export default function LandingClient() {
 
       <main>
         {/* ── Hero ── */}
-        <section className="relative overflow-hidden px-6 pb-16 pt-20 sm:pt-28">
-          <div className="pad-hero-glow" aria-hidden />
+        <section className={`${styles.hero} relative overflow-hidden px-6 pb-14 pt-14 sm:pt-20`}>
           <div className="relative mx-auto max-w-4xl text-center">
-            <h1 className="pad-display text-[clamp(2.25rem,6.5vw,4rem)]">
+            <h1 className="pad-display text-[clamp(2.5rem,6.5vw,4rem)]">
               {t.landing.heroTitle}
             </h1>
-            <p className="mx-auto mt-7 max-w-2xl text-lg leading-relaxed text-[var(--pad-ink-70)] sm:text-xl">
+            <p className="mx-auto mt-6 max-w-2xl text-base leading-relaxed text-[var(--pad-ink-70)] sm:text-lg">
               {t.landing.heroSubtitle}
             </p>
-            <div className="mt-10 flex flex-col items-center justify-center gap-3 sm:flex-row">
+            <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
               <Link
                 href="/pad"
-                className="w-full bg-[var(--pad-ink)] px-8 py-3.5 text-base font-semibold text-[var(--pad-bg)] transition-opacity hover:opacity-90 sm:w-auto"
+                className={`${styles.primaryAction} w-full bg-[var(--pad-ink)] px-8 py-3.5 text-base font-semibold text-[var(--pad-bg)] transition-opacity hover:opacity-90 sm:w-auto`}
               >
                 {t.landing.heroCtaPrimary}
               </Link>
               <Link
                 href="/pad"
-                className="w-full border border-[var(--pad-border-strong)] px-8 py-3.5 text-base font-medium text-[var(--pad-ink-70)] transition-colors hover:border-[var(--pad-ink)] hover:text-[var(--pad-ink)] sm:w-auto"
+                className={`${styles.secondaryAction} w-full border border-[var(--pad-border-strong)] px-8 py-3.5 text-base font-medium text-[var(--pad-ink)] transition-colors hover:border-[var(--pad-ink)] sm:w-auto`}
               >
                 {t.landing.heroCtaSecondary}
               </Link>
@@ -240,22 +258,11 @@ export default function LandingClient() {
           </div>
 
           {/* ── Live editor preview ── */}
-          <div id="hero-editor" className="relative mx-auto mt-16 max-w-5xl scroll-mt-24">
-            {/* text-gray-900 matters: the surrounding page is cream-on-dark and
-                the preview's icons inherit currentColor. */}
+          <div id="hero-editor" className="relative mx-auto mt-12 max-w-5xl scroll-mt-24">
             <div
-              className="preview-animated-shadow light overflow-hidden border border-[var(--pad-border-strong)] text-gray-900"
+              className={`${styles.editorPreview} light overflow-hidden border border-[var(--pad-border-strong)] text-gray-900`}
               style={{ colorScheme: "light" }}
             >
-              {/* Browser chrome */}
-              <div className="flex items-center gap-2 border-b border-gray-200 bg-gray-100 px-4 py-2.5">
-                <span className="size-3 rounded-full bg-[#ff5f57]" />
-                <span className="size-3 rounded-full bg-[#febc2e]" />
-                <span className="size-3 rounded-full bg-[#28c840]" />
-                <span className="ms-3 max-w-xs flex-1 bg-white px-3 py-1 text-xs text-gray-400">
-                  wordpad.info/pad
-                </span>
-              </div>
               {/* Real Toolbar + a real, typeable ProseMirror page */}
               <ToolbarPreviewClient />
             </div>
@@ -263,102 +270,126 @@ export default function LandingClient() {
         </section>
 
         {/* ── Trust bar ── */}
-        <section className="border-y border-[var(--pad-border)]">
-          <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-center gap-y-2 px-6 py-5 text-center text-sm text-[var(--pad-ink-70)]">
-            <DotSeparated items={t.landing.trustItems} />
-          </div>
+        <section className={`${styles.trust} border-y border-[var(--pad-border)]`}>
+          <ul className={`${styles.trustItems} mx-auto max-w-6xl`}>
+            {t.landing.trustItems.map((item) => (
+              <li key={item}>
+                <Check size={18} aria-hidden="true" />
+                <span>{item}</span>
+              </li>
+            ))}
+          </ul>
         </section>
 
         {/* ── Slash menu: the heart of the page ── */}
         <section id="slash-menu" className="scroll-mt-16 px-6 py-24">
-          <div className="mx-auto max-w-3xl">
-            <div className="mx-auto flex size-14 items-center justify-center border border-[var(--pad-border)] bg-[var(--pad-surface)]">
-              <Command size={26} weight="duotone" />
-            </div>
-            <h2 className="pad-display mt-6 text-center text-[clamp(2rem,5vw,3rem)]">
-              {t.landing.slashTitle}
-            </h2>
-            <div className="mt-8 space-y-5 leading-relaxed text-[var(--pad-ink-70)]">
-              <p>{t.landing.slashP1}</p>
-              <p>{t.landing.slashP2}</p>
-              <p>{renderKbd(t.landing.slashP3)}</p>
+          <div className={`${styles.splitSection} mx-auto max-w-6xl`}>
+            <div className={styles.splitCopy}>
+              <div className="flex size-12 items-center justify-center border border-[var(--pad-border)] bg-[var(--pad-surface)]">
+                <Command size={26} weight="duotone" />
+              </div>
+              <h2 className="pad-display mt-6 text-start text-[clamp(2rem,5vw,3rem)]">
+                {renderKbd(t.landing.slashTitle)}
+              </h2>
+              <div className="mt-8 space-y-5 leading-relaxed text-[var(--pad-ink-70)]">
+                <p>{t.landing.slashP1}</p>
+                <p>{t.landing.slashP2}</p>
+                <p>{renderKbd(t.landing.slashP3)}</p>
+              </div>
+
             </div>
 
-            {/* Demo strip: each chip inserts its thing into the hero editor. */}
-            <div className="mt-10 flex flex-wrap items-center justify-center gap-3">
-              {DEMO_CHIPS.map((chip) => (
-                <button
-                  key={chip.label}
-                  type="button"
-                  onClick={() => heroCommand(chip.command)}
-                  className="border border-[var(--pad-border-strong)] px-4 py-2 font-mono text-sm text-[var(--pad-ink-70)] transition-colors hover:border-[var(--pad-ink)] hover:text-[var(--pad-ink)]"
+            {/* Each command runs in the live hero editor. */}
+            <div className={styles.commandPanel}>
+              <div className={styles.panelHeading}>
+                <kbd className={styles.slashKey} aria-hidden="true">/</kbd>
+                <span>{t.landing.navSlash}</span>
+                <Command size={18} weight="duotone" aria-hidden="true" />
+              </div>
+              <div className={styles.commandList}>
+                {DEMO_CHIPS.map((chip) => (
+                  <button
+                    key={chip.label}
+                    type="button"
+                    onClick={() => heroCommand(chip.command)}
+                    className={styles.commandItem}
+                  >
+                    <span>{chip.label}</span>
+                    <span aria-hidden="true" className={styles.commandArrow}>↵</span>
+                  </button>
+                ))}
+                <Link
+                  href="/pad"
+                  className={styles.commandItem}
                 >
-                  {chip.label}
+                  <span>/export</span>
+                  <span aria-hidden="true" className={styles.commandArrow}>→</span>
+                </Link>
+              </div>
+              <div className={styles.panelFooter}>
+                <button
+                  type="button"
+                  onClick={() => heroCommand("focus")}
+                  className="font-medium underline underline-offset-4 decoration-[var(--pad-border-strong)] transition-colors hover:decoration-current"
+                >
+                  {t.landing.slashTryLink}
                 </button>
-              ))}
-              <Link
-                href="/pad"
-                className="border border-[var(--pad-border-strong)] px-4 py-2 font-mono text-sm text-[var(--pad-ink-50)] transition-colors hover:border-[var(--pad-ink)] hover:text-[var(--pad-ink)]"
-              >
-                /export
-              </Link>
-            </div>
-            <div className="mt-6 text-center">
-              <button
-                type="button"
-                onClick={() => heroCommand("focus")}
-                className="font-medium underline underline-offset-4 decoration-[var(--pad-border-strong)] transition-colors hover:decoration-current"
-              >
-                {t.landing.slashTryLink}
-              </button>
+              </div>
             </div>
           </div>
         </section>
 
         {/* ── Variables ── */}
-        <section id="variables" className="scroll-mt-16 border-t border-[var(--pad-border)] px-6 py-24">
-          <div className="mx-auto max-w-3xl">
-            <div className="mx-auto flex size-14 items-center justify-center border border-[var(--pad-border)] bg-[var(--pad-surface)]">
-              <Code size={26} weight="duotone" />
-            </div>
-            <h2 className="pad-display mt-6 text-center text-[clamp(2rem,5vw,3rem)]">
-              {renderKbd(t.landing.variablesTitle)}
-            </h2>
-            <div className="mt-8 space-y-5 leading-relaxed text-[var(--pad-ink-70)]">
-              <p>{t.landing.variablesP1}</p>
-              <p>{t.landing.variablesP2}</p>
-              <p>{t.landing.variablesP3}</p>
-            </div>
+        <section id="variables" className={`${styles.softSection} scroll-mt-16 border-t border-[var(--pad-border)] px-6 py-24`}>
+          <div className={`${styles.splitSection} mx-auto max-w-6xl`}>
+            <div className={styles.splitCopy}>
+              <div className="flex size-12 items-center justify-center border border-[var(--pad-border)] bg-[var(--pad-surface)]">
+                <Code size={26} weight="regular" />
+              </div>
+              <h2 className="pad-display mt-6 text-start text-[clamp(2rem,5vw,3rem)]">
+                {renderKbd(t.landing.variablesTitle)}
+              </h2>
+              <div className="mt-8 space-y-5 leading-relaxed text-[var(--pad-ink-70)]">
+                <p>{t.landing.variablesP1}</p>
+                <p>{t.landing.variablesP2}</p>
+                <p>{t.landing.variablesP3}</p>
+              </div>
 
-            <dl className="mt-10 border-y border-[var(--pad-border)]">
-              {variableRows.map((row) => (
-                <div
-                  key={row.token}
-                  className="flex flex-wrap items-baseline justify-between gap-x-6 gap-y-1 border-b border-[var(--pad-border)] py-3 last:border-b-0"
+              <div className="mt-8">
+                <Link
+                  href="/pad"
+                  className="font-medium underline underline-offset-4 decoration-[var(--pad-border-strong)] transition-colors hover:decoration-current"
                 >
-                  <dt className="font-mono text-sm text-[var(--pad-ink)]">{row.token}</dt>
-                  <dd
-                    className={
-                      row.literal
-                        ? "text-sm italic text-[var(--pad-ink-50)]"
-                        : "font-mono text-sm text-[var(--pad-ink-70)]"
-                    }
+                  {t.landing.variablesCta}
+                </Link>
+              </div>
+            </div>
+            <div className={styles.variablePanel}>
+              <div className={styles.panelHeading}>
+                <Code size={20} weight="regular" aria-hidden="true" />
+                <span>{t.landing.navVariables}</span>
+              </div>
+              <dl className={styles.variableTable}>
+                {variableRows.map((row) => (
+                  <div
+                    key={row.token}
+                    className="flex flex-wrap items-baseline justify-between gap-x-6 gap-y-1 border-b border-[var(--pad-border)] px-5 py-4 last:border-b-0"
                   >
-                    {/* Empty until hydration fills the date in — the space keeps
-                        the row from changing height when it arrives. */}
-                    {row.value || "\u00A0"}
-                  </dd>
-                </div>
-              ))}
-            </dl>
-
-            <div className="mt-8 text-center">
-              <Link
-                href="/pad"
-                className="font-medium underline underline-offset-4 decoration-[var(--pad-border-strong)] transition-colors hover:decoration-current"
-              >
-                {t.landing.variablesCta}
-              </Link>
+                    <dt className="font-mono text-sm text-[var(--pad-ink)]">{row.token}</dt>
+                    <dd
+                      className={
+                        row.literal
+                          ? "text-sm italic text-[var(--pad-ink-50)]"
+                          : "font-mono text-sm text-[var(--pad-ink-70)]"
+                      }
+                    >
+                      {/* Empty until hydration fills the date in — the space keeps
+                          the row from changing height when it arrives. */}
+                      {row.value || "\u00A0"}
+                    </dd>
+                  </div>
+                ))}
+              </dl>
             </div>
           </div>
         </section>
@@ -389,12 +420,12 @@ export default function LandingClient() {
         </section>
 
         {/* ── Comparison table ── */}
-        <section id="comparison" className="border-t border-[var(--pad-border)] px-6 py-24">
+        <section id="comparison" className={`${styles.softSection} border-t border-[var(--pad-border)] px-6 py-24`}>
           <div className="mx-auto max-w-4xl">
             <h2 className="pad-display text-center text-[clamp(2rem,5vw,3rem)]">
               {t.landing.compareTitle}
             </h2>
-            <div className="mt-12 overflow-x-auto border border-[var(--pad-border)]">
+            <div className={`${styles.comparison} mt-12 overflow-x-auto border border-[var(--pad-border)]`}>
               <table className="w-full min-w-[640px] border-collapse text-sm">
                 <thead>
                   <tr className="border-b border-[var(--pad-border)]">
@@ -442,6 +473,11 @@ export default function LandingClient() {
             <p className="mt-4 text-center text-xs text-[var(--pad-ink-50)]">
               {t.landing.compareCaption}
             </p>
+            <nav aria-label={t.landing.navGuides} className="mt-6 flex flex-wrap justify-center gap-x-6 gap-y-3 text-sm">
+              <Link href="/guides/online-word-alternative" className="underline underline-offset-4 hover:text-[var(--pad-ink-70)]">{t.landing.footerWordAlternative}</Link>
+              <Link href="/guides/open-docx-online" className="underline underline-offset-4 hover:text-[var(--pad-ink-70)]">{t.landing.footerOpenDocx}</Link>
+              <Link href="/guides/google-docs-alternative" className="underline underline-offset-4 hover:text-[var(--pad-ink-70)]">{t.landing.footerGoogleDocsAlternative}</Link>
+            </nav>
           </div>
         </section>
 
@@ -456,7 +492,7 @@ export default function LandingClient() {
               {featureList(t).map((f) => (
                 <div
                   key={f.title}
-                  className="bg-[var(--pad-bg)] p-8 transition-colors hover:bg-[var(--pad-surface)]"
+                  className={`${styles.featureCard} bg-[var(--pad-bg)] p-8 transition-colors hover:bg-[var(--pad-surface)]`}
                 >
                   <div className="mb-4 flex size-10 items-center justify-center border border-[var(--pad-border)] bg-[var(--pad-surface-2)]">
                     <f.Icon size={20} weight="duotone" />
@@ -474,7 +510,7 @@ export default function LandingClient() {
         </section>
 
         {/* ── Privacy ── */}
-        <section id="privacy" className="border-t border-[var(--pad-border)] px-6 py-24">
+        <section id="privacy" className={`${styles.softSection} border-t border-[var(--pad-border)] px-6 py-24`}>
           <div className="mx-auto flex max-w-3xl flex-col items-center gap-5 text-center">
             <div className="flex size-14 items-center justify-center border border-[var(--pad-border)] bg-[var(--pad-surface)]">
               <Lock size={26} weight="duotone" />
@@ -533,7 +569,7 @@ export default function LandingClient() {
             <div className="mx-auto max-w-2xl text-center">
               <h2 className="pad-display text-[clamp(2rem,5vw,3rem)]">{t.landing.howTitle}</h2>
             </div>
-            <div className="mt-14 grid gap-10 sm:grid-cols-3">
+            <div className={`${styles.steps} mt-12 grid gap-8 sm:grid-cols-3`}>
               {[
                 { step: "1", title: t.landing.howStep1Title, desc: t.landing.howStep1Desc },
                 { step: "2", title: t.landing.howStep2Title, desc: t.landing.howStep2Desc },
@@ -593,7 +629,7 @@ export default function LandingClient() {
         <section id="faq" className="border-t border-[var(--pad-border)] px-6 py-24">
           <div className="mx-auto max-w-3xl">
             <h2 className="pad-display text-center text-[clamp(2rem,5vw,3rem)]">{t.landing.faqTitle}</h2>
-            <div className="mt-12 divide-y divide-[var(--pad-border)] border-y border-[var(--pad-border)]">
+            <div className={`${styles.faq} mt-12 divide-y divide-[var(--pad-border)] border-y border-[var(--pad-border)]`}>
               {faqList(t).map((faq) => (
                 <details key={faq.q} className="group">
                   <summary className="flex cursor-pointer list-none items-center justify-between gap-4 py-5 font-medium transition-colors hover:text-[var(--pad-ink)]">
@@ -610,7 +646,7 @@ export default function LandingClient() {
         </section>
 
         {/* ── CTA ── */}
-        <section className="border-t border-[var(--pad-border)] px-6 py-24">
+        <section className={`${styles.softSection} border-t border-[var(--pad-border)] px-6 py-24`}>
           <div className="mx-auto max-w-3xl text-center">
             <h2 className="pad-display text-[clamp(2rem,5vw,3.25rem)]">{t.landing.ctaTitle}</h2>
             <Link
@@ -652,16 +688,13 @@ export default function LandingClient() {
                 </SelectTrigger>
                 <SelectContent align="start">
                   {LOCALES.map((code) => (
-                    <SelectItem key={code} value={code} className="text-[13px]">
-                      {LOCALE_NAMES[code]}
+                    <SelectItem key={code} value={code} textValue={LOCALE_NAMES[code]} className="text-[13px]">
+                      <span aria-hidden="true">{LANGUAGE_FLAGS[code]}</span>
+                      <span>{LOCALE_NAMES[code]}</span>
                     </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
-              <nav aria-label={t.locale.label} className="mt-3 flex gap-3 text-[13px] text-[var(--pad-ink-50)]">
-                <Link href="/" hrefLang="en" lang="en" onClick={(event) => { event.preventDefault(); setLocale("en"); }} className="underline underline-offset-4">English</Link>
-                <Link href="/ar" hrefLang="ar" lang="ar" className="underline underline-offset-4">العربية</Link>
-              </nav>
             </div>
           </div>
           <div className="flex flex-col gap-10 sm:flex-row sm:gap-20">
@@ -673,8 +706,10 @@ export default function LandingClient() {
               <Link href="/pad" className="transition-colors hover:text-[var(--pad-ink)]">{t.landing.footerEditor}</Link>
               <Link href="/guides" className="transition-colors hover:text-[var(--pad-ink)]">{t.landing.footerGuides}</Link>
               <Link href="/guides/wordpad-alternative" className="transition-colors hover:text-[var(--pad-ink)]">{t.landing.footerWordAlt}</Link>
+              <Link href="/guides/online-word-alternative" className="transition-colors hover:text-[var(--pad-ink)]">{t.landing.footerWordAlternative}</Link>
+              <Link href="/guides/google-docs-alternative" className="transition-colors hover:text-[var(--pad-ink)]">{t.landing.footerGoogleDocsAlternative}</Link>
               <Link href="/guides/wordpad-online" className="transition-colors hover:text-[var(--pad-ink)]">{t.landing.footerWordpadOnline}</Link>
-              <Link href="/guides/export-to-word-docx-online" className="transition-colors hover:text-[var(--pad-ink)]">{t.landing.footerOpenDocx}</Link>
+              <Link href="/guides/open-docx-online" className="transition-colors hover:text-[var(--pad-ink)]">{t.landing.footerOpenDocx}</Link>
               <a href="/llms.txt" className="transition-colors hover:text-[var(--pad-ink)]">llms.txt</a>
             </div>
           </div>
@@ -705,10 +740,10 @@ export default function LandingClient() {
         </div>
         <div className="mx-auto mt-10 max-w-6xl border-t border-[var(--pad-border)] pt-6 text-sm text-[var(--pad-ink-50)]">
           <div className="flex flex-col items-center justify-between gap-3 sm:flex-row">
-            <span>
-              {t.landing.footerCopyright(new Date().getFullYear())}{" "}
-              {t.landing.footerTrademark}
-            </span>
+            <div className="space-y-1 text-center sm:text-start">
+              <p>{t.landing.footerCopyright(new Date().getFullYear())}</p>
+              <p>{t.landing.footerTrademark}</p>
+            </div>
             <span className="whitespace-nowrap">{renderCredit(t.landing.footerCredit)}</span>
           </div>
         </div>

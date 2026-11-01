@@ -10,6 +10,8 @@ export interface GuideMeta {
   description: string;
   keywords: string[];
   date: string;
+  updated?: string;
+  related: string[];
 }
 
 export interface Guide extends GuideMeta {
@@ -33,6 +35,8 @@ export function getAllGuides(): GuideMeta[] {
       description: data.description as string,
       keywords: (data.keywords as string[]) ?? [],
       date: data.date as string,
+      updated: data.updated as string | undefined,
+      related: (data.related as string[]) ?? [],
     };
   });
 }
@@ -46,6 +50,8 @@ export function getGuide(slug: string): Guide {
     description: data.description as string,
     keywords: (data.keywords as string[]) ?? [],
     date: data.date as string,
+    updated: data.updated as string | undefined,
+    related: (data.related as string[]) ?? [],
     content,
   };
 }

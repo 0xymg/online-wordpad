@@ -1,6 +1,6 @@
 import { en } from "@/lib/i18n/en";
 import { ar } from "@/lib/i18n/ar";
-import { ARABIC_LANDING_DESCRIPTION, SITE_URL } from "@/lib/landing-seo";
+import { APPLICATION_ID, ARABIC_LANDING_DESCRIPTION, ORGANIZATION_ID, SITE_URL, WEBSITE_ID } from "@/lib/landing-seo";
 
 /** Structured answers and steps share their source with the visible copy. */
 export default function LandingStructuredData({ locale }: { locale: "en" | "ar" }) {
@@ -16,18 +16,32 @@ export default function LandingStructuredData({ locale }: { locale: "en" | "ar" 
   const schemas = [
     {
       "@context": "https://schema.org",
+      "@type": "WebPage",
+      "@id": `${url}#webpage`,
+      url,
+      name: t.landing.heroTitle,
+      inLanguage,
+      isPartOf: { "@id": WEBSITE_ID },
+      mainEntity: { "@id": APPLICATION_ID },
+    },
+    {
+      "@context": "https://schema.org",
       "@type": "WebApplication",
-      "@id": `${url}#application`,
+      "@id": APPLICATION_ID,
       name: "EDTRpad",
       alternateName: locale === "ar"
         ? ["محرر نصوص أون لاين", "وورد باد أون لاين", "بديل وورد مجاني"]
         : ["Online WordPad", "WordPad Online", "Free WordPad Replacement"],
-      url,
+      url: `${SITE_URL}/pad`,
       inLanguage,
+      publisher: { "@id": ORGANIZATION_ID },
+      creator: { "@type": "Organization", name: "312", url: "https://312.sh" },
+      mainEntityOfPage: { "@id": `${url}#webpage` },
+      isAccessibleForFree: true,
       applicationCategory: "ProductivityApplication",
       operatingSystem: "Web",
       offers: { "@type": "Offer", price: "0", priceCurrency: "USD" },
-      description: locale === "ar" ? ARABIC_LANDING_DESCRIPTION : t.help.aboutBody,
+      description: locale === "ar" ? ARABIC_LANDING_DESCRIPTION : t.landing.heroSubtitle,
       featureList: [
         t.landing.navSlash, t.landing.navVariables, t.toolbar.insertTable,
         t.toolbar.insertImage, t.file.exportDocx, t.file.exportPdf, t.file.print,
@@ -47,7 +61,8 @@ export default function LandingStructuredData({ locale }: { locale: "en" | "ar" 
     {
       "@context": "https://schema.org",
       "@type": "HowTo",
-      "@id": `${url}#how-to`,
+      "@id": `${url}#how`,
+      url: `${url}#how`,
       name: t.landing.howTitle,
       description: t.landing.heroSubtitle,
       inLanguage,

@@ -1,94 +1,31 @@
 # EDTRpad (Online WordPad)
 
-> EDTRpad is a free, browser-based word processor — an online WordPad — with rich text editing, tables, images, file import/export, and printing. No install required; accounts are optional.
+> EDTRpad is a free browser-based word processor at wordpad.info, developed by 312. It supports individual writing, DOCX import and document export, with guest editing and optional account sync.
 
-## What is EDTRpad?
+EDTRpad is independent of Microsoft, Google and Notion. It is not Microsoft WordPad or Microsoft Word Online. Guest documents save in the current browser; signed-in documents can sync to an account. DOCX import is content conversion, not a guarantee of identical Word layout. There is no simultaneous multiplayer editing. Product reference reviewed on 2026-10-31.
 
-EDTRpad is a client-side rich text editor that runs in the browser. It is built on ProseMirror and provides a word-processor experience comparable to Microsoft WordPad — without requiring any software installation. Creating an account is optional and enables cloud sync of documents across devices.
+## Product reference
 
-The editor is available at: /pad
+- [Product facts and limitations](https://wordpad.info/llms.md): Saving modes, supported formats, account behavior and editing workflow.
+- [Reviewed product reference and guides in one file](https://wordpad.info/llms-full.txt): Generated from the product reference and six reviewed guides, with source URLs and dates.
 
-## Core Capabilities
+## Word alternatives and DOCX help
 
-- Rich text formatting: bold, italic, underline, strikethrough, superscript, subscript
-- Font family selection (20+ fonts via Google Fonts)
-- Font size control
-- Text color and highlight color
-- Paragraph alignment: left, center, right, justify
-- Heading levels: H1–H4
-- Bullet lists and numbered lists
-- Indent / outdent
-- Blockquote
-- Inline code and code blocks
-- Emoji insertion (searchable picker)
-- Horizontal rule / divider
-- Page breaks (with correct print behavior)
-- Tables: insert via grid picker, add/remove rows and columns, resize cells
-- Image insertion: upload, paste, or drag & drop; resize, crop, rotate, flip, align
-- Hyperlink insertion (Ctrl+K); URLs typed with a trailing space auto-link
-- Find & replace (Ctrl+F) with match-case and whole-word options
-- Format painter (copy formatting to another selection)
-- Change case (Sentence / lower / UPPER / Title)
-- AutoCorrect: smart quotes, -- → em dash, ... → …, (c) © (r) ® (tm) ™
-- Table of contents generated from headings
-- Read aloud (browser speech synthesis)
-- Document templates (letter, resume, meeting notes, invoice, report, to-do)
-- Version history with restore (auto-snapshots while editing)
-- Focus mode; spellcheck language picker
-- Multiple documents with a sidebar and folders (free account); guests work on a single document saved locally
+- [Online Word alternative](https://wordpad.info/guides/online-word-alternative/index.md): Everyday writing, optional sign-in and when Word is a better fit.
+- [Open DOCX online](https://wordpad.info/guides/open-docx-online/index.md): Open, edit and export a Word file, with formatting and storage limitations.
+- [Google Docs alternative](https://wordpad.info/guides/google-docs-alternative/index.md): Individual writing versus live shared editing.
+- [Export to Word](https://wordpad.info/guides/export-to-word-docx-online/index.md): Download DOCX and choose between editable and fixed-layout formats.
+- [WordPad vs Google Docs](https://wordpad.info/guides/wordpad-vs-google-docs/index.md): Distinguishes classic WordPad, EDTRpad and Google Docs.
+- [WordPad vs Microsoft Word](https://wordpad.info/guides/wordpad-vs-microsoft-word/index.md): Browser and desktop workflows, including free Word web apps.
 
-## Import, Export & Print
+## Website
 
-- Open files: .docx, .txt, .md, .html
-- Export as Word (.docx) with formatting preserved
-- Export as Rich Text (.rtf)
-- Export as HTML
-- Export as plain text (.txt)
-- Print or save as PDF with configurable page margins (0.5 / 1 / 1.5 / 2 cm)
-- Accurate page break rendering in print output
+- [EDTRpad homepage](https://wordpad.info/): Product overview and interactive editor demo.
+- [Open the editor](https://wordpad.info/pad): Browser application; document content is not part of this public reference.
+- [Arabic homepage](https://wordpad.info/ar): Arabic product overview.
+- [All guides](https://wordpad.info/guides): Public articles; each guide has an index.md representation generated from its source.
 
-## Technical Stack
+## Optional
 
-- Framework: Next.js 16 (App Router)
-- Editor engine: ProseMirror
-- Styling: Tailwind CSS v4
-- UI components: shadcn/ui (Radix UI)
-- Icons: Phosphor Icons
-- Print: react-to-print
-- DOCX export: docx.js — DOCX import: mammoth
-- Image editing: react-advanced-cropper
-- Runtime: React 19, TypeScript
-
-## Privacy
-
-Without an account, all document data stays in the user's browser via localStorage and no content is transmitted to any server. With an optional free account, documents sync to the user's private cloud space and are never shared.
-
-## Keyboard Shortcuts
-
-- Ctrl+Z — Undo
-- Ctrl+Y — Redo
-- Ctrl+B — Bold
-- Ctrl+I — Italic
-- Ctrl+U — Underline
-- Ctrl+. / Ctrl+, — Superscript / Subscript
-- Ctrl+Shift+L / E / R / J — Align left / center / right / justify
-- Ctrl+K — Insert link
-- Ctrl+F — Find & replace
-- Ctrl+O — Open file
-- Ctrl+S — Save now
-- Ctrl+A — Select All
-- Ctrl+P — Print
-- Tab / Shift+Tab — Increase / decrease indent
-
-## Routes
-
-- / — Landing page
-- /pad — The editor application
-- /guides — How-to guides and articles
-
-## SEO & Metadata
-
-- Brand: EDTRpad
-- Canonical URL: https://wordpad.info
-- Language: English
-- Target queries: online wordpad, online word processor, browser word processor, free online wordpad, rich text editor online, no install word processor
+- [Sitemap](https://wordpad.info/sitemap.xml): Canonical public HTML URLs and content modification dates.
+- [312](https://312.sh/): The software and product studio developing EDTRpad.

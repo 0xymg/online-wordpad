@@ -1,4 +1,4 @@
-import { SOCIAL_IMAGE } from "@/lib/landing-seo";
+import { ORGANIZATION_ID, SITE_URL, SOCIAL_IMAGE, WEBSITE_ID } from "@/lib/landing-seo";
 import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -48,14 +48,26 @@ export const viewport: Viewport = {
   themeColor: "#ffffff",
 };
 
-const jsonLdOrganization = {
+const jsonLdSite = {
   "@context": "https://schema.org",
-  "@type": "Organization",
-  name: "EDTRpad",
-  alternateName: "Online WordPad",
-  url: "https://wordpad.info",
-  logo: "https://wordpad.info/logo.png",
-  sameAs: ["https://wordpad.info"],
+  "@graph": [
+    {
+      "@type": "Organization",
+      "@id": ORGANIZATION_ID,
+      name: "EDTRpad",
+      url: SITE_URL,
+      logo: `${SITE_URL}/logo.png`,
+    },
+    {
+      "@type": "WebSite",
+      "@id": WEBSITE_ID,
+      name: "EDTRpad",
+      alternateName: "Online WordPad",
+      url: SITE_URL,
+      publisher: { "@id": ORGANIZATION_ID },
+      inLanguage: ["en", "ar"],
+    },
+  ],
 };
 
 export default function RootLayout({
@@ -69,6 +81,7 @@ export default function RootLayout({
   return (
     <html lang={locale} dir={locale === "ar" ? "rtl" : "ltr"}>
       <head>
+        <link rel="describedby" href={`${SITE_URL}/llms.txt`} type="text/plain" />
         <script
           dangerouslySetInnerHTML={{
             __html: `try{if(localStorage.getItem('wordpad-theme')==='dark')document.documentElement.classList.add('dark')}catch(e){}`,
@@ -76,7 +89,7 @@ export default function RootLayout({
         />
         <script
           type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLdOrganization) }}
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLdSite).replace(/</g, "\\u003c") }}
         />
       </head>
       <body

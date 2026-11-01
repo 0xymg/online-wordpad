@@ -1,4 +1,9 @@
 export const SITE_URL = "https://wordpad.info";
+// Change only when these public pages receive substantive content changes.
+export const SITE_CONTENT_UPDATED = "2026-10-31";
+export const ORGANIZATION_ID = `${SITE_URL}/#organization`;
+export const WEBSITE_ID = `${SITE_URL}/#website`;
+export const APPLICATION_ID = `${SITE_URL}/#application`;
 
 export const SOCIAL_IMAGE = {
   url: `${SITE_URL}/opengraph-image`,

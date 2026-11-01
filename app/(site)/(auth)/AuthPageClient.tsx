@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { Fragment, useEffect, useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 import AuthForm, { oauthErrorMessage, type AuthMode } from "@/app/components/AuthForm";
 import { useT, useLocale } from "@/app/components/I18nProvider";
@@ -91,9 +92,31 @@ export default function AuthPageClient({
       </main>
 
       <footer className="border-t border-border px-6 py-6 text-center text-xs text-muted-foreground">
-        {t.landing.footerCredit
-          .replace("{project}", "Project EDTR")
-          .replace("{by}", "312")}
+        {t.landing.footerCredit.split(/(\{project\}|\{by\})/).map((part, i) => {
+          if (part === "{project}") {
+            return <span key={i} className="font-brand font-bold tracking-tight text-foreground">Project EDTR</span>;
+          }
+          if (part === "{by}") {
+            return (
+              <a
+                key={i}
+                href="https://312.sh"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-block transition-opacity hover:opacity-70 focus-visible:outline-2 focus-visible:outline-offset-4"
+              >
+                <Image
+                  src="/312-logo.svg"
+                  alt="312"
+                  width={35}
+                  height={11}
+                  className="inline-block h-[0.75em] w-auto align-baseline"
+                />
+              </a>
+            );
+          }
+          return <Fragment key={i}>{part}</Fragment>;
+        })}
       </footer>
     </div>
   );

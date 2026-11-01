@@ -1,105 +1,72 @@
-# EDTRpad (Online WordPad) — LLM Context Document
+# EDTRpad — Product Reference
 
-**Brand:** EDTRpad
-**URL:** https://wordpad.info
-**Editor:** https://wordpad.info/pad
-**Category:** Online Productivity / Word Processor
+Source: https://wordpad.info/
+Last reviewed: 2026-10-31
+Developer: [312](https://312.sh/)
+Editor: https://wordpad.info/pad
 
----
+## Identity and purpose
 
-## Summary
+EDTRpad is a free browser-based word processor, also described as an online WordPad. It is part of Project EDTR and developed by 312. It is independent of Microsoft, Google and Notion, and is not an official Microsoft WordPad or Word product.
 
-**EDTRpad** is a free, browser-based rich text editor (word processor) built with Next.js and ProseMirror — an online alternative to Microsoft WordPad. It requires no installation and no account to start. Creating a free account is optional and enables cloud sync of documents across devices. For guests, all data is stored locally in the browser (localStorage).
+It is suited to individual writing, letters, notes, short reports and straightforward document edits. It has both a formatting toolbar and a slash command menu. It does not offer simultaneous multiplayer document editing.
 
----
+## Accounts and saving
 
-## Feature Reference
+Guest editing does not require an account. Guest documents save to the current browser's local storage. Closing a normal browser tab does not by itself delete them. Clearing browser data, changing browsers or private browsing can affect persistence. Export a file to keep a separate copy.
 
-### Text Formatting
-| Feature | Keyboard Shortcut |
-|---|---|
-| Bold | Ctrl+B |
-| Italic | Ctrl+I |
-| Underline | Ctrl+U |
-| Strikethrough | — |
-| Superscript / Subscript | Ctrl+. / Ctrl+, |
-| Text / Highlight Color | Toolbar |
-| Font Family & Size | Toolbar dropdowns |
+An optional account enables server-backed document sync across devices. Signed-in documents therefore do not remain only on the device. Account sync is not live collaboration with other people. The welcome screen is for signed-in users; guests can start in the editor.
 
-### Paragraph & Structure
-- Alignment: Left / Center / Right / Justify (Ctrl+Shift+L/E/R/J)
-- Headings H1–H4, paragraph, code block, blockquote
-- Bullet and numbered lists, indent/outdent (Tab / Shift+Tab)
-- Horizontal rule, page break (renders on screen + in print)
-- Slash command menu ("/")
+The public website uses Google Analytics, Vercel Analytics and Vercel Speed Insights. Browser storage of guest writing should not be described as a claim that the whole website makes no network requests.
 
-### Tables
-- Visual grid picker, add/delete rows & columns, column resizing, drag to move
+## Editing
 
-### Images
-- Insert via file picker, paste, or drag & drop (auto-compressed client-side)
-- Resize, crop, rotate, flip, align
+- Rich text, font family and size, text color, highlighting and paragraph alignment.
+- Headings, lists, tables, images, links and page breaks.
+- Formatting toolbar plus a slash command menu opened by typing `/`.
+- Find and replace, document templates and document version history.
+- Page layout, print preview and document exports.
+- Calibri is the default document font choice. Carlito is bundled as a compatible fallback when Calibri is not installed.
 
-### Documents
-- Multiple documents in a sidebar (guests: localStorage; members: cloud)
-- Find & replace (Ctrl+F), word/character count, autosave with status indicator
+Interface languages include English, Chinese, Turkish, French and Arabic. The dedicated Arabic landing URL is https://wordpad.info/ar. Most public guides are in English.
 
-### Import & Export
-| Format | Direction |
-|---|---|
-| Word (.docx) | Open + Export (formatting preserved) |
-| Rich Text (.rtf) | Export |
-| HTML | Open + Export |
-| Plain text (.txt / .md) | Open + Export |
+## Import and export
 
-### Print
-- File → Print or Ctrl+P; A4; margins 0.5–2 cm; page breaks honored; save as PDF via print dialog
+Supported file-picker inputs are `.docx`, `.txt`, `.md`, `.html` and `.htm`. DOCX is converted in the browser into editable content. Markdown input is read as plain text. Older `.doc`, macro-enabled `.docm` and password-protected Word files are not supported DOCX-opening workflows.
 
----
+Exports include DOCX, PDF, RTF, HTML, Markdown and plain text. Importing a file creates an editor document; exporting downloads a new file rather than overwriting the original on the device.
 
-## Data & Privacy
+DOCX conversion does not guarantee identical fonts, spacing, pagination, complex table layouts, headers, footers, fields or review markup. Keep the original and review imported and exported documents when layout matters. Word macros, mail merge and a tracked-changes review workflow are not replacements provided by EDTRpad.
 
-- **Guests:** documents persist only in the browser's localStorage; content is not uploaded.
-- **Members (optional):** documents sync to the user's private account (Postgres via better-auth sessions); never shared.
-- **Analytics:** anonymous page analytics (Vercel Analytics); no document content is collected.
+## Common workflows
 
----
+### Open a Word file
 
-## Page Routes
+1. Open https://wordpad.info/pad.
+2. Choose File → Open and select a `.docx` file.
+3. Review the imported content and make changes.
+4. Choose File → Export → Word (.docx) for an editable download or PDF for a fixed-layout copy.
 
-| Route | Description |
-|---|---|
-| `/` | Marketing landing page |
-| `/pad` | The word processor editor |
-| `/guides` | How-to guides and articles |
-| `/llms.txt` | Plain-text LLM context file |
-| `/llms.md` | Markdown LLM context file (this file) |
+Signed-in users can also open a device file from the welcome screen.
 
----
+### Write a new document
 
-## Target Use Cases
+1. Open the editor and start typing.
+2. Use the toolbar or `/` menu to format and insert elements.
+3. Review the document and export a copy for sharing or backup.
 
-- Quick document drafting without opening a desktop application
-- Replacing WordPad after its removal from Windows 11
-- Producing formatted documents for printing (letters, reports, notes)
-- Opening and exporting Word (.docx) files in the browser
-- Teachers and students needing a lightweight in-browser editor
+## Availability and limitations
 
----
+Use a current desktop or mobile browser. A connection is needed to load the application; do not describe offline startup as guaranteed. Browser saving after loading and the ability to reopen the application offline are different capabilities.
 
-## Frequently Asked Questions
+Guest browser storage has capacity limits, which vary by browser. Large documents and images can exhaust that storage. Export important writing regularly rather than treating browser storage as a permanent backup.
 
-**Q: Does it work offline?**
-A: Yes — the editor is a PWA; after the first load, /pad opens and works offline.
+## Further reading
 
-**Q: Can I use it on mobile?**
-A: Yes. The page automatically fits the A4 canvas to small screens.
+- [Open DOCX online](https://wordpad.info/guides/open-docx-online)
+- [Online Word alternative](https://wordpad.info/guides/online-word-alternative)
+- [Google Docs alternative](https://wordpad.info/guides/google-docs-alternative)
+- [Export to Word](https://wordpad.info/guides/export-to-word-docx-online)
+- [All guides](https://wordpad.info/guides)
 
-**Q: Where is my document stored?**
-A: In your browser's localStorage as a guest, or in your private cloud space if you sign in.
-
-**Q: Is there a file size limit?**
-A: Browser localStorage is typically limited to ~5 MB for guests; images are compressed automatically to stay small.
-
-**Q: Can I collaborate in real time?**
-A: No. EDTRpad is a single-user editor.
+Machine-readable guide versions use `/guides/{slug}/index.md` and include the canonical HTML source URL. The combined reference at https://wordpad.info/llms-full.txt includes this product reference and the six guides selected in https://wordpad.info/llms.txt. These files describe public product behavior, not private user documents.

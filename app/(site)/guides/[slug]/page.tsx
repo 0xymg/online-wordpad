@@ -1,4 +1,4 @@
-import { SOCIAL_IMAGE } from "@/lib/landing-seo";
+import { ORGANIZATION_ID, SOCIAL_IMAGE, WEBSITE_ID } from "@/lib/landing-seo";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -25,6 +25,7 @@ export async function generateMetadata({
     keywords: guide.keywords,
     alternates: {
       canonical: `https://wordpad.info/guides/${slug}`,
+      types: { "text/markdown": `https://wordpad.info/guides/${slug}/index.md` },
     },
     openGraph: {
     images: [SOCIAL_IMAGE],
@@ -32,7 +33,10 @@ export async function generateMetadata({
       description: guide.description,
       url: `https://wordpad.info/guides/${slug}`,
       type: "article",
-      siteName: "Online WordPad",
+      siteName: "EDTRpad",
+      locale: "en_US",
+      publishedTime: guide.date,
+      modifiedTime: guide.updated || guide.date,
     },
     twitter: {
     images: [SOCIAL_IMAGE.url],
@@ -111,22 +115,32 @@ export default async function GuidePage({
   if (!slugs.includes(slug)) notFound();
 
   const guide = getGuide(slug);
+  const relatedGuides = guide.related
+    .filter((relatedSlug) => relatedSlug !== slug && slugs.includes(relatedSlug))
+    .map((relatedSlug) => getGuide(relatedSlug));
+  const hasContentTitle = /^#\s+/m.test(guide.content);
+  const displayDate = guide.updated || guide.date;
 
   const jsonLdArticle = {
     "@context": "https://schema.org",
     "@type": "Article",
+    "@id": `https://wordpad.info/guides/${slug}#article`,
     headline: guide.title,
     description: guide.description,
     url: `https://wordpad.info/guides/${slug}`,
     publisher: {
       "@type": "Organization",
+      "@id": ORGANIZATION_ID,
       name: "EDTRpad",
       url: "https://wordpad.info",
       logo: { "@type": "ImageObject", url: "https://wordpad.info/logo.png" },
     },
-    author: { "@type": "Organization", name: "EDTRpad" },
+    author: { "@type": "Organization", "@id": ORGANIZATION_ID, name: "EDTRpad", url: "https://wordpad.info" },
+    inLanguage: "en",
+    isAccessibleForFree: true,
+    isPartOf: { "@id": WEBSITE_ID },
     datePublished: guide.date,
-    dateModified: guide.date,
+    dateModified: displayDate,
     mainEntityOfPage: { "@type": "WebPage", "@id": `https://wordpad.info/guides/${slug}` },
     image: "https://wordpad.info/opengraph-image",
   };
@@ -145,7 +159,7 @@ export default async function GuidePage({
     <>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLdArticle) }} />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLdBreadcrumb) }} />
-      <div className="min-h-screen bg-white text-gray-900 font-sans">
+      <div lang="en" className="min-h-screen bg-white text-gray-900 font-sans">
         {/* Nav */}
         <header className="sticky top-0 z-50 border-b border-gray-100 bg-white/90 backdrop-blur-sm">
           <div className="mx-auto max-w-3xl px-6 flex items-center justify-between h-14">
@@ -179,12 +193,36 @@ export default async function GuidePage({
         {/* Article */}
         <main className="mx-auto max-w-3xl px-6 py-10">
           <article className="prose-none">
+            {!hasContentTitle && (
+              <h1 className="text-3xl font-extrabold tracking-tight mb-4">{guide.title}</h1>
+            )}
+            <p className="mb-8 text-sm text-gray-500">
+              By EDTRpad · {guide.updated ? "Updated" : "Published"}{" "}
+              <time dateTime={displayDate}>
+                {new Intl.DateTimeFormat("en", { dateStyle: "medium", timeZone: "UTC" }).format(new Date(displayDate))}
+              </time>
+            </p>
             <MDXRemote
               source={guide.content}
               components={components}
               options={{ mdxOptions: { remarkPlugins: [remarkGfm] } }}
             />
           </article>
+
+          {relatedGuides.length > 0 && (
+            <nav aria-label="Related guides" className="mt-10 border-t border-gray-200 pt-6">
+              <h2 className="mb-4 text-lg font-semibold">Related guides</h2>
+              <ul className="space-y-3">
+                {relatedGuides.map((related) => (
+                  <li key={related.slug}>
+                    <Link href={`/guides/${related.slug}`} className="font-medium underline underline-offset-4 hover:text-gray-600">
+                      {related.title}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </nav>
+          )}
 
           {/* CTA */}
           <div className="mt-12 p-8 bg-gray-50 rounded-2xl border border-gray-100 text-center">

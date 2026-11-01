@@ -1,45 +1,37 @@
 import type { MetadataRoute } from "next";
-import { LANDING_LANGUAGES } from "@/lib/landing-seo";
+import { LANDING_LANGUAGES, SITE_CONTENT_UPDATED, SITE_URL } from "@/lib/landing-seo";
 import { getAllGuides } from "@/lib/guides";
 
 export default function sitemap(): MetadataRoute.Sitemap {
-  const now = new Date();
-
   const guides = getAllGuides();
-  // Use each guide's frontmatter date so lastModified doesn't churn on every deploy.
+  // Use actual content dates so lastModified doesn't churn on every deploy.
   const guideEntries: MetadataRoute.Sitemap = guides.map((guide) => ({
-    url: `https://wordpad.info/guides/${guide.slug}`,
-    lastModified: guide.date ? new Date(guide.date) : now,
-    changeFrequency: "monthly",
-    priority: 0.7,
+    url: `${SITE_URL}/guides/${guide.slug}`,
+    lastModified: new Date(guide.updated || guide.date),
   }));
+  const latestGuideDate = guides.reduce(
+    (latest, guide) => (guide.updated || guide.date) > latest ? (guide.updated || guide.date) : latest,
+    SITE_CONTENT_UPDATED,
+  );
 
   return [
     {
-      url: "https://wordpad.info",
+      url: SITE_URL,
       alternates: { languages: LANDING_LANGUAGES },
-      lastModified: now,
-      changeFrequency: "weekly",
-      priority: 1,
+      lastModified: new Date(SITE_CONTENT_UPDATED),
     },
     {
-      url: "https://wordpad.info/ar",
-      lastModified: new Date("2026-10-27T00:00:00Z"),
-      changeFrequency: "weekly",
-      priority: 1,
+      url: `${SITE_URL}/ar`,
+      lastModified: new Date(SITE_CONTENT_UPDATED),
       alternates: { languages: LANDING_LANGUAGES },
     },
     {
-      url: "https://wordpad.info/pad",
-      lastModified: now,
-      changeFrequency: "monthly",
-      priority: 0.9,
+      url: `${SITE_URL}/pad`,
+      lastModified: new Date(SITE_CONTENT_UPDATED),
     },
     {
-      url: "https://wordpad.info/guides",
-      lastModified: now,
-      changeFrequency: "weekly",
-      priority: 0.8,
+      url: `${SITE_URL}/guides`,
+      lastModified: new Date(latestGuideDate),
     },
     ...guideEntries,
   ];

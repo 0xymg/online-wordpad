@@ -1,9 +1,12 @@
 User-agent: *
+Disallow: /api/
 Allow: /
 
-# LLM-friendly context files
+# Public content is available to search and AI crawlers under the wildcard rule.
+# Account pages use HTML noindex; do not block crawling of that directive.
 Allow: /llms.txt
 Allow: /llms.md
+Allow: /llms-full.txt
 
 # Sitemap
 Sitemap: https://wordpad.info/sitemap.xml

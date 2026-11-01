@@ -16,6 +16,18 @@ const nextConfig: NextConfig = {
     // Keep production styles fresh until vercel/next.js#100326 is resolved.
     turbopackFileSystemCacheForBuild: false,
   },
+  async headers() {
+    return [
+      {
+        source: "/llms.md",
+        headers: [{ key: "Content-Type", value: "text/markdown; charset=utf-8" }],
+      },
+      {
+        source: "/api/:path*",
+        headers: [{ key: "X-Robots-Tag", value: "noindex" }],
+      },
+    ];
+  },
 };
 
 export default withBundleAnalyzer(nextConfig);
