@@ -90,7 +90,7 @@ html, body {
 }
 
 body {
-  background: #CCD6E5;
+  background: #f5f6f8;
 }
 
 /* ── Toolbar ── */
@@ -190,7 +190,7 @@ body {
 /* ── Editor shell ── */
 .editor-shell {
   flex: 1;
-  background: #CCD6E5;
+  background: #f5f6f8;
   padding: 40px 0 60px 0;
   overflow-y: auto;
 }
@@ -348,7 +348,7 @@ body {
   pointer-events: none;
 }
 .pm-page-spacer-gap {
-  background: var(--shell-bg, #ccd6e5);
+  background: var(--shell-bg, #f5f6f8);
   box-sizing: border-box;
   /* Cover the page's own drop shadow on both sides of the gap. */
   padding: 0 var(--page-bleed);

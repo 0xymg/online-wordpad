@@ -560,6 +560,7 @@ const MARGIN_PRESETS = [0.5, 1, 1.5, 2];
 
 const FILES_KEY = "wordpad-files";
 const ACTIVE_KEY = "wordpad-active";
+const DEFAULT_EDITOR_BG = "#f5f6f8";
 
 function newId(): string {
   try { return crypto.randomUUID(); } catch { return `f-${Date.now()}-${Math.floor(Math.random() * 1e6)}`; }
@@ -836,7 +837,7 @@ export default function Editor({
   const [pageMarginCm, setPageMarginCm] = useState(1);
   const [pageOrientation, setPageOrientation] = useState<"portrait" | "landscape">("portrait");
   const [zoomPercent, setZoomPercent] = useState(100);
-  const [paperBgColor, setPaperBgColor] = useState("#ccd6e5");
+  const [paperBgColor, setPaperBgColor] = useState(DEFAULT_EDITOR_BG);
   const [docTitle, setDocTitle] = useState("Untitled document");
   const [showToolbar, setShowToolbar] = useState(true);
   const [showRuler, setShowRuler] = useState(false);
@@ -2123,7 +2124,10 @@ export default function Editor({
     if (typeof p.zoom === "number") setZoomPercent(p.zoom);
     if (typeof p.margin === "number") setPageMarginCm(p.margin);
     if (p.orientation === "portrait" || p.orientation === "landscape") setPageOrientation(p.orientation);
-    if (typeof p.bg === "string") setPaperBgColor(p.bg);
+    if (typeof p.bg === "string") {
+      // Move the previous default to the new canvas color, preserving custom colors.
+      setPaperBgColor(p.bg.toLowerCase() === "#ccd6e5" ? DEFAULT_EDITOR_BG : p.bg);
+    }
     if (typeof p.spellLang === "string") setSpellLang(p.spellLang);
     if (typeof p.printHeader === "boolean") setPrintHeaderFooter(p.printHeader);
     if (p.pageNumbers === "off" || p.pageNumbers === "bottom" || p.pageNumbers === "top") {
@@ -3459,7 +3463,7 @@ export default function Editor({
                     <button
                       type="button"
                       className="h-7 rounded border border-input bg-background px-2 text-[11px] hover:bg-accent/70"
-                      onClick={() => setPaperBgColor("#ccd6e5")}
+                      onClick={() => setPaperBgColor(DEFAULT_EDITOR_BG)}
                     >
                       {uiText(t, "Reset")}
                     </button>
