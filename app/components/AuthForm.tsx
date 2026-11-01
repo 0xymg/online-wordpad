@@ -155,12 +155,12 @@ export default function AuthForm({
   };
 
   const INPUT =
-    "w-full rounded-md border border-input bg-background px-3 py-2 text-sm outline-none focus:ring-1 focus:ring-ring";
+    "w-full min-h-11 rounded-md border border-input bg-background px-3 py-2.5 text-sm outline-none focus:ring-1 focus:ring-ring";
 
   return (
     <>
-      <h2 className="mb-1 text-lg font-semibold">{copy.title}</h2>
-      <p className="mb-4 text-sm text-muted-foreground">{copy.sub}</p>
+      <h2 className="mb-2 font-serif text-3xl font-normal tracking-tight">{copy.title}</h2>
+      <p className="mb-6 text-sm leading-relaxed text-muted-foreground">{copy.sub}</p>
 
       {mode === "signup" && (
         <ul className="mb-4 space-y-1.5">
@@ -179,7 +179,7 @@ export default function AuthForm({
             type="button"
             onClick={googleSignIn}
             disabled={busy}
-            className="mb-3 flex w-full items-center justify-center gap-2 rounded-md border border-input px-3 py-2 text-sm font-medium hover:bg-accent disabled:opacity-60"
+            className="mb-4 flex min-h-11 w-full items-center justify-center gap-2 rounded-md border border-input bg-background px-3 py-2.5 text-sm font-medium hover:bg-accent disabled:opacity-60"
           >
             {googleLoading
               ? <CircleNotch size={18} className="animate-spin" />
@@ -192,11 +192,12 @@ export default function AuthForm({
         </>
       )}
 
-      <form onSubmit={submit} className="space-y-3">
+      <form onSubmit={submit} className="space-y-4">
         {mode === "signup" && (
           <input
             className={INPUT}
             placeholder={t.auth.namePlaceholder}
+            aria-label={t.auth.namePlaceholder}
             value={name}
             onChange={(e) => setName(e.target.value)}
             autoComplete="name"
@@ -207,6 +208,7 @@ export default function AuthForm({
           className={INPUT}
           type="email"
           placeholder={t.auth.emailPlaceholder}
+          aria-label={t.auth.emailPlaceholder}
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           required
@@ -216,9 +218,10 @@ export default function AuthForm({
           <div className="space-y-1">
             <div className="relative">
               <input
-                className={`${INPUT} pr-9`}
+                className={`${INPUT} pe-10`}
                 type={showPassword ? "text" : "password"}
                 placeholder={t.auth.passwordPlaceholder}
+                aria-label={t.auth.passwordPlaceholder}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
@@ -230,7 +233,7 @@ export default function AuthForm({
                 onClick={() => setShowPassword((s) => !s)}
                 aria-label={showPassword ? t.auth.hidePassword : t.auth.showPassword}
                 tabIndex={-1}
-                className="absolute right-2 top-1/2 -translate-y-1/2 rounded p-1 text-muted-foreground hover:text-foreground"
+                className="absolute end-2 top-1/2 -translate-y-1/2 rounded p-1 text-muted-foreground hover:text-foreground"
               >
                 {showPassword ? <EyeSlash size={16} /> : <Eye size={16} />}
               </button>
@@ -239,7 +242,7 @@ export default function AuthForm({
               <p className="text-[11px] text-muted-foreground">{t.auth.passwordHint}</p>
             )}
             {mode === "login" && (
-              <div className="text-right">
+              <div className="text-end">
                 <button
                   type="button"
                   onClick={() => switchMode("forgot")}
@@ -256,7 +259,7 @@ export default function AuthForm({
         <button
           type="submit"
           disabled={busy}
-          className="flex w-full items-center justify-center gap-2 rounded-md bg-primary px-3 py-2 text-sm font-medium text-primary-foreground hover:opacity-90 disabled:opacity-60"
+          className="flex min-h-11 w-full items-center justify-center gap-2 rounded-md bg-primary px-3 py-3 text-sm font-medium text-primary-foreground hover:opacity-90 disabled:opacity-60"
         >
           {loading && <CircleNotch size={16} className="animate-spin" />}
           {loading ? t.auth.pleaseWait : copy.cta}

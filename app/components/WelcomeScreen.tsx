@@ -134,7 +134,7 @@ function DocRow({
     );
   }
   return (
-      <div className="group flex items-center hover:bg-accent/60">
+      <div className="welcome-classic-row group flex items-center hover:bg-accent/60">
         {onToggleSelected && (
           <input
             type="checkbox"
@@ -157,9 +157,9 @@ function DocRow({
         >
           <FileText size={18} className="shrink-0 text-muted-foreground" />
           <span className="min-w-0 flex-1 truncate text-sm">{f.name || t.sidebar.untitled}</span>
-          {f.folder && <span className="shrink-0 text-xs text-muted-foreground">{f.folder}</span>}
+          {f.folder && <span className="hidden shrink-0 text-xs text-muted-foreground sm:inline">{f.folder}</span>}
           {f.id === activeId && (
-            <span className="shrink-0 rounded bg-accent px-1.5 py-0.5 text-[10px] font-medium text-accent-foreground">{t.welcome.lastOpened}</span>
+            <span className="hidden shrink-0 rounded bg-accent px-1.5 py-0.5 text-[10px] sm:inline font-medium text-accent-foreground">{t.welcome.lastOpened}</span>
           )}
         </a>
         {onDownload && (
@@ -168,7 +168,7 @@ function DocRow({
             onClick={() => onDownload(f.id)}
             aria-label={t.welcome.downloadDocumentNamed(f.name || t.sidebar.untitled)}
             title={t.welcome.downloadDocument}
-            className="shrink-0 rounded p-1.5 text-muted-foreground opacity-0 transition hover:bg-accent hover:text-foreground focus-visible:opacity-100 focus-visible:outline-2 focus-visible:outline-ring group-hover:opacity-100"
+            className="shrink-0 rounded p-1.5 text-muted-foreground opacity-100 transition md:opacity-0 hover:bg-accent hover:text-foreground focus-visible:opacity-100 focus-visible:outline-2 focus-visible:outline-ring group-hover:opacity-100"
           >
             <DownloadSimple size={15} />
           </button>
@@ -178,7 +178,7 @@ function DocRow({
           onClick={() => onCopyLink(f.id)}
           aria-label={t.welcome.copyLinkTo(f.name || t.sidebar.untitled)}
           title={t.sidebar.copyLink}
-          className="shrink-0 rounded p-1.5 text-muted-foreground opacity-0 transition hover:bg-accent hover:text-foreground focus-visible:opacity-100 focus-visible:outline-2 focus-visible:outline-ring group-hover:opacity-100"
+          className="shrink-0 rounded p-1.5 text-muted-foreground opacity-100 transition md:opacity-0 hover:bg-accent hover:text-foreground focus-visible:opacity-100 focus-visible:outline-2 focus-visible:outline-ring group-hover:opacity-100"
         >
           <LinkSimple size={15} />
         </button>
@@ -187,7 +187,7 @@ function DocRow({
           onClick={() => onDelete(f.id)}
           aria-label={t.welcome.deleteDocumentNamed(f.name || t.sidebar.untitled)}
           title={t.welcome.deleteDocument}
-          className="me-2 shrink-0 rounded p-1.5 text-muted-foreground opacity-0 transition hover:bg-destructive/15 hover:text-destructive focus-visible:opacity-100 focus-visible:outline-2 focus-visible:outline-ring group-hover:opacity-100"
+          className="me-2 shrink-0 rounded p-1.5 text-muted-foreground opacity-100 transition md:opacity-0 hover:bg-destructive/15 hover:text-destructive focus-visible:opacity-100 focus-visible:outline-2 focus-visible:outline-ring group-hover:opacity-100"
         >
           <Trash size={15} />
         </button>
@@ -216,8 +216,9 @@ export default function WelcomeScreen({
   // Stay mounted through the closing animation so the editor fades in behind
   // it instead of snapping into place.
   const [visible, setVisible] = useState(open);
+  if (open && !visible) setVisible(true);
   useEffect(() => {
-    if (open) { setVisible(true); return; }
+    if (open) return;
     const timer = setTimeout(() => setVisible(false), EXIT_MS);
     return () => clearTimeout(timer);
   }, [open]);
@@ -265,7 +266,7 @@ export default function WelcomeScreen({
   useEffect(() => {
     const el = selectAllRef.current;
     if (el) el.indeterminate = selectedOnPage.length > 0 && !allOnPageSelected;
-  }, [selectedOnPage.length, allOnPageSelected]);
+  }, [selectedOnPage.length, allOnPageSelected, visible, loading]);
 
   // Template strip: the scrollbar is hidden (in dark mode it read as a slab
   // across the bottom of the row), so these drive the chevrons that replace it.
@@ -325,7 +326,7 @@ export default function WelcomeScreen({
       role="dialog"
       aria-modal="true"
       aria-label={t.welcome.ariaLabel}
-      className={`welcome-screen fixed inset-0 z-[1400] overflow-y-auto bg-background text-foreground ${
+      className={`welcome-screen welcome-classic fixed inset-0 z-[1400] overflow-y-auto bg-background text-foreground ${
         open ? "welcome-screen-in" : "welcome-screen-out"
       }`}
     >
@@ -349,25 +350,18 @@ export default function WelcomeScreen({
       {/* The template strip gets the wider container; the document lists below
           sit in a narrower one so the eye lands on "start something" first. */}
       <div className="mx-auto max-w-6xl px-5 pb-16 pt-10">
-        {/* Greeting on the left, account entry on the right, same line. The
-            greeting is width-capped so the subtitle wraps well before it
-            reaches the account block, at any locale's copy length.
-            While the session resolves we don't yet know WHO this is — show
-            placeholders rather than flashing the guest copy. */}
-        <div className="flex items-start justify-between gap-4">
+        {/* Greeting and account share a row; keep placeholders until the
+            session resolves. */}
+        <div className="flex flex-wrap items-start justify-between gap-4">
           {sessionLoading ? (
             <div className="animate-pulse" aria-hidden="true">
               <div className="h-8 w-72 max-w-[70vw] bg-accent" />
-              <div className="mt-2.5 h-4 w-96 max-w-[85vw] bg-accent" />
             </div>
           ) : (
           <div className="min-w-0 max-w-xl">
             <h1 className="font-serif text-3xl font-normal tracking-tight">
               {firstName ? t.welcome.greetingWith(greeting(t), firstName) : t.welcome.titleGuest}
             </h1>
-            <p className="mt-1 text-sm text-muted-foreground">
-              {t.welcome.subtitle}
-            </p>
           </div>
           )}
           {sessionLoading && (
@@ -398,6 +392,7 @@ export default function WelcomeScreen({
               </span>
             </button>
           )}
+
         </div>
 
         {/* Start new */}
@@ -440,15 +435,21 @@ export default function WelcomeScreen({
         </div>
         </div>
 
+        <div className="my-4 flex items-center gap-3 text-xs text-muted-foreground">
+          <span className="h-px flex-1 bg-border" aria-hidden="true" />
+          <span>{t.auth.or}</span>
+          <span className="h-px flex-1 bg-border" aria-hidden="true" />
+        </div>
+
         {/* Stays open behind the file picker — the editor appears once a file is
             actually chosen (and nothing flashes if the picker is cancelled). */}
         <button
           type="button"
           onClick={onOpenFile}
-          className="mt-4 flex items-center gap-2 rounded-md border border-input px-3 py-2 text-sm hover:bg-accent focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-ring"
+          className="welcome-file-picker flex max-w-full flex-wrap items-center gap-2 rounded-md border border-foreground/25 bg-muted/40 px-3 py-2 text-sm font-medium shadow-sm transition-colors hover:border-foreground/40 hover:bg-accent focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
         >
           <UploadSimple size={16} /> {t.welcome.openFile}
-          <span className="text-xs text-muted-foreground">{t.welcome.openFileFormats}</span>
+          <span className="text-xs font-normal text-muted-foreground">{t.welcome.openFileFormats}</span>
         </button>
 
         {/* Document lists — narrower than the strip above, and centred in it */}
@@ -457,7 +458,7 @@ export default function WelcomeScreen({
             {isAuthed ? t.welcome.lastUsed : t.welcome.continueWhereLeftOff}
           </h2>
           {loading ? (
-            <div className="divide-y divide-border overflow-hidden rounded-md border border-border">
+            <div className="divide-y divide-border overflow-hidden rounded-md border border-border bg-card">
               <DocRowSkeleton />
               <DocRowSkeleton />
               <DocRowSkeleton />
@@ -467,7 +468,7 @@ export default function WelcomeScreen({
               {t.welcome.noDocuments}
             </p>
           ) : (
-            <div className="divide-y divide-border overflow-hidden rounded-md border border-border">
+            <div className="divide-y divide-border overflow-hidden rounded-md border border-border bg-card">
               {files.slice(0, RECENT_COUNT).map((f) => <DocRow key={f.id} {...rowProps} f={f} deleting={deletingIds.includes(f.id)} />)}
             </div>
           )}
@@ -476,7 +477,7 @@ export default function WelcomeScreen({
           {loading ? (
             <>
               <h2 className="mb-2 mt-8 text-sm font-medium text-muted-foreground">{t.welcome.allDocuments}</h2>
-              <div className="divide-y divide-border overflow-hidden rounded-md border border-border">
+              <div className="divide-y divide-border overflow-hidden rounded-md border border-border bg-card">
                 <DocRowSkeleton />
                 <DocRowSkeleton />
               </div>
@@ -552,7 +553,7 @@ export default function WelcomeScreen({
                   {t.welcome.noMatches}
                 </p>
               ) : (
-              <div className="divide-y divide-border overflow-hidden rounded-md border border-border">
+              <div className="divide-y divide-border overflow-hidden rounded-md border border-border bg-card">
                 {pagedFiles.map((f) => (
                   <DocRow
                     key={f.id}

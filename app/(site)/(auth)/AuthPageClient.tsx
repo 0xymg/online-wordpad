@@ -44,19 +44,19 @@ export default function AuthPageClient({
   };
 
   return (
-    <div className="pad-marketing flex min-h-screen flex-col">
-      <header className="border-b border-[var(--pad-border)] px-6">
-        <div className="mx-auto flex h-16 max-w-6xl items-center justify-between">
+    <div className="auth-page flex min-h-screen flex-col text-foreground">
+      <header className="welcome-classic-header border-b border-border px-5">
+        <div className="mx-auto flex min-h-16 max-w-6xl flex-wrap gap-3 py-3 items-center justify-between">
           <Link href="/" className="font-brand leading-none">
-            <span className="text-2xl font-bold tracking-tight">EDTR</span>
-            <span className="text-lg font-semibold tracking-wider text-[var(--pad-ink-50)]">PAD</span>
+            <span className="text-lg font-bold tracking-tight">EDTR</span>
+            <span className="text-sm font-semibold tracking-wider text-muted-foreground">PAD</span>
           </Link>
           <div className="flex items-center gap-2">
             <Select value={locale} onValueChange={(v) => setLocale(v as typeof locale)}>
               <SelectTrigger
                 size="sm"
                 aria-label={t.locale.label}
-                className="h-8 border-[var(--pad-border)] bg-transparent px-2 text-[13px] shadow-none"
+                className="h-8 border-border bg-transparent px-2 text-[13px] shadow-none"
               >
                 <SelectValue />
               </SelectTrigger>
@@ -70,7 +70,7 @@ export default function AuthPageClient({
             </Select>
             <Link
               href="/pad"
-              className="rounded-full border border-[var(--pad-border-strong)] px-4 py-2 text-[13px] font-medium transition-colors hover:border-[var(--pad-ink)]"
+              className="rounded-full border border-input px-4 py-2 text-[13px] font-medium transition-colors hover:bg-accent"
             >
               {t.auth.continueWithout}
             </Link>
@@ -78,8 +78,8 @@ export default function AuthPageClient({
         </div>
       </header>
 
-      <main className="flex flex-1 items-center justify-center px-6 py-16">
-        <div className="w-full max-w-sm rounded-xl border border-[var(--pad-border)] bg-[var(--pad-bg)] p-6 shadow-sm">
+      <main className="flex flex-1 items-center justify-center px-5 py-10 sm:py-16">
+        <div className="w-full max-w-md border border-border bg-card p-6 text-card-foreground shadow-sm sm:p-10">
           <AuthForm
             mode={mode}
             onModeChange={changeMode}
@@ -90,10 +90,10 @@ export default function AuthPageClient({
         </div>
       </main>
 
-      <footer className="border-t border-[var(--pad-border)] px-6 py-6 text-center text-xs text-[var(--pad-ink-50)]">
+      <footer className="border-t border-border px-6 py-6 text-center text-xs text-muted-foreground">
         {t.landing.footerCredit
           .replace("{project}", "Project EDTR")
-          .replace("{by}", "ymg.digital")}
+          .replace("{by}", "312")}
       </footer>
     </div>
   );

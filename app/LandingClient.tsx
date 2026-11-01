@@ -133,15 +133,12 @@ function renderCredit(template: string): ReactNode {
     }
     if (part === "{by}") {
       return (
-        <a
+        <span
           key={i}
-          href="https://ymg.digital"
-          target="_blank"
-          rel="noopener"
-          className="font-medium text-[var(--pad-ink)] transition-opacity hover:opacity-70"
+          className="font-medium text-[var(--pad-ink)]"
         >
-          ymg.digital
-        </a>
+          312
+        </span>
       );
     }
     return <Fragment key={i}>{part}</Fragment>;

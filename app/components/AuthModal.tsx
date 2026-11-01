@@ -28,22 +28,22 @@ export default function AuthModal({
 
   return (
     <div
-      className="fixed inset-0 z-[1400] flex items-center justify-center bg-black/40 p-4"
+      className="fixed inset-0 z-[1400] flex items-center justify-center overflow-y-auto bg-black/30 p-4 backdrop-blur-sm"
       onMouseDown={onClose}
       role="dialog"
       aria-modal="true"
       aria-label={authCopy(t, mode).title}
     >
       <div
-        className="w-full max-w-sm rounded-xl border border-border bg-background p-6 shadow-2xl"
+        className="my-auto max-h-[calc(100dvh-2rem)] w-full max-w-md overflow-y-auto border border-border bg-card p-6 text-card-foreground shadow-xl sm:p-8"
         onMouseDown={(e) => e.stopPropagation()}
       >
-        <div className="relative mb-4 flex items-center justify-center">
+        <div className="relative mb-8 flex items-center justify-start">
           <div className="font-brand leading-none">
             <span className="text-xl font-bold tracking-tight text-foreground">EDTR</span>
             <span className="text-base font-semibold tracking-wider text-muted-foreground">PAD</span>
           </div>
-          <button type="button" onClick={onClose} aria-label={t.dialog.close} className="absolute right-0 rounded p-1 hover:bg-accent">
+          <button type="button" onClick={onClose} aria-label={t.dialog.close} className="absolute end-0 rounded p-1 hover:bg-accent">
             <X size={16} />
           </button>
         </div>

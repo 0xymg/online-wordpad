@@ -291,6 +291,22 @@ body {
   animation: welcome-out 220ms cubic-bezier(0.4, 0, 1, 1) both;
   pointer-events: none;
 }
+
+/* Auth screens share the welcome screen's neutral surfaces. */
+.welcome-classic,
+.auth-page {
+  background: #f5f6f8;
+}
+.welcome-classic-header {
+  background: rgb(255 255 255 / 95%);
+}
+.dark .welcome-classic,
+.dark .auth-page {
+  background: #1b1b1b;
+}
+.dark .welcome-classic-header {
+  background: rgb(27 27 27 / 95%);
+}
 @media (prefers-reduced-motion: reduce) {
   .welcome-screen-in,
   .welcome-screen-out { animation-duration: 1ms; }
