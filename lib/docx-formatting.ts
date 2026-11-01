@@ -346,6 +346,32 @@ export async function prepareDocxFormatting(arrayBuffer: ArrayBuffer) {
   for (const path of paths) {
     const doc = path === mainPath ? mainDocument : await read(path);
     if (!doc) continue;
+    if (path === mainPath) {
+      let breakId = 0;
+      for (const run of wordElements(doc, "r")) {
+        if (!Array.from(run.children).some(c => c.localName === "br" && attr(c, "type") === "page")) continue;
+        const fragment = doc.createDocumentFragment();
+        const rPr = child(run, "rPr");
+        let segment = doc.createElementNS(W, "w:r");
+        if (rPr) segment.appendChild(rPr.cloneNode(true));
+        for (const item of Array.from(run.children)) {
+          if (item === rPr) continue;
+          if (item.localName === "br" && attr(item, "type") === "page") {
+            if (segment.children.length > (rPr ? 1 : 0)) fragment.appendChild(segment);
+            const marker = doc.createElementNS(W, "w:bookmarkStart");
+            marker.setAttributeNS(W, "w:name", `${prefix}b${breakId}`);
+            marker.setAttributeNS(W, "w:id", String(1000000 + breakId++));
+            const end = doc.createElementNS(W, "w:bookmarkEnd");
+            end.setAttributeNS(W, "w:id", marker.getAttributeNS(W, "id")!);
+            fragment.append(marker, end);
+            segment = doc.createElementNS(W, "w:r");
+            if (rPr) segment.appendChild(rPr.cloneNode(true));
+          } else segment.appendChild(item.cloneNode(true));
+        }
+        if (segment.children.length > (rPr ? 1 : 0)) fragment.appendChild(segment);
+        run.replaceWith(fragment);
+      }
+    }
     for (const p of wordElements(doc, "p")) {
       let pPr = child(p, "pPr");
       const inherited = resolve(
@@ -470,6 +496,23 @@ export async function prepareDocxFormatting(arrayBuffer: ArrayBuffer) {
           wrapper.append(...Array.from(span.childNodes));
           span.appendChild(wrapper);
         }
+      }
+      for (const marker of Array.from(doc.querySelectorAll<HTMLAnchorElement>(`a[id^="${prefix}b"]`))) {
+        const block = marker.closest("p,h1,h2,h3,h4,h5,h6");
+        const separator = doc.createElement("hr"); separator.setAttribute("data-page-break", "true");
+        if (block) {
+          const range = doc.createRange(); range.setStartAfter(marker); range.setEnd(block, block.childNodes.length);
+          const after = block.cloneNode(false) as HTMLElement; after.appendChild(range.extractContents());
+          // Section properties end the original paragraph; a break-before flag
+          // belongs only to its first fragment.
+          for (const [element, property] of [[block, "sectPr"], [after, "pageBreakBefore"]] as const) {
+            const raw = element.getAttribute("data-docx-properties");
+            if (raw) { const props = xml(raw); wordElements(props, property).forEach(e => e.remove()); element.setAttribute("data-docx-properties", new XMLSerializer().serializeToString(props.documentElement)); }
+          }
+          block.after(separator, after); marker.remove();
+          const empty = (el: Element) => !el.textContent?.trim() && !el.querySelector("img,br");
+          if (empty(block)) block.remove(); if (empty(after)) after.remove();
+        } else marker.replaceWith(separator);
       }
       return wrapDocumentHtml(doc.body.innerHTML, preservation.layout);
     },

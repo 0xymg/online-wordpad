@@ -1011,3 +1011,18 @@ kbd.hero-kbd {
   padding-inline-start: 12px;
   color: #4b5563;
 }
+
+/* Page breaks inside tables must remain valid table rows. */
+.pm-page-spacer.pm-pagination-row { display: table-row; }
+.pm-page .pm-pagination-row > td { padding: 0 !important; border: 0 !important; background: transparent !important; }
+.pm-page .pm-repeated-header { margin: 0 !important; width: 100%; table-layout: fixed; border-collapse: collapse; }
+.pm-page-spacer-gap {
+  margin-left: calc(-1 * (var(--page-margin-left, var(--page-margin)) + var(--page-bleed) + var(--pagination-left-offset, 0px))) !important;
+  margin-right: calc(-1 * (var(--page-margin-right, var(--page-margin)) + var(--page-bleed) + var(--pagination-right-offset, 0px))) !important;
+}
+
+/* Keep first/last child margins inside the measured editor content box. */
+.pm-page .ProseMirror { display: flow-root; }
+
+/* Trailing paragraph spacing does not add another strip below the last sheet. */
+.pm-page .ProseMirror > :last-child { margin-bottom: 0 !important; }

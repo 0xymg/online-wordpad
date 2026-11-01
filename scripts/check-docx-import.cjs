@@ -21,7 +21,7 @@ const {
   TableRow,
   TableCell,
   ImageRun,
-  LevelFormat, Header, Footer, PageNumber, WidthType, BorderStyle, HeightRule,
+  LevelFormat, PageBreak, Header, Footer, PageNumber, WidthType, BorderStyle, HeightRule,
 } = require("docx");
 
 async function fixture(dir) {
@@ -226,6 +226,7 @@ async function fixture(dir) {
           }),
           new Paragraph({ alignment: AlignmentType.RIGHT, children: [] }),
           new Paragraph({ children: [new TextRun("THEME FONT")] }),
+          new Paragraph({ children: [new TextRun("BEFORE PAGE BREAK"), new PageBreak(), new TextRun("AFTER PAGE BREAK")] }),
           new Table({
             columnWidths: [1800, 2700, 3600], width: { size: 8100, type: WidthType.DXA },
             rows: [
@@ -305,9 +306,9 @@ async function fixture(dir) {
       const chooser = page.waitForEvent("filechooser");
       await page.getByRole("menuitem", { name: /^Open…/ }).click();
       await (await chooser).setFiles(file);
-      await page
-        .getByRole("button", { name: "Replace document", exact: true })
-        .click();
+      const replace = page.getByRole("button", { name: "Replace document", exact: true });
+      await Promise.race([replace.waitFor({ state: "visible" }), page.waitForFunction(text => document.querySelector(".ProseMirror")?.textContent.includes(text), expected)]);
+      if (await replace.isVisible()) await replace.click();
       await page.waitForFunction(
         (text) =>
           document.querySelector(".ProseMirror").textContent.includes(text),
@@ -325,6 +326,7 @@ async function fixture(dir) {
       return JSZip.loadAsync(await fs.readFile(target));
     }
     await open(file, "INHERITED RIGHT");
+    assert.equal(await page.locator(".ProseMirror hr[data-page-break]").count(), 1);
     const facts = await page.locator(".ProseMirror").evaluate((root) => {
       const nodeFor = (text) => {
         const walk = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
@@ -514,6 +516,7 @@ async function fixture(dir) {
         .evaluate((p) => p.style.textAlign),
       "right",
     );
+    assert.equal(await page.locator(".ProseMirror hr[data-page-break]").count(), 1);
     // Page controls must alter this document and persist without requiring typing.
     async function pageControl(submenu, item) {
       await page.getByRole("menuitem", { name: "File", exact: true }).click();

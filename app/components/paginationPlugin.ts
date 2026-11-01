@@ -5,6 +5,7 @@
 // flow (print hides them via pageStyle and uses real CSS page breaks).
 import type { DocumentLayout } from "@/lib/document-layout";
 import { Plugin, PluginKey } from "prosemirror-state";
+import { TableMap } from "prosemirror-tables";
 import { Decoration, DecorationSet } from "prosemirror-view";
 import type { EditorView } from "prosemirror-view";
 import type { Node as PMNode } from "prosemirror-model";
@@ -56,6 +57,9 @@ interface PageBreakPoint {
   pos: number;
   /** Empty space left on the page being closed, in px. */
   fillPx: number;
+  leftOffset?: number;
+  rightOffset?: number;
+  table?: { columns: number; headerHtml: string; headerHeight: number };
 }
 
 interface PaginationState {
@@ -110,7 +114,7 @@ function spacerDom(
   return el;
 }
 
-const positiveModulo = (value: number, mod: number) => ((value % mod) + mod) % mod;
+
 
 /**
  * Inside a textblock rendered as `blockPos`'s node, find the start of the
@@ -170,120 +174,170 @@ const MEASURE_EPS = 2;
  * px so CSS `zoom` on the page doesn't skew the numbers. Also returns how
  * much of the last page is used, so the editor can be padded to a full page.
  */
-function computeLayout(
-  view: EditorView,
-  cfg: PageLayoutConfig
-): { breaks: PageBreakPoint[]; lastPagePadPx: number; complete: boolean } {
+const WORD_NS = "http://schemas.openxmlformats.org/wordprocessingml/2006/main";
+const paragraphRules = new Map<string, { before: boolean; after: boolean; keep: boolean; together: boolean }>();
+function rules(node: PMNode) {
+  const raw = String(node.attrs.docxProperties || "");
+  const cached = paragraphRules.get(raw + (node.type.name === "heading" ? "heading" : ""));
+  if (cached) return cached;
+  const xml = new DOMParser().parseFromString(raw || `<p/>`, "application/xml");
+  const el = (name: string) => xml.getElementsByTagNameNS(WORD_NS, name)[0];
+  const on = (name: string) => { const e = el(name); return !!e && !["0", "false", "off"].includes(e.getAttributeNS(WORD_NS, "val") || ""); };
+  const result = { before: on("pageBreakBefore"), after: !!el("sectPr") && el("type")?.getAttributeNS(WORD_NS, "val") !== "continuous", keep: on("keepNext") || node.type.name === "heading", together: on("keepLines") };
+  // Keep memory bounded when many imported documents have distinct properties.
+  if (paragraphRules.size > 1000) paragraphRules.clear();
+  paragraphRules.set(raw + (node.type.name === "heading" ? "heading" : ""), result);
+  return result;
+}
+interface FlowUnit {
+  node: PMNode; pos: number; dom: HTMLElement; endDom?: HTMLElement;
+  table?: { columns: number; headerHtml: string; headerHeight: number };
+}
+function computeLayout(view: EditorView, cfg: PageLayoutConfig): { breaks: PageBreakPoint[]; lastPagePadPx: number; complete: boolean } {
   const dom = view.dom as HTMLElement;
   const pageContentH = cfg.pageHeightPx - cfg.marginPx - (cfg.bottomMarginPx ?? cfg.marginPx);
   if (pageContentH <= 60 || !dom.offsetWidth) return { breaks: [], lastPagePadPx: 0, complete: false };
-
-  // Hiding the spacers momentarily collapses the content height; the browser
-  // clamps/anchors the scroll position DURING that layout even though nothing
-  // paints, which read as "clicking the page jumps to the top". Save and
-  // restore the scroll container's position around the measurement.
   const scroller = dom.closest(".editor-shell") as HTMLElement | null;
-  const savedScrollTop = scroller?.scrollTop ?? 0;
+  const scrollTop = scroller?.scrollTop ?? 0;
+  const root = dom.getBoundingClientRect(), scale = root.width / Number.parseFloat(getComputedStyle(dom).width);
+  const headerHeights = new Map<Element, number>();
+  for (const header of Array.from(dom.querySelectorAll(".pm-repeated-header"))) {
+    const table = header.parentElement?.closest("table");
+    if (table) headerHeights.set(table, header.getBoundingClientRect().height / scale);
+  }
   dom.classList.add("pm-measuring");
   try {
-    const scale = dom.getBoundingClientRect().width / dom.offsetWidth;
-    if (!scale || !isFinite(scale)) return { breaks: [], lastPagePadPx: 0, complete: false };
-
-    const offsets: number[] = [];
-    view.state.doc.forEach((_node, offset) => offsets.push(offset));
-
-    // A stale plugin view (one left over from a previous EditorState) still has
-    // the old document in `view.state` while the DOM already shows the new one.
-    // Measuring then walks a single old block against 13 rendered ones and pads
-    // the page to a wildly wrong height, so bail out and let the live view do it.
-    const renderedBlocks = (Array.from(dom.children) as HTMLElement[])
-      .filter((el) => !el.classList.contains("pm-page-spacer")).length;
-    if (renderedBlocks !== offsets.length) {
-      return { breaks: [], lastPagePadPx: 0, complete: false };
-    }
-
-    const breaks: PageBreakPoint[] = [];
-    let baseTop: number | null = null;
-    let pageStart = 0; // natural y where the current page's content begins
-    let contentBottom = 0;
-    let forceBreakBeforeNext = false;
-    let blockIdx = 0;
-
-    for (const child of Array.from(dom.children) as HTMLElement[]) {
-      if (child.classList.contains("pm-page-spacer")) continue;
-      if (blockIdx >= offsets.length) break;
-      const rect = child.getBoundingClientRect();
-      if (baseTop === null) baseTop = rect.top / scale;
-      const top = rect.top / scale - baseTop;
-      const bottom = top + rect.height / scale;
-      contentBottom = Math.max(contentBottom, bottom);
-      const node = view.state.doc.child(blockIdx);
-
-      if (forceBreakBeforeNext && top > pageStart + MEASURE_EPS) {
-        let fillPx = positiveModulo(pageContentH - (top - pageStart), pageContentH);
-        if (fillPx > pageContentH - MEASURE_EPS * 2) fillPx = 0;
-        breaks.push({ pos: offsets[blockIdx], fillPx });
-        pageStart = top;
-      }
-      forceBreakBeforeNext = false;
-
-      // Paragraphs and headings break at line boundaries (like Word); other
-      // blocks (tables, lists, dividers) are pushed to the next page whole.
-      const lineSplittable = node.type.name === "paragraph" || node.type.name === "heading";
-      let guard = 0;
-      while (bottom - pageStart > pageContentH + MEASURE_EPS && guard++ < 100) {
-        const boundary = pageStart + pageContentH;
-        const split = lineSplittable
-          ? findLineSplit(view, offsets[blockIdx], node, boundary, scale, baseTop)
-          : null;
-        if (split && split.lineTop > top + MEASURE_EPS && split.lineTop > pageStart + MEASURE_EPS) {
-          // Break inside the block, right before the line crossing the boundary.
-          breaks.push({ pos: split.pos, fillPx: Math.max(0, boundary - split.lineTop) });
-          pageStart = split.lineTop;
-        } else if (top > pageStart + MEASURE_EPS) {
-          // Block (or its very first line) doesn't fit — push it down whole.
-          let fillPx = positiveModulo(pageContentH - (top - pageStart), pageContentH);
-          // A block sitting exactly on a page boundary can read as
-          // "overflowing" by a subpixel — never answer with a blank page.
-          if (fillPx > pageContentH - MEASURE_EPS * 2) fillPx = 0;
-          breaks.push({ pos: offsets[blockIdx], fillPx });
-          pageStart = top;
-        } else {
-          // Starts at the page top and still doesn't fit (oversized table,
-          // image, …) — let it run across the boundary; realign afterwards.
-          break;
+    if (!scale || !Number.isFinite(scale)) return { breaks: [], lastPagePadPx: 0, complete: false };
+    const baseTop = root.top / scale;
+    const units: FlowUnit[] = [];
+    let complete = true;
+    const collect = (node: PMNode, pos: number) => {
+      const element = view.nodeDOM(pos);
+      if (!(element instanceof HTMLElement)) { complete = false; return; }
+      if (node.type.name === "table") {
+        const map = TableMap.get(node);
+        const rows: { node: PMNode; pos: number; dom: HTMLElement }[] = [];
+        node.forEach((row, offset) => {
+          const rowPos = pos + 1 + offset, rowDom = view.nodeDOM(rowPos);
+          if (rowDom instanceof HTMLElement) rows.push({ node: row, pos: rowPos, dom: rowDom });
+          else complete = false;
+        });
+        if (rows.length !== map.height) { complete = false; return; }
+        const headerRows: HTMLElement[] = [];
+        for (const row of rows) {
+          const xml = new DOMParser().parseFromString(row.node.attrs.docxProperties || "<tr/>", "application/xml");
+          const repeat = xml.getElementsByTagNameNS(WORD_NS, "tblHeader")[0];
+          if (!repeat || ["0", "false", "off"].includes(repeat.getAttributeNS(WORD_NS, "val") || "")) break;
+          const clone = row.dom.cloneNode(true) as HTMLElement;
+          clone.querySelectorAll(".pm-page-spacer").forEach(e => e.remove());
+          clone.querySelectorAll(".selectedCell").forEach(e => e.classList.remove("selectedCell"));
+          clone.querySelectorAll(".column-resize-handle").forEach(e => e.remove());
+          clone.querySelectorAll("[id]").forEach(e => e.removeAttribute("id"));
+          headerRows.push(clone);
         }
+        const naturalHeaderHeight = rows.slice(0, headerRows.length).reduce((sum, row) => sum + row.dom.getBoundingClientRect().height / scale, 0);
+        const tableDom = rows[0]?.dom.closest("table");
+        const headerHeight = naturalHeaderHeight && tableDom ? headerHeights.get(tableDom) || naturalHeaderHeight : 0;
+        const colgroup = tableDom?.querySelector("colgroup")?.outerHTML || "";
+        // A rowspan is indivisible: group all rows connected by a merged cell.
+        for (let r = 0; r < rows.length;) {
+          let end = r + 1;
+          for (let row = r; row < end; row++) for (let c = 0; c < map.width; c++) end = Math.max(end, map.findCell(map.map[row * map.width + c]).bottom);
+          units.push({ ...rows[r], endDom: rows[end - 1].dom, table: { columns: map.width, headerHtml: r >= headerRows.length && headerHeight < pageContentH / 2 ? `${colgroup}<tbody>${headerRows.map(e => e.outerHTML).join("")}</tbody>` : "", headerHeight: r >= headerRows.length && headerHeight < pageContentH / 2 ? headerHeight : 0 } });
+          r = end;
+        }
+      } else if (node.isTextblock || node.isLeaf) units.push({ node, pos, dom: element });
+      else node.forEach((child, offset) => collect(child, pos + 1 + offset));
+    };
+    view.state.doc.forEach((node, pos) => collect(node, pos));
+    if (!complete) return { breaks: [], lastPagePadPx: 0, complete: false };
+    const breaks: PageBreakPoint[] = [];
+    let pageStart = 0, contentBottom = 0, repeatedHeight = 0, forced = false;
+    const topOf = (el: HTMLElement) => el.getBoundingClientRect().top / scale - baseTop;
+    const bottomOf = (el: HTMLElement) => el.getBoundingClientRect().bottom / scale - baseTop;
+    function addBreak(unit: FlowUnit, top: number, pos = unit.pos, inline = false) {
+      if (breaks.at(-1)?.pos === pos) return;
+      const rect = unit.dom.getBoundingClientRect();
+      let border = 0;
+      if (unit.table && !inline) {
+        let previous = unit.dom.previousElementSibling;
+        while (previous?.classList.contains("pm-page-spacer")) previous = previous.previousElementSibling;
+        const maxBorder = (row: Element | null, side: "borderTopWidth" | "borderBottomWidth") => Math.max(0, ...Array.from(row?.children || []).map(cell => Number.parseFloat(getComputedStyle(cell)[side]) || 0));
+        border = (maxBorder(previous, "borderBottomWidth") + maxBorder(unit.dom, "borderTopWidth")) / 2;
       }
-
-      // A manual page break closes the page for whatever follows it.
-      if (child.matches("hr.pm-page-break")) forceBreakBeforeNext = true;
-      blockIdx++;
+      breaks.push({ pos, fillPx: Math.max(0, pageContentH - repeatedHeight - (top - pageStart) - border), leftOffset: Math.max(0, (rect.left - root.left) / scale), rightOffset: Math.max(0, (root.right - rect.right) / scale), table: inline ? undefined : unit.table });
+      pageStart = top;
+      repeatedHeight = inline ? 0 : unit.table?.headerHeight || 0;
     }
-
-    const usedOnLastPage = positiveModulo(contentBottom - pageStart, pageContentH);
-    const lastPagePadPx = usedOnLastPage > MEASURE_EPS ? pageContentH - usedOnLastPage : 0;
-    // Every top-level node had a matching rendered block. When it doesn't (the
-    // DOM and the state can disagree for a frame after a whole-document swap)
-    // the numbers describe only part of the document and must not be trusted.
-    return { breaks, lastPagePadPx, complete: blockIdx === offsets.length };
+    for (let i = 0; i < units.length; i++) {
+      const unit = units[i], top = topOf(unit.dom), bottom = bottomOf(unit.endDom || unit.dom), policy = rules(unit.node);
+      contentBottom = Math.max(contentBottom, bottom);
+      if (forced || policy.before && top > pageStart + MEASURE_EPS) addBreak(unit, top);
+      forced = false;
+      const next = units[i + 1];
+      if (policy.keep && next && top > pageStart + MEASURE_EPS) {
+        const nextBottom = Math.min(bottomOf(next.endDom || next.dom), topOf(next.dom) + Math.max(24, Number.parseFloat(getComputedStyle(next.dom).lineHeight) * 2 || 32));
+        if (nextBottom - pageStart + repeatedHeight > pageContentH && nextBottom - top < pageContentH) addBreak(unit, top);
+      }
+      let guard = 0;
+      while (bottom - pageStart + repeatedHeight > pageContentH + MEASURE_EPS && guard++ < 1000) {
+        const boundary = pageStart + pageContentH - repeatedHeight;
+        let split = unit.node.isTextblock && !policy.together ? findLineSplit(view, unit.pos, unit.node, boundary, scale, baseTop) : null;
+        // Prefer two lines on each side of a paragraph boundary.
+        if (split && bottom - split.lineTop < 20) split = findLineSplit(view, unit.pos, unit.node, boundary - 20, scale, baseTop) || split;
+        if (split && split.lineTop > top + MEASURE_EPS && split.lineTop > pageStart + MEASURE_EPS) addBreak(unit, split.lineTop, split.pos, true);
+        else if (top > pageStart + MEASURE_EPS) addBreak(unit, top);
+        else break; // An indivisible row/image taller than a sheet cannot fit.
+      }
+      if (unit.node.type.name === "page_break" || policy.after) forced = true;
+    }
+    // Include trailing block margins; otherwise every page gains a few pixels.
+    const last = Array.from(dom.children).filter(e => !e.classList.contains("pm-page-spacer")).at(-1) as HTMLElement | undefined;
+    if (last) contentBottom = Math.max(contentBottom, bottomOf(last) + (Number.parseFloat(getComputedStyle(last).marginBottom) || 0));
+    let lastPagePadPx = Math.max(0, pageContentH - repeatedHeight - (contentBottom - pageStart));
+    if (forced && units.length) {
+      const lastPos = view.state.doc.content.size;
+      breaks.push({ pos: lastPos, fillPx: lastPagePadPx });
+      lastPagePadPx = pageContentH;
+    }
+    return { breaks, lastPagePadPx, complete: true };
   } finally {
     dom.classList.remove("pm-measuring");
-    if (scroller && scroller.scrollTop !== savedScrollTop) {
-      scroller.scrollTop = savedScrollTop;
-    }
+    if (scroller && scroller.scrollTop !== scrollTop) scroller.scrollTop = scrollTop;
   }
 }
 
 function sameBreaks(a: PageBreakPoint[], b: PageBreakPoint[]): boolean {
   if (a.length !== b.length) return false;
   for (let i = 0; i < a.length; i++) {
-    if (a[i].pos !== b[i].pos || Math.round(a[i].fillPx) !== Math.round(b[i].fillPx)) return false;
+    if (a[i].pos !== b[i].pos || Math.round(a[i].fillPx) !== Math.round(b[i].fillPx) || a[i].table?.headerHtml !== b[i].table?.headerHtml || a[i].table?.headerHeight !== b[i].table?.headerHeight || Math.round(a[i].leftOffset || 0) !== Math.round(b[i].leftOffset || 0) || Math.round(a[i].rightOffset || 0) !== Math.round(b[i].rightOffset || 0)) return false;
   }
   return true;
 }
 
 /** Frames to wait for the DOM to catch up with the state before giving up (~1s). */
 const MAX_REMEASURE_TRIES = 60;
+function breakDom(point: PageBreakPoint, top: number, bottom: number, numbers: Parameters<typeof spacerDom>[3]): HTMLElement {
+  const gap = spacerDom(point.fillPx, top, bottom, numbers);
+  gap.style.setProperty("--pagination-left-offset", `${point.leftOffset || 0}px`);
+  gap.style.setProperty("--pagination-right-offset", `${point.rightOffset || 0}px`);
+  if (!point.table) return gap;
+  const row = document.createElement("tr");
+  row.className = "pm-page-spacer pm-pagination-row";
+  row.contentEditable = "false";
+  row.setAttribute("aria-hidden", "true");
+  const cell = document.createElement("td"); cell.colSpan = point.table.columns;
+  gap.classList.remove("pm-page-spacer"); cell.appendChild(gap);
+  if (point.table.headerHtml) {
+    const header = document.createElement("table");
+    header.className = "pm-repeated-header";
+    header.innerHTML = point.table.headerHtml;
+    header.querySelectorAll("a,button,input,[tabindex]").forEach(el => el.setAttribute("tabindex", "-1"));
+    cell.appendChild(header);
+  }
+  row.appendChild(cell); return row;
+}
+
 
 /**
  * Lets the editor ask for a re-measure directly. Plugin views are torn down and
@@ -291,10 +345,10 @@ const MAX_REMEASURE_TRIES = 60;
  * update that follows a whole-document replacement — this gives the app a way
  * in that does not depend on that lifecycle.
  */
-let activeMeasure: ((view: EditorView) => void) | null = null;
+const measurements = new WeakMap<EditorView, (view: EditorView) => void>();
 
 export function remeasurePagination(view: EditorView | null | undefined): void {
-  if (view && !view.isDestroyed) activeMeasure?.(view);
+  if (view && !view.isDestroyed) measurements.get(view)?.(view);
 }
 
 export function paginationPlugin(getConfig: () => PageLayoutConfig): Plugin {
@@ -314,7 +368,7 @@ export function paginationPlugin(getConfig: () => PageLayoutConfig): Plugin {
       // compositionend re-triggers the measure.
       if (view.composing) return;
       const cfg = getConfig();
-      const { breaks, lastPagePadPx, complete } = computeLayout(view, cfg);
+      const { breaks, complete } = computeLayout(view, cfg);
       // Replacing a whole document (loading a template, switching files) can
       // leave the rendered blocks a frame behind the state. Measuring then sees
       // only the outgoing document — one empty paragraph, say — and pads the
@@ -328,24 +382,23 @@ export function paginationPlugin(getConfig: () => PageLayoutConfig): Plugin {
         return;
       }
       tries = 0;
-      // Only a multi-page document needs this: .pm-page carries min-height of a
-      // full sheet, so a single page already stands at full height on its own.
-      // Padding matters once spacers have pushed content past a boundary and
-      // the final page has to be filled out to match. Skipping it when there
-      // are no breaks also means a mis-timed measurement can no longer stretch
-      // a one-page document to twice its height.
-      (view.dom as HTMLElement).style.paddingBottom =
-        breaks.length && lastPagePadPx > 1 ? `${lastPagePadPx}px` : "";
       const cur = paginationKey.getState(view.state);
       const numbering = `${cfg.pageNumbers}:${cfg.pageNumberFormat}:${JSON.stringify(cfg.numberingStyle)}`;
-      if (
-        cur && sameBreaks(cur.breaks, breaks) &&
-        cur.marginPx === cfg.marginPx && cur.bottomMarginPx === cfg.bottomMarginPx && cur.numbering === numbering
-      ) return;
-      view.dispatch(view.state.tr.setMeta(paginationKey, {
-        breaks, marginPx: cfg.marginPx, bottomMarginPx: cfg.bottomMarginPx, numbering,
-        pageNumbers: cfg.pageNumbers, pageNumberFormat: cfg.pageNumberFormat, numberingStyle: cfg.numberingStyle,
-      }));
+      if (!cur || !sameBreaks(cur.breaks, breaks) || cur.marginPx !== cfg.marginPx || cur.bottomMarginPx !== cfg.bottomMarginPx || cur.numbering !== numbering) {
+        view.dispatch(view.state.tr.setMeta(paginationKey, {
+          breaks, marginPx: cfg.marginPx, bottomMarginPx: cfg.bottomMarginPx, numbering,
+          pageNumbers: cfg.pageNumbers, pageNumberFormat: cfg.pageNumberFormat, numberingStyle: cfg.numberingStyle,
+        }));
+      }
+      // Measure final padding after the widgets have reached the live DOM.
+      // This includes collapsed table borders and repeated-header geometry.
+      const root = view.dom.getBoundingClientRect();
+      const scale = root.width / Number.parseFloat(getComputedStyle(view.dom).width);
+      const last = Array.from(view.dom.children).filter(e => !e.classList.contains("pm-page-spacer")).at(-1) as HTMLElement | undefined;
+      const used = last ? (last.getBoundingClientRect().bottom - root.top) / scale + (Number.parseFloat(getComputedStyle(last).marginBottom) || 0) : 0;
+      const target = pageCountOf(breaks) * cfg.pageHeightPx + breaks.length * PAGE_GAP_PX - cfg.marginPx - (cfg.bottomMarginPx ?? cfg.marginPx);
+      const padding = breaks.length ? Math.max(0, target - used) : 0;
+      view.dom.style.paddingBottom = padding > 0.5 ? `${padding}px` : "";
     });
   };
 
@@ -368,7 +421,7 @@ export function paginationPlugin(getConfig: () => PageLayoutConfig): Plugin {
             meta.breaks.map((b, i) =>
               Decoration.widget(
                 b.pos,
-                () => spacerDom(b.fillPx, meta.marginPx, meta.bottomMarginPx ?? meta.marginPx, {
+                () => breakDom(b, meta.marginPx, meta.bottomMarginPx ?? meta.marginPx, {
                   position: meta.pageNumbers,
                   alignment: meta.numberingStyle?.alignment,
                   // The spacer closes page i+1 and opens page i+2.
@@ -377,7 +430,7 @@ export function paginationPlugin(getConfig: () => PageLayoutConfig): Plugin {
                 }),
                 {
                   side: -1,
-                  key: `pgbrk:${b.pos}:${Math.round(b.fillPx)}:${meta.marginPx}:${meta.bottomMarginPx}:${meta.numbering}:${total}`,
+                  key: `pgbrk:${b.pos}:${Math.round(b.fillPx)}:${meta.marginPx}:${meta.bottomMarginPx}:${meta.numbering}:${total}:${b.leftOffset}:${b.rightOffset}:${b.table?.headerHeight || 0}:${b.table?.headerHtml || ""}`,
                 }
               )
             )
@@ -403,7 +456,7 @@ export function paginationPlugin(getConfig: () => PageLayoutConfig): Plugin {
       },
     },
     view(view) {
-      activeMeasure = measure;
+      measurements.set(view, measure);
       measure(view);
       // The first page's top band and the last page's bottom band are .pm-page's
       // own padding — no spacer reaches them, so those two numbers are absolutely
@@ -437,17 +490,23 @@ export function paginationPlugin(getConfig: () => PageLayoutConfig): Plugin {
       // config changes (orientation/margins change the editor's width).
       const observer = new ResizeObserver(() => measure(view));
       observer.observe(view.dom);
+      const onLoad = () => measure(view);
+      view.dom.addEventListener("load", onLoad, true);
+      view.dom.addEventListener("compositionend", onLoad);
+      document.fonts?.addEventListener("loadingdone", onLoad);
       return {
-        update(v) {
-          measure(v);
+        update(v, previous) {
+          if (v.state.doc !== previous.doc) measure(v);
           syncEdges(v);
         },
         destroy() {
-          // Deliberately not cancelling a pending frame: a document swap tears
-          // this view down while the measurement it queued is the one the new
-          // content needs. The callback checks isConnected, so a genuinely dead
-          // view still bails out on its own.
-          if (activeMeasure === measure) activeMeasure = null;
+          // A replacement plugin registers its own measure callback; stale
+          // views must not write geometry into its document.
+          if (measurements.get(view) === measure) measurements.delete(view);
+          if (rafId) cancelAnimationFrame(rafId);
+          view.dom.removeEventListener("load", onLoad, true);
+          view.dom.removeEventListener("compositionend", onLoad);
+          document.fonts?.removeEventListener("loadingdone", onLoad);
           observer.disconnect();
           firstEdge.remove();
           lastEdge.remove();

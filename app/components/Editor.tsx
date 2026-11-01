@@ -990,7 +990,7 @@ export default function Editor({
       : undefined;
     pageLayoutConfig.pageNumberFormat = pageNumberFormat;
     const v = viewRef.current;
-    if (v && !v.isDestroyed) v.dispatch(v.state.tr);
+    if (v && !v.isDestroyed) { v.dispatch(v.state.tr); remeasurePagination(v); }
   }, [pageHeightPx, pageMargins.top, pageMargins.bottom, pageNumbers, pageNumberFormat, documentLayout]);
 
   // Same idea for the `[[name]]`/`[[email]]`/`[[today]]` input rule: it reads

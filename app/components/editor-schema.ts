@@ -185,6 +185,7 @@ const pageBreakNodeSpec: NodeSpec = {
   selectable: true,
   parseDOM: [{
     tag: "hr[data-page-break]",
+    priority: 100,
   }],
   toDOM() {
     return ["hr", { "data-page-break": "true", class: "pm-page-break" }];

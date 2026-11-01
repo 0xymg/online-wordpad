@@ -23,7 +23,9 @@ const { chromium } = require(process.env.PLAYWRIGHT_MODULE || 'playwright');
       const chooser = page.waitForEvent('filechooser');
       await page.getByRole('menuitem', { name: /^Open…/ }).click();
       await (await chooser).setFiles(filename);
-      await page.getByRole('button', { name: 'Replace document', exact: true }).click();
+      const replace = page.getByRole('button', { name: 'Replace document', exact: true });
+      await Promise.race([replace.waitFor({ state: 'visible' }), page.waitForFunction(() => document.querySelector('.ProseMirror')?.textContent.includes('MERGED A'))]);
+      if (await replace.isVisible()) await replace.click();
       await page.waitForFunction(() => document.querySelector('.ProseMirror')?.textContent.includes('MERGED A'));
       await page.getByRole('alertdialog').waitFor({ state: 'hidden' });
     }
