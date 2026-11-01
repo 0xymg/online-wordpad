@@ -3,6 +3,7 @@
 // boundary, drawing a gap band between the "pages". The document itself is
 // untouched — spacers are decorations only, so save/export see the plain
 // flow (print hides them via pageStyle and uses real CSS page breaks).
+import type { DocumentLayout } from "@/lib/document-layout";
 import { Plugin, PluginKey } from "prosemirror-state";
 import { Decoration, DecorationSet } from "prosemirror-view";
 import type { EditorView } from "prosemirror-view";
@@ -18,12 +19,27 @@ export interface PageLayoutConfig {
   pageHeightPx: number;
   /** Page margin in CSS px (padding of .pm-page). */
   marginPx: number;
+  bottomMarginPx?: number;
   pageNumbers: PageNumberPosition;
   pageNumberFormat: PageNumberFormat;
+  numberingStyle?: DocumentLayout["numberingStyle"];
 }
 
-function numberLabel(page: number, total: number, format: PageNumberFormat): string {
-  return format === "of" ? `${page} / ${total}` : String(page);
+function numberLabel(page: number, total: number, format: PageNumberFormat, style?: DocumentLayout["numberingStyle"]): string {
+  if (style?.hideFirst && page === 1) return "";
+  if (!style) return format === "of" ? `${page} / ${total}` : String(page);
+  let n = page + style.start - 1;
+  let label = String(n);
+  if (/Roman$/.test(style.format)) {
+    label = "";
+    for (const [value, letters] of [[1000,"M"],[900,"CM"],[500,"D"],[400,"CD"],[100,"C"],[90,"XC"],[50,"L"],[40,"XL"],[10,"X"],[9,"IX"],[5,"V"],[4,"IV"],[1,"I"]] as const) while (n >= value && label.length < 100) { label += letters; n -= value; }
+    if (style.format === "lowerRoman") label = label.toLowerCase();
+  } else if (/Letter$/.test(style.format)) {
+    label = "";
+    while (n > 0) { n--; label = String.fromCharCode(65 + n % 26) + label; n = Math.floor(n / 26); }
+    if (style.format === "lowerLetter") label = label.toLowerCase();
+  }
+  return style.template.replaceAll("{{PAGE}}", label).replaceAll("{{NUMPAGES}}", String(total));
 }
 
 /** A number filling one page-margin band; the CSS pins it to the outer edge. */
@@ -45,6 +61,7 @@ interface PageBreakPoint {
 interface PaginationState {
   breaks: PageBreakPoint[];
   marginPx: number;
+  bottomMarginPx?: number;
   /** "<position>:<format>" — the numbering settings the decorations were built from. */
   numbering: string;
   deco: DecorationSet;
@@ -59,8 +76,8 @@ const PAGE_GAP_PX = 26;
 export const paginationKey = new PluginKey<PaginationState>("pagination");
 
 function spacerDom(
-  fillPx: number, marginPx: number,
-  numbers: { position: PageNumberPosition; closing: string; opening: string }
+  fillPx: number, marginPx: number, bottomMarginPx: number,
+  numbers: { position: PageNumberPosition; closing: string; opening: string; alignment?: string }
 ): HTMLElement {
   const el = document.createElement("div");
   el.className = "pm-page-spacer";
@@ -70,8 +87,8 @@ function spacerDom(
   fill.style.height = `${Math.max(0, fillPx)}px`;
   // …and its bottom margin, kept as its own band so a page number can sit in it.
   const bottomMargin = numbers.position === "bottom"
-    ? numberDom(numbers.closing, marginPx, "bottom")
-    : (() => { const d = document.createElement("div"); d.style.height = `${marginPx}px`; return d; })();
+    ? numberDom(numbers.closing, bottomMarginPx, "bottom")
+    : (() => { const d = document.createElement("div"); d.style.height = `${bottomMarginPx}px`; return d; })();
   // The gap between pages. It bleeds past the page's own edges so the single
   // box-shadow around .pm-page doesn't run through the gap; the inner element
   // redraws that shadow as a bottom edge for the closing page and a top edge
@@ -79,8 +96,8 @@ function spacerDom(
   const gap = document.createElement("div");
   gap.className = "pm-page-spacer-gap";
   gap.style.height = `${PAGE_GAP_PX}px`;
-  gap.style.marginLeft = "calc(-1 * (var(--page-margin) + var(--page-bleed)))";
-  gap.style.marginRight = "calc(-1 * (var(--page-margin) + var(--page-bleed)))";
+  gap.style.marginLeft = "calc(-1 * (var(--page-margin-left, var(--page-margin)) + var(--page-bleed)))";
+  gap.style.marginRight = "calc(-1 * (var(--page-margin-right, var(--page-margin)) + var(--page-bleed)))";
   const edge = document.createElement("div");
   edge.className = "pm-page-spacer-edge";
   gap.appendChild(edge);
@@ -88,6 +105,7 @@ function spacerDom(
   const top = numbers.position === "top"
     ? numberDom(numbers.opening, marginPx, "top")
     : (() => { const d = document.createElement("div"); d.style.height = `${marginPx}px`; return d; })();
+  for (const margin of [bottomMargin, top]) margin.style.justifyContent = numbers.alignment === "center" ? "center" : numbers.alignment === "left" ? "flex-start" : "flex-end";
   el.append(fill, bottomMargin, gap, top);
   return el;
 }
@@ -157,7 +175,7 @@ function computeLayout(
   cfg: PageLayoutConfig
 ): { breaks: PageBreakPoint[]; lastPagePadPx: number; complete: boolean } {
   const dom = view.dom as HTMLElement;
-  const pageContentH = cfg.pageHeightPx - 2 * cfg.marginPx;
+  const pageContentH = cfg.pageHeightPx - cfg.marginPx - (cfg.bottomMarginPx ?? cfg.marginPx);
   if (pageContentH <= 60 || !dom.offsetWidth) return { breaks: [], lastPagePadPx: 0, complete: false };
 
   // Hiding the spacers momentarily collapses the content height; the browser
@@ -319,14 +337,14 @@ export function paginationPlugin(getConfig: () => PageLayoutConfig): Plugin {
       (view.dom as HTMLElement).style.paddingBottom =
         breaks.length && lastPagePadPx > 1 ? `${lastPagePadPx}px` : "";
       const cur = paginationKey.getState(view.state);
-      const numbering = `${cfg.pageNumbers}:${cfg.pageNumberFormat}`;
+      const numbering = `${cfg.pageNumbers}:${cfg.pageNumberFormat}:${JSON.stringify(cfg.numberingStyle)}`;
       if (
         cur && sameBreaks(cur.breaks, breaks) &&
-        cur.marginPx === cfg.marginPx && cur.numbering === numbering
+        cur.marginPx === cfg.marginPx && cur.bottomMarginPx === cfg.bottomMarginPx && cur.numbering === numbering
       ) return;
       view.dispatch(view.state.tr.setMeta(paginationKey, {
-        breaks, marginPx: cfg.marginPx, numbering,
-        pageNumbers: cfg.pageNumbers, pageNumberFormat: cfg.pageNumberFormat,
+        breaks, marginPx: cfg.marginPx, bottomMarginPx: cfg.bottomMarginPx, numbering,
+        pageNumbers: cfg.pageNumbers, pageNumberFormat: cfg.pageNumberFormat, numberingStyle: cfg.numberingStyle,
       }));
     });
   };
@@ -338,8 +356,9 @@ export function paginationPlugin(getConfig: () => PageLayoutConfig): Plugin {
       apply(tr, prev, _oldState, newState) {
         const meta = tr.getMeta(paginationKey) as
           | {
-              breaks: PageBreakPoint[]; marginPx: number; numbering: string;
-              pageNumbers: PageNumberPosition; pageNumberFormat: PageNumberFormat;
+              breaks: PageBreakPoint[]; marginPx: number;
+              bottomMarginPx?: number; numbering: string;
+              pageNumbers: PageNumberPosition; pageNumberFormat: PageNumberFormat; numberingStyle?: DocumentLayout["numberingStyle"];
             }
           | undefined;
         if (meta) {
@@ -349,21 +368,22 @@ export function paginationPlugin(getConfig: () => PageLayoutConfig): Plugin {
             meta.breaks.map((b, i) =>
               Decoration.widget(
                 b.pos,
-                () => spacerDom(b.fillPx, meta.marginPx, {
+                () => spacerDom(b.fillPx, meta.marginPx, meta.bottomMarginPx ?? meta.marginPx, {
                   position: meta.pageNumbers,
+                  alignment: meta.numberingStyle?.alignment,
                   // The spacer closes page i+1 and opens page i+2.
-                  closing: numberLabel(i + 1, total, meta.pageNumberFormat),
-                  opening: numberLabel(i + 2, total, meta.pageNumberFormat),
+                  closing: numberLabel(i + 1, total, meta.pageNumberFormat, meta.numberingStyle),
+                  opening: numberLabel(i + 2, total, meta.pageNumberFormat, meta.numberingStyle),
                 }),
                 {
                   side: -1,
-                  key: `pgbrk:${b.pos}:${Math.round(b.fillPx)}:${meta.marginPx}:${meta.numbering}:${total}`,
+                  key: `pgbrk:${b.pos}:${Math.round(b.fillPx)}:${meta.marginPx}:${meta.bottomMarginPx}:${meta.numbering}:${total}`,
                 }
               )
             )
           );
           return {
-            breaks: meta.breaks, marginPx: meta.marginPx, numbering: meta.numbering, deco,
+            breaks: meta.breaks, marginPx: meta.marginPx, bottomMarginPx: meta.bottomMarginPx, numbering: meta.numbering, deco,
           };
         }
         if (tr.docChanged) {
@@ -402,12 +422,13 @@ export function paginationPlugin(getConfig: () => PageLayoutConfig): Plugin {
         const cfg = getConfig();
         const total = pageCountOf(paginationKey.getState(v.state)?.breaks ?? []);
         const entries: Array<[HTMLElement, boolean, string]> = [
-          [firstEdge, cfg.pageNumbers === "top", numberLabel(1, total, cfg.pageNumberFormat)],
-          [lastEdge, cfg.pageNumbers === "bottom", numberLabel(total, total, cfg.pageNumberFormat)],
+          [firstEdge, cfg.pageNumbers === "top", numberLabel(1, total, cfg.pageNumberFormat, cfg.numberingStyle)],
+          [lastEdge, cfg.pageNumbers === "bottom", numberLabel(total, total, cfg.pageNumberFormat, cfg.numberingStyle)],
         ];
         for (const [el, on, text] of entries) {
           el.style.display = on ? "" : "none";
-          el.style.height = `${cfg.marginPx}px`;
+          el.style.justifyContent = cfg.numberingStyle?.alignment === "center" ? "center" : cfg.numberingStyle?.alignment === "left" ? "flex-start" : "flex-end";
+          el.style.height = `${el === lastEdge ? (cfg.bottomMarginPx ?? cfg.marginPx) : cfg.marginPx}px`;
           if (on) el.textContent = text;
         }
       };

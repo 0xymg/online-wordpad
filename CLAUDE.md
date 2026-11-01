@@ -56,6 +56,8 @@ app/(site)/pad/layout.tsx          → Editör fontları (Google Fonts) sadece /
 
 ## Guide Yazıları
 
+Guide yazarı her zaman **312** olmalı (https://312.sh). Görünen byline, Article JSON-LD ve Markdown çıktısı `lib/guide-topics.ts` içindeki `GUIDE_AUTHOR` kaynağını kullanır. Yeni yazılarda konu (`topic`), dil (`language`), en az iki ilgili rehber (`related`) ve uygun olduğunda animasyon türü (`demo`: slash/docx/table/print) ekle; konuya uygun yazı içi bağlantılar kullan.
+
 Her guide `content/guides/<slug>.mdx` olarak saklanır. Frontmatter zorunlu alanlar:
 
 ```mdx
@@ -131,6 +133,9 @@ npm run lint   # ESLint
 - Editör client-side çalışır; misafirlerde localStorage'a, üyelerde Postgres'e (server actions: `app/actions/user-data.ts`) kaydeder.
 - Autosave 800ms debounce'lu; id schedule anında yakalanır ve dosya değiştirme/kapatma anında flush edilir (`flushSave`). Bu davranışı bozacak değişikliklerden kaçın.
 - Görseller eklenirken client-side sıkıştırılır (`lib/image-util.ts`) — localStorage 5MB kotası için kritik.
+- DOCX import, `lib/docx-formatting.ts` ile OOXML varsayılanlarını/stil kalıtımını ve doğrudan biçimlendirmeyi Mammoth çıktısına taşır. Font, punto ve hizalamayı düzeltirken liste/tablo/link/görsel yapısını koru; `scripts/check-docx-import.cjs` gerçek editörde import → export → tekrar import kontrolü yapar (Playwright gerekir).
+- Tablo özellikleri (`TablePropertiesDialog`, `lib/table-formatting.ts`) hücre seçimini tek işlemde biçimlendirir. Ekran stilleri ile OOXML özelliklerini birlikte güncelle; birleşik hücreleri ve seçilmeyen hücrelerin ayarlarını koru. `scripts/check-table-formatting.cjs` geri alma, kaydetme/yeniden yükleme ve DOCX döngüsünü doğrular.
+- DOCX sayfa düzeni `doc.attrs.layout` içinde, HTML’de `data-edtr-layout` ile saklanır; aktif olmayan dosya dışa aktarımı ve sürüm geri yükleme de aynı metadatayı kullanmalı. `lib/docx-preservation.ts`, bölüm ayarlarını, üst/alt bilgi alanlarını ve ilişkili varlıkları, tablo/satır/hücre özelliklerini korur. Geçici export bookmark’larını çıktıda bırakma. İçe aktarılan dört kenar boşluğunu tek genel tercihle ezme. Çok bölümlü belgenin ayarları DOCX’te korunur; editörün sayfalama önizlemesi ilk bölümün geometrisini kullanır ve Word’ün tam yerleşim motoru değildir.
 - Export'lar (`lib/doc-export.ts`) ve mammoth dynamic import ile yüklenir; ana bundle'a statik olarak import ETME.
 - Guide sayfaları Next.js `generateStaticParams` ile statik olarak oluşturulur (SSG).
 - MDX bileşen override'ları `app/(site)/guides/[slug]/page.tsx` içindeki `components` objesinde tanımlı.

@@ -27,9 +27,10 @@ import {
 interface TableContextMenuProps {
   viewRef: React.MutableRefObject<EditorView | null>;
   children: React.ReactNode;
+  onProperties: () => void;
 }
 
-export default function TableContextMenu({ viewRef, children }: TableContextMenuProps) {
+export default function TableContextMenu({ viewRef, children, onProperties }: TableContextMenuProps) {
   const t = useT();
   const [inTable, setInTable] = useState(false);
 
@@ -70,6 +71,8 @@ export default function TableContextMenu({ viewRef, children }: TableContextMenu
       <ContextMenuContent className="w-52">
         {inTable ? (
           <>
+            <ContextMenuItem onSelect={onProperties}>{t.tableProperties.title}</ContextMenuItem>
+            <ContextMenuSeparator />
             {/* Sütun işlemleri */}
             <ContextMenuSub>
               <ContextMenuSubTrigger>{uiText(t, "Column")}</ContextMenuSubTrigger>

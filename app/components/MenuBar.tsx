@@ -59,6 +59,7 @@ interface MenuBarProps {
   onShowShortcuts: () => void;
   onShowAbout: () => void;
   onFind: () => void;
+  onTableProperties: () => void;
   onInsertTable: (rows: number, cols: number) => void;
   onPageBreakAdd: () => void;
   onLinkAdd: () => void;
@@ -158,7 +159,7 @@ function MenuBar({
   docTitle, onTitleChange, onNewDoc, onShowHome, onNewFromTemplate, onOpenFile, onExport,
   onSave, onCopyLink, onRenameDoc, onDeleteDoc, onReplace,
   onShowVersions, onShowShortcuts, onShowAbout, onFind,
-  onInsertTable, onPageBreakAdd, onLinkAdd, onImageAdd, onImageUrlAdd,
+  onTableProperties, onInsertTable, onPageBreakAdd, onLinkAdd, onImageAdd, onImageUrlAdd,
   onInsertDivider, onInsertSymbol, onInsertDate, onInsertVariable,
   onLineSpacing, onClearFormatting,
   zoomPercent, onZoomChange,
@@ -778,6 +779,8 @@ function MenuBar({
               <MenubarItem onClick={() => onInsertTable(5, 3)}>{t.tableMenu.rowsByCols(5, 3)}</MenubarItem>
             </MenubarSubContent>
           </MenubarSub>
+          <MenubarSeparator />
+          <MenubarItem onClick={onTableProperties}>{t.tableProperties.title}</MenubarItem>
           <MenubarSeparator />
           <MenubarItem onClick={() => cmd(addRowBefore)}>{t.tableMenu.rowAbove}</MenubarItem>
           <MenubarItem onClick={() => cmd(addRowAfter)}>{t.tableMenu.rowBelow}</MenubarItem>

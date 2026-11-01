@@ -3,10 +3,18 @@
 // (e.g. the landing page's ToolbarPreview) can import it without dragging in
 // the entire Editor.tsx module graph (react-to-print, dialogs, actions, …).
 
-import { Schema, Node as PMNode, Mark } from "prosemirror-model";
+import { Schema, Node as PMNode, Mark, type NodeSpec } from "prosemirror-model";
 import { schema as basicSchema } from "prosemirror-schema-basic";
 import { addListNodes } from "prosemirror-schema-list";
 import { tableNodes } from "prosemirror-tables";
+import { readDocxProperties } from "@/lib/document-layout";
+
+function layoutStyles(el: HTMLElement): string {
+  return ["height", "margin-top", "margin-bottom", "margin-left", "margin-right", "text-indent", "line-height", "background-color", "vertical-align", "border-top", "border-right", "border-bottom", "border-left", "padding-top", "padding-right", "padding-bottom", "padding-left"].map(p => el.style.getPropertyValue(p) ? `${p}:${el.style.getPropertyValue(p)}` : "").filter(Boolean).join(";");
+}
+const rawAttrs = { docxProperties: { default: null }, layoutStyle: { default: null } };
+const parseRaw = (el: HTMLElement) => ({ docxProperties: readDocxProperties(el), layoutStyle: el.hasAttribute("data-docx-properties") ? layoutStyles(el) : null });
+const rawDOM = (node: PMNode): Record<string, string> => node.attrs.docxProperties ? { "data-docx-properties": node.attrs.docxProperties } : {};
 
 const normalizeTextAlign = (value: string | null | undefined) => {
   if (!value) return null;
@@ -38,9 +46,10 @@ const normalizeLineHeight = (value: unknown): string | null => {
   return String(n);
 };
 
-const paragraphNodeSpec = {
+const paragraphNodeSpec: NodeSpec = {
   ...basicSchema.spec.nodes.get("paragraph"),
   attrs: {
+    ...rawAttrs,
     textAlign: { default: null },
     indent: { default: 0 },
     lineHeight: { default: null },
@@ -51,9 +60,10 @@ const paragraphNodeSpec = {
       if (typeof dom === "string") return { textAlign: null, indent: 0, lineHeight: null };
       const el = dom as HTMLElement;
       return {
+        ...parseRaw(el),
         textAlign: normalizeTextAlign(el.style.textAlign),
-        indent: parseIndentFromDom(el),
-        lineHeight: normalizeLineHeight(el.style.lineHeight),
+        indent: el.hasAttribute("data-docx-properties") ? 0 : parseIndentFromDom(el),
+        lineHeight: /[a-z%]/i.test(el.style.lineHeight) ? null : normalizeLineHeight(el.style.lineHeight),
       };
     },
   }],
@@ -61,21 +71,22 @@ const paragraphNodeSpec = {
     const textAlign = normalizeTextAlign(node.attrs.textAlign);
     const indent = normalizeIndent(node.attrs.indent);
     const lineHeight = normalizeLineHeight(node.attrs.lineHeight);
-    const style: string[] = [];
+    const style: string[] = node.attrs.layoutStyle ? [node.attrs.layoutStyle] : [];
     if (textAlign) style.push(`text-align:${textAlign}`);
     if (indent > 0) style.push(`margin-left:${indent * 24}px`);
     if (lineHeight) style.push(`line-height:${lineHeight}`);
-    const attrs: Record<string, string> = { dir: "auto" };
+    const attrs: Record<string, string> = { dir: "auto", ...rawDOM(node) };
     if (style.length) attrs.style = style.join(";");
     if (indent > 0) attrs["data-indent"] = String(indent);
     return ["p", attrs, 0];
   },
 };
 
-const headingNodeSpec = {
+const headingNodeSpec: NodeSpec = {
   ...basicSchema.spec.nodes.get("heading"),
   attrs: {
     level: { default: 1 },
+    ...rawAttrs,
     textAlign: { default: null },
     indent: { default: 0 },
     lineHeight: { default: null },
@@ -87,9 +98,10 @@ const headingNodeSpec = {
       const el = dom as HTMLElement;
       return {
         level,
+        ...parseRaw(el),
         textAlign: normalizeTextAlign(el.style.textAlign),
-        indent: parseIndentFromDom(el),
-        lineHeight: normalizeLineHeight(el.style.lineHeight),
+        indent: el.hasAttribute("data-docx-properties") ? 0 : parseIndentFromDom(el),
+        lineHeight: /[a-z%]/i.test(el.style.lineHeight) ? null : normalizeLineHeight(el.style.lineHeight),
       };
     },
   })),
@@ -98,18 +110,18 @@ const headingNodeSpec = {
     const textAlign = normalizeTextAlign(node.attrs.textAlign);
     const indent = normalizeIndent(node.attrs.indent);
     const lineHeight = normalizeLineHeight(node.attrs.lineHeight);
-    const style: string[] = [];
+    const style: string[] = node.attrs.layoutStyle ? [node.attrs.layoutStyle] : [];
     if (textAlign) style.push(`text-align:${textAlign}`);
     if (indent > 0) style.push(`margin-left:${indent * 24}px`);
     if (lineHeight) style.push(`line-height:${lineHeight}`);
-    const attrs: Record<string, string> = { dir: "auto" };
+    const attrs: Record<string, string> = { dir: "auto", ...rawDOM(node) };
     if (style.length) attrs.style = style.join(";");
     if (indent > 0) attrs["data-indent"] = String(indent);
     return [`h${level}`, attrs, 0];
   },
 };
 
-const imageNodeSpec = {
+const imageNodeSpec: NodeSpec = {
   inline: true,
   group: "inline",
   draggable: true,
@@ -167,7 +179,7 @@ const imageNodeSpec = {
   },
 };
 
-const pageBreakNodeSpec = {
+const pageBreakNodeSpec: NodeSpec = {
   group: "block",
   atom: true,
   selectable: true,
@@ -179,17 +191,36 @@ const pageBreakNodeSpec = {
   },
 };
 
+const importedTables = tableNodes({ tableGroup: "block", cellContent: "block+", cellAttributes: {
+  docxContinuations: { default: null, getFromDOM: (el) => el.getAttribute("data-docx-continuations"), setDOMAttr(value, attrs) { if (value) attrs["data-docx-continuations"] = value; } },
+  docxProperties: { default: null, getFromDOM: readDocxProperties, setDOMAttr(value, attrs) { if (value) attrs["data-docx-properties"] = value; } },
+  layoutStyle: { default: null, getFromDOM: (el) => layoutStyles(el), setDOMAttr(value, attrs) { if (value) attrs.style = `${attrs.style || ""};${value}`; } },
+} });
+for (const name of ["table", "table_row"] as const) {
+  const spec = importedTables[name];
+  const originalDOM = spec.toDOM!;
+  spec.attrs = { ...spec.attrs, ...rawAttrs, docxGrid: { default: null }, docxRows: { default: null } };
+  spec.parseDOM = [{ tag: name === "table" ? "table" : "tr", getAttrs: (dom) => ({ ...parseRaw(dom as HTMLElement), docxGrid: (dom as HTMLElement).getAttribute("data-docx-grid"), docxRows: (dom as HTMLElement).getAttribute("data-docx-rows") }) }];
+  spec.toDOM = (node) => {
+    const dom = originalDOM(node) as [string, Record<string, unknown>, ...unknown[]];
+    const attrs = { ...rawDOM(node), ...(node.attrs.layoutStyle ? { style: node.attrs.layoutStyle } : {}), ...(node.attrs.docxGrid ? { "data-docx-grid": node.attrs.docxGrid } : {}), ...(node.attrs.docxRows ? { "data-docx-rows": node.attrs.docxRows } : {}) };
+    // tableNodes emits [table, [tbody, 0]] / [tr, 0], with no attrs object.
+    return [dom[0], attrs, ...dom.slice(1)] as import("prosemirror-model").DOMOutputSpec;
+  };
+}
+
 export const mySchema = new Schema({
   nodes: (addListNodes(
     basicSchema.spec.nodes
-      .update("paragraph", paragraphNodeSpec as any)
-      .update("heading", headingNodeSpec as any)
-      .update("image", imageNodeSpec as any),
+      .update("doc", { ...basicSchema.spec.nodes.get("doc"), attrs: { layout: { default: null } } })
+      .update("paragraph", paragraphNodeSpec)
+      .update("heading", headingNodeSpec)
+      .update("image", imageNodeSpec),
     "paragraph block*",
     "block"
-  ) as any)
-    .append(tableNodes({ tableGroup: "block", cellContent: "block+", cellAttributes: {} }))
-    .addToEnd("page_break", pageBreakNodeSpec as any),
+  ))
+    .append(importedTables)
+    .addToEnd("page_break", pageBreakNodeSpec),
   marks: basicSchema.spec.marks.append({
     underline:     { parseDOM: [{ tag: "u" }],                    toDOM: () => ["u", 0] },
     strikethrough: { parseDOM: [{ tag: "s" }, { tag: "strike" }],  toDOM: () => ["s", 0] },

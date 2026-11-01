@@ -92,11 +92,19 @@ def check_guide(file):
     assert page.meta.get("description"), path + " description"
     article = next(schema for schema in page.schemas if schema.get("@type") == "Article")
     assert article["datePublished"] == dates["date"] and article["dateModified"] == expected_date
-    assert article["inLanguage"] == "en"
+    expected_language = re.search(r'^language: "([^"]+)"', raw, re.M).group(1)
+    assert article["inLanguage"] == expected_language
+    assert article["author"]["name"] == "312" and article["author"]["url"] == "https://312.sh"
+    related = json.loads(re.search(r'^related: (.+)$', raw, re.M).group(1))
+    assert len(related) >= 2 and all((ROOT / "content/guides" / (slug + ".mdx")).exists() for slug in related)
+    for linked in re.findall(r'\]\(/guides/([^)#]+)\)', raw):
+        assert (ROOT / "content/guides" / (linked + ".mdx")).exists(), linked
+        assert "/guides/" + linked in page.anchors, linked
     assert any(link.get("type") == "text/markdown" and link.get("href") == SITE + path + "/index.md" for link in page.links)
     status, headers, text = fetch(path + "/index.md")
     assert status == 200 and headers.get("Content-Type", "").startswith("text/markdown"), path
     assert "Source: " + SITE + path in text
+    assert "Author: 312 (https://312.sh)" in text
     assert "](/" not in text, path + " relative Markdown link"
     assert '<' + SITE + path + '>; rel="canonical"' in headers.get("Link", "")
 

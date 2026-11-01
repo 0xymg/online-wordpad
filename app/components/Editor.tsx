@@ -1,5 +1,6 @@
 "use client";
 
+import { readLayout, defaultDocumentLayout, wrapDocumentHtml, type DocumentLayout } from "@/lib/document-layout";
 import { useEffect, useRef, useCallback, useMemo, useState, lazy, Suspense } from "react";
 import { useReactToPrint } from "react-to-print";
 import { DOMParser as PMParser, DOMSerializer, Node as PMNode } from "prosemirror-model";
@@ -55,6 +56,7 @@ import WelcomeScreen from "./WelcomeScreen";
 // Auth/profile dialogs are closed for the vast majority of a session — load
 // their chunks only when they are first opened.
 const AuthModal = lazy(() => import("./AuthModal"));
+const TablePropertiesDialog = lazy(() => import("./TablePropertiesDialog"));
 const ProfileDialog = lazy(() => import("./ProfileDialog"));
 import { toast, Toaster } from "./toast";
 import { useAskDialogs } from "./AskDialogs";
@@ -173,7 +175,7 @@ function setTextAlignCmd(align: "left" | "center" | "right" | "justify") {
 
 function parseHtmlToDoc(html: string): PMNode {
   const dom = new DOMParser().parseFromString(html || "<p></p>", "text/html");
-  return PMParser.fromSchema(mySchema).parse(dom.body);
+  return PMParser.fromSchema(mySchema).parse(dom.body, { topNode: mySchema.nodes.doc.create({ layout: readLayout(dom.body) ?? defaultDocumentLayout() }) });
 }
 
 function buildPlugins() {
@@ -320,6 +322,7 @@ class TableNodeView {
   ) {
     // prosemirror-tables TableView'ını kullan (column resizing desteği için)
     this.tableView = new TableView(node, 25);
+    this.applyTableStyle(node);
 
     // Wrapper
     this.dom = document.createElement("div");
@@ -356,8 +359,19 @@ class TableNodeView {
     this.contentDOM = this.tableView.contentDOM;
   }
 
+  private applyTableStyle(node: PMNode) {
+    const table = this.tableView.dom.querySelector("table");
+    if (table) {
+      const style = document.createElement("table");
+      style.style.cssText = node.attrs.layoutStyle || "";
+      table.style.marginLeft = style.style.marginLeft;
+      table.style.marginRight = style.style.marginRight;
+    }
+  }
   update(node: PMNode) {
-    return this.tableView.update(node);
+    const updated = this.tableView.update(node);
+    if (updated) this.applyTableStyle(node);
+    return updated;
   }
 
   stopEvent(event: Event) {
@@ -572,7 +586,7 @@ function serializeDoc(doc: PMNode): string {
   const frag = s.serializeFragment(doc.content);
   const tmp = document.createElement("div");
   tmp.appendChild(frag);
-  return tmp.innerHTML;
+  return wrapDocumentHtml(tmp.innerHTML, doc.attrs.layout);
 }
 
 function loadFiles(): { list: FileItem[]; active: string } {
@@ -836,6 +850,7 @@ export default function Editor({
   const slashItemsRef = useRef(SLASH_COMMANDS);
   const [tick, setTick] = useState(0);
   const [pageMarginCm, setPageMarginCm] = useState(1);
+  const [documentLayout, setDocumentLayout] = useState<DocumentLayout | null>(null);
   const [pageOrientation, setPageOrientation] = useState<"portrait" | "landscape">("portrait");
   const [zoomPercent, setZoomPercent] = useState(100);
   const [paperBgColor, setPaperBgColor] = useState(DEFAULT_EDITOR_BG);
@@ -928,6 +943,13 @@ export default function Editor({
     return initialDeepLinkId;
   }, [initialDeepLinkId]);
   const lastSnapAtRef = useRef<Record<string, number>>({});
+  const [tablePropertiesOpen, setTablePropertiesOpen] = useState(false);
+  const showTableProperties = useCallback(() => {
+    const view = viewRef.current;
+    if (view && isInTable(view.state)) setTablePropertiesOpen(true);
+    else toast(tRef.current.tableMenu.hint);
+  }, []);
+  const closeTableProperties = useCallback(() => setTablePropertiesOpen(false), []);
   const [shortcutsOpen, setShortcutsOpen] = useState(false);
   const [aboutOpen, setAboutOpen] = useState(false);
   const [focusMode, setFocusMode] = useState(false);
@@ -946,20 +968,30 @@ export default function Editor({
 
   // A4 at 96dpi: 794×1123px (21×29.7cm). Landscape swaps the two.
   const isLandscape = pageOrientation === "landscape";
-  const pageWidthPx = isLandscape ? 1123 : 794;
-  const pageHeightPx = isLandscape ? 794 : 1123;
-  const pageWidthCm = isLandscape ? 29.7 : 21;
+  const pageWidthPx = documentLayout ? documentLayout.width / 15 : isLandscape ? 1123 : 794;
+  const pageHeightPx = documentLayout ? documentLayout.height / 15 : isLandscape ? 794 : 1123;
+  const pageWidthCm = pageWidthPx / CM_TO_PX;
+  const pageMargins = documentLayout?.margins ?? { top: pageMarginCm / 2.54 * 1440, right: pageMarginCm / 2.54 * 1440, bottom: pageMarginCm / 2.54 * 1440, left: pageMarginCm / 2.54 * 1440 };
+
+  const uniformMargins = Object.values(pageMargins).every(value => Math.abs(value - pageMargins.left) < 0.1);
+  const presetMargin = uniformMargins && MARGIN_PRESETS.includes(pageMarginCm);
 
   // Keep the pagination plugin's geometry in sync; an empty transaction pokes
   // its update hook so pages re-flow right away.
   useEffect(() => {
     pageLayoutConfig.pageHeightPx = pageHeightPx;
-    pageLayoutConfig.marginPx = pageMarginCm * CM_TO_PX;
+    pageLayoutConfig.marginPx = pageMargins.top / 15;
+    pageLayoutConfig.bottomMarginPx = pageMargins.bottom / 15;
     pageLayoutConfig.pageNumbers = pageNumbers;
+    pageLayoutConfig.numberingStyle = documentLayout?.numberingStyle
+      ? documentLayout.overrides?.pageNumbers
+        ? { ...documentLayout.numberingStyle, alignment: "right", template: pageNumberFormat === "of" ? "{{PAGE}} / {{NUMPAGES}}" : "{{PAGE}}" }
+        : documentLayout.numberingStyle
+      : undefined;
     pageLayoutConfig.pageNumberFormat = pageNumberFormat;
     const v = viewRef.current;
     if (v && !v.isDestroyed) v.dispatch(v.state.tr);
-  }, [pageHeightPx, pageMarginCm, pageNumbers, pageNumberFormat]);
+  }, [pageHeightPx, pageMargins.top, pageMargins.bottom, pageNumbers, pageNumberFormat, documentLayout]);
 
   // Same idea for the `[[name]]`/`[[email]]`/`[[today]]` input rule: it reads
   // the box rather than a value captured when the plugins were built.
@@ -972,7 +1004,7 @@ export default function Editor({
   const handlePrint = useReactToPrint({
     contentRef: printRef,
     pageStyle: `
-      @page { size: A4 ${pageOrientation}; margin: ${pageMarginCm}cm; }
+      @page { size: ${pageWidthPx}px ${pageHeightPx}px; margin: ${pageMargins.top / 20}pt ${pageMargins.right / 20}pt ${pageMargins.bottom / 20}pt ${pageMargins.left / 20}pt; }
       body { margin: 0 !important; padding: 0 !important; background: white !important; }
       .pm-page {
         zoom: 1 !important;
@@ -1376,7 +1408,7 @@ export default function Editor({
     // Google fonts load on demand — fetch the ones this document uses.
     ensureFontsInHtml(html);
     const dom = new DOMParser().parseFromString(html || "<p></p>", "text/html");
-    const doc = PMParser.fromSchema(mySchema).parse(dom.body);
+    const doc = PMParser.fromSchema(mySchema).parse(dom.body, { topNode: mySchema.nodes.doc.create({ layout: readLayout(dom.body) ?? defaultDocumentLayout() }) });
     // Replace the content through a transaction rather than swapping in a fresh
     // EditorState. A new state means a new plugin set, which tears down and
     // rebuilds every plugin view — pagination then loses the measurement it had
@@ -1386,10 +1418,19 @@ export default function Editor({
     // `addToHistory: false` keeps loading a document out of the undo stack.
     const tr = v.state.tr
       .replaceWith(0, v.state.doc.content.size, doc.content)
+      .setDocAttribute("layout", doc.attrs.layout)
       .setMeta("addToHistory", false);
     // Land the cursor inside the first text block, not on the doc node itself.
     tr.setSelection(TextSelection.near(tr.doc.resolve(0)));
     v.dispatch(tr);
+    const layout = doc.attrs.layout as DocumentLayout | null;
+    setDocumentLayout(layout);
+    if (layout) {
+      setPageMarginCm(Math.round(layout.margins.left / 1440 * 254) / 100);
+      setPageOrientation(layout.width > layout.height ? "landscape" : "portrait");
+      setPageNumbers(layout.pageNumbers ?? "off");
+      setPageNumberFormat(layout.pageNumberFormat ?? "plain");
+    }
     refreshDocInfo(v.state);
     v.focus();
     // Ask pagination to re-measure directly: after a full-document replacement
@@ -1640,7 +1681,7 @@ export default function Editor({
         let entry = `${base}.docx`;
         for (let n = 2; used.has(entry); n++) entry = `${base} (${n}).docx`;
         used.add(entry);
-        zip.file(entry, await docToDocxBlob(parseHtmlToDoc(html), file.name || "Document", pageOrientation));
+        zip.file(entry, await docToDocxBlob(parseHtmlToDoc(html), file.name || "Document", { orientation: pageOrientation, marginCm: pageMarginCm, pageNumbers, pageNumberFormat }));
       }
       if (used.size === 0) {
         toast.error(tRef.current.toast.openFailed);
@@ -1654,7 +1695,7 @@ export default function Editor({
     } finally {
       setBulkBusy(false);
     }
-  }, [htmlForFile, pageOrientation]);
+  }, [htmlForFile, pageOrientation, pageMarginCm, pageNumbers, pageNumberFormat]);
 
   /** Bulk delete: one confirmation for the whole selection, not one per row. */
   const deleteFiles = useCallback(async (ids: string[]) => {
@@ -1840,7 +1881,7 @@ export default function Editor({
     } else {
       const doc = isActiveDoc ? v!.state.doc : parseHtmlToDoc(html);
       if (fmt === "docx") {
-        downloadBlob(await docToDocxBlob(doc, file.name || "Document", pageOrientation), `${safe}.docx`);
+        downloadBlob(await docToDocxBlob(doc, file.name || "Document", { orientation: pageOrientation, marginCm: pageMarginCm, pageNumbers, pageNumberFormat }), `${safe}.docx`);
       } else if (fmt === "pdf") {
         // Real client-side PDF export — loaded on demand like the other exporters.
         const { docToPdfBlob } = await import("@/lib/pdf-export");
@@ -1952,8 +1993,28 @@ export default function Editor({
   const showHome = useCallback(() => openHome(), [openHome]);
   const showShortcuts = useCallback(() => setShortcutsOpen(true), []);
   const showAbout = useCallback(() => setAboutOpen(true), []);
-  const changePageNumbers = useCallback((p: PageNumberPosition) => setPageNumbers(p), []);
-  const changePageNumberFormat = useCallback((f: PageNumberFormat) => setPageNumberFormat(f), []);
+  const updateDocumentLayout = useCallback((change: (layout: DocumentLayout) => DocumentLayout) => {
+    const v = viewRef.current;
+    if (!v) return;
+    const fallbackMargin = Math.round(pageMarginCm / 2.54 * 1440);
+    const current: DocumentLayout = v.state.doc.attrs.layout ?? {
+      width: pageOrientation === "landscape" ? 16838 : 11906,
+      height: pageOrientation === "landscape" ? 11906 : 16838,
+      margins: { top: fallbackMargin, right: fallbackMargin, bottom: fallbackMargin, left: fallbackMargin },
+      pageNumbers, pageNumberFormat,
+    };
+    v.dispatch(v.state.tr.setDocAttribute("layout", change(current)));
+  }, [pageMarginCm, pageOrientation, pageNumbers, pageNumberFormat]);
+  const changePageMargin = useCallback((cm: number) => {
+    const twips = Math.round(cm / 2.54 * 1440);
+    updateDocumentLayout(l => ({ ...l, margins: { top: twips, right: twips, bottom: twips, left: twips }, overrides: { ...l.overrides, margins: true } }));
+  }, [updateDocumentLayout]);
+  const changePageNumbers = useCallback((p: PageNumberPosition) => {
+    updateDocumentLayout(l => ({ ...l, pageNumbers: p, overrides: { ...l.overrides, pageNumbers: true } }));
+  }, [updateDocumentLayout]);
+  const changePageNumberFormat = useCallback((f: PageNumberFormat) => {
+    updateDocumentLayout(l => ({ ...l, pageNumberFormat: f, overrides: { ...l.overrides, pageNumbers: true } }));
+  }, [updateDocumentLayout]);
   const toggleToolbar = useCallback(() => setShowToolbar((s) => !s), []);
   const toggleRuler = useCallback(() => setShowRuler((s) => !s), []);
   const toggleSpellcheck = useCallback(() => setSpellcheckOn((s) => !s), []);
@@ -2114,7 +2175,18 @@ export default function Editor({
       },
       dispatchTransaction(tr) {
         const next = view.state.apply(tr);
+        const previousLayout = view.state.doc.attrs.layout;
         view.updateState(next);
+        if (next.doc.attrs.layout !== previousLayout) {
+          const layout = next.doc.attrs.layout as DocumentLayout | null;
+          setDocumentLayout(layout);
+          if (layout) {
+            setPageMarginCm(Math.round(layout.margins.left / 1440 * 254) / 100);
+            setPageOrientation(layout.width > layout.height ? "landscape" : "portrait");
+            setPageNumbers(layout.pageNumbers ?? "off");
+            setPageNumberFormat(layout.pageNumberFormat ?? "plain");
+          }
+        }
         setTick(n => n + 1);
         refreshSlashMenu(view);
         refreshImagePopover(view);
@@ -2812,9 +2884,13 @@ export default function Editor({
   }, []);
 
   const changePageOrientation = useCallback((o: "portrait" | "landscape") => {
-    setPageOrientation(o);
+    updateDocumentLayout(l => ({ ...l,
+      width: o === "landscape" ? Math.max(l.width, l.height) : Math.min(l.width, l.height),
+      height: o === "landscape" ? Math.min(l.width, l.height) : Math.max(l.width, l.height),
+      overrides: { ...l.overrides, orientation: true },
+    }));
     try { localStorage.setItem("wordpad-orientation", o); } catch {}
-  }, []);
+  }, [updateDocumentLayout]);
 
   const togglePrintHeaderFooter = useCallback(() => {
     setPrintHeaderFooter((prev) => {
@@ -2895,8 +2971,8 @@ export default function Editor({
         headerCollapsed={chromeCollapsed}
         viewRef={viewRef}
         schema={mySchema}
-        pageMarginCm={pageMarginCm}
-        onPageMarginChange={setPageMarginCm}
+        pageMarginCm={uniformMargins ? pageMarginCm : -1}
+        onPageMarginChange={changePageMargin}
         pageOrientation={pageOrientation}
         onPageOrientationChange={changePageOrientation}
         onPrint={handlePrint}
@@ -2916,6 +2992,7 @@ export default function Editor({
         onShowShortcuts={showShortcuts}
         onShowAbout={showAbout}
         onFind={openFind}
+        onTableProperties={showTableProperties}
         onInsertTable={handleInsertTable}
         onPageBreakAdd={handleInsertPageBreak}
         onLinkAdd={handleLinkAdd}
@@ -3021,7 +3098,7 @@ export default function Editor({
             </div>
           </div>
         )}
-        <TableContextMenu viewRef={viewRef}>
+        <TableContextMenu viewRef={viewRef} onProperties={showTableProperties}>
           <div ref={printRef}>
             {printHeaderFooter && (
               <div className="pm-print-header" aria-hidden="true">
@@ -3034,6 +3111,10 @@ export default function Editor({
               ref={editorRef}
               style={{
                 ["--page-margin" as any]: `${pageMarginCm}cm`,
+                ["--page-margin-top" as any]: `${pageMargins.top / 15}px`,
+                ["--page-margin-right" as any]: `${pageMargins.right / 15}px`,
+                ["--page-margin-bottom" as any]: `${pageMargins.bottom / 15}px`,
+                ["--page-margin-left" as any]: `${pageMargins.left / 15}px`,
                 ["--page-w" as any]: `${pageWidthPx}px`,
                 ["--page-h" as any]: `${pageHeightPx}px`,
                 ["zoom" as any]: zoomPercent / 100,
@@ -3435,11 +3516,12 @@ export default function Editor({
             </div>
             <div className="flex items-center gap-1.5 max-[799px]:hidden">
               <span className="text-muted-foreground">{t.status.pageMargin}</span>
-              <Select value={String(pageMarginCm)} onValueChange={(v) => setPageMarginCm(Number(v))}>
+              <Select value={presetMargin ? String(pageMarginCm) : "custom"} onValueChange={(v) => { if (v !== "custom") changePageMargin(Number(v)); }}>
                 <SelectTrigger size="sm" aria-label={t.status.pageMargin} className="h-6 w-[82px] px-1.5 text-[11px]">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent align="end">
+                  {!presetMargin && <SelectItem value="custom" disabled className="text-xs">{t.status.customMargin}</SelectItem>}
                   {MARGIN_PRESETS.map((m) => (
                     <SelectItem key={m} value={String(m)} className="text-xs">{m} cm</SelectItem>
                   ))}
@@ -3662,6 +3744,7 @@ export default function Editor({
       )}
       {/* Mounted only while open so their lazy chunks stay out of the initial
           load; the null fallback covers the brief first-open fetch. */}
+      {tablePropertiesOpen && viewRef.current && <Suspense fallback={null}><TablePropertiesDialog view={viewRef.current} onClose={closeTableProperties} /></Suspense>}
       {authOpen && (
         <Suspense fallback={null}>
           <AuthModal open={authOpen} onClose={closeAuth} googleEnabled={googleEnabled} />

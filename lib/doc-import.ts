@@ -14,22 +14,36 @@ export function textToHtml(text: string): string {
   return paragraphs.map((line) => `<p>${escapeHtml(line)}</p>`).join("");
 }
 
-export async function fileToHtml(file: File): Promise<{ html: string; name: string }> {
+export async function fileToHtml(
+  file: File,
+): Promise<{ html: string; name: string }> {
   const name = file.name.replace(/\.[^.]+$/, "") || "Imported document";
   const ext = (file.name.split(".").pop() || "").toLowerCase();
 
   if (ext === "docx") {
-    const mammoth = await import("mammoth");
-    const arrayBuffer = await file.arrayBuffer();
-    const result = await mammoth.convertToHtml({ arrayBuffer });
-    return { html: result.value || "<p></p>", name };
+    const [mammoth, { prepareDocxFormatting }] = await Promise.all([
+      import("mammoth"),
+      import("./docx-formatting"),
+    ]);
+    const prepared = await prepareDocxFormatting(await file.arrayBuffer());
+    const result = await mammoth.convertToHtml(
+      { arrayBuffer: prepared.arrayBuffer },
+      {
+        styleMap: prepared.styleMap,
+        includeEmbeddedStyleMap: false,
+        ignoreEmptyParagraphs: false,
+      },
+    );
+    return { html: prepared.restore(result.value || "<p></p>"), name };
   }
 
   if (ext === "html" || ext === "htm") {
     const raw = await file.text();
     // Extract body content; ProseMirror's schema-based parser drops scripts/styles.
     const doc = new DOMParser().parseFromString(raw, "text/html");
-    doc.querySelectorAll("script, style, link, meta").forEach((el) => el.remove());
+    doc
+      .querySelectorAll("script, style, link, meta")
+      .forEach((el) => el.remove());
     return { html: doc.body.innerHTML || "<p></p>", name };
   }
 

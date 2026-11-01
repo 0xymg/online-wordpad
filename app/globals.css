@@ -252,7 +252,7 @@ body {
   width: var(--page-w);
   min-height: var(--page-h);
   margin: 0 auto;
-  padding: var(--page-margin);
+  padding: var(--page-margin-top, var(--page-margin)) var(--page-margin-right, var(--page-margin)) var(--page-margin-bottom, var(--page-margin)) var(--page-margin-left, var(--page-margin));
   box-shadow: 0 2px 8px rgba(0,0,0,0.18);
   overflow: visible;
   /* Containing block for the first/last page numbers. */
@@ -282,8 +282,8 @@ body {
   position: absolute;
   left: 0;
   right: 0;
-  padding-left: var(--page-margin);
-  padding-right: var(--page-margin);
+  padding-left: var(--page-margin-left, var(--page-margin));
+  padding-right: var(--page-margin-right, var(--page-margin));
 }
 .pm-page-number-edge.pm-page-number-top { top: 0; }
 .pm-page-number-edge.pm-page-number-bottom { bottom: 0; }
@@ -292,7 +292,7 @@ body {
 /* ── ProseMirror içerik ── */
 .pm-page .ProseMirror {
   outline: none;
-  min-height: calc(var(--page-h, 1123px) - (var(--page-margin) * 2));
+  min-height: calc(var(--page-h, 1123px) - (var(--page-margin-top, var(--page-margin)) + var(--page-margin-bottom, var(--page-margin))));
   font-family: Calibri, Carlito, Arial, sans-serif;
   font-size: 12pt;
   line-height: 1.5;
@@ -424,7 +424,7 @@ body {
 
 .pm-page.ProseMirror {
   outline: none;
-  min-height: calc(var(--page-h, 1123px) - (var(--page-margin) * 2));
+  min-height: calc(var(--page-h, 1123px) - (var(--page-margin-top, var(--page-margin)) + var(--page-margin-bottom, var(--page-margin))));
   font-family: Calibri, Carlito, Arial, sans-serif;
   font-size: 12pt;
   line-height: 1.5;

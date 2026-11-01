@@ -1,6 +1,7 @@
 import fs from "fs";
 import path from "path";
 import matter from "gray-matter";
+import type { GuideTopic, GuideDemoKind } from "./guide-topics";
 
 const GUIDES_DIR = path.join(process.cwd(), "content/guides");
 
@@ -12,6 +13,10 @@ export interface GuideMeta {
   date: string;
   updated?: string;
   related: string[];
+  topic: GuideTopic;
+  language: string;
+  demo?: GuideDemoKind;
+  readingMinutes: number;
 }
 
 export interface Guide extends GuideMeta {
@@ -27,16 +32,10 @@ export function getAllGuideSlugs(): string[] {
 
 export function getAllGuides(): GuideMeta[] {
   return getAllGuideSlugs().map((slug) => {
-    const file = fs.readFileSync(path.join(GUIDES_DIR, `${slug}.mdx`), "utf8");
-    const { data } = matter(file);
+    const { content, ...meta } = getGuide(slug);
     return {
-      slug,
-      title: data.title as string,
-      description: data.description as string,
-      keywords: (data.keywords as string[]) ?? [],
-      date: data.date as string,
-      updated: data.updated as string | undefined,
-      related: (data.related as string[]) ?? [],
+      ...meta,
+      readingMinutes: Math.max(1, Math.ceil(content.split(/\s+/).length / 200)),
     };
   });
 }
@@ -52,6 +51,10 @@ export function getGuide(slug: string): Guide {
     date: data.date as string,
     updated: data.updated as string | undefined,
     related: (data.related as string[]) ?? [],
+    topic: (data.topic as GuideTopic) ?? "Getting started",
+    language: (data.language as string) ?? "en",
+    demo: data.demo as GuideDemoKind | undefined,
+    readingMinutes: Math.max(1, Math.ceil(content.split(/\s+/).length / 200)),
     content,
   };
 }

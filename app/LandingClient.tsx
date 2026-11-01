@@ -13,7 +13,7 @@ import { formatDate } from "@/lib/doc-variables";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 const LANGUAGE_FLAGS: Record<(typeof LOCALES)[number], string> = {
-  en: "🇬🇧",
+  en: "🇺🇸",
   zh: "🇨🇳",
   tr: "🇹🇷",
   fr: "🇫🇷",

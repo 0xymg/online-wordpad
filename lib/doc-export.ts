@@ -1,11 +1,14 @@
 // Client-side document exporters: ProseMirror doc → .docx (formatted) and .rtf.
 // Loaded on demand via dynamic import so the docx library stays out of the main bundle.
 import { resolvedAlignment, textDirection } from "./text-direction";
+import { restoreDocxPackage, parseXml, xmlString, W } from "./docx-preservation";
+import type { DocumentLayout } from "./document-layout";
+import { TableMap } from "prosemirror-tables";
 import { DEFAULT_DOCUMENT_FONT } from "./document-font";
 import type { Node as PMNode, Mark } from "prosemirror-model";
 import {
   Document, Packer, Paragraph, TextRun, HeadingLevel, AlignmentType,
-  Table, TableRow, TableCell, WidthType, ImageRun, ExternalHyperlink,
+  Table, TableRow, TableCell, WidthType, ImageRun, ExternalHyperlink, Bookmark, Header, Footer, PageNumber,
   LevelFormat, ShadingType, BorderStyle, PageBreak, PageOrientation,
   type FileChild, type ParagraphChild, type INumberingOptions,
 } from "docx";
@@ -129,6 +132,7 @@ async function preloadImages(doc: PMNode): Promise<Array<LoadedImage | null>> {
 const MAX_IMAGE_WIDTH = 600; // px inside an A4 text column
 
 class DocxBuilder {
+  paragraphProperties: Array<{ id: string; properties: string }> = [];
   private imageQueue: Array<LoadedImage | null>;
   numbering: INumberingOptions["config"][number][] = [];
 
@@ -138,6 +142,22 @@ class DocxBuilder {
 
   inlineChildren(node: PMNode): ParagraphChild[] {
     const out: ParagraphChild[] = [];
+    if (node.attrs.docxProperties) {
+      const id = `EDTRLayout${this.paragraphProperties.length}`;
+      const properties = parseXml(node.attrs.docxProperties).documentElement;
+      const line = Number(node.attrs.lineHeight);
+      if (line > 0) {
+        const spacing = properties.getElementsByTagNameNS(W, "spacing")[0] ?? properties.appendChild(properties.ownerDocument.createElementNS(W, "w:spacing"));
+        spacing.setAttributeNS(W, "w:line", String(Math.round(line * 240)));
+        spacing.setAttributeNS(W, "w:lineRule", "auto");
+      }
+      if (node.attrs.indent > 0) {
+        const indent = properties.getElementsByTagNameNS(W, "ind")[0] ?? properties.appendChild(properties.ownerDocument.createElementNS(W, "w:ind"));
+        indent.setAttributeNS(W, textDirection(node.textContent) === "rtl" ? "w:right" : "w:left", String(node.attrs.indent * 360));
+      }
+      this.paragraphProperties.push({ id, properties: xmlString(properties) });
+      out.push(new Bookmark({ id, children: [] }));
+    }
     node.forEach((child) => {
       if (child.isText) {
         const p = readMarks(child.marks);
@@ -312,28 +332,54 @@ class DocxBuilder {
 
   private tableToDocx(table: PMNode): Table {
     const rows: TableRow[] = [];
-    table.forEach((row) => {
+    const map = TableMap.get(table);
+    const originalGrid: number[] = table.attrs.docxGrid ? JSON.parse(table.attrs.docxGrid) : [];
+    const columnWidths = Array.from({ length: map.width }, (_, c) => {
+      for (let r = 0; r < map.height; r++) {
+        const pos = map.map[r * map.width + c];
+        const cell = table.nodeAt(pos);
+        const left = map.findCell(pos).left;
+        const width = cell?.attrs.colwidth?.[c - left];
+        if (width) return originalGrid[c] && Math.round(originalGrid[c] / 15) === width ? originalGrid[c] : width * 15;
+      }
+      return originalGrid[c] || Math.floor(9000 / map.width);
+    });
+    table.forEach((row, rowOffset) => {
       const cells: TableCell[] = [];
-      row.forEach((cell) => {
+      row.forEach((cell, cellOffset) => {
+        const position = rowOffset + 1 + cellOffset;
+        const left = map.findCell(position).left;
+        const width = columnWidths.slice(left, left + cell.attrs.colspan).reduce((sum, w) => sum + w, 0);
         const isHeader = cell.type.name === "table_header";
         const content: FileChild[] = [];
         cell.forEach((block) => content.push(...this.blockToDocx(block)));
         cells.push(new TableCell({
           children: content.length ? content : [new Paragraph("")],
+          columnSpan: cell.attrs.colspan || 1,
+          rowSpan: cell.attrs.rowspan || 1,
+          width: { size: width, type: WidthType.DXA },
           shading: isHeader ? { type: ShadingType.CLEAR, fill: "F3F4F6" } : undefined,
         }));
       });
       rows.push(new TableRow({ children: cells }));
     });
-    return new Table({ width: { size: 100, type: WidthType.PERCENTAGE }, rows });
+    return new Table({ width: { size: columnWidths.reduce((sum, w) => sum + w, 0), type: WidthType.DXA }, columnWidths, rows });
   }
 }
 
 export async function docToDocxBlob(
   doc: PMNode,
   title: string,
-  orientation: "portrait" | "landscape" = "portrait"
+  options: { orientation?: "portrait" | "landscape"; marginCm?: number; pageNumbers?: "off" | "top" | "bottom"; pageNumberFormat?: "plain" | "of" } | "portrait" | "landscape" = {}
 ): Promise<Blob> {
+  const defaults = typeof options === "string" ? { orientation: options } : options;
+  const layout = doc.attrs.layout as DocumentLayout | null;
+  const orientation = layout ? layout.width > layout.height ? "landscape" : "portrait" : defaults.orientation || "portrait";
+  const margin = Math.round((defaults.marginCm ?? 1) / 2.54 * 1440);
+  const margins = layout?.margins ?? { top: margin, right: margin, bottom: margin, left: margin };
+  const pageNumbers = layout?.pageNumbers ?? defaults.pageNumbers ?? "off";
+  const pageNumberFormat = layout?.pageNumberFormat ?? defaults.pageNumberFormat ?? "plain";
+  const numberingParagraph = new Paragraph({ alignment: AlignmentType.RIGHT, children: [new TextRun({ children: pageNumberFormat === "of" ? [PageNumber.CURRENT, " / ", PageNumber.TOTAL_PAGES] : [PageNumber.CURRENT] })] });
   const images = await preloadImages(doc);
   const builder = new DocxBuilder(images);
   const children: FileChild[] = [];
@@ -351,17 +397,20 @@ export async function docToDocxBlob(
     sections: [{
       properties: {
         page: {
+          margin: margins,
           size: {
-            width: 11906,
-            height: 16838,
+            width: layout ? Math.min(layout.width, layout.height) : 11906,
+            height: layout ? Math.max(layout.width, layout.height) : 16838,
             orientation: orientation === "landscape" ? PageOrientation.LANDSCAPE : PageOrientation.PORTRAIT,
           },
         },
       },
+      headers: pageNumbers === "top" ? { default: new Header({ children: [numberingParagraph] }) } : undefined,
+      footers: pageNumbers === "bottom" ? { default: new Footer({ children: [numberingParagraph] }) } : undefined,
       children: children.length ? children : [new Paragraph("")],
     }],
   });
-  return Packer.toBlob(file);
+  return restoreDocxPackage(await Packer.toBlob(file), doc, builder.paragraphProperties);
 }
 
 /* ── RTF conversion ─────────────────────────────────────────────────────── */

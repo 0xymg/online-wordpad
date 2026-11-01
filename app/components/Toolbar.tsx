@@ -14,7 +14,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip
 import { cn } from "@/lib/utils";
 import ColorPicker from "./ColorPicker";
 import { ensureEditorFont } from "@/lib/editor-fonts";
-import { DEFAULT_DOCUMENT_FONT, DEFAULT_DOCUMENT_FONT_CSS } from "@/lib/document-font";
+import { DEFAULT_DOCUMENT_FONT, DEFAULT_DOCUMENT_FONT_CSS, primaryDocumentFont } from "@/lib/document-font";
 import { useT } from "./I18nProvider";
 import type { EmojiClickData } from "emoji-picker-react";
 
@@ -359,6 +359,9 @@ function Toolbar({
   }, [tick]);
   const { fontFamily: currentFontFamily, fontSize: currentFontSize, block: currentBlock, align: currentAlign } = selFmt;
 
+  const currentFontName = primaryDocumentFont(currentFontFamily);
+  const knownFont = FONTS.find(f => f.label.toLowerCase() === currentFontName.toLowerCase());
+
   const setTextAlign = (align: string) => applyTextAlign(viewRef.current, schema, align);
   const adjustIndent = (direction: 1 | -1) => applyIndent(viewRef.current, schema, direction);
 
@@ -427,7 +430,7 @@ function Toolbar({
         {/* Row 1: font family + size + highlight */}
         <Row between>
           <Select
-            value={FONTS.some(f => f.value === currentFontFamily) ? currentFontFamily : ""}
+            value={knownFont?.value ?? currentFontFamily}
             onValueChange={(val) => { ensureEditorFont(val); applyMark("fontFamily", { family: val }); }}
           >
             <SelectTrigger
@@ -438,6 +441,11 @@ function Toolbar({
               <SelectValue placeholder={t.toolbar.fontPlaceholder} />
             </SelectTrigger>
             <SelectContent>
+              {!knownFont && currentFontFamily && (
+                <SelectItem value={currentFontFamily} className="text-xs">
+                  <span style={{ fontFamily: currentFontFamily }}>{currentFontName}</span>
+                </SelectItem>
+              )}
               {FONT_GROUPS.map((g) => (
                 <SelectGroup key={g.label}>
                   <SelectLabel>{uiText(t, g.label)}</SelectLabel>
