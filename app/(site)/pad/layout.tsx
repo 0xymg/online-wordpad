@@ -1,4 +1,4 @@
-// Editor Google Fonts load ON DEMAND: /pad boots with system fonts only, and
+// Editor Google Fonts load ON DEMAND: /pad boots with local fonts, and
 // a family's stylesheet is injected the first time it is actually needed —
 // picked in the toolbar or present in an opened document. See
 // lib/editor-fonts.ts (ensureEditorFont / ensureFontsInHtml). The preconnects

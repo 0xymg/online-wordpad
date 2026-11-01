@@ -23,17 +23,17 @@ const A4_LANDSCAPE_WIDTH_PT = 841.89;
    The 14 built-in PDF fonts are WinAnsi-encoded and cannot render Turkish
    (ğ ş İ ı …), so we embed the metric-compatible Liberation family:
    LiberationSans≈Arial, LiberationSerif≈Times New Roman,
-   LiberationMono≈Courier New. Files live in public/pdf-fonts/. */
+   LiberationMono≈Courier New, Carlito≈Calibri. Files live in public/pdf-fonts/. */
 export type PdfFontResolver = (file: string) => string;
 
 let fontsRegistered = false;
 
-/** Register the Liberation families. `resolve` maps a TTF filename to a URL
+/** Register the document font families. `resolve` maps a TTF filename to a URL
  *  (browser) or filesystem path (Node tests). Idempotent. */
 export function registerPdfFonts(resolve: PdfFontResolver): void {
   if (fontsRegistered) return;
   fontsRegistered = true;
-  for (const family of ["LiberationSans", "LiberationSerif", "LiberationMono"]) {
+  for (const family of ["Carlito", "LiberationSans", "LiberationSerif", "LiberationMono"]) {
     Font.register({
       family,
       fonts: [
@@ -57,12 +57,13 @@ export function registerPdfFonts(resolve: PdfFontResolver): void {
 /** Map a CSS font-family list (e.g. "'Courier New', monospace") to one of the
  *  embedded families using its generic fallback category. */
 function mapFontFamily(value: string | undefined | null): string {
-  if (!value) return "LiberationSans";
+  if (!value) return "Carlito";
   const parts = String(value)
     .split(",")
     .map((s) => s.trim().replace(/^['"]|['"]$/g, "").toLowerCase())
     .filter(Boolean);
   const generic = parts[parts.length - 1] || "";
+  if (parts[0] === "calibri" || parts[0] === "carlito") return "Carlito";
   if (generic === "monospace") return "LiberationMono";
   if (generic === "serif") return "LiberationSerif";
   if (generic === "sans-serif" || generic === "cursive" || generic === "fantasy") return "LiberationSans";
@@ -491,7 +492,7 @@ export function buildPdfDocument(doc: PMNode, opts: PdfExportOptions): React.Rea
     justifyContent: "space-between",
     fontSize: 9,
     color: "#777",
-    fontFamily: "LiberationSans",
+    fontFamily: "Carlito",
   };
 
   return (
@@ -501,7 +502,7 @@ export function buildPdfDocument(doc: PMNode, opts: PdfExportOptions): React.Rea
         orientation={opts.orientation}
         style={{
           padding: marginPt,
-          fontFamily: "LiberationSans",
+          fontFamily: "Carlito",
           fontSize: BASE_FONT_PT,
           lineHeight: BASE_LINE_HEIGHT,
           color: "#000",

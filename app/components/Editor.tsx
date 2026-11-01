@@ -46,6 +46,7 @@ import {
   ArrowsInSimple,
 } from "./icons";
 import { cn } from "@/lib/utils";
+import { DEFAULT_DOCUMENT_FONT_CSS } from "@/lib/document-font";
 import { authClient, useSession } from "@/lib/auth-client";
 import { prepareImageFile, insertWidth } from "@/lib/image-util";
 import { OPEN_ACCEPT } from "@/lib/doc-import";
@@ -742,7 +743,7 @@ const DEFAULT_REF_CONTENT = `
   <ul>
     <li>Paper size: A4 (794 × 1123 px)</li>
     <li>Adjustable page margins (0.5 / 1 / 1.5 / 2 cm)</li>
-    <li>Default body font: Arial, 12pt</li>
+    <li>Default body font: Calibri, 12pt</li>
     <li>Line height: 1.5</li>
   </ul>
 
@@ -1003,7 +1004,7 @@ export default function Editor({
         position: fixed;
         left: 0; right: 0;
         justify-content: space-between;
-        font-family: Arial, sans-serif;
+        font-family: ${DEFAULT_DOCUMENT_FONT_CSS};
         font-size: 9px;
         color: #777;
       }
@@ -1321,6 +1322,15 @@ export default function Editor({
       raf = 0;
       const y = el.scrollTop;
       const now = performance.now();
+      if (y <= 48) {
+        lastY = y;
+        if (chromeCollapsedRef.current) {
+          chromeCollapsedRef.current = false;
+          settleUntil = now + 350;
+          setChromeCollapsed(false);
+        }
+        return;
+      }
       if (now < settleUntil) { lastY = y; return; }
       const delta = y - lastY;
       if (Math.abs(delta) < 8) return;
@@ -1328,15 +1338,29 @@ export default function Editor({
       // Nothing to win back on a document that barely scrolls.
       if (el.scrollHeight - el.clientHeight < 160) return;
       const next = y > 48 && delta > 0;
+      // Keep the title/account controls available while the user is editing them.
+      if (next && el.parentElement?.querySelector(".editor-title-bar")?.contains(document.activeElement)) return;
       if (next === chromeCollapsedRef.current) return;
       chromeCollapsedRef.current = next;
       settleUntil = now + 350;
       setChromeCollapsed(next);
     };
     const onScroll = () => { if (!raf) raf = requestAnimationFrame(read); };
+    // Intentional scrolling can reverse direction during the resize animation.
+    // Only the scroll events caused by the resize itself should be ignored.
+    const onScrollIntent = () => { settleUntil = 0; };
+    const onScrollKey = (e: KeyboardEvent) => {
+      if (["ArrowUp", "ArrowDown", "PageUp", "PageDown", "Home", "End", " "].includes(e.key)) onScrollIntent();
+    };
     el.addEventListener("scroll", onScroll, { passive: true });
+    el.addEventListener("wheel", onScrollIntent, { passive: true });
+    el.addEventListener("touchmove", onScrollIntent, { passive: true });
+    el.addEventListener("keydown", onScrollKey);
     return () => {
       el.removeEventListener("scroll", onScroll);
+      el.removeEventListener("wheel", onScrollIntent);
+      el.removeEventListener("touchmove", onScrollIntent);
+      el.removeEventListener("keydown", onScrollKey);
       if (raf) cancelAnimationFrame(raf);
     };
   }, []);
@@ -1807,7 +1831,7 @@ export default function Editor({
     const safe = (file.name || "document").replace(/[^\w.\- ]+/g, "").trim() || "document";
     const { docToDocxBlob, docToRtf, docToMarkdown, downloadBlob } = await import("@/lib/doc-export");
     if (fmt === "html") {
-      const blob = new Blob([`<!DOCTYPE html><html><head><meta charset="utf-8"><title>${file.name}</title></head><body style="font-family:Arial;max-width:800px;margin:40px auto;padding:20px">${html}</body></html>`], { type: "text/html" });
+      const blob = new Blob([`<!DOCTYPE html><html><head><meta charset="utf-8"><title>${file.name}</title></head><body style="font-family:${DEFAULT_DOCUMENT_FONT_CSS};max-width:800px;margin:40px auto;padding:20px">${html}</body></html>`], { type: "text/html" });
       downloadBlob(blob, `${safe}.html`);
     } else if (fmt === "txt") {
       const tmp = document.createElement("div");
@@ -2868,6 +2892,7 @@ export default function Editor({
       <div className="flex h-screen flex-1 min-w-0 flex-col overflow-hidden">
       {!focusMode && (
       <MenuBar
+        headerCollapsed={chromeCollapsed}
         viewRef={viewRef}
         schema={mySchema}
         pageMarginCm={pageMarginCm}

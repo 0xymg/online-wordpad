@@ -35,6 +35,7 @@ import { getTemplates } from "@/lib/templates";
 import { DATE_FORMATS, formatDate } from "@/lib/doc-variables";
 
 interface MenuBarProps {
+  headerCollapsed?: boolean;
   viewRef: React.MutableRefObject<EditorView | null>;
   schema: any;
   pageMarginCm: number;
@@ -150,6 +151,7 @@ function previewDate(format: string, locale: keyof typeof LOCALE_TAGS): string {
 // Memoized so per-keystroke Editor re-renders (tick/docInfo/saveStatus) skip
 // this ~700-line tree — every prop Editor passes is referentially stable.
 function MenuBar({
+  headerCollapsed = false,
   viewRef, schema, onPrint,
   pageMarginCm, onPageMarginChange,
   pageOrientation, onPageOrientationChange,
@@ -260,6 +262,8 @@ function MenuBar({
   return (
     <div className="border-b border-border bg-card">
       {/* Top bar: brand on the left, document title centered, account on the right */}
+      <div className="editor-title-bar" data-collapsed={headerCollapsed} aria-hidden={headerCollapsed} inert={headerCollapsed}>
+      <div className="min-h-0 overflow-hidden">
       <div className="relative flex min-h-9 flex-wrap items-center border-b border-border/60 px-3 sm:h-9 sm:flex-nowrap">
         <div className="flex min-w-0 items-center gap-1.5">
           <span className="font-brand shrink-0 select-none leading-none">
@@ -355,7 +359,9 @@ function MenuBar({
           )}
         </div>
       </div>
-      {/* Menu row */}
+      </div>
+      </div>
+      {/* Menu row stays available while the title bar is collapsed. */}
       <Menubar className="h-8 rounded-none border-0 bg-transparent px-0">
       <div className="max-w-[800px] w-full mx-auto flex items-center gap-[15px]">
       <HomeBtn onClick={goHome} label={t.header.home} />

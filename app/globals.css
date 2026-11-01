@@ -77,6 +77,36 @@
   font-display: swap;
 }
 
+/* Carlito supplies Calibri-compatible metrics on devices without Calibri. */
+@font-face {
+  font-family: "Carlito";
+  src: url("/fonts/Carlito-Regular.woff2") format("woff2");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Carlito";
+  src: url("/fonts/Carlito-Bold.woff2") format("woff2");
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Carlito";
+  src: url("/fonts/Carlito-Italic.woff2") format("woff2");
+  font-weight: 400;
+  font-style: italic;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Carlito";
+  src: url("/fonts/Carlito-BoldItalic.woff2") format("woff2");
+  font-weight: 700;
+  font-style: italic;
+  font-display: swap;
+}
+
 .font-brand {
   font-family: "Author", ui-sans-serif, system-ui, sans-serif;
 }
@@ -94,6 +124,20 @@ body {
 }
 
 /* ── Toolbar ── */
+.editor-title-bar {
+  display: grid;
+  grid-template-rows: 1fr;
+  opacity: 1;
+  transition: grid-template-rows 220ms ease, opacity 220ms ease;
+}
+.editor-title-bar[data-collapsed="true"] {
+  grid-template-rows: 0fr;
+  opacity: 0;
+  pointer-events: none;
+}
+@media (prefers-reduced-motion: reduce) {
+  .editor-title-bar { transition: none; }
+}
 .pm-toolbar {
   position: sticky;
   top: 0;
@@ -223,7 +267,7 @@ body {
   /* Right-aligned, and pinned to the outer edge of the margin band so the
      number keeps its distance from the text even on a page that ends full. */
   justify-content: flex-end;
-  font-family: Arial, sans-serif;
+  font-family: Calibri, Carlito, Arial, sans-serif;
   font-size: 9pt;
   line-height: 1;
   color: #777;
@@ -249,7 +293,7 @@ body {
 .pm-page .ProseMirror {
   outline: none;
   min-height: calc(var(--page-h, 1123px) - (var(--page-margin) * 2));
-  font-family: Arial, sans-serif;
+  font-family: Calibri, Carlito, Arial, sans-serif;
   font-size: 12pt;
   line-height: 1.5;
   color: #000;
@@ -381,7 +425,7 @@ body {
 .pm-page.ProseMirror {
   outline: none;
   min-height: calc(var(--page-h, 1123px) - (var(--page-margin) * 2));
-  font-family: Arial, sans-serif;
+  font-family: Calibri, Carlito, Arial, sans-serif;
   font-size: 12pt;
   line-height: 1.5;
   color: #000;
@@ -912,7 +956,7 @@ kbd.hero-kbd {
 
 /* Compact typography for the version-history preview pane */
 .version-preview {
-  font-family: Arial, sans-serif;
+  font-family: Calibri, Carlito, Arial, sans-serif;
   font-size: 11px;
   line-height: 1.45;
 }
@@ -934,7 +978,7 @@ kbd.hero-kbd {
 .template-preview {
   background: #ffffff;
   color: #000000;
-  font-family: Arial, sans-serif;
+  font-family: Calibri, Carlito, Arial, sans-serif;
   font-size: 12pt;
   line-height: 1.5;
   padding: 38px 60px;

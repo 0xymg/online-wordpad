@@ -3,7 +3,7 @@
 /**
  * On-demand Google Fonts loader for the /pad editor.
  *
- * The editor boots with system fonts only. A Google font's stylesheet is
+ * The editor boots with system and bundled fonts. A Google font's stylesheet is
  * injected the first time the family is actually needed:
  *   - `ensureEditorFont(cssValue)`  → call when the user picks a font in the toolbar
  *   - `ensureFontsInHtml(html)`     → call when a document is opened, so any
@@ -14,8 +14,10 @@
  * SSR-safe: all functions are no-ops on the server.
  */
 
-/* System fonts available everywhere — never downloaded. */
+/* System fonts use local fallbacks; Carlito is bundled with the editor. */
 const SYSTEM_FAMILIES = new Set([
+  "calibri",
+  "carlito",
   "arial",
   "times new roman",
   "courier new",

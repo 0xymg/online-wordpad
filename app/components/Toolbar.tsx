@@ -14,6 +14,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip
 import { cn } from "@/lib/utils";
 import ColorPicker from "./ColorPicker";
 import { ensureEditorFont } from "@/lib/editor-fonts";
+import { DEFAULT_DOCUMENT_FONT, DEFAULT_DOCUMENT_FONT_CSS } from "@/lib/document-font";
 import { useT } from "./I18nProvider";
 import type { EmojiClickData } from "emoji-picker-react";
 
@@ -36,6 +37,7 @@ const GRID_ROWS = 8;
 const GRID_COLS = 10;
 
 const FONTS = [
+  { label: DEFAULT_DOCUMENT_FONT, value: DEFAULT_DOCUMENT_FONT_CSS },
   { label: "Arial",             value: "Arial, sans-serif" },
   { label: "Times New Roman",   value: "'Times New Roman', serif" },
   { label: "Courier New",       value: "'Courier New', monospace" },
@@ -68,11 +70,11 @@ const FONTS = [
 const FONT_SIZES = ["8","9","10","11","12","14","16","18","20","24","28","36","48","72"];
 
 const FONT_GROUPS = [
-  { label: "Classic",    fonts: FONTS.slice(0, 7) },
-  { label: "Sans-serif", fonts: FONTS.slice(7, 17) },
-  { label: "Serif",      fonts: FONTS.slice(17, 22) },
-  { label: "Monospace",  fonts: FONTS.slice(22, 23) },
-  { label: "Decorative", fonts: FONTS.slice(23) },
+  { label: "Classic",    fonts: FONTS.slice(0, 8) },
+  { label: "Sans-serif", fonts: FONTS.slice(8, 18) },
+  { label: "Serif",      fonts: FONTS.slice(18, 23) },
+  { label: "Monospace",  fonts: FONTS.slice(23, 24) },
+  { label: "Decorative", fonts: FONTS.slice(24) },
 ];
 
 const BLOCK_VALUES = ["paragraph", "h1", "h2", "h3", "h4", "code_block"] as const;
@@ -338,7 +340,7 @@ function Toolbar({
 
   // Mirror the cursor's formatting in the selects/buttons. Recomputed per editor
   // transaction (tick) in an effect — refs must not be read during render.
-  // No fontFamily mark means the editor's base font (Arial) — show it in the
+  // No fontFamily mark means the editor's base font (Calibri) — show it in the
   // select instead of an empty placeholder.
   const DEFAULT_FONT = FONTS[0].value;
   const [selFmt, setSelFmt] = useState({ fontFamily: DEFAULT_FONT, fontSize: "12", block: "paragraph", align: "left" });

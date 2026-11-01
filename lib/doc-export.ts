@@ -1,6 +1,7 @@
 // Client-side document exporters: ProseMirror doc → .docx (formatted) and .rtf.
 // Loaded on demand via dynamic import so the docx library stays out of the main bundle.
 import { resolvedAlignment, textDirection } from "./text-direction";
+import { DEFAULT_DOCUMENT_FONT } from "./document-font";
 import type { Node as PMNode, Mark } from "prosemirror-model";
 import {
   Document, Packer, Paragraph, TextRun, HeadingLevel, AlignmentType,
@@ -344,7 +345,7 @@ export async function docToDocxBlob(
     numbering: { config: builder.numbering },
     styles: {
       default: {
-        document: { run: { font: "Arial", size: 24 } },
+        document: { run: { font: DEFAULT_DOCUMENT_FONT, size: 24 } },
       },
     },
     sections: [{
@@ -389,7 +390,7 @@ function rtfEscape(text: string): string {
 
 class RtfBuilder {
   private colors: string[] = [];
-  private fonts: string[] = ["Arial", "Courier New"];
+  private fonts: string[] = [DEFAULT_DOCUMENT_FONT, "Courier New"];
   body = "";
 
   private colorIndex(hex: string | undefined): number {
