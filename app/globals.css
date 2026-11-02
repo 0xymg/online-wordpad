@@ -1026,3 +1026,21 @@ kbd.hero-kbd {
 
 /* Trailing paragraph spacing does not add another strip below the last sheet. */
 .pm-page .ProseMirror > :last-child { margin-bottom: 0 !important; }
+
+.pm-page.pm-page-mixed { background: transparent; box-shadow: none; }
+.pm-sheet-backgrounds { position: absolute; inset: 0; pointer-events: none; }
+.pm-section-sheet { position: absolute; background: white; box-shadow: 0 2px 8px rgba(0,0,0,.18); }
+.pm-section-number { position: absolute; }
+.pm-page-mixed > .ProseMirror { position: relative; }
+.dark .pm-section-sheet { background: #262626; }
+@media print {
+  .pm-sheet-backgrounds { display: none !important; }
+  .pm-section-block { left: 0 !important; width: auto !important; max-width: none !important; }
+}
+/* Mixed sections draw their own sheet edges at each paper's actual width. */
+.pm-page-mixed .pm-page-spacer-edge { box-shadow: none !important; }
+
+.pm-page .pm-paginated-cell { vertical-align: top !important; }
+
+.pm-page { --sheet-bg: #fff; }
+.dark .pm-page { --sheet-bg: #262626; }

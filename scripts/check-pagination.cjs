@@ -54,6 +54,15 @@ const layout = { width: 11906, height: 16838, margins: { top: 720, right: 1080, 
   await page.waitForTimeout(500);
   const zoomed=await facts('zoom'); assert.equal(zoomed.gaps.length,table.gaps.length);
   await page.getByRole('combobox',{name:'Zoom',exact:true}).click(); await page.getByRole('option',{name:'100%',exact:true}).click();
+  await load(`<p>FIXTURE LARGE CELLS</p><table><tr><td colspan="2" style="background-color:#dbeafe">${Array.from({length:90},(_,i)=>`<p>LEFT ${i} ${'Long cell text for wrapping. '.repeat(4)}</p>`).join('')}</td><td>${Array.from({length:15},(_,i)=>`<p>RIGHT ${i} shorter column content</p>`).join('')}</td></tr></table><p>END LARGE CELLS</p>`);
+  const aligned = await page.locator('.ProseMirror td').evaluateAll(cells => cells.map(c => Array.from(c.querySelectorAll('.pm-page-spacer-gap')).map(g => g.getBoundingClientRect().top)));
+  await fs.writeFile(path.join(dir,'cell-boundaries.json'),JSON.stringify(aligned));
+  assert.ok(aligned[0].length >= 3, 'oversized row should span several pages');
+  assert.equal(aligned[0].length, aligned[1].length, 'both cells must cross every page boundary');
+  aligned[0].forEach((top,i)=>assert.ok(Math.abs(top-aligned[1][i])<2, `cell boundary ${i} is misaligned`));
+  assert.equal(await page.locator('.ProseMirror td').first().getAttribute('colspan'),'2');
+  await page.locator('.editor-shell').evaluate(e=>{e.scrollTop=850;});
+  await page.screenshot({path:path.join(dir,'large-cells.png')});
   await load(`<p>FIXTURE LIST</p><ol>${Array.from({length:140},(_,i)=>`<li><p>Item ${i} with a little more text.</p></li>`).join('')}</ol>`);
   const list=await facts('list'); assert.ok(list.gaps.length>=3,'long list must split');
   for(let i=0;i<list.gaps.length;i++) assert.ok(Math.abs(list.gaps[i]-(pageHeight+i*(pageHeight+26)))<8,`list boundary ${i}: ${list.gaps[i]}`);
