@@ -1,5 +1,8 @@
 "use client";
 
+import { documentSections } from "@/lib/document-sections";
+import { MARGIN_PRESETS, marginPreset, setPageMargins, activeSection, requestedMargins, type PageMargins } from "@/lib/page-margins";
+import { paragraphStylePlugin, splitStyledParagraph } from "@/lib/paragraph-style-plugin";
 import { printPageStyle } from "@/lib/print-style";
 import { updateRunningNumbering } from "@/lib/running-content";
 import { readLayout, defaultDocumentLayout, wrapDocumentHtml, type DocumentLayout } from "@/lib/document-layout";
@@ -60,6 +63,9 @@ import WelcomeScreen from "./WelcomeScreen";
 const AboutDialog = lazy(() => import("./AboutDialog"));
 const AuthModal = lazy(() => import("./AuthModal"));
 const HeaderFooterDialog = lazy(() => import("./HeaderFooterDialog"));
+const PageMarginsDialog = lazy(() => import("./PageMarginsDialog"));
+const ParagraphDialog = lazy(() => import("./ParagraphDialog"));
+const StylesDialog = lazy(() => import("./StylesDialog"));
 const TablePropertiesDialog = lazy(() => import("./TablePropertiesDialog"));
 const ProfileDialog = lazy(() => import("./ProfileDialog"));
 import { toast, Toaster } from "./toast";
@@ -145,7 +151,7 @@ const CM_TO_PX = 96 / 2.54;
 // Current page geometry for the pagination plugin (single-editor app, same
 // pattern as editorHandlers). Updated from React state; read at measure time.
 const pageLayoutConfig: PageLayoutConfig = {
-  pageHeightPx: 1123, marginPx: CM_TO_PX, pageNumbers: "off", pageNumberFormat: "plain",
+  pageHeightPx: 1123, marginPx: CM_TO_PX * 2.54, pageNumbers: "off", pageNumberFormat: "plain",
 };
 
 /* How long the account dialog's close animation runs. Declared here rather
@@ -165,7 +171,7 @@ function setTextAlignCmd(align: "left" | "center" | "right" | "justify") {
     state.doc.nodesBetween(from, to, (node, pos) => {
       if (node.type === mySchema.nodes.paragraph || node.type === mySchema.nodes.heading) {
         found = true;
-        tr.setNodeMarkup(pos, undefined, { ...node.attrs, textAlign: align });
+        tr.setNodeMarkup(pos, undefined, { ...node.attrs, textAlign: align, paragraphFormat: { ...node.attrs.paragraphFormat,alignment:align } });
       }
     });
     if (!found) return false;
@@ -182,6 +188,7 @@ function parseHtmlToDoc(html: string): PMNode {
 function buildPlugins() {
   return [
     history(),
+    paragraphStylePlugin(),
     columnResizing(),
     tableEditing(),
     searchPlugin(),
@@ -219,7 +226,7 @@ function buildPlugins() {
       },
       "Tab":       adjustBlockIndentByTab(1),
       "Shift-Tab": adjustBlockIndentByTab(-1),
-      "Enter":     splitListItem(mySchema.nodes.list_item),
+      "Enter": (state,dispatch,view) => splitListItem(mySchema.nodes.list_item)(state,dispatch,view) || splitStyledParagraph(state,dispatch,view),
     }),
     keymap(baseKeymap),
     inputRules({ rules: [
@@ -291,19 +298,34 @@ function autoLinkRule(): InputRule {
 }
 
 export function insertPageBreak() {
-  return (state: EditorState, dispatch?: (tr: Transaction) => void): boolean => {
-    const pageBreakType = mySchema.nodes.page_break;
-    const paragraphType = mySchema.nodes.paragraph;
-    if (!pageBreakType || !paragraphType) return false;
-    if (!dispatch) return true;
-
-    const pageBreak = pageBreakType.create();
-    const paragraph = paragraphType.create();
-    let tr = state.tr.replaceSelectionWith(pageBreak);
-    const insertPos = tr.selection.from;
-    tr = tr.insert(insertPos, paragraph);
-    tr = tr.setSelection(TextSelection.create(tr.doc, insertPos + 1));
+  return (state: EditorState, dispatch?: (tr: Transaction) => void, view?: EditorView): boolean => {
+    const pageBreakType = mySchema.nodes.page_break,paragraphType=mySchema.nodes.paragraph;
+    if(!dispatch)return true;
+    let tr=state.tr.deleteSelection();
+    const point=tr.selection.$from;
+    if(point.parent.isTextblock){
+      const attrs={...point.parent.attrs,docxProperties:null};
+      tr=tr.split(point.pos,1,[{type:point.parent.type,attrs}]);
+      tr.insert(point.pos+1,pageBreakType.create());
+      tr.setSelection(TextSelection.create(tr.doc,point.pos+3));
+    }else{
+      tr=tr.replaceSelectionWith(pageBreakType.create());
+      let position=-1;tr.doc.descendants((node,pos)=>{if(position<0&&node.type===pageBreakType&&pos>=state.selection.from-1)position=pos;});
+      if(position<0)return false;
+      const after=position+1;
+      if(tr.doc.nodeAt(after)?.isTextblock)tr.setSelection(TextSelection.create(tr.doc,after+1));
+      else{tr.insert(after,paragraphType.create());tr.setSelection(TextSelection.create(tr.doc,after+1));}
+    }
+    const cursor=tr.selection.from;
     dispatch(tr.scrollIntoView());
+    if(view)requestAnimationFrame(()=>requestAnimationFrame(()=>{
+      if(view.isDestroyed||view.state.selection.from!==cursor)return;
+      view.focus();view.dispatch(view.state.tr.scrollIntoView());
+      const shell=view.dom.closest<HTMLElement>('.editor-shell'),page=view.dom.parentElement;
+      if(shell&&page){const scale=page.getBoundingClientRect().width/Number.parseFloat(getComputedStyle(page).width),g=documentSections(view.state.doc)[activeSection(view.state)].geometry;
+        const coords=view.coordsAtPos(cursor);shell.scrollTop+=coords.top-shell.getBoundingClientRect().top-g.margins.top/15*scale-40;
+      }
+    }));
     return true;
   };
 }
@@ -573,7 +595,6 @@ export { mySchema };
 // html is fetched on demand, then cached here.
 type FileItem = { id: string; name: string; html?: string; folder?: string | null };
 const ZOOM_PRESETS = [50, 75, 90, 100, 110, 125, 150];
-const MARGIN_PRESETS = [0.5, 1, 1.5, 2];
 
 const FILES_KEY = "wordpad-files";
 const ACTIVE_KEY = "wordpad-active";
@@ -851,7 +872,7 @@ export default function Editor({
   const slashMenuStateRef = useRef<SlashMenuState | null>(null);
   const slashItemsRef = useRef(SLASH_COMMANDS);
   const [tick, setTick] = useState(0);
-  const [pageMarginCm, setPageMarginCm] = useState(1);
+  const [pageMarginCm, setPageMarginCm] = useState(2.54);
   const [documentLayout, setDocumentLayout] = useState<DocumentLayout | null>(null);
   const [pageOrientation, setPageOrientation] = useState<"portrait" | "landscape">("portrait");
   const [zoomPercent, setZoomPercent] = useState(100);
@@ -955,6 +976,12 @@ export default function Editor({
     view.state.doc.forEach((node, pos) => { if (pos + node.nodeSize <= position && String(node.attrs.docxProperties || "").includes("sectPr")) section++; });
     setRunningEditor({ id: loadedIdRef.current, section });
   }, []);
+  const [marginsOpen,setMarginsOpen] = useState(false);
+  const showMargins = useCallback(()=>setMarginsOpen(true),[]);
+  const [paragraphOpen,setParagraphOpen] = useState(false);
+  const [stylesOpen,setStylesOpen] = useState(false);
+  const showParagraph = useCallback(()=>setParagraphOpen(true),[]);
+  const showStyles = useCallback(()=>setStylesOpen(true),[]);
   const [tablePropertiesOpen, setTablePropertiesOpen] = useState(false);
   const showTableProperties = useCallback(() => {
     const view = viewRef.current;
@@ -983,10 +1010,11 @@ export default function Editor({
   const pageWidthPx = documentLayout ? documentLayout.width / 15 : isLandscape ? 1123 : 794;
   const pageHeightPx = documentLayout ? documentLayout.height / 15 : isLandscape ? 794 : 1123;
   const pageWidthCm = pageWidthPx / CM_TO_PX;
-  const pageMargins = documentLayout?.margins ?? { top: pageMarginCm / 2.54 * 1440, right: pageMarginCm / 2.54 * 1440, bottom: pageMarginCm / 2.54 * 1440, left: pageMarginCm / 2.54 * 1440 };
+  const pageMargins = documentLayout?.sectionMargins?.[0] ?? documentLayout?.margins ?? { top: pageMarginCm / 2.54 * 1440, right: pageMarginCm / 2.54 * 1440, bottom: pageMarginCm / 2.54 * 1440, left: pageMarginCm / 2.54 * 1440 };
 
-  const uniformMargins = Object.values(pageMargins).every(value => Math.abs(value - pageMargins.left) < 0.1);
-  const presetMargin = uniformMargins && MARGIN_PRESETS.includes(pageMarginCm);
+  const [activeMargins,setActiveMargins]=useState<PageMargins>({top:1440,bottom:1440,left:1440,right:1440});
+  useEffect(()=>{const v=viewRef.current;if(!v)return;const next=requestedMargins(v.state.doc,activeSection(v.state));setActiveMargins(previous=>Object.keys(next).every(key=>next[key as keyof PageMargins]===previous[key as keyof PageMargins])?previous:next);},[tick,documentLayout]);
+  const presetMargin=marginPreset(activeMargins);
 
   // Keep the pagination plugin's geometry in sync; an empty transaction pokes
   // its update hook so pages re-flow right away.
@@ -1160,7 +1188,7 @@ export default function Editor({
       const tr = v.state.tr.insert(insertPos, [hr, paragraph]);
       v.dispatch(tr.scrollIntoView());
     }
-    else if (id === "page_break") insertPageBreak()(v.state, v.dispatch);
+    else if (id === "page_break") insertPageBreak()(v.state, v.dispatch,v);
     else if (id === "table") insertTable(3, 3)(v.state, v.dispatch);
     else if (id === "emoji") v.dispatch(v.state.tr.insertText("😀"));
 
@@ -1866,15 +1894,15 @@ export default function Editor({
         downloadBlob(await docToDocxBlob(doc, file.name || "Document", { orientation: pageOrientation, marginCm: pageMarginCm, pageNumbers, pageNumberFormat }), `${safe}.docx`);
       } else if (fmt === "pdf") {
         // Real client-side PDF export — loaded on demand like the other exporters.
-        const { docToPdfBlob } = await import("@/lib/pdf-export");
-        downloadBlob(await docToPdfBlob(doc, {
+        const { docToScreenPdfBlob } = await import("@/lib/pdf-snapshot");
+        downloadBlob(await docToScreenPdfBlob(doc, {
           title: file.name || "Document",
           orientation: pageOrientation,
           marginCm: pageMarginCm,
           headerFooter: printHeaderFooter,
           pageNumbers,
           pageNumberFormat,
-        }), `${safe}.pdf`);
+        },isActiveDoc?v!:undefined), `${safe}.pdf`);
       } else if (fmt === "md") {
         downloadBlob(new Blob([docToMarkdown(doc)], { type: "text/markdown" }), `${safe}.md`);
       } else {
@@ -1885,10 +1913,13 @@ export default function Editor({
   }, [pageOrientation, pageMarginCm, printHeaderFooter, pageNumbers, pageNumberFormat]);
 
   // Export the document currently open in the editor (used by the File menu).
+  const pdfExportBusy = useRef(false);
   const exportActive = useCallback((fmt: "html" | "txt" | "docx" | "rtf" | "md" | "pdf") => {
     const id = activeIdRef.current;
     const file = filesRef.current.find((f) => f.id === id) || { id, name: docTitle, html: "" };
-    exportFile({ ...file, name: docTitle || file.name }, fmt);
+    if(fmt==="pdf"&&pdfExportBusy.current)return;
+    if(fmt==="pdf")pdfExportBusy.current=true;
+    exportFile({ ...file, name: docTitle || file.name }, fmt).catch(()=>toast.error(tRef.current.toast.exportFailed)).finally(()=>{if(fmt==="pdf")pdfExportBusy.current=false;});
   }, [exportFile, docTitle]);
 
   /** Single-row download — a lone .docx, no archive around it. */
@@ -1987,10 +2018,7 @@ export default function Editor({
     };
     v.dispatch(v.state.tr.setDocAttribute("layout", change(current)));
   }, [pageMarginCm, pageOrientation, pageNumbers, pageNumberFormat]);
-  const changePageMargin = useCallback((cm: number) => {
-    const twips = Math.round(cm / 2.54 * 1440);
-    updateDocumentLayout(l => ({ ...l, margins: { top: twips, right: twips, bottom: twips, left: twips }, overrides: { ...l.overrides, margins: true } }));
-  }, [updateDocumentLayout]);
+  const changeMarginPreset = useCallback((id:string)=>{const v=viewRef.current,preset=MARGIN_PRESETS.find(p=>p.id===id);if(!v||!preset)return;try{v.dispatch(setPageMargins(v.state,{...preset.margins},"section"));}catch{toast.error(tRef.current.margins.tooLarge);}},[]);
   const changePageNumbers = useCallback((p: PageNumberPosition) => {
     updateDocumentLayout(l => updateRunningNumbering({ ...l, pageNumbers: p, overrides: { ...l.overrides, pageNumbers: true } }));
   }, [updateDocumentLayout]);
@@ -2369,7 +2397,7 @@ export default function Editor({
   const handleInsertPageBreak = useCallback(() => {
     const v = viewRef.current;
     if (!v) return;
-    insertPageBreak()(v.state, v.dispatch);
+    insertPageBreak()(v.state, v.dispatch,v);
     v.focus();
   }, []);
 
@@ -2554,7 +2582,7 @@ export default function Editor({
     const tr = v.state.tr;
     v.state.doc.nodesBetween(from, to, (node, pos) => {
       if (node.type === mySchema.nodes.paragraph || node.type === mySchema.nodes.heading) {
-        tr.setNodeMarkup(pos, undefined, { ...node.attrs, lineHeight });
+        tr.setNodeMarkup(pos, undefined, { ...node.attrs, lineHeight, paragraphFormat: { ...node.attrs.paragraphFormat,lineMode:"multiple",lineValue:lineHeight || 1.5 } });
       }
     });
     v.dispatch(tr); v.focus();
@@ -2953,8 +2981,9 @@ export default function Editor({
         headerCollapsed={chromeCollapsed}
         viewRef={viewRef}
         schema={mySchema}
-        pageMarginCm={uniformMargins ? pageMarginCm : -1}
-        onPageMarginChange={changePageMargin}
+        marginPreset={presetMargin}
+        onMarginPreset={changeMarginPreset}
+        onCustomMargins={showMargins}
         pageOrientation={pageOrientation}
         onPageOrientationChange={changePageOrientation}
         onPrint={handlePrint}
@@ -2975,6 +3004,8 @@ export default function Editor({
         onShowAbout={showAbout}
         onFind={openFind}
         onHeaderFooter={showRunningEditor}
+        onParagraph={showParagraph}
+        onStyles={showStyles}
         onTableProperties={showTableProperties}
         onInsertTable={handleInsertTable}
         onPageBreakAdd={handleInsertPageBreak}
@@ -3488,15 +3519,14 @@ export default function Editor({
             </div>
             <div className="flex items-center gap-1.5 max-[799px]:hidden">
               <span className="text-muted-foreground">{t.status.pageMargin}</span>
-              <Select value={presetMargin ? String(pageMarginCm) : "custom"} onValueChange={(v) => { if (v !== "custom") changePageMargin(Number(v)); }}>
-                <SelectTrigger size="sm" aria-label={t.status.pageMargin} className="h-6 w-[82px] px-1.5 text-[11px]">
+              <Select value={presetMargin || "custom"} onValueChange={v=>{if(v==="configure")showMargins();else changeMarginPreset(v);}}>
+                <SelectTrigger size="sm" aria-label={t.status.pageMargin} className="h-6 min-w-[145px] w-auto max-w-[220px] px-2 text-[11px]">
                   <SelectValue />
                 </SelectTrigger>
-                <SelectContent align="end">
+                <SelectContent position="popper" side="top" align="end" collisionPadding={12} className="min-w-[270px] max-w-[calc(100vw-24px)]">
                   {!presetMargin && <SelectItem value="custom" disabled className="text-xs">{t.status.customMargin}</SelectItem>}
-                  {MARGIN_PRESETS.map((m) => (
-                    <SelectItem key={m} value={String(m)} className="text-xs">{m} cm</SelectItem>
-                  ))}
+                  {MARGIN_PRESETS.map(p=><SelectItem key={p.id} value={p.id} className="text-xs"><span className="flex w-full items-center justify-between gap-4"><span>{t.margins[p.id]}</span><span className="text-muted-foreground">{(Math.round(p.margins.left*254/1440)/100).toFixed(2)} cm</span></span></SelectItem>)}
+                  <SelectItem value="configure" className="text-xs">{t.margins.custom}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -3680,6 +3710,9 @@ export default function Editor({
         if (loadedIdRef.current !== runningEditor.id) { toast.error(tRef.current.toast.openFailed); return; }
         updateDocumentLayout(layout => ({ ...layout, running: { ...layout.running, ...slots } }));
       }} /></Suspense>}
+      {marginsOpen && viewRef.current && <Suspense fallback={null}><PageMarginsDialog view={viewRef.current} onClose={()=>setMarginsOpen(false)}/></Suspense>}
+      {paragraphOpen && viewRef.current && <Suspense fallback={null}><ParagraphDialog view={viewRef.current} onClose={()=>setParagraphOpen(false)}/></Suspense>}
+      {stylesOpen && viewRef.current && <Suspense fallback={null}><StylesDialog view={viewRef.current} onClose={()=>setStylesOpen(false)}/></Suspense>}
       {tablePropertiesOpen && viewRef.current && <Suspense fallback={null}><TablePropertiesDialog view={viewRef.current} onClose={closeTableProperties} /></Suspense>}
       {authOpen && (
         <Suspense fallback={null}>

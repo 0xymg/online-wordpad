@@ -1,6 +1,7 @@
 // Block-level commands shared by the toolbar and the menu bar, so both stay in
 // step instead of each keeping its own copy of the logic.
 
+import { effectiveParagraph } from "./paragraph-format";
 import type { EditorView } from "prosemirror-view";
 import { sinkListItem, liftListItem } from "prosemirror-schema-list";
 
@@ -19,7 +20,7 @@ export function setTextAlign(view: EditorView | null, schema: Schema, align: str
   view.state.doc.nodesBetween(from, to, (node, pos) => {
     if (node.type === schema.nodes.paragraph || node.type === schema.nodes.heading) {
       if (node.attrs.textAlign !== align) {
-        tr.setNodeMarkup(pos, undefined, { ...node.attrs, textAlign: align });
+        tr.setNodeMarkup(pos, undefined, { ...node.attrs, textAlign: align, paragraphFormat: { ...node.attrs.paragraphFormat,alignment:align } });
         changed = true;
       }
     }
@@ -43,10 +44,10 @@ export function adjustIndent(view: EditorView | null, schema: Schema, direction:
   let changed = false;
   view.state.doc.nodesBetween(from, to, (node, pos) => {
     if (node.type === schema.nodes.paragraph || node.type === schema.nodes.heading) {
-      const current = Number(node.attrs.indent || 0);
+      const current = Number(effectiveParagraph(node).left || 0) / 360;
       const next = Math.max(0, Math.min(MAX_INDENT, current + direction));
       if (next !== current) {
-        tr.setNodeMarkup(pos, undefined, { ...node.attrs, indent: next });
+        tr.setNodeMarkup(pos, undefined, { ...node.attrs, indent: next, paragraphFormat: { ...node.attrs.paragraphFormat,left:next*360 } });
         changed = true;
       }
     }

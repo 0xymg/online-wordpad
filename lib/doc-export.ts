@@ -2,6 +2,9 @@
 // Loaded on demand via dynamic import so the docx library stays out of the main bundle.
 import { resolvedAlignment, textDirection } from "./text-direction";
 import { restoreDocxPackage, parseXml, xmlString, W } from "./docx-preservation";
+import { paragraphXml } from "./paragraph-format";
+import { textFormat } from "./document-styles";
+import type { DocumentStyles } from "./paragraph-format";
 import type { DocumentLayout } from "./document-layout";
 import { TableMap } from "prosemirror-tables";
 import { DEFAULT_DOCUMENT_FONT } from "./document-font";
@@ -137,37 +140,35 @@ class DocxBuilder {
   private imageQueue: Array<LoadedImage | null>;
   numbering: INumberingOptions["config"][number][] = [];
 
-  constructor(images: Array<LoadedImage | null>) {
+  constructor(images: Array<LoadedImage | null>, private styles: DocumentStyles = {}) {
     this.imageQueue = [...images];
   }
 
   inlineChildren(node: PMNode): ParagraphChild[] {
     const out: ParagraphChild[] = [];
-    if (node.attrs.docxProperties) {
+    if (node.attrs.docxProperties || node.attrs.styleId || Object.keys(node.attrs.paragraphFormat || {}).length) {
       const id = `EDTRLayout${this.paragraphProperties.length}`;
-      const properties = parseXml(node.attrs.docxProperties).documentElement;
-      const line = Number(node.attrs.lineHeight);
-      if (line > 0) {
-        const spacing = properties.getElementsByTagNameNS(W, "spacing")[0] ?? properties.appendChild(properties.ownerDocument.createElementNS(W, "w:spacing"));
-        spacing.setAttributeNS(W, "w:line", String(Math.round(line * 240)));
-        spacing.setAttributeNS(W, "w:lineRule", "auto");
-      }
-      if (node.attrs.indent > 0) {
-        const indent = properties.getElementsByTagNameNS(W, "ind")[0] ?? properties.appendChild(properties.ownerDocument.createElementNS(W, "w:ind"));
-        indent.setAttributeNS(W, textDirection(node.textContent) === "rtl" ? "w:right" : "w:left", String(node.attrs.indent * 360));
-      }
-      this.paragraphProperties.push({ id, properties: xmlString(properties) });
+      this.paragraphProperties.push({ id, properties: paragraphXml(node,!!this.styles[node.attrs.styleId]) });
       out.push(new Bookmark({ id, children: [] }));
     }
     node.forEach((child) => {
       if (child.isText) {
         const p = readMarks(child.marks);
+        if (node.attrs.styleId && this.styles[node.attrs.styleId] && node.attrs.styleText) {
+          const actual = textFormat(child.marks),base = node.attrs.styleText;
+          if (actual.family.replace(/["'\s]/g,"").toLowerCase() === String(base.family).replace(/["'\s]/g,"").toLowerCase()) p.font = undefined;
+          if (actual.size === base.size) p.size = undefined;
+          p.bold = actual.bold === base.bold ? undefined : actual.bold;
+          p.italics = actual.italic === base.italic ? undefined : actual.italic;
+          p.underline = actual.underline === base.underline ? undefined : actual.underline;
+          if (actual.color.toLowerCase() === String(base.color).toLowerCase()) p.color = undefined;
+        }
         const run = new TextRun({
           text: child.text || "",
           rightToLeft: textDirection(child.text || "") === "rtl",
           bold: p.bold,
           italics: p.italics,
-          underline: p.underline ? {} : undefined,
+          underline: p.underline === false ? { type: "none" } : p.underline ? {} : undefined,
           strike: p.strike,
           color: p.color,
           size: p.size,
@@ -216,6 +217,7 @@ class DocxBuilder {
     const align = ALIGN[resolvedAlignment(node.attrs.textAlign, node.textContent)];
     const indent = Number(node.attrs.indent || 0);
     const lh = node.attrs.lineHeight ? Number.parseFloat(String(node.attrs.lineHeight)) : NaN;
+    if (node.attrs.styleId && this.styles[node.attrs.styleId]) return { alignment: undefined, bidirectional: rtl, indent: undefined, spacing: undefined };
     return {
       alignment: align,
       bidirectional: rtl,
@@ -380,13 +382,13 @@ export async function docToDocxBlob(
   const defaults = typeof options === "string" ? { orientation: options } : options;
   const layout = doc.attrs.layout as DocumentLayout | null;
   const orientation = layout ? layout.width > layout.height ? "landscape" : "portrait" : defaults.orientation || "portrait";
-  const margin = Math.round((defaults.marginCm ?? 1) / 2.54 * 1440);
+  const margin = Math.round((defaults.marginCm ?? 2.54) / 2.54 * 1440);
   const margins = layout?.margins ?? { top: margin, right: margin, bottom: margin, left: margin };
   const pageNumbers = layout?.pageNumbers ?? defaults.pageNumbers ?? "off";
   const pageNumberFormat = layout?.pageNumberFormat ?? defaults.pageNumberFormat ?? "plain";
   const numberingParagraph = new Paragraph({ alignment: AlignmentType.RIGHT, children: [new TextRun({ children: pageNumberFormat === "of" ? [PageNumber.CURRENT, " / ", PageNumber.TOTAL_PAGES] : [PageNumber.CURRENT] })] });
   const images = await preloadImages(doc);
-  const builder = new DocxBuilder(images);
+  const builder = new DocxBuilder(images,layout?.styles);
   const children: FileChild[] = [];
   doc.forEach((block) => children.push(...builder.blockToDocx(block)));
   // A4 portrait in twips (11906×16838) — docx.js swaps the two itself when
@@ -415,7 +417,8 @@ export async function docToDocxBlob(
       children: children.length ? children : [new Paragraph("")],
     }],
   });
-  const result = await restoreDocxPackage(await Packer.toBlob(file), doc, builder.paragraphProperties);
+  let result = await restoreDocxPackage(await Packer.toBlob(file), doc, builder.paragraphProperties);
+  if (layout?.styles) { const { exportDocumentStyles } = await import("./style-docx"); result = await exportDocumentStyles(result,doc); }
   if (!layout?.running || !Object.keys(layout.running).length) return result;
   const { exportRunning } = await import("./header-footer-export");
   return exportRunning(result, doc, html => {

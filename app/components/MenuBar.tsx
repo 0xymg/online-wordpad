@@ -27,6 +27,7 @@ import {
 import { setTextAlign, adjustIndent } from "@/lib/editor-commands";
 import { SignIn, SignOut, House, PencilSimple, UserCircle, Check } from "./icons";
 import { toast } from "./toast";
+import { MARGIN_PRESETS } from "@/lib/page-margins";
 import { useT, useLocale } from "./I18nProvider";
 import { LOCALES, LOCALE_NAMES, LOCALE_TAGS } from "@/lib/i18n";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -38,8 +39,9 @@ interface MenuBarProps {
   headerCollapsed?: boolean;
   viewRef: React.MutableRefObject<EditorView | null>;
   schema: any;
-  pageMarginCm: number;
-  onPageMarginChange: (cm: number) => void;
+  marginPreset?: string;
+  onMarginPreset: (id:string) => void;
+  onCustomMargins: () => void;
   pageOrientation: "portrait" | "landscape";
   onPageOrientationChange: (o: "portrait" | "landscape") => void;
   onPrint?: () => void;
@@ -60,6 +62,8 @@ interface MenuBarProps {
   onShowAbout: () => void;
   onFind: () => void;
   onTableProperties: () => void;
+  onParagraph: () => void;
+  onStyles: () => void;
   onHeaderFooter: () => void;
   onInsertTable: (rows: number, cols: number) => void;
   onPageBreakAdd: () => void;
@@ -107,7 +111,6 @@ const TEXT_COLORS = ["#000000", "#e11d48", "#ea580c", "#ca8a04", "#16a34a", "#25
 const HIGHLIGHTS = ["#fef08a", "#bbf7d0", "#bfdbfe", "#fbcfe8", "#fed7aa", "#e9d5ff"];
 const SYMBOLS = ["©", "®", "™", "§", "¶", "•", "–", "—", "…", "€", "£", "¥", "°", "±", "×", "÷", "≈", "≠", "≤", "≥", "→", "←", "↑", "↓", "✓", "★"];
 const ZOOM_LEVELS = [50, 75, 90, 100, 110, 125, 150];
-const MARGIN_PRESETS = [0.5, 1, 1.5, 2];
 const PAGE_NUMBER_POSITIONS = ["off", "bottom", "top"] as const;
 const PAGE_NUMBER_FORMATS = ["plain", "of"] as const;
 const LINE_SPACINGS: Array<{ key: "single" | "num" | "double" | "reset"; num?: string; value: number | null }> = [
@@ -155,12 +158,12 @@ function previewDate(format: string, locale: keyof typeof LOCALE_TAGS): string {
 function MenuBar({
   headerCollapsed = false,
   viewRef, schema, onPrint,
-  pageMarginCm, onPageMarginChange,
+  marginPreset, onMarginPreset, onCustomMargins,
   pageOrientation, onPageOrientationChange,
   docTitle, onTitleChange, onNewDoc, onShowHome, onNewFromTemplate, onOpenFile, onExport,
   onSave, onCopyLink, onRenameDoc, onDeleteDoc, onReplace,
   onShowVersions, onShowShortcuts, onShowAbout, onFind,
-  onTableProperties, onHeaderFooter, onInsertTable, onPageBreakAdd, onLinkAdd, onImageAdd, onImageUrlAdd,
+  onParagraph, onStyles, onTableProperties, onHeaderFooter, onInsertTable, onPageBreakAdd, onLinkAdd, onImageAdd, onImageUrlAdd,
   onInsertDivider, onInsertSymbol, onInsertDate, onInsertVariable,
   onLineSpacing, onClearFormatting,
   zoomPercent, onZoomChange,
@@ -376,7 +379,7 @@ function MenuBar({
           <MenubarItem onClick={onNewDoc}>{t.file.new}</MenubarItem>
           <MenubarSub>
             <MenubarSubTrigger>{t.file.newFromTemplate}</MenubarSubTrigger>
-            <MenubarSubContent>
+            <MenubarSubContent className="max-h-[70dvh] overflow-y-auto">
               {getTemplates(locale).map((t) => (
                 <MenubarItem key={t.id} onClick={() => onNewFromTemplate({ name: t.name, html: t.html })}>
                   <div>
@@ -428,15 +431,11 @@ function MenuBar({
                 {t.file.landscape}
               </MenubarCheckboxItem>
               <MenubarSeparator />
-              {MARGIN_PRESETS.map((m) => (
-                <MenubarCheckboxItem
-                  key={m}
-                  checked={pageMarginCm === m}
-                  onClick={() => onPageMarginChange(m)}
-                >
-                  {t.status.pageMargin}: {m} cm
-                </MenubarCheckboxItem>
-              ))}
+              {MARGIN_PRESETS.map(p=><MenubarCheckboxItem key={p.id} checked={marginPreset===p.id} onClick={()=>onMarginPreset(p.id)}>
+                <div><div>{t.margins[p.id]}</div><div className="text-[10px] text-muted-foreground">{t.margins.top}: {(p.margins.top*2.54/1440).toFixed(2)} · {t.margins.left}: {(p.margins.left*2.54/1440).toFixed(2)}</div></div>
+              </MenubarCheckboxItem>)}
+              <MenubarSeparator/>
+              <MenubarItem onClick={onCustomMargins}>{t.margins.custom}</MenubarItem>
             </MenubarSubContent>
           </MenubarSub>
           <MenubarSub>
@@ -761,6 +760,9 @@ function MenuBar({
               })}
             </MenubarSubContent>
           </MenubarSub>
+          <MenubarSeparator />
+          <MenubarItem onClick={onParagraph}>{t.paragraph.title}…</MenubarItem>
+          <MenubarItem onClick={onStyles}>{t.styles.title}…</MenubarItem>
           <MenubarSeparator />
           <MenubarItem onClick={onClearFormatting}>
             {t.format.clearFormatting}

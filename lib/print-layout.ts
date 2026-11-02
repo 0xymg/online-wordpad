@@ -42,6 +42,7 @@ export async function preparePrintLayout(view: EditorView, host: HTMLElement, cr
   pages.forEach((page, index) => {
     const g = page.geometry, sheet = document.createElement("section");
     sheet.className = "edtr-print-sheet";
+    sheet.dataset.pageWidth = String(g.width); sheet.dataset.pageHeight = String(g.height);
     // Leave a sub-point tolerance for the print engine's paper-size rounding.
     const height = g.height / 15 - 1;
     sheet.style.cssText = `page:edtr${index};position:relative;width:${g.width / 15}px;height:${height}px;overflow:hidden;break-after:${index === pages.length - 1 ? "auto" : "page"};background:white`;

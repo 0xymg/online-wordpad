@@ -292,10 +292,11 @@ export async function restoreDocxPackage(blob: Blob, doc: PMNode, paragraphs: Ar
   const generatedSection = first(body, "sectPr")?.cloneNode(true) as Element | undefined;
   if (layout?.section) replaceProperties(body, layout.section);
   // Explicit user layout changes win over imported settings in every section.
-  for (const section of all(main, "sectPr")) {
-    if (layout?.overrides?.margins) {
+  for (const [index,section] of all(main, "sectPr").entries()) {
+    const selectedMargins = layout?.sectionMargins?.[index] || (layout?.overrides?.margins ? layout.margins : null);
+    if (selectedMargins) {
       const margins = first(section, "pgMar") ?? section.appendChild(main.createElementNS(W, "w:pgMar"));
-      for (const [side, n] of Object.entries(layout.margins)) margins.setAttributeNS(W, `w:${side}`, String(n));
+      for (const [side, n] of Object.entries(selectedMargins)) margins.setAttributeNS(W, `w:${side}`, String(n));
     }
     if (layout?.overrides?.orientation) {
       const size = first(section, "pgSz") ?? section.appendChild(main.createElementNS(W, "w:pgSz"));
@@ -384,6 +385,7 @@ export async function restoreDocxPackage(blob: Blob, doc: PMNode, paragraphs: Ar
   // OOXML property children have a schema-defined order. Merging preserved and
   // newly edited properties must not produce files that Word needs to repair.
   const orders: Record<string, string[]> = {
+    pPr: "pStyle keepNext keepLines pageBreakBefore framePr widowControl numPr suppressLineNumbers pBdr shd tabs suppressAutoHyphens kinsoku wordWrap overflowPunct topLinePunct autoSpaceDE autoSpaceDN bidi adjustRightInd snapToGrid spacing ind contextualSpacing mirrorIndents suppressOverlap jc textDirection textAlignment textboxTightWrap outlineLvl divId cnfStyle rPr sectPr pPrChange".split(" "),
     sectPr: "headerReference footerReference footnotePr endnotePr type pgSz pgMar paperSrc pgBorders lnNumType pgNumType cols formProt vAlign noEndnote titlePg textDirection bidi rtlGutter docGrid printerSettings sectPrChange".split(" "),
     trPr: "cnfStyle divId gridBefore gridAfter wBefore wAfter cantSplit trHeight tblHeader tblCellSpacing jc hidden ins del trPrChange".split(" "),
     tcPr: "cnfStyle tcW gridSpan hMerge vMerge tcBorders shd noWrap tcMar textDirection tcFitText vAlign hideMark headers cellIns cellDel cellMerge tcPrChange".split(" "),

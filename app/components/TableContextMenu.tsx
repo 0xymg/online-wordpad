@@ -3,7 +3,7 @@
 import { useT } from "./I18nProvider";
 import { uiText } from "@/lib/i18n/ui";
 import { useState, useCallback } from "react";
-import type { Command } from "prosemirror-state";
+import { Selection, type Command } from "prosemirror-state";
 import { EditorView } from "prosemirror-view";
 import {
   isInTable, findTable, CellSelection, TableMap,
@@ -34,11 +34,20 @@ export default function TableContextMenu({ viewRef, children, onProperties }: Ta
   const t = useT();
   const [inTable, setInTable] = useState(false);
 
-  // Sağ tıkta tablo içinde olup olmadığını kontrol et
-  const handleContextMenu = useCallback(() => {
+  const handleContextMenu = useCallback((event: React.MouseEvent) => {
     const v = viewRef.current;
-    if (!v) { setInTable(false); return; }
-    setInTable(isInTable(v.state));
+    const cell = event.target instanceof Element ? event.target.closest("td,th") : null;
+    if (!v || !cell || !v.dom.contains(cell)) {
+      // Stop Radix's trigger without cancelling the browser's native menu.
+      event.stopPropagation(); setInTable(false); return;
+    }
+    try {
+      if (!(v.state.selection instanceof CellSelection && cell.classList.contains("selectedCell"))) {
+        const position = v.posAtDOM(cell,0);
+        v.dispatch(v.state.tr.setSelection(Selection.near(v.state.doc.resolve(position))));
+      }
+      setInTable(isInTable(v.state));
+    } catch { event.stopPropagation(); setInTable(false); }
   }, [viewRef]);
 
   const run = (cmd: Command) => {
@@ -64,12 +73,11 @@ export default function TableContextMenu({ viewRef, children, onProperties }: Ta
 
   return (
     <ContextMenu>
-      <ContextMenuTrigger asChild onContextMenu={handleContextMenu}>
-        <div className="contents">{children}</div>
+      <ContextMenuTrigger asChild>
+        <div className="contents" onContextMenuCapture={handleContextMenu}>{children}</div>
       </ContextMenuTrigger>
 
-      <ContextMenuContent className="w-52">
-        {inTable ? (
+      {inTable && <ContextMenuContent className="w-52">
           <>
             <ContextMenuItem onSelect={onProperties}>{t.tableProperties.title}</ContextMenuItem>
             <ContextMenuSeparator />
@@ -152,12 +160,7 @@ export default function TableContextMenu({ viewRef, children, onProperties }: Ta
               {t.tableMenu.deleteTable}
             </ContextMenuItem>
           </>
-        ) : (
-          <ContextMenuItem disabled className="text-muted-foreground text-xs">
-            {t.tableMenu.hint}
-          </ContextMenuItem>
-        )}
-      </ContextMenuContent>
+      </ContextMenuContent>}
     </ContextMenu>
   );
 }

@@ -1056,3 +1056,8 @@ kbd.hero-kbd {
 .edtr-document-field { display: inline; border-bottom: 1px dotted currentColor; background: #8881; padding: 0 2px; }
 .pm-running-layer { position: absolute; inset: 0; pointer-events: none; }
 @media print { .pm-running-layer { display: none !important; } }
+
+/* A minimum line height still lets larger inline text expand the line. */
+.pm-page [data-edtr-line-mode="atLeast"] [style*="font-size"] { line-height: normal; }
+
+.pm-page .ProseMirror { white-space: pre-wrap; }

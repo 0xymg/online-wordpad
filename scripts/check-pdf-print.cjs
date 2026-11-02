@@ -18,6 +18,8 @@ const {chromium}=require(process.env.PLAYWRIGHT_MODULE||'playwright');
  await page.locator('input[type=file][accept*=".docx"]').setInputFiles(source);await page.waitForFunction(()=>document.querySelector('.pm-running-header')?.textContent.includes('FIRST HEADER'));
  async function exportPdf(name){await page.getByRole('menuitem',{name:'File',exact:true}).click();await page.getByRole('menuitem',{name:'Export',exact:true}).hover();const event=page.waitForEvent('download');await page.getByRole('menuitem',{name:'PDF (.pdf)',exact:true}).click();const file=path.join(dir,name);await(await event).saveAs(file);return file;}
  await exportPdf('export.pdf');
+ await page.getByRole('combobox',{name:'Zoom',exact:true}).click();await page.getByRole('option',{name:'50%',exact:true}).click();await page.waitForTimeout(350);await exportPdf('zoom-50.pdf');
+ await page.getByRole('combobox',{name:'Zoom',exact:true}).click();await page.getByRole('option',{name:'100%',exact:true}).click();await page.waitForTimeout(350);
  // Intercept the native print call, retaining the exact document sent to it.
  page.on('frameattached',async frame=>{try{await frame.evaluate(()=>{window.print=()=>{window.top.__printedHtml=document.documentElement.outerHTML;};});}catch{}});
  async function nativePrint(name) {
@@ -26,7 +28,11 @@ const {chromium}=require(process.env.PLAYWRIGHT_MODULE||'playwright');
   await page.waitForFunction(()=>window.__printedHtml,{timeout:20000});
   const html=await page.evaluate(()=>window.__printedHtml);await fs.writeFile(path.join(dir,name+'.html'),html);
   const printPage=await browser.newPage();await printPage.route('**/__print-fixture',route=>route.fulfill({contentType:'text/html',body:html}));await printPage.goto(base+'/__print-fixture',{waitUntil:'networkidle'});await printPage.evaluate(()=>document.fonts.ready);await printPage.pdf({path:path.join(dir,name+'.pdf'),preferCSSPageSize:true,printBackground:true});
-  const count=await printPage.locator('.edtr-print-sheet').count();await printPage.close();return count;
+  const sheets=printPage.locator('.edtr-print-sheet'),count=await sheets.count();
+  // Put each sample at y=0: scrolling to fractional paper offsets can add a
+  // rounded pixel to Playwright's crop, obscuring genuine PDF layout changes.
+  for(let index=0;index<Math.min(count,2);index++){await sheets.evaluateAll((nodes,index)=>nodes.forEach((node,i)=>node.style.display=i===index?'block':'none'),index);await sheets.nth(index).screenshot({path:path.join(dir,name+(index?'-second':'-first')+'-sheet.png')});}
+  await printPage.close();return count;
  }
  assert.equal(await nativePrint('print'),5);
  await page.getByRole('menuitem',{name:'Insert',exact:true}).click();await page.getByRole('menuitem',{name:'Header & footer…',exact:true}).click();

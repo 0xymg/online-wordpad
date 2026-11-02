@@ -3,6 +3,7 @@
 // (e.g. the landing page's ToolbarPreview) can import it without dragging in
 // the entire Editor.tsx module graph (react-to-print, dialogs, actions, …).
 
+import { paragraphAttrs, paragraphDOM, paragraphCSS } from "@/lib/paragraph-format";
 import { Schema, Node as PMNode, Mark, type NodeSpec } from "prosemirror-model";
 import { schema as basicSchema } from "prosemirror-schema-basic";
 import { addListNodes } from "prosemirror-schema-list";
@@ -50,6 +51,7 @@ const paragraphNodeSpec: NodeSpec = {
   ...basicSchema.spec.nodes.get("paragraph"),
   attrs: {
     ...rawAttrs,
+    styleId: { default: null }, styleText: { default: null }, styleParagraph: { default: null }, paragraphFormat: { default: null },
     textAlign: { default: null },
     indent: { default: 0 },
     lineHeight: { default: null },
@@ -60,10 +62,10 @@ const paragraphNodeSpec: NodeSpec = {
       if (typeof dom === "string") return { textAlign: null, indent: 0, lineHeight: null };
       const el = dom as HTMLElement;
       return {
-        ...parseRaw(el),
-        textAlign: normalizeTextAlign(el.style.textAlign),
+        ...parseRaw(el), ...paragraphAttrs(el),
+        textAlign: el.hasAttribute("data-edtr-style") ? null : normalizeTextAlign(el.style.textAlign),
         indent: el.hasAttribute("data-docx-properties") ? 0 : parseIndentFromDom(el),
-        lineHeight: /[a-z%]/i.test(el.style.lineHeight) ? null : normalizeLineHeight(el.style.lineHeight),
+        lineHeight: el.hasAttribute("data-edtr-style") || /[a-z%]/i.test(el.style.lineHeight) ? null : normalizeLineHeight(el.style.lineHeight),
       };
     },
   }],
@@ -75,7 +77,8 @@ const paragraphNodeSpec: NodeSpec = {
     if (textAlign) style.push(`text-align:${textAlign}`);
     if (indent > 0) style.push(`margin-left:${indent * 24}px`);
     if (lineHeight) style.push(`line-height:${lineHeight}`);
-    const attrs: Record<string, string> = { dir: "auto", ...rawDOM(node) };
+    style.push(paragraphCSS(node));
+    const attrs: Record<string, string> = { dir: "auto", ...rawDOM(node), ...paragraphDOM(node) };
     if (style.length) attrs.style = style.join(";");
     if (indent > 0) attrs["data-indent"] = String(indent);
     return ["p", attrs, 0];
@@ -87,6 +90,7 @@ const headingNodeSpec: NodeSpec = {
   attrs: {
     level: { default: 1 },
     ...rawAttrs,
+    styleId: { default: null }, styleText: { default: null }, styleParagraph: { default: null }, paragraphFormat: { default: null },
     textAlign: { default: null },
     indent: { default: 0 },
     lineHeight: { default: null },
@@ -98,10 +102,10 @@ const headingNodeSpec: NodeSpec = {
       const el = dom as HTMLElement;
       return {
         level,
-        ...parseRaw(el),
-        textAlign: normalizeTextAlign(el.style.textAlign),
+        ...parseRaw(el), ...paragraphAttrs(el),
+        textAlign: el.hasAttribute("data-edtr-style") ? null : normalizeTextAlign(el.style.textAlign),
         indent: el.hasAttribute("data-docx-properties") ? 0 : parseIndentFromDom(el),
-        lineHeight: /[a-z%]/i.test(el.style.lineHeight) ? null : normalizeLineHeight(el.style.lineHeight),
+        lineHeight: el.hasAttribute("data-edtr-style") || /[a-z%]/i.test(el.style.lineHeight) ? null : normalizeLineHeight(el.style.lineHeight),
       };
     },
   })),
@@ -114,7 +118,8 @@ const headingNodeSpec: NodeSpec = {
     if (textAlign) style.push(`text-align:${textAlign}`);
     if (indent > 0) style.push(`margin-left:${indent * 24}px`);
     if (lineHeight) style.push(`line-height:${lineHeight}`);
-    const attrs: Record<string, string> = { dir: "auto", ...rawDOM(node) };
+    style.push(paragraphCSS(node));
+    const attrs: Record<string, string> = { dir: "auto", ...rawDOM(node), ...paragraphDOM(node) };
     if (style.length) attrs.style = style.join(";");
     if (indent > 0) attrs["data-indent"] = String(indent);
     return [`h${level}`, attrs, 0];

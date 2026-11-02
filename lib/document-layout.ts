@@ -1,7 +1,10 @@
+import type { DocumentStyles } from "./paragraph-format";
 /** Small, shared document metadata. Kept in the document, never in user preferences. */
 export type DocumentLayout = {
   width: number; height: number;
   margins: { top: number; right: number; bottom: number; left: number };
+  styles?: DocumentStyles;
+  sectionMargins?: Record<string, {top:number;right:number;bottom:number;left:number}>;
   pageNumbers?: "off" | "top" | "bottom";
   pageNumberFormat?: "plain" | "of";
   numberingStyle?: { start: number; alignment: string; template: string; format: string; hideFirst: boolean };
@@ -33,5 +36,5 @@ export function readDocxProperties(dom: Node | string): string | null {
 }
 
 export function defaultDocumentLayout(): DocumentLayout {
-  return { width: 11906, height: 16838, margins: { top: 567, right: 567, bottom: 567, left: 567 }, pageNumbers: "off", pageNumberFormat: "plain" };
+  return { width: 11906, height: 16838, margins: { top: 1440, right: 1440, bottom: 1440, left: 1440 }, pageNumbers: "off", pageNumberFormat: "plain" };
 }

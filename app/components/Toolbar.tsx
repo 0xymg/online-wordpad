@@ -1,5 +1,8 @@
 "use client";
 
+import { applyDocumentStyle, documentStyles, BUILTIN_STYLES } from "@/lib/document-styles";
+import type { DocumentStyles } from "@/lib/paragraph-format";
+import { effectiveParagraph } from "@/lib/paragraph-format";
 import { uiText } from "@/lib/i18n/ui";
 import { resolvedAlignment } from "@/lib/text-direction";
 
@@ -77,7 +80,6 @@ const FONT_GROUPS = [
   { label: "Decorative", fonts: FONTS.slice(24) },
 ];
 
-const BLOCK_VALUES = ["paragraph", "h1", "h2", "h3", "h4", "code_block"] as const;
 
 /** Icon sizes, full-size and compact. The button box stays flex-centred, so a
     smaller icon sits in the same place — nothing else has to move. */
@@ -343,17 +345,21 @@ function Toolbar({
   // No fontFamily mark means the editor's base font (Calibri) — show it in the
   // select instead of an empty placeholder.
   const DEFAULT_FONT = FONTS[0].value;
+  const [styles,setStyles] = useState<DocumentStyles>(BUILTIN_STYLES);
+  const [selectedStyle,setSelectedStyle] = useState("");
   const [selFmt, setSelFmt] = useState({ fontFamily: DEFAULT_FONT, fontSize: "12", block: "paragraph", align: "left" });
   useEffect(() => {
     const v = viewRef.current; if (!v) return;
     const parent = v.state.selection.$from.parent;
+    setStyles(documentStyles(v.state.doc.attrs.layout));
+    setSelectedStyle(parent.attrs.styleId || "");
     setSelFmt({
       fontFamily: activeMarkAttrs("fontFamily")?.family ?? DEFAULT_FONT,
       fontSize: (activeMarkAttrs("fontSize")?.size ?? "12pt").replace("pt", ""),
       block: parent.type === schema.nodes.heading ? `h${parent.attrs.level}`
         : parent.type === schema.nodes.code_block ? "code_block"
         : "paragraph",
-      align: resolvedAlignment(parent.attrs?.textAlign, parent.textContent),
+      align: resolvedAlignment(effectiveParagraph(parent).alignment, parent.textContent),
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [tick]);
@@ -497,11 +503,12 @@ function Toolbar({
         {/* Row 1: block style + alignment */}
         <Row>
           <Select
-            value={(BLOCK_VALUES as readonly string[]).includes(currentBlock) ? currentBlock : "paragraph"}
+            value={selectedStyle ? `style:${selectedStyle}` : currentBlock==="code_block"?"code_block":currentBlock.startsWith("h")?`style:Heading${currentBlock.slice(1)}`:"style:Normal"}
             onValueChange={(val) => {
               const { nodes } = schema;
-              if (val === "paragraph")       cmd(setBlockType(nodes.paragraph));
-              else if (/^h\d$/.test(val))    cmd(setBlockType(nodes.heading, { level: +val[1] }));
+              if (val.startsWith("style:")) { const v=viewRef.current;if(v){const id=val.slice(6);ensureEditorFont(styles[id]?.text.family || DEFAULT_DOCUMENT_FONT_CSS);v.dispatch(applyDocumentStyle(v.state,id));v.focus();} }
+              else if (val === "paragraph") { const v=viewRef.current;if(v){v.dispatch(applyDocumentStyle(v.state,"Normal"));v.focus();} }
+              else if (/^h\d$/.test(val)) { const v=viewRef.current;if(v){v.dispatch(applyDocumentStyle(v.state,`Heading${val[1]}`));v.focus();} }
               else if (val === "code_block") cmd(setBlockType(nodes.code_block));
             }}
           >
@@ -513,9 +520,8 @@ function Toolbar({
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              {BLOCK_VALUES.map((v) => (
-                <SelectItem key={v} value={v} className="text-xs">{blockLabel(v)}</SelectItem>
-              ))}
+              {Object.entries(styles).map(([id,style])=><SelectItem key={id} value={`style:${id}`} className="text-xs">{style.name}</SelectItem>)}
+              <SelectItem value="code_block" className="text-xs">{blockLabel("code_block")}</SelectItem>
             </SelectContent>
           </Select>
           <TBtn onClick={() => setTextAlign("left")}    active={currentAlign === "left"}    tip={t.format.alignLeft}>    <TextAlignLeft size={sz} /></TBtn>

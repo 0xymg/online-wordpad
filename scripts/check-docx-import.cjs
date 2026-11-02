@@ -484,8 +484,8 @@ async function fixture(dir) {
     const exported = await JSZip.loadAsync(await fs.readFile(output));
     const doc = await exported.file("word/document.xml").async("string");
     assert.match(doc, /w:jc w:val="right"/);
-    assert.match(doc, /w:ascii="Garamond"/);
-    assert.match(doc, /w:sz w:val="32"/);
+    assert.match(doc + await exported.file("word/styles.xml").async("string"), /w:ascii="Garamond"/);
+    assert.match(doc + await exported.file("word/styles.xml").async("string"), /w:sz w:val="32"/);
     assert.match(doc, /w:sz w:val="19"/);
     const layoutFacts = await page.evaluate(xml => {
       const d = new DOMParser().parseFromString(xml, "application/xml");
@@ -524,7 +524,12 @@ async function fixture(dir) {
       await page.getByRole("menuitemcheckbox", { name: item, exact: true }).click();
     }
     await pageControl("Page setup", "Landscape");
-    await pageControl("Page setup", "Page Margin: 2 cm");
+    await page.getByRole("menuitem", {name:"File",exact:true}).click();
+    await page.getByRole("menuitem", {name:"Page setup",exact:true}).hover();
+    await page.getByRole("menuitem", {name:"Custom margins…",exact:true}).click();
+    const marginDialog=page.getByRole("dialog",{name:"Page margins",exact:true});
+    for(const label of ["Top (cm)","Bottom (cm)","Left (cm)","Right (cm)"])await marginDialog.getByRole("spinbutton",{name:label,exact:true}).fill("2");
+    await marginDialog.getByRole("button",{name:"Apply",exact:true}).click();
     await pageControl("Page numbers", "None");
     const changedZip = await downloadDocx("changed-layout.docx");
     const changedXml = await changedZip.file("word/document.xml").async("string");

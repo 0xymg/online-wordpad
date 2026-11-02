@@ -1,3 +1,4 @@
+import { effectiveParagraph } from "./paragraph-format";
 import type { Node as PMNode } from "prosemirror-model";
 import { defaultDocumentLayout, type DocumentLayout } from "./document-layout";
 export type PageGeometry = Pick<DocumentLayout, "width" | "height" | "margins"> & {
@@ -7,7 +8,7 @@ export type DocumentSection = { from: number; to: number; geometry: PageGeometry
 const W = "http://schemas.openxmlformats.org/wordprocessingml/2006/main";
 const cache = new WeakMap<PMNode, DocumentSection[]>();
 export function sectionGeometry(raw: string | undefined, fallback: PageGeometry): PageGeometry {
-  if (!raw) return fallback;
+  if (!raw) return { ...fallback,headerDistance:fallback.headerDistance ?? Math.min(fallback.margins.top/2,720),footerDistance:fallback.footerDistance ?? Math.min(fallback.margins.bottom/2,720) };
   const xml = new DOMParser().parseFromString(raw, "application/xml");
   const get = (name: string) => xml.getElementsByTagNameNS(W, name)[0];
   const attr = (name: string, key: string) => get(name)?.getAttributeNS(W, key);
@@ -48,6 +49,7 @@ export function documentSections(doc: PMNode): DocumentSection[] {
   rawSections.push(layout?.section || "");
   for (let index = 0; index < sections.length; index++) {
     const g = sections[index].geometry;
+    if (layout?.sectionMargins?.[index]) g.margins = { ...layout.sectionMargins[index] };
     const own = Object.entries(layout?.running || {}).filter(([key]) => key.startsWith(`${index}:`));
     if (own.some(([key]) => key.includes(":first:"))) g.differentFirst = true;
     for (const kind of ["header", "footer"] as const) {
@@ -72,7 +74,8 @@ export function documentSections(doc: PMNode): DocumentSection[] {
 export function sectionBlockStyle(node: PMNode, geometry: PageGeometry, first: PageGeometry, maximumWidth: number): string {
   const source = document.createElement("div"); source.style.cssText = node.attrs.layoutStyle || "";
   const px = (text: string) => { const n = Number.parseFloat(text) || 0; return text.endsWith("pt") ? n * 4 / 3 : text.endsWith("cm") ? n * 96 / 2.54 : n; };
-  const width = (geometry.width - geometry.margins.left - geometry.margins.right) / 15 - px(source.style.marginLeft) - px(source.style.marginRight);
+  const p=effectiveParagraph(node);
+  const width = (geometry.width - geometry.margins.left - geometry.margins.right) / 15 - (p.left!==undefined?p.left/15:px(source.style.marginLeft)) - (p.right!==undefined?p.right/15:px(source.style.marginRight));
   const left = ((maximumWidth - geometry.width) / 2 + geometry.margins.left - first.margins.left) / 15;
   return `width:${Math.max(20, width)}px;max-width:none;position:relative;left:${left}px`;
 }

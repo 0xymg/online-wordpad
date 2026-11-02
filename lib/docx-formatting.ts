@@ -4,6 +4,8 @@
  * This module is reached only through the lazy DOCX import path.
  */
 import JSZip from "jszip";
+import { paragraphFromXml, type ParagraphFormat, type DocumentStyles, type StyleText } from "./paragraph-format";
+import { resolveStyle } from "./document-styles";
 import { captureLayout, restoreLayoutProperties } from "./docx-preservation";
 import { wrapDocumentHtml } from "./document-layout";
 import { DEFAULT_DOCUMENT_FONT_CSS } from "./document-font";
@@ -331,6 +333,28 @@ export async function prepareDocxFormatting(arrayBuffer: ArrayBuffer) {
       css["line-height"] = String(line / 240);
     return css;
   }
+  const importedStyles: DocumentStyles = {};
+  for (const el of wordElements(styleXml,"style")) {
+    const id = attr(el,"styleId");
+    if (!id || attr(el,"type") !== "paragraph" || id.startsWith("EDTRSource_") || ["__proto__","constructor","prototype"].includes(id)) continue;
+    const definition = definitions.get(id)!;
+    const own = definition.basedOn ? definition.run : mergeStyle(defaultRun,definition.run), format = runFormat(own), text: Partial<StyleText> = {};
+    if (format.css["font-family"]) text.family = format.css["font-family"];
+    if (format.css["font-size"]) text.size = Number.parseFloat(format.css["font-size"]);
+    if (format.css.color) text.color = format.css.color;
+    if (own.b !== undefined) text.bold = !!format.bold;
+    if (own.i !== undefined) text.italic = !!format.italic;
+    if (own.u !== undefined) text.underline = !!format.underline;
+    const pPr = child(el,"pPr"), paragraph = paragraphFromXml(pPr || null);
+    if (!definition.basedOn) {
+      const global = child(child(defaults,"pPrDefault"),"pPr");
+      Object.assign(paragraph,{ before:0,after:0,lineMode:"multiple",lineValue:1,...paragraphFromXml(global || null),...paragraph });
+    }
+    const level = Number(attr(child(pPr,"outlineLvl")));
+    importedStyles[id] = { name:attr(child(el,"name")) || id,basedOn:definition.basedOn,...(Number.isFinite(level) && attr(child(pPr,"outlineLvl")) !== undefined && (level < 6 || level === 9) ? {level:level===9?0:level+1}:{}),paragraph,text };
+  }
+  preservation.layout.styles = importedStyles;
+  const paragraphMeta = new Map<string,{ id:string; direct:ParagraphFormat }>();
   const prefix = `EDTRimport${crypto.randomUUID().replace(/-/g, "")}`;
   const paragraphFormats = new Map<string, Properties>();
   const runFormats = new Map<string, RunFormat>();
@@ -375,9 +399,9 @@ export async function prepareDocxFormatting(arrayBuffer: ArrayBuffer) {
     }
     for (const p of wordElements(doc, "p")) {
       let pPr = child(p, "pPr");
-      const inherited = resolve(
-        attr(child(pPr, "pStyle")) ?? defaultParagraph ?? "Normal",
-      );
+      const paragraphStyle = attr(child(pPr,"pStyle")) ?? defaultParagraph ?? "Normal";
+      const directParagraph = paragraphFromXml(pPr || null);
+      const inherited = resolve(paragraphStyle);
       const paragraphProps = {
         ...defaultPara,
         ...inherited.paragraph,
@@ -398,6 +422,7 @@ export async function prepareDocxFormatting(arrayBuffer: ArrayBuffer) {
       const baseRun = mergeStyle(defaultRun, inherited.run);
       const id = `${prefix}p${paragraphFormats.size}`;
       paragraphFormats.set(id, paragraphFormat(paragraphProps));
+      if (importedStyles[paragraphStyle]) paragraphMeta.set(id,{ id:paragraphStyle,direct:directParagraph });
       sourceParagraphs.set(id, p);
       const bookmark = doc.createElementNS(W, "w:bookmarkStart");
       bookmark.setAttributeNS(W, "w:name", id);
@@ -478,6 +503,14 @@ export async function prepareDocxFormatting(arrayBuffer: ArrayBuffer) {
         if (block && css) setStyles(block, css);
         const original = sourceParagraphs.get(marker.id);
         if (block && original) restoreLayoutProperties(original, block, preservation.sectionXml);
+        const meta = paragraphMeta.get(marker.id);
+        if (block && meta) {
+          const resolved = resolveStyle(importedStyles,meta.id);
+          block.setAttribute("data-edtr-style",meta.id);
+          block.setAttribute("data-edtr-style-text",JSON.stringify(resolved.text));
+          block.setAttribute("data-edtr-style-paragraph",JSON.stringify(resolved.paragraph));
+          block.setAttribute("data-edtr-paragraph",JSON.stringify(meta.direct));
+        }
         marker.remove();
       }
       for (const span of Array.from(

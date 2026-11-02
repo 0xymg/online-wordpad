@@ -3,6 +3,7 @@
 // boundary, drawing a gap band between the "pages". The document itself is
 // untouched — spacers are decorations only, so save/export see the plain
 // flow (print hides them via pageStyle and uses real CSS page breaks).
+import { effectiveParagraph } from "@/lib/paragraph-format";
 import { numberLabel } from "@/lib/page-number";
 import { rawSections, runningSlot, runningFragment, type RunningSlots, type RunningVariant } from "@/lib/running-content";
 import { documentSections, sameGeometry, sectionBlockStyle, type PageGeometry } from "@/lib/document-sections";
@@ -174,16 +175,17 @@ const MEASURE_EPS = 2;
 const WORD_NS = "http://schemas.openxmlformats.org/wordprocessingml/2006/main";
 const paragraphRules = new Map<string, { before: boolean; after: boolean; keep: boolean; together: boolean }>();
 function rules(node: PMNode) {
-  const raw = String(node.attrs.docxProperties || "");
-  const cached = paragraphRules.get(raw + (node.type.name === "heading" ? "heading" : ""));
+  const raw = String(node.attrs.docxProperties || ""), managed = effectiveParagraph(node);
+  const key = raw + JSON.stringify(managed) + node.type.name;
+  const cached = paragraphRules.get(key);
   if (cached) return cached;
   const xml = new DOMParser().parseFromString(raw || `<p/>`, "application/xml");
   const el = (name: string) => xml.getElementsByTagNameNS(WORD_NS, name)[0];
   const on = (name: string) => { const e = el(name); return !!e && !["0", "false", "off"].includes(e.getAttributeNS(WORD_NS, "val") || ""); };
-  const result = { before: on("pageBreakBefore"), after: !!el("sectPr") && el("type")?.getAttributeNS(WORD_NS, "val") !== "continuous", keep: on("keepNext") || node.type.name === "heading", together: on("keepLines") };
+  const result = { before: managed.pageBreakBefore ?? on("pageBreakBefore"), after: !!el("sectPr") && el("type")?.getAttributeNS(WORD_NS, "val") !== "continuous", keep: managed.keepNext ?? (on("keepNext") || node.type.name === "heading"), together: managed.keepLines ?? on("keepLines") };
   // Keep memory bounded when many imported documents have distinct properties.
   if (paragraphRules.size > 1000) paragraphRules.clear();
-  paragraphRules.set(raw + (node.type.name === "heading" ? "heading" : ""), result);
+  paragraphRules.set(key, result);
   return result;
 }
 interface FlowUnit {
@@ -370,9 +372,13 @@ function computeLayout(view: EditorView, cfg: PageLayoutConfig): { breaks: PageB
       while (bottom - pageStart + repeatedHeight > pageContentH + MEASURE_EPS && guard++ < 1000) {
         const boundary = pageStart + pageContentH - repeatedHeight;
         if (unit.cells && splitCells(unit, boundary)) continue;
-        let split = unit.node.isTextblock && !policy.together ? findLineSplit(view, unit.pos, unit.node, boundary, scale, baseTop) : null;
+        let split = unit.node.isTextblock && (!policy.together || bottom-top > pageContentH) ? findLineSplit(view, unit.pos, unit.node, boundary, scale, baseTop) : null;
         // Prefer two lines on each side of a paragraph boundary.
-        if (split && bottom - split.lineTop < 20) split = findLineSplit(view, unit.pos, unit.node, boundary - 20, scale, baseTop) || split;
+        const line = Number.parseFloat(getComputedStyle(unit.dom).lineHeight) || 20;
+        if (effectiveParagraph(unit.node).widowControl !== false && split) {
+          if (bottom-split.lineTop < line*1.5) split = findLineSplit(view,unit.pos,unit.node,boundary-line,scale,baseTop) || split;
+          if (split.lineTop-top < line*1.5 && top > pageStart+MEASURE_EPS) split=null;
+        }
         if (split && split.lineTop > top + MEASURE_EPS && split.lineTop > pageStart + MEASURE_EPS) addBreak(unit, split.lineTop, split.pos, true);
         else if (top > pageStart + MEASURE_EPS) addBreak(unit, top);
         else break; // An indivisible row/image taller than a sheet cannot fit.

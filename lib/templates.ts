@@ -281,6 +281,43 @@ export const TEMPLATES: DocTemplate[] = [
       <p><span style="font-size:10pt;color:${MUTED}">Done this week: [list what you finished — it helps on the days that feel unproductive.]</span></p>
     `,
   },
+  {
+    id: "prd", name: "PRD", description: "Product requirements, user stories, scope, and acceptance criteria",
+    html: `
+      <h1><span style="color:${ACCENT}">Product Requirements Document</span></h1>
+      <p><strong>Product / feature:</strong> [Name]<br/><strong>Owner:</strong> [Name] · <strong>Version:</strong> [1.0]<br/><strong>Status:</strong> [Draft / In review / Approved] · <strong>Updated:</strong> [Date]</p>
+      <hr/>
+      <h2>1. Problem and opportunity</h2><p>[Describe the user problem, the evidence behind it, and why it matters now. Include links to research or support requests.]</p>
+      <h2>2. Goals and success metrics</h2><table><tbody><tr><th>Outcome</th><th>Metric and baseline</th><th>Target / review date</th></tr><tr><td>[Desired user or business outcome]</td><td>[How success is measured today]</td><td>[Target and date]</td></tr></tbody></table>
+      <h2>3. Users and scenarios</h2><p><strong>Primary users:</strong> [Segments, roles, and needs]</p><ul><li>As a [user], I want to [action], so that [benefit].</li><li>[Key scenario, including failure or recovery paths.]</li></ul>
+      <h2>4. Scope</h2><p><strong>In scope:</strong> [Capabilities included in this release]</p><p><strong>Out of scope:</strong> [Explicit exclusions and follow-up work]</p>
+      <h2>5. Functional requirements</h2><table><tbody><tr><th>ID / priority</th><th>Requirement</th><th>Acceptance criteria</th></tr><tr><td>FR-01 · [Must / Should / Could]</td><td>[User-visible behavior]</td><td>Given [context], when [action], then [observable result].</td></tr><tr><td>FR-02 · [Priority]</td><td>[Edge case or error behavior]</td><td>[Testable pass / fail criteria]</td></tr></tbody></table>
+      <h2>6. Non-functional requirements</h2><ul><li><strong>Performance:</strong> [Response-time target, load, and measurement method]</li><li><strong>Accessibility:</strong> [Keyboard, screen reader, and visual requirements]</li><li><strong>Privacy and security:</strong> [Data collected, access, and retention]</li><li><strong>Reliability:</strong> [Availability, recovery, and supported environments]</li></ul>
+      <h2>7. Experience and dependencies</h2><p>[Link to designs and describe the main flow, empty states, permissions, and errors.]</p><p><strong>Dependencies:</strong> [Teams, systems, integrations, and owners]</p>
+      <h2>8. Risks and open decisions</h2><table><tbody><tr><th>Risk / question</th><th>Impact / response</th><th>Owner / due date</th></tr><tr><td>[Risk or unresolved decision]</td><td>[Mitigation or options]</td><td>[Owner and date]</td></tr></tbody></table>
+      <h2>9. Release and validation</h2><p>[Release stages, migration, monitoring, rollback criteria, and post-launch review.]</p>
+      <h2>10. Approvals and change log</h2><p><strong>Reviewers:</strong> [Product, design, engineering, and relevant stakeholders]</p><table><tbody><tr><th>Date / version</th><th>Change</th><th>Author / approver</th></tr><tr><td>[Date / version]</td><td>[Summary of decision or change]</td><td>[Name]</td></tr></tbody></table>
+    `,
+  },
+  {
+    id: "business-analysis", name: "Business Analysis", description: "Business needs, AS-IS / TO-BE processes, requirements, and recommendations",
+    html: `
+      <h1><span style="color:${ACCENT}">Business Analysis</span></h1>
+      <p><strong>Initiative:</strong> [Name]<br/><strong>Business analyst:</strong> [Name] · <strong>Sponsor:</strong> [Name]<br/><strong>Version:</strong> [1.0] · <strong>Date:</strong> [Date] · <strong>Status:</strong> [Draft / Approved]</p>
+      <hr/>
+      <h2>1. Executive summary</h2><p>[Summarize the business need, key findings, recommended option, and decision required.]</p>
+      <h2>2. Objectives and scope</h2><p><strong>Business objectives:</strong> [Measurable outcomes and strategic alignment]</p><p><strong>In scope / out of scope:</strong> [Processes, teams, locations, and systems covered or excluded]</p>
+      <h2>3. Stakeholders</h2><table><tbody><tr><th>Stakeholder / role</th><th>Need / responsibility</th><th>Engagement / approval</th></tr><tr><td>[Name, team, or role]</td><td>[Concern and ownership]</td><td>[Consultation method and authority]</td></tr></tbody></table>
+      <h2>4. Current state (AS-IS)</h2><p>[Describe the process, inputs, outputs, systems, handoffs, and current controls. Link to process maps and evidence.]</p><table><tbody><tr><th>Issue / root cause</th><th>Evidence</th><th>Business impact</th></tr><tr><td>[Problem and underlying cause]</td><td>[Data, observation, or interview]</td><td>[Cost, delay, risk, or customer impact]</td></tr></tbody></table>
+      <h2>5. Future state (TO-BE) and gap analysis</h2><p>[Describe the desired process and how roles, information, and systems should change.]</p><table><tbody><tr><th>Current state</th><th>Required future state</th><th>Gap / action</th></tr><tr><td>[Current capability]</td><td>[Target capability]</td><td>[Change, dependency, and owner]</td></tr></tbody></table>
+      <h2>6. Requirements and business rules</h2><table><tbody><tr><th>ID / type</th><th>Requirement / rule</th><th>Priority / source</th><th>Validation</th></tr><tr><td>BR-01 · Business</td><td>[Business outcome or rule]</td><td>[Priority and stakeholder]</td><td>[Measure or approval criterion]</td></tr><tr><td>FR-01 · Functional</td><td>[System or process behavior]</td><td>[Priority; linked BR-01]</td><td>[Acceptance test]</td></tr><tr><td>NFR-01 · Quality</td><td>[Performance, security, accessibility, or reliability target]</td><td>[Priority and source]</td><td>[Measurement method]</td></tr></tbody></table>
+      <h2>7. Options and recommendation</h2><table><tbody><tr><th>Option</th><th>Benefits / costs</th><th>Risks / feasibility</th></tr><tr><td>[Option, including doing nothing]</td><td>[Quantified benefits, assumptions, and costs]</td><td>[Delivery constraints and risks]</td></tr></tbody></table><p><strong>Recommendation:</strong> [Preferred option, evidence, and trade-offs]</p>
+      <h2>8. Assumptions, dependencies, and risks</h2><p>[List assumptions to validate, external dependencies, compliance considerations, and mitigation owners.]</p>
+      <h2>9. Implementation and acceptance</h2><p>[Phases, owners, change management, training, and migration needs.]</p><p><strong>Acceptance and benefits review:</strong> [Who validates the outcome, how, and when]</p>
+      <h2>10. Decisions and sign-off</h2><p><strong>Open decisions:</strong> [Question, owner, and due date]</p><p><strong>Approval:</strong> [Stakeholder, decision, date, and conditions]</p><p><strong>References and glossary:</strong> [Source links and definitions]</p>
+    `,
+  },
+
 ];
 
 // Arabic starter documents use Arabic placeholders as well as translated cards.

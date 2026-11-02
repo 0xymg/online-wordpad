@@ -47,3 +47,28 @@ for name in ('natural-export.pdf', 'natural-print.pdf'):
         assert len(re.findall(rf'COMPANION {index}\b', all_text)) == 1, (name, index)
     assert 'LONG BODY BEGIN' in all_text and 'LONG BODY END' in all_text, name
 print('PASS natural table pagination: every row exactly once, all page fields/totals, repeated rich header and final body text.')
+
+# Allow subpixel crop/raster antialiasing while catching changed font metrics,
+# shifted tables and a second export scale. The samples are browser page crops.
+from PIL import Image, ImageChops, ImageFilter, ImageStat
+for document, prefix in [('export.pdf', 'print'), ('natural-export.pdf', 'natural-print')]:
+    reader = PdfReader(root / document)
+    for index, suffix in enumerate(('first', 'second')):
+        sample = root / f'{prefix}-{suffix}-sheet.png'
+        if not sample.exists():
+            continue
+        artwork = reader.pages[index].images[0].image.convert('RGB')
+        screen = Image.open(sample).convert('RGB')
+        artwork = artwork.resize(screen.size, Image.Resampling.LANCZOS)
+        difference = ImageChops.difference(artwork.filter(ImageFilter.GaussianBlur(2)), screen.filter(ImageFilter.GaussianBlur(2)))
+        assert max(ImageStat.Stat(difference).mean) < 2, (document, index, ImageStat.Stat(difference).mean)
+zoom = root / 'zoom-50.pdf'
+if zoom.exists():
+    regular, small = PdfReader(root / 'export.pdf'), PdfReader(zoom)
+    assert len(regular.pages) == len(small.pages)
+    for index, (normal_page, zoom_page) in enumerate(zip(regular.pages, small.pages)):
+        assert normal_page.mediabox == zoom_page.mediabox
+        a, b = normal_page.images[0].image.convert('RGB'), zoom_page.images[0].image.convert('RGB')
+        assert a.size == b.size
+        assert max(ImageStat.Stat(ImageChops.difference(a, b)).mean) < 1, (index, 'Zoom changed PDF artwork')
+print('PASS screen/PDF artwork, embedded font geometry and zoom-independent physical scale.')
