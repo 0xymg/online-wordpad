@@ -63,6 +63,14 @@ const layout = { width: 11906, height: 16838, margins: { top: 720, right: 1080, 
   assert.equal(await page.locator('.ProseMirror td').first().getAttribute('colspan'),'2');
   await page.locator('.editor-shell').evaluate(e=>{e.scrollTop=850;});
   await page.screenshot({path:path.join(dir,'large-cells.png')});
+  await load(`<p>FIXTURE VERTICAL MERGE</p><table><tr><td rowspan="3">${Array.from({length:95},(_,i)=>`<p>SPAN ${i} ${'Text across several physical pages. '.repeat(3)}</p>`).join('')}</td><td>${Array.from({length:12},(_,i)=>`<p>ROW ONE ${i}</p>`).join('')}</td></tr><tr><td>${Array.from({length:8},(_,i)=>`<p>ROW TWO ${i}</p>`).join('')}</td></tr><tr><td>${Array.from({length:12},(_,i)=>`<p>ROW THREE ${i}</p>`).join('')}</td></tr></table><p>END VERTICAL</p>`);
+  const vertical = await page.locator('.ProseMirror td').evaluateAll(cells => cells.map(c => Array.from(c.querySelectorAll('.pm-page-spacer-gap')).map(g => g.getBoundingClientRect().top)));
+  await fs.writeFile(path.join(dir,'vertical-boundaries.json'),JSON.stringify(vertical));
+  assert.ok(vertical[0].length >= 3, 'rowspan must cross several pages');
+  for (const other of vertical.slice(1)) for (const top of other) assert.ok(vertical[0].some(primary=>Math.abs(primary-top)<2),`rowspan companion ${top} is misaligned`);
+  assert.equal(await page.locator('.ProseMirror td').first().getAttribute('rowspan'),'3');
+  await page.locator('.editor-shell').evaluate(e=>{e.scrollTop=850;});
+  await page.screenshot({path:path.join(dir,'vertical-merge.png')});
   await load(`<p>FIXTURE LIST</p><ol>${Array.from({length:140},(_,i)=>`<li><p>Item ${i} with a little more text.</p></li>`).join('')}</ol>`);
   const list=await facts('list'); assert.ok(list.gaps.length>=3,'long list must split');
   for(let i=0;i<list.gaps.length;i++) assert.ok(Math.abs(list.gaps[i]-(pageHeight+i*(pageHeight+26)))<8,`list boundary ${i}: ${list.gaps[i]}`);

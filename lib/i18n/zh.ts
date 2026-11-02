@@ -121,6 +121,34 @@ export const zh: Dictionary = {
     default: "默认",
   },
 
+  running: {
+    "title": "页眉和页脚",
+    "description": "编辑所选节和页面类型。在应用更改之前，原有内容保持不变。",
+    "section": "节",
+    "variant": "页面类型",
+    "normal": "普通页",
+    "first": "首页",
+    "even": "偶数页",
+    "header": "页眉",
+    "footer": "页脚",
+    "link": "链接到前一节",
+    "distance": "距边缘距离（厘米）",
+    "bold": "加粗",
+    "italic": "斜体",
+    "underline": "下划线",
+    "alignment": "对齐方式",
+    "left": "左对齐",
+    "center": "居中",
+    "right": "右对齐",
+    "pageNumber": "页码",
+    "pageCount": "总页数",
+    "loading": "正在加载页眉和页脚…",
+    "failed": "无法加载现有页眉或页脚。",
+    "tooTall": "页眉或页脚过高，请减少内容或距边缘的距离。",
+    "cancel": "取消",
+    "apply": "应用"
+},
+
   tableProperties: {
     "title": "Table properties",
     "description": "Cell settings apply to the selected cells. Leave a setting unchanged to preserve its current formatting.",
@@ -179,9 +207,10 @@ export const zh: Dictionary = {
     about: "关于 EDTRpad",
     aboutText:
       "EDTRpad 是 wordpad.info 上的免费在线文字处理器。本产品为独立项目，与 Microsoft 无关。",
+    aboutProjects: "更多 Project EDTR 工具",
+    aboutStudio: "探索 312 的产品",
     aboutTagline: "一个早已打开的文字处理器。",
-    aboutBody:
-      "直接在浏览器里撰写、排版和打印文稿。无需安装，无需账户，边打字边保存。可打开 .docx、.txt、.md 和 .html 文件，并导出为 Word、PDF、RTF、Markdown 和纯文本。",
+    aboutBody: "在浏览器中编写、排版和打印文档，编辑时自动保存。打开 .docx、.txt、.md 和 .html 文件，并导出为 Word、PDF、RTF、Markdown 或纯文本。",
     aboutContact: "问题、缺陷、建议",
     aboutMadeBy: "作者",
   },

@@ -1,7 +1,7 @@
 import type { Node as PMNode } from "prosemirror-model";
 import { defaultDocumentLayout, type DocumentLayout } from "./document-layout";
 export type PageGeometry = Pick<DocumentLayout, "width" | "height" | "margins"> & {
-  startType?: string; numberStart?: number; numberFormat?: string; differentFirst?: boolean;
+  headerDistance?: number; footerDistance?: number; startType?: string; numberStart?: number; numberFormat?: string; differentFirst?: boolean;
 };
 export type DocumentSection = { from: number; to: number; geometry: PageGeometry };
 const W = "http://schemas.openxmlformats.org/wordprocessingml/2006/main";
@@ -15,6 +15,7 @@ export function sectionGeometry(raw: string | undefined, fallback: PageGeometry)
   const geometry: PageGeometry = {
     width: Math.max(720, number("pgSz", "w", fallback.width)), height: Math.max(720, number("pgSz", "h", fallback.height)),
     margins: { top: Math.abs(number("pgMar", "top", fallback.margins.top)), right: Math.max(0, number("pgMar", "right", fallback.margins.right)), bottom: Math.abs(number("pgMar", "bottom", fallback.margins.bottom)), left: Math.max(0, number("pgMar", "left", fallback.margins.left)) },
+    headerDistance: Math.max(0, number("pgMar", "header", Math.min(fallback.margins.top / 2, 720))), footerDistance: Math.max(0, number("pgMar", "footer", Math.min(fallback.margins.bottom / 2, 720))),
     startType: attr("type", "val") || "nextPage", numberFormat: attr("pgNumType", "fmt") || undefined,
     numberStart: attr("pgNumType", "start") !== null && attr("pgNumType", "start") !== undefined ? number("pgNumType", "start", 1) : undefined,
     differentFirst: !!get("titlePg") && !["0", "false", "off"].includes(attr("titlePg", "val") || ""),
@@ -33,15 +34,38 @@ export function documentSections(doc: PMNode): DocumentSection[] {
     ...(layout?.overrides?.margins ? { margins: layout.margins } : {}),
   });
   const sections: DocumentSection[] = [];
+  const rawSections: string[] = [];
   let from = 0;
   doc.forEach((node, pos) => {
     const raw = String(node.attrs.docxProperties || "");
     if (!raw.includes("sectPr")) return;
     const end = pos + node.nodeSize;
+    rawSections.push(node.attrs.docxProperties);
     sections.push({ from, to: end, geometry: applyOverrides(sectionGeometry(raw, fallback)) });
     from = end;
   });
   sections.push({ from, to: doc.content.size, geometry: applyOverrides(sectionGeometry(layout?.section, fallback)) });
+  rawSections.push(layout?.section || "");
+  for (let index = 0; index < sections.length; index++) {
+    const g = sections[index].geometry;
+    const own = Object.entries(layout?.running || {}).filter(([key]) => key.startsWith(`${index}:`));
+    if (own.some(([key]) => key.includes(":first:"))) g.differentFirst = true;
+    for (const kind of ["header", "footer"] as const) {
+      const modified = own.filter(([key]) => key.endsWith(`:${kind}`)).at(-1)?.[1];
+      const distance = modified?.distance ?? (kind === "header" ? g.headerDistance : g.footerDistance) ?? 283;
+      if (kind === "header") g.headerDistance = distance; else g.footerDistance = distance;
+      let reserve = 0;
+      for (const variant of ["default", "first", "even"]) {
+        for (let source = index; source >= 0; source--) {
+          const slot = layout?.running?.[`${source}:${variant}:${kind}`];
+          if (slot) { if (slot.linked && source) continue; reserve = Math.max(reserve, slot.height ? distance + slot.height + 120 : 0); break; }
+          const xml = new DOMParser().parseFromString(rawSections[source] || "<p/>", "application/xml");
+          if (Array.from(xml.getElementsByTagNameNS(W, `${kind}Reference`)).some(r => r.getAttributeNS(W, "type") === variant)) break;
+        }
+      }
+      if (reserve) g.margins = { ...g.margins, [kind === "header" ? "top" : "bottom"]: Math.max(g.margins[kind === "header" ? "top" : "bottom"], reserve) };
+    }
+  }
   cache.set(doc, sections); return sections;
 }
 /** Reflow only; these widths never enter the document's saved attributes. */

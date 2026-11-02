@@ -94,10 +94,15 @@ export async function captureLayout(zip: JSZip, mainPath: string, main: Document
     if (path) type.setAttribute("PartName", `/${canonicalPart(path.slice(1))}`);
   }
   source.file("[Content_Types].xml", xmlString(capturedTypes));
+  let evenAndOddHeaders = false;
   const settingsRel = Array.from(relations.documentElement.children).find(r => r.getAttribute("Type")?.endsWith("/settings"));
   if (settingsRel) {
     const settings = await zip.file(targetPath(mainPath, settingsRel.getAttribute("Target")!))?.async("string");
-    if (settings) source.file("edtr-settings.xml", settings);
+    if (settings) {
+      source.file("edtr-settings.xml", settings);
+      const even = all(parseXml(settings), "evenAndOddHeaders")[0];
+      evenAndOddHeaders = !!even && !["0", "false", "off"].includes(val(even));
+    }
   }
   const themeRel = Array.from(relations.documentElement.children).find(r => r.getAttribute("Type")?.endsWith("/theme"));
   if (themeRel) {
@@ -147,7 +152,7 @@ export async function captureLayout(zip: JSZip, mainPath: string, main: Document
   const layout: DocumentLayout = {
     width: Number(val(size, "w")) || 11906, height: Number(val(size, "h")) || 16838,
     margins: Object.fromEntries(["top", "right", "bottom", "left"].map(k => [k, val(margins, k) ? Number(val(margins, k)) : 1440])) as DocumentLayout["margins"],
-    pageNumbers, pageNumberFormat, numberingStyle,
+    pageNumbers, pageNumberFormat, numberingStyle, evenAndOddHeaders,
     section: section ? sectionXml(section) : undefined,
     source: await source.generateAsync({ type: "base64", compression: "DEFLATE" }),
   };

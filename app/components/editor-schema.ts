@@ -130,6 +130,7 @@ const imageNodeSpec: NodeSpec = {
     alt: { default: null },
     title: { default: null },
     width: { default: "100%" },
+    aspectRatio: { default: null },
     rotate: { default: 0 },
     flipX: { default: false },
     flipY: { default: false },
@@ -144,6 +145,7 @@ const imageNodeSpec: NodeSpec = {
         alt: img.getAttribute("alt"),
         title: img.getAttribute("title"),
         width: img.getAttribute("data-width") || img.style.width || "100%",
+        aspectRatio: Number.isFinite(Number(img.getAttribute("data-aspect-ratio"))) && Number(img.getAttribute("data-aspect-ratio")) > 0 ? Number(img.getAttribute("data-aspect-ratio")) : null,
         rotate: Number(img.getAttribute("data-rotate") || "0") || 0,
         flipX: img.getAttribute("data-flip-x") === "true",
         flipY: img.getAttribute("data-flip-y") === "true",
@@ -170,11 +172,12 @@ const imageNodeSpec: NodeSpec = {
       alt: a.alt || "",
       title: a.title || "",
       "data-width": a.width || "100%",
+      ...(a.aspectRatio ? { "data-aspect-ratio": String(a.aspectRatio) } : {}),
       "data-rotate": String(Number(a.rotate || 0)),
       "data-flip-x": a.flipX ? "true" : "false",
       "data-flip-y": a.flipY ? "true" : "false",
       "data-align": align,
-      style: `width:${a.width || "100%"};height:auto;max-width:100%;transform:${transform};transform-origin:center center;${alignStyle}`,
+      style: `width:${a.width || "100%"};height:auto;${a.aspectRatio ? `aspect-ratio:${a.aspectRatio};` : ""}max-width:100%;transform:${transform};transform-origin:center center;${alignStyle}`,
     }];
   },
 };
@@ -221,7 +224,13 @@ export const mySchema = new Schema({
     "block"
   ))
     .append(importedTables)
-    .addToEnd("page_break", pageBreakNodeSpec),
+    .addToEnd("page_break", pageBreakNodeSpec)
+    .addToEnd("doc_field", {
+      inline: true, group: "inline", atom: true,
+      attrs: { kind: { default: "PAGE" }, instruction: { default: null }, cached: { default: null } },
+      parseDOM: [{ tag: "span[data-doc-field]", getAttrs: dom => { const el = dom as HTMLElement; const kind = el.getAttribute("data-doc-field"); return { kind: kind === "OTHER" || kind === "NUMPAGES" ? kind : "PAGE", instruction: el.getAttribute("data-field-instruction"), cached: el.getAttribute("data-field-cached") }; } }],
+      toDOM: node => ["span", { "data-doc-field": node.attrs.kind, ...(node.attrs.instruction ? { "data-field-instruction": node.attrs.instruction, "data-field-cached": node.attrs.cached || "" } : {}), contenteditable: "false", class: "edtr-document-field" }, node.attrs.kind === "OTHER" ? node.attrs.cached || "…" : node.attrs.kind === "NUMPAGES" ? "…" : "1"],
+    }),
   marks: basicSchema.spec.marks.append({
     underline:     { parseDOM: [{ tag: "u" }],                    toDOM: () => ["u", 0] },
     strikethrough: { parseDOM: [{ tag: "s" }, { tag: "strike" }],  toDOM: () => ["s", 0] },

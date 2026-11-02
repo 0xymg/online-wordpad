@@ -1,5 +1,6 @@
 "use client";
 
+import { updateRunningNumbering } from "@/lib/running-content";
 import { readLayout, defaultDocumentLayout, wrapDocumentHtml, type DocumentLayout } from "@/lib/document-layout";
 import { useEffect, useRef, useCallback, useMemo, useState, lazy, Suspense } from "react";
 import { useReactToPrint } from "react-to-print";
@@ -55,7 +56,9 @@ import WelcomeScreen from "./WelcomeScreen";
 
 // Auth/profile dialogs are closed for the vast majority of a session — load
 // their chunks only when they are first opened.
+const AboutDialog = lazy(() => import("./AboutDialog"));
 const AuthModal = lazy(() => import("./AuthModal"));
+const HeaderFooterDialog = lazy(() => import("./HeaderFooterDialog"));
 const TablePropertiesDialog = lazy(() => import("./TablePropertiesDialog"));
 const ProfileDialog = lazy(() => import("./ProfileDialog"));
 import { toast, Toaster } from "./toast";
@@ -152,9 +155,6 @@ const PROFILE_EXIT_MS = 180;
 
 /** Filename for the bulk "download selected" archive. */
 const ZIP_NAME = "edtrpad-documents.zip";
-
-/** Shown in Help ▸ About. Must be a mailbox that actually receives. */
-const CONTACT_EMAIL = "hello@wordpad.info";
 
 function setTextAlignCmd(align: "left" | "center" | "right" | "justify") {
   return (state: EditorState, dispatch?: (tr: Transaction) => void): boolean => {
@@ -464,6 +464,7 @@ class ImageNodeView {
     this.img.setAttribute("data-align", align);
     this.img.style.width = width;
     this.img.style.height = "auto";
+    this.img.style.aspectRatio = String(node.attrs.aspectRatio || "");
     this.img.style.maxWidth = "100%";
     this.img.style.display = "block";
     this.img.style.transform = `rotate(${rotate}deg) scale(${sx}, ${sy})`;
@@ -943,6 +944,16 @@ export default function Editor({
     return initialDeepLinkId;
   }, [initialDeepLinkId]);
   const lastSnapAtRef = useRef<Record<string, number>>({});
+  const [runningEditor, setRunningEditor] = useState<{ id: string; section: number } | null>(null);
+  const closeRunningEditor = useCallback(() => setRunningEditor(null), []);
+  const showRunningEditor = useCallback(() => {
+    const view = viewRef.current;
+    if (!view) return;
+    const position = view.state.selection.from;
+    let section = 0;
+    view.state.doc.forEach((node, pos) => { if (pos + node.nodeSize <= position && String(node.attrs.docxProperties || "").includes("sectPr")) section++; });
+    setRunningEditor({ id: loadedIdRef.current, section });
+  }, []);
   const [tablePropertiesOpen, setTablePropertiesOpen] = useState(false);
   const showTableProperties = useCallback(() => {
     const view = viewRef.current;
@@ -2010,10 +2021,10 @@ export default function Editor({
     updateDocumentLayout(l => ({ ...l, margins: { top: twips, right: twips, bottom: twips, left: twips }, overrides: { ...l.overrides, margins: true } }));
   }, [updateDocumentLayout]);
   const changePageNumbers = useCallback((p: PageNumberPosition) => {
-    updateDocumentLayout(l => ({ ...l, pageNumbers: p, overrides: { ...l.overrides, pageNumbers: true } }));
+    updateDocumentLayout(l => updateRunningNumbering({ ...l, pageNumbers: p, overrides: { ...l.overrides, pageNumbers: true } }));
   }, [updateDocumentLayout]);
   const changePageNumberFormat = useCallback((f: PageNumberFormat) => {
-    updateDocumentLayout(l => ({ ...l, pageNumberFormat: f, overrides: { ...l.overrides, pageNumbers: true } }));
+    updateDocumentLayout(l => updateRunningNumbering({ ...l, pageNumberFormat: f, overrides: { ...l.overrides, pageNumbers: true } }));
   }, [updateDocumentLayout]);
   const toggleToolbar = useCallback(() => setShowToolbar((s) => !s), []);
   const toggleRuler = useCallback(() => setShowRuler((s) => !s), []);
@@ -2850,7 +2861,7 @@ export default function Editor({
   // Global shortcuts: Ctrl+P print, Ctrl+S flush save, Ctrl+O open file
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      if (!(e.ctrlKey || e.metaKey)) return;
+      if (e.defaultPrevented || !(e.ctrlKey || e.metaKey)) return;
       if (e.key === "p") { e.preventDefault(); handlePrint(); }
       else if (e.key === "s") { e.preventDefault(); flushSave(); }
       else if (e.key === "o") { e.preventDefault(); openFileDialog(); }
@@ -2992,6 +3003,7 @@ export default function Editor({
         onShowShortcuts={showShortcuts}
         onShowAbout={showAbout}
         onFind={openFind}
+        onHeaderFooter={showRunningEditor}
         onTableProperties={showTableProperties}
         onInsertTable={handleInsertTable}
         onPageBreakAdd={handleInsertPageBreak}
@@ -3701,49 +3713,13 @@ export default function Editor({
           </div>
         </div>
       )}
-      {aboutOpen && (
-        <div
-          className="fixed inset-0 z-[1300] flex items-center justify-center bg-black/40 p-4"
-          onMouseDown={(e) => { if (e.target === e.currentTarget) setAboutOpen(false); }}
-        >
-          <div role="dialog" aria-modal="true" aria-label={t.help.about} className="w-full max-w-md rounded-lg border border-border bg-popover text-popover-foreground p-6 shadow-2xl">
-            <div className="mb-4 flex items-start justify-between gap-4">
-              <div>
-                <span className="font-brand select-none leading-none">
-                  <span className="text-2xl font-bold tracking-tight text-foreground">EDTR</span>
-                  <span className="text-lg font-semibold tracking-wider text-muted-foreground">PAD</span>
-                </span>
-                <p className="mt-1 text-sm text-muted-foreground">{t.help.aboutTagline}</p>
-              </div>
-              <button type="button" onClick={() => setAboutOpen(false)} aria-label={t.dialog.close} className="-mr-1 -mt-1 shrink-0 rounded p-1 hover:bg-accent">
-                <X size={14} />
-              </button>
-            </div>
-            <p className="text-sm leading-relaxed text-muted-foreground">{t.help.aboutBody}</p>
-            <p className="mt-3 text-xs leading-relaxed text-muted-foreground">{t.help.aboutText}</p>
-            <dl className="mt-5 space-y-2 border-t border-border pt-4 text-sm">
-              <div className="flex items-baseline justify-between gap-4">
-                <dt className="text-muted-foreground">{t.help.aboutContact}</dt>
-                <dd>
-                  <a href={`mailto:${CONTACT_EMAIL}`} className="underline underline-offset-2 hover:no-underline">
-                    {CONTACT_EMAIL}
-                  </a>
-                </dd>
-              </div>
-              <div className="flex items-baseline justify-between gap-4">
-                <dt className="text-muted-foreground">{t.help.aboutMadeBy}</dt>
-                <dd>
-                  <a href="https://ymg.digital" target="_blank" rel="noopener" className="underline underline-offset-2 hover:no-underline">
-                    ymg.digital
-                  </a>
-                </dd>
-              </div>
-            </dl>
-          </div>
-        </div>
-      )}
+      {aboutOpen && <Suspense fallback={null}><AboutDialog onClose={() => setAboutOpen(false)} /></Suspense>}
       {/* Mounted only while open so their lazy chunks stay out of the initial
           load; the null fallback covers the brief first-open fetch. */}
+      {runningEditor && viewRef.current && <Suspense fallback={null}><HeaderFooterDialog doc={viewRef.current.state.doc} initialSection={runningEditor.section} onClose={closeRunningEditor} onApply={slots => {
+        if (loadedIdRef.current !== runningEditor.id) { toast.error(tRef.current.toast.openFailed); return; }
+        updateDocumentLayout(layout => ({ ...layout, running: { ...layout.running, ...slots } }));
+      }} /></Suspense>}
       {tablePropertiesOpen && viewRef.current && <Suspense fallback={null}><TablePropertiesDialog view={viewRef.current} onClose={closeTableProperties} /></Suspense>}
       {authOpen && (
         <Suspense fallback={null}>

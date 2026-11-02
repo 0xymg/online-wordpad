@@ -121,6 +121,34 @@ export const tr: Dictionary = {
     default: "Varsayılan",
   },
 
+  running: {
+    "title": "Üst / alt bilgi",
+    "description": "Seçili bölümün ve sayfa türünün içeriğini düzenleyin. Uygulayana kadar mevcut içerik korunur.",
+    "section": "Bölüm",
+    "variant": "Sayfa türü",
+    "normal": "Normal sayfalar",
+    "first": "İlk sayfa",
+    "even": "Çift sayfalar",
+    "header": "Üst bilgi",
+    "footer": "Alt bilgi",
+    "link": "Önceki bölümle bağlantılı",
+    "distance": "Kenardan uzaklık (cm)",
+    "bold": "Kalın",
+    "italic": "İtalik",
+    "underline": "Altı çizili",
+    "alignment": "Hizalama",
+    "left": "Sol",
+    "center": "Orta",
+    "right": "Sağ",
+    "pageNumber": "Sayfa numarası",
+    "pageCount": "Toplam sayfa",
+    "loading": "Üst ve alt bilgi yükleniyor…",
+    "failed": "Mevcut üst veya alt bilgi yüklenemedi.",
+    "tooTall": "Üst veya alt bilgi çok yüksek. İçeriği ya da kenardan uzaklığı azaltın.",
+    "cancel": "Vazgeç",
+    "apply": "Uygula"
+},
+
   tableProperties: {
     "title": "Tablo özellikleri",
     "description": "Hücre ayarları seçili hücrelere uygulanır. Mevcut biçimi korumak için ilgili ayarı değiştirmeyin.",
@@ -179,9 +207,10 @@ export const tr: Dictionary = {
     about: "EDTRpad hakkında",
     aboutText:
       "EDTRpad, wordpad.info adresinde çalışan ücretsiz bir çevrimiçi kelime işlemcidir. Bağımsız bir projedir ve Microsoft ile ilişkisi yoktur.",
+    aboutProjects: "Project EDTR’dan diğer araçlar",
+    aboutStudio: "312’nin tüm ürünlerini keşfedin",
     aboutTagline: "Zaten açık olan kelime işlemci.",
-    aboutBody:
-      "Belgelerinizi doğrudan tarayıcıda yazın, biçimlendirin ve yazdırın. Kurulum yok, hesap gerekmiyor, yazdıkça kaydediliyor. .docx, .txt, .md ve .html dosyaları açılıyor; Word, PDF, RTF, Markdown ve düz metin olarak dışa aktarılıyor.",
+    aboutBody: "Belgelerinizi tarayıcıda yazın, biçimlendirin ve yazdırın; çalışmanız otomatik kaydedilir. .docx, .txt, .md ve .html dosyalarını açın; Word, PDF, RTF, Markdown veya düz metin olarak dışa aktarın.",
     aboutContact: "Soru, hata, öneri",
     aboutMadeBy: "Yapan",
   },

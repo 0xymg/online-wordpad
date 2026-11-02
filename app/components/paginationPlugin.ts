@@ -3,6 +3,7 @@
 // boundary, drawing a gap band between the "pages". The document itself is
 // untouched — spacers are decorations only, so save/export see the plain
 // flow (print hides them via pageStyle and uses real CSS page breaks).
+import { rawSections, runningSlot, runningFragment, type RunningSlots, type RunningVariant } from "@/lib/running-content";
 import { documentSections, sameGeometry, sectionBlockStyle, type PageGeometry } from "@/lib/document-sections";
 import type { DocumentLayout } from "@/lib/document-layout";
 import { Plugin, PluginKey } from "prosemirror-state";
@@ -68,11 +69,13 @@ interface PageBreakPoint {
   table?: { columns: number; headerHtml: string; headerHeight: number };
 }
 
+interface RenderedRow { pos: number; height: number; sourceHeight: string }
 interface RenderedPage { top: number; geometry: PageGeometry; section: number; sectionPage: number }
 interface PaginationState {
   breaks: PageBreakPoint[];
   pages?: RenderedPage[];
   tallCells?: number[];
+  rowHeights?: RenderedRow[];
   marginPx: number;
   bottomMarginPx?: number;
   /** "<position>:<format>" — the numbering settings the decorations were built from. */
@@ -202,15 +205,16 @@ interface FlowUnit {
   node: PMNode; pos: number; dom: HTMLElement; endDom?: HTMLElement;
   table?: { columns: number; headerHtml: string; headerHeight: number };
   section: number;
+  rows?: Array<RenderedRow & { top: number; bottom: number }>;
   cells?: Array<{ pos: number; node: PMNode; dom: HTMLElement; blocks: Array<{ node: PMNode; pos: number; dom: HTMLElement }> }>;
 }
-function computeLayout(view: EditorView, cfg: PageLayoutConfig): { breaks: PageBreakPoint[]; pages?: RenderedPage[]; tallCells?: number[]; lastPagePadPx: number; complete: boolean } {
+function computeLayout(view: EditorView, cfg: PageLayoutConfig): { breaks: PageBreakPoint[]; pages?: RenderedPage[]; tallCells?: number[]; rowHeights?: RenderedRow[]; lastPagePadPx: number; complete: boolean } {
   const dom = view.dom as HTMLElement;
   const sections = documentSections(view.state.doc);
   const mixed = sections.length > 1;
   let currentSection = 0;
   let geometry = sections[0].geometry;
-  let pageContentH = mixed ? (geometry.height - geometry.margins.top - geometry.margins.bottom) / 15 : cfg.pageHeightPx - cfg.marginPx - (cfg.bottomMarginPx ?? cfg.marginPx);
+  let pageContentH = (geometry.height - geometry.margins.top - geometry.margins.bottom) / 15;
   const pages: RenderedPage[] = [{ top: 0, geometry, section: 0, sectionPage: 0 }];
   if (pageContentH <= 60 || !dom.offsetWidth) return { breaks: [], lastPagePadPx: 0, complete: false };
   const scroller = dom.closest(".editor-shell") as HTMLElement | null;
@@ -227,6 +231,7 @@ function computeLayout(view: EditorView, cfg: PageLayoutConfig): { breaks: PageB
     const baseTop = root.top / scale;
     const units: FlowUnit[] = [];
     const tallCells: number[] = [];
+    const rowHeights = new Map<number, RenderedRow>();
     let complete = true;
     const collect = (node: PMNode, pos: number, section: number) => {
       const element = view.nodeDOM(pos);
@@ -256,15 +261,15 @@ function computeLayout(view: EditorView, cfg: PageLayoutConfig): { breaks: PageB
         const tableDom = rows[0]?.dom.closest("table");
         const headerHeight = naturalHeaderHeight && tableDom ? headerHeights.get(tableDom) || naturalHeaderHeight : 0;
         const colgroup = tableDom?.querySelector("colgroup")?.outerHTML || "";
-        // A rowspan is indivisible: group all rows connected by a merged cell.
+        // Keep small rowspan groups together; large groups receive synchronized cell fragments.
         for (let r = 0; r < rows.length;) {
           let end = r + 1;
           for (let row = r; row < end; row++) for (let c = 0; c < map.width; c++) end = Math.max(end, map.findCell(map.map[row * map.width + c]).bottom);
           const cells: NonNullable<FlowUnit["cells"]> = [];
           const available = (sections[section].geometry.height - sections[section].geometry.margins.top - sections[section].geometry.margins.bottom) / 15;
-          if (end === r + 1 && rows[r].dom.getBoundingClientRect().height / scale > available) {
-            rows[r].node.forEach((cell, offset) => {
-              const cellPos = rows[r].pos + 1 + offset, cellDom = view.nodeDOM(cellPos);
+          if ((rows[end - 1].dom.getBoundingClientRect().bottom - rows[r].dom.getBoundingClientRect().top) / scale > available) {
+            for (let rowIndex = r; rowIndex < end; rowIndex++) rows[rowIndex].node.forEach((cell, offset) => {
+              const cellPos = rows[rowIndex].pos + 1 + offset, cellDom = view.nodeDOM(cellPos);
               if (!(cellDom instanceof HTMLElement)) return;
               const blocks: NonNullable<FlowUnit["cells"]>[number]["blocks"] = [];
               cell.descendants((block, relative) => {
@@ -276,7 +281,13 @@ function computeLayout(view: EditorView, cfg: PageLayoutConfig): { breaks: PageB
               if (blocks.length) { cells.push({ pos: cellPos, node: cell, dom: cellDom, blocks }); tallCells.push(cellPos); }
             });
           }
-          units.push({ ...rows[r], section, cells: cells.length ? cells : undefined, endDom: rows[end - 1].dom, table: { columns: map.width, headerHtml: r >= headerRows.length && headerHeight < pageContentH / 2 ? `${colgroup}<tbody>${headerRows.map(e => e.outerHTML).join("")}</tbody>` : "", headerHeight: r >= headerRows.length && headerHeight < pageContentH / 2 ? headerHeight : 0 } });
+          const groupRows = cells.length ? rows.slice(r, end).map(row => {
+            const css = document.createElement("div"); css.style.cssText = row.node.attrs.layoutStyle || "";
+            const rect = row.dom.getBoundingClientRect();
+            const result = { pos: row.pos, height: rect.height / scale, sourceHeight: css.style.height || "auto", top: rect.top / scale - baseTop, bottom: rect.bottom / scale - baseTop };
+            rowHeights.set(row.pos, result); return result;
+          }) : undefined;
+          units.push({ ...rows[r], section, rows: groupRows, cells: cells.length ? cells : undefined, endDom: rows[end - 1].dom, table: { columns: map.width, headerHtml: r >= headerRows.length && headerHeight < pageContentH / 2 ? `${colgroup}<tbody>${headerRows.map(e => e.outerHTML).join("")}</tbody>` : "", headerHeight: r >= headerRows.length && headerHeight < pageContentH / 2 ? headerHeight : 0 } });
           r = end;
         }
       } else if (node.isTextblock || node.isLeaf) units.push({ node, pos, dom: element, section });
@@ -298,19 +309,21 @@ function computeLayout(view: EditorView, cfg: PageLayoutConfig): { breaks: PageB
         const maxBorder = (row: Element | null, side: "borderTopWidth" | "borderBottomWidth") => Math.max(0, ...Array.from(row?.children || []).map(cell => Number.parseFloat(getComputedStyle(cell)[side]) || 0));
         border = (maxBorder(previous, "borderBottomWidth") + maxBorder(unit.dom, "borderTopWidth")) / 2;
       }
-      breaks.push({ pos, fillPx: Math.max(0, pageContentH - repeatedHeight - (top - pageStart) - border), leftOffset: mixed ? (rect.left - root.left) / scale : Math.max(0, (rect.left - root.left) / scale), rightOffset: mixed ? (root.right - rect.right) / scale : Math.max(0, (root.right - rect.right) / scale), closingMargin: mixed ? geometry.margins.bottom / 15 : undefined, openingMargin: mixed ? sections[nextSection].geometry.margins.top / 15 : undefined, table: inline ? undefined : unit.table });
+      breaks.push({ pos, fillPx: Math.max(0, pageContentH - repeatedHeight - (top - pageStart) - border), leftOffset: mixed ? (rect.left - root.left) / scale : Math.max(0, (rect.left - root.left) / scale), rightOffset: mixed ? (root.right - rect.right) / scale : Math.max(0, (root.right - rect.right) / scale), closingMargin: geometry.margins.bottom / 15, openingMargin: sections[nextSection].geometry.margins.top / 15, table: inline ? undefined : unit.table });
       const previousPage = pages[pages.length - 1];
       const nextGeometry = sections[nextSection].geometry;
       pages.push({ top: previousPage.top + previousPage.geometry.height / 15 + PAGE_GAP_PX, geometry: nextGeometry, section: nextSection, sectionPage: nextSection === currentSection ? previousPage.sectionPage + 1 : 0 });
       currentSection = nextSection; geometry = nextGeometry;
-      if (mixed) pageContentH = (geometry.height - geometry.margins.top - geometry.margins.bottom) / 15;
+      pageContentH = (geometry.height - geometry.margins.top - geometry.margins.bottom) / 15;
       pageStart = top;
       repeatedHeight = inline ? 0 : unit.table?.headerHeight || 0;
     }
     function splitCells(unit: FlowUnit, boundary: number): boolean {
       if (!unit.cells?.length) return false;
-      const dominant = unit.cells.reduce((a, b) => bottomOf(a.blocks[a.blocks.length - 1].dom) > bottomOf(b.blocks[b.blocks.length - 1].dom) ? a : b);
-      const candidates = unit.cells.map(cell => {
+      const active = unit.cells.filter(cell => topOf(cell.dom) < boundary - 32);
+      if (!active.length) return false;
+      const dominant = active.reduce((a, b) => bottomOf(a.blocks[a.blocks.length - 1].dom) > bottomOf(b.blocks[b.blocks.length - 1].dom) ? a : b);
+      const candidates = active.map(cell => {
         const safeBoundary = boundary - 32;
         const block = cell.blocks.find(b => bottomOf(b.dom) > safeBoundary + MEASURE_EPS) || cell.blocks[cell.blocks.length - 1];
         if (topOf(block.dom) >= safeBoundary - MEASURE_EPS) return { cell, block, pos: block.pos, top: topOf(block.dom) };
@@ -323,6 +336,7 @@ function computeLayout(view: EditorView, cfg: PageLayoutConfig): { breaks: PageB
         return { cell, block, pos, top: bottomOf(block.dom) + (Number.parseFloat(getComputedStyle(block.dom).marginBottom) || 0) };
       });
       const primary = candidates.find(c => c.cell === dominant)!;
+      const crossing = candidates.filter(c => c.cell === dominant || topOf(c.cell.dom) < primary.top - MEASURE_EPS && bottomOf(c.cell.dom) > primary.top + MEASURE_EPS);
       if (primary.top <= pageStart + MEASURE_EPS || breaks.at(-1)?.pos === primary.pos) return false;
       const physicalEnd = pages[pages.length - 1].top + geometry.height / 15 - sections[0].geometry.margins.top / 15 - geometry.margins.bottom / 15;
       const offsets = cellOffsets.get(unit.pos) || new Map<number, number>(); cellOffsets.set(unit.pos, offsets);
@@ -332,17 +346,23 @@ function computeLayout(view: EditorView, cfg: PageLayoutConfig): { breaks: PageB
       const headerHeight = unit.table?.headerHeight || 0;
       const format = (candidate: typeof primary, main: boolean): PageBreakPoint => {
         const rect = candidate.block.dom.getBoundingClientRect();
-        const fillPx = Math.max(0, physicalEnd - candidate.top - (offsets.get(candidate.cell.pos) || 0));
+        const beforeCell = (groupShifts.get(unit.pos) || []).filter(s => s.cut <= topOf(candidate.cell.dom) + MEASURE_EPS).reduce((sum, s) => sum + s.height, 0);
+        const fillPx = Math.max(0, physicalEnd - candidate.top - beforeCell - (offsets.get(candidate.cell.pos) || 0));
         const result: PageBreakPoint = { pos: candidate.pos, fillPx, cellContentWidth: root.width / scale, leftOffset: (rect.left - root.left) / scale, rightOffset: (root.right - rect.right) / scale, closingMargin: point.closingMargin, openingMargin: point.openingMargin,
           cellHeader: headerHeight ? { html: unit.table!.headerHtml, height: headerHeight, width: tableDom.getBoundingClientRect().width / scale, left: (tableDom.getBoundingClientRect().left - rect.left) / scale, primary: main } : undefined };
         offsets.set(candidate.cell.pos, (offsets.get(candidate.cell.pos) || 0) + fillPx + (point.closingMargin ?? cfg.bottomMarginPx ?? cfg.marginPx) + PAGE_GAP_PX + (point.openingMargin ?? cfg.marginPx) + headerHeight);
         return result;
       };
       Object.assign(point, format(primary, true));
-      point.companions = candidates.filter(c => c !== primary).map(c => format(c, false));
+      point.companions = crossing.filter(c => c !== primary).map(c => format(c, false));
+      const extra = point.fillPx + (point.closingMargin ?? cfg.bottomMarginPx ?? cfg.marginPx) + PAGE_GAP_PX + (point.openingMargin ?? cfg.marginPx) + headerHeight;
+      const shifts = groupShifts.get(unit.pos) || []; shifts.push({ cut: primary.top, height: extra }); groupShifts.set(unit.pos, shifts);
+      const row = unit.rows?.find(r => primary.top >= r.top - MEASURE_EPS && primary.top < r.bottom - MEASURE_EPS) || unit.rows?.[0];
+      if (row) { const rendered = rowHeights.get(row.pos)!; rowHeights.set(row.pos, { ...rendered, height: rendered.height + extra }); }
       repeatedHeight = headerHeight;
       return true;
     }
+    const groupShifts = new Map<number, Array<{ cut: number; height: number }>>();
     const cellOffsets = new Map<number, Map<number, number>>();
     for (let i = 0; i < units.length; i++) {
       const unit = units[i], top = topOf(unit.dom), bottom = bottomOf(unit.endDom || unit.dom), policy = rules(unit.node);
@@ -382,11 +402,11 @@ function computeLayout(view: EditorView, cfg: PageLayoutConfig): { breaks: PageB
       const lastPos = view.state.doc.content.size;
       const nextSection = Math.min(currentSection + (sections[currentSection].to === lastPos ? 1 : 0), sections.length - 1);
       const previousPage = pages[pages.length - 1], nextGeometry = sections[nextSection].geometry;
-      breaks.push({ pos: lastPos, fillPx: lastPagePadPx, closingMargin: mixed ? geometry.margins.bottom / 15 : undefined, openingMargin: mixed ? nextGeometry.margins.top / 15 : undefined });
+      breaks.push({ pos: lastPos, fillPx: lastPagePadPx, closingMargin: geometry.margins.bottom / 15, openingMargin: nextGeometry.margins.top / 15 });
       pages.push({ top: previousPage.top + previousPage.geometry.height / 15 + PAGE_GAP_PX, geometry: nextGeometry, section: nextSection, sectionPage: nextSection === currentSection ? previousPage.sectionPage + 1 : 0 });
       lastPagePadPx = pageContentH;
     }
-    return { breaks, pages, tallCells, lastPagePadPx, complete: true };
+    return { breaks, pages, tallCells, rowHeights: Array.from(rowHeights.values()), lastPagePadPx, complete: true };
   } finally {
     dom.classList.remove("pm-measuring");
     if (scroller && scroller.scrollTop !== scrollTop) scroller.scrollTop = scrollTop;
@@ -457,6 +477,10 @@ export function remeasurePagination(view: EditorView | null | undefined): void {
 export function paginationPlugin(getConfig: () => PageLayoutConfig): Plugin {
   let rafId = 0;
   let tries = 0;
+  let runningOriginal: RunningSlots = {};
+  let sourceKey = "";
+  let suppressNumbering = false;
+  let paintRunning: ((pages: RenderedPage[]) => void) | undefined;
   let paintPages: ((pages: RenderedPage[]) => void) | undefined;
 
   const measure = (view: EditorView) => {
@@ -483,7 +507,7 @@ export function paginationPlugin(getConfig: () => PageLayoutConfig): Plugin {
         page.style.setProperty("--page-margin-left", `${first.margins.left / 15}px`);
         page.style.setProperty("--page-margin-right", `${first.margins.right / 15}px`);
       }
-      const { breaks, pages = [], tallCells = [], complete } = computeLayout(view, cfg);
+      const { breaks, pages = [], tallCells = [], rowHeights = [], complete } = computeLayout(view, cfg);
       // Replacing a whole document (loading a template, switching files) can
       // leave the rendered blocks a frame behind the state. Measuring then sees
       // only the outgoing document — one empty paragraph, say — and pads the
@@ -498,11 +522,11 @@ export function paginationPlugin(getConfig: () => PageLayoutConfig): Plugin {
       }
       tries = 0;
       const cur = paginationKey.getState(view.state);
-      const numbering = `${cfg.pageNumbers}:${cfg.pageNumberFormat}:${JSON.stringify(cfg.numberingStyle)}:${JSON.stringify(pages)}:${tallCells.join(",")}`;
+      const numbering = `${cfg.pageNumbers}:${cfg.pageNumberFormat}:${JSON.stringify(cfg.numberingStyle)}:${JSON.stringify(pages)}:${tallCells.join(",")}:${JSON.stringify(rowHeights)}:${suppressNumbering}`;
       if (!cur || !sameBreaks(cur.breaks, breaks) || cur.marginPx !== cfg.marginPx || cur.bottomMarginPx !== cfg.bottomMarginPx || cur.numbering !== numbering) {
         view.dispatch(view.state.tr.setMeta(paginationKey, {
-          breaks, pages, tallCells, marginPx: cfg.marginPx, bottomMarginPx: cfg.bottomMarginPx, numbering,
-          pageNumbers: cfg.pageNumbers, pageNumberFormat: cfg.pageNumberFormat, numberingStyle: cfg.numberingStyle,
+          breaks, pages, tallCells, rowHeights, marginPx: cfg.marginPx, bottomMarginPx: cfg.bottomMarginPx, numbering,
+          pageNumbers: suppressNumbering ? "off" : cfg.pageNumbers, pageNumberFormat: cfg.pageNumberFormat, numberingStyle: cfg.numberingStyle,
         }));
       }
       // Align each cell against the same physical sheet edge. Inline widgets at
@@ -529,10 +553,11 @@ export function paginationPlugin(getConfig: () => PageLayoutConfig): Plugin {
       const used = last ? (last.getBoundingClientRect().bottom - root.top) / scale + (Number.parseFloat(getComputedStyle(last).marginBottom) || 0) : 0;
       const lastGeometry = pages[pages.length - 1]?.geometry || first;
       if (page) page.style.setProperty("--page-margin-bottom", `${lastGeometry.margins.bottom / 15}px`);
-      const target = mixed ? pages.reduce((sum, p) => sum + p.geometry.height / 15, 0) + breaks.length * PAGE_GAP_PX - first.margins.top / 15 - lastGeometry.margins.bottom / 15 : pageCountOf(breaks) * cfg.pageHeightPx + breaks.length * PAGE_GAP_PX - cfg.marginPx - (cfg.bottomMarginPx ?? cfg.marginPx);
+      const target = pages.reduce((sum, p) => sum + p.geometry.height / 15, 0) + breaks.length * PAGE_GAP_PX - first.margins.top / 15 - lastGeometry.margins.bottom / 15;
       const padding = breaks.length ? Math.max(0, target - used) : 0;
       view.dom.style.paddingBottom = padding > 0.5 ? `${padding}px` : "";
       paintPages?.(pages);
+      paintRunning?.(pages);
     });
   };
 
@@ -543,7 +568,7 @@ export function paginationPlugin(getConfig: () => PageLayoutConfig): Plugin {
       apply(tr, prev, _oldState, newState) {
         const meta = tr.getMeta(paginationKey) as
           | {
-              breaks: PageBreakPoint[]; pages?: RenderedPage[]; tallCells?: number[]; marginPx: number;
+              breaks: PageBreakPoint[]; pages?: RenderedPage[]; tallCells?: number[]; rowHeights?: RenderedRow[]; marginPx: number;
               bottomMarginPx?: number; numbering: string;
               pageNumbers: PageNumberPosition; pageNumberFormat: PageNumberFormat; numberingStyle?: DocumentLayout["numberingStyle"];
             }
@@ -566,7 +591,7 @@ export function paginationPlugin(getConfig: () => PageLayoutConfig): Plugin {
             ))
           );
           return {
-            breaks: meta.breaks, pages: meta.pages, tallCells: meta.tallCells, marginPx: meta.marginPx, bottomMarginPx: meta.bottomMarginPx, numbering: meta.numbering, deco,
+            breaks: meta.breaks, pages: meta.pages, tallCells: meta.tallCells, rowHeights: meta.rowHeights, marginPx: meta.marginPx, bottomMarginPx: meta.bottomMarginPx, numbering: meta.numbering, deco,
           };
         }
         if (tr.docChanged) {
@@ -576,6 +601,7 @@ export function paginationPlugin(getConfig: () => PageLayoutConfig): Plugin {
             deco: prev.deco.map(tr.mapping, tr.doc),
             breaks: prev.breaks.map((b) => ({ ...b, pos: tr.mapping.map(b.pos) })),
             tallCells: prev.tallCells?.map(pos => tr.mapping.map(pos)),
+            rowHeights: prev.rowHeights?.map(row => ({ ...row, pos: tr.mapping.map(row.pos) })),
           };
         }
         return prev;
@@ -595,6 +621,10 @@ export function paginationPlugin(getConfig: () => PageLayoutConfig): Plugin {
           const cell = state.doc.nodeAt(pos);
           if (cell?.type.spec.tableRole === "cell" || cell?.type.spec.tableRole === "header_cell") nodes.push(Decoration.node(pos, pos + cell.nodeSize, { class: "pm-paginated-cell" }));
         }
+        for (const row of saved?.rowHeights || []) {
+          const node = state.doc.nodeAt(row.pos);
+          if (node?.type.spec.tableRole === "row") nodes.push(Decoration.node(row.pos, row.pos + node.nodeSize, { class: "pm-paginated-source-row", style: `--pagination-row-height:${row.height}px;--pagination-source-height:${row.sourceHeight}` }));
+        }
         return (saved?.deco || DecorationSet.empty).add(state.doc, nodes);
       },
     },
@@ -605,6 +635,48 @@ export function paginationPlugin(getConfig: () => PageLayoutConfig): Plugin {
       // own padding — no spacer reaches them, so those two numbers are absolutely
       // positioned against the page element instead of riding in the flow.
       const page = view.dom.parentElement;
+      const runningLayer = document.createElement("div"); runningLayer.className = "pm-running-layer";
+      runningLayer.setAttribute("aria-hidden", "true"); page?.appendChild(runningLayer);
+      const loadRunning = (v: EditorView) => {
+        const layout = v.state.doc.attrs.layout as DocumentLayout | null;
+        const raw = rawSections(v.state.doc).join("");
+        const nextKey = `${layout?.source || ""}:${raw}`;
+        if (nextKey === sourceKey) return;
+        sourceKey = nextKey; runningOriginal = {};
+        if (!layout?.source || !/headerReference|footerReference/.test(raw)) return;
+        import("@/lib/header-footer-source").then(module => module.readRunningSource(v.state.doc)).then(slots => {
+          if (sourceKey === nextKey && v.dom.isConnected) { runningOriginal = slots; measure(v); }
+        }).catch(() => {});
+      };
+      loadRunning(view);
+      let lastRunning = "", lastLayout: DocumentLayout | null = null, lastOriginal: RunningSlots | null = null;
+      paintRunning = (pages) => {
+        const layout = view.state.doc.attrs.layout as DocumentLayout | null, cfg = getConfig();
+        const signature = JSON.stringify([pages, cfg.pageNumbers, cfg.pageNumberFormat]);
+        if (layout === lastLayout && runningOriginal === lastOriginal && signature === lastRunning) return;
+        lastLayout = layout; lastOriginal = runningOriginal; lastRunning = signature;
+        runningLayer.replaceChildren();
+        const maximum = Math.max(...documentSections(view.state.doc).map(s => s.geometry.width));
+        const even = layout?.evenAndOddHeaders || Object.keys(layout?.running || {}).some(key => key.includes(":even:"));
+        let replacesNumber = false, counter = cfg.numberingStyle?.start ?? 1;
+        for (let index = 0; index < pages.length; index++) {
+          const entry = pages[index], g = entry.geometry;
+          if (entry.sectionPage === 0 && g.numberStart !== undefined) counter = g.numberStart;
+          else if (index) counter++;
+          const variant: RunningVariant = entry.sectionPage === 0 && g.differentFirst ? "first" : even && (index + 1) % 2 === 0 ? "even" : "default";
+          const formatted = numberLabel(counter, pages.length, "plain", { start: 1, alignment: "right", template: "{{PAGE}}", format: g.numberFormat || cfg.numberingStyle?.format || "decimal", hideFirst: false });
+          for (const kind of ["header", "footer"] as const) {
+            const slot = runningSlot(runningOriginal, layout, entry.section, variant, kind);
+            if (cfg.pageNumbers === (kind === "header" ? "top" : "bottom") && Object.keys(layout?.running || {}).some(key => key.endsWith(`:${kind}`))) replacesNumber = true;
+            if (!slot.html || !new DOMParser().parseFromString(slot.html, "text/html").body.textContent?.trim() && !/data-doc-field|<img/.test(slot.html)) continue;
+            const box = document.createElement("div"); box.className = `edtr-running-content pm-running-${kind}`;
+            box.style.cssText = `position:absolute;left:${(maximum - g.width) / 30 + g.margins.left / 15}px;width:${(g.width - g.margins.left - g.margins.right) / 15}px;${kind === "header" ? `top:${entry.top + (g.headerDistance ?? slot.distance) / 15}px` : `top:${entry.top + g.height / 15 - (g.footerDistance ?? slot.distance) / 15}px;transform:translateY(-100%)`}`;
+            box.appendChild(runningFragment(slot.html, formatted, pages.length)); runningLayer.appendChild(box);
+            if (cfg.pageNumbers === (kind === "header" ? "top" : "bottom") && (slot.html.includes('data-doc-field="PAGE"') || Object.keys(layout?.running || {}).some(key => key.startsWith(`${entry.section}:`) && key.endsWith(`:${kind}`)))) replacesNumber = true;
+          }
+        }
+        if (suppressNumbering !== replacesNumber) { suppressNumbering = replacesNumber; measure(view); }
+      };
       const edge = (place: "top" | "bottom") => {
         const el = document.createElement("div");
         el.className = `pm-page-number pm-page-number-edge pm-page-number-${place}`;
@@ -619,7 +691,7 @@ export function paginationPlugin(getConfig: () => PageLayoutConfig): Plugin {
       let painted = "";
       paintPages = (pages) => {
         const sections = documentSections(view.state.doc), cfg = getConfig();
-        const signature = JSON.stringify([pages, cfg.pageNumbers, cfg.pageNumberFormat, cfg.numberingStyle]);
+        const signature = JSON.stringify([pages, cfg.pageNumbers, cfg.pageNumberFormat, cfg.numberingStyle, suppressNumbering]);
         if (painted === signature) return; painted = signature;
         sheets.replaceChildren();
         if (sections.length < 2) return;
@@ -629,7 +701,7 @@ export function paginationPlugin(getConfig: () => PageLayoutConfig): Plugin {
           const sheet = document.createElement("div"); sheet.className = "pm-section-sheet";
           sheet.setAttribute("data-section-index", String(entry.section));
           sheet.style.cssText = `top:${entry.top}px;left:${(maximum - g.width) / 30}px;width:${g.width / 15}px;height:${g.height / 15}px`;
-          if (cfg.pageNumbers !== "off") {
+          if (cfg.pageNumbers !== "off" && !suppressNumbering) {
             const number = document.createElement("div"); number.className = `pm-section-number pm-page-number pm-page-number-${cfg.pageNumbers}`;
             const style = cfg.numberingStyle ? { ...cfg.numberingStyle, start: (g.numberStart ?? i - entry.sectionPage + cfg.numberingStyle.start) - (i - entry.sectionPage), format: g.numberFormat || cfg.numberingStyle.format, hideFirst: !!g.differentFirst && entry.sectionPage === 0 } : undefined;
             number.textContent = g.differentFirst && entry.sectionPage === 0 ? "" : numberLabel(i + 1, pages.length, cfg.pageNumberFormat, style);
@@ -654,9 +726,10 @@ export function paginationPlugin(getConfig: () => PageLayoutConfig): Plugin {
           [lastEdge, cfg.pageNumbers === "bottom", numberLabel(total, total, cfg.pageNumberFormat, cfg.numberingStyle)],
         ];
         for (const [el, on, text] of entries) {
-          el.style.display = on && documentSections(v.state.doc).length < 2 ? "" : "none";
+          el.style.display = on && !suppressNumbering && documentSections(v.state.doc).length < 2 ? "" : "none";
           el.style.justifyContent = cfg.numberingStyle?.alignment === "center" ? "center" : cfg.numberingStyle?.alignment === "left" ? "flex-start" : "flex-end";
-          el.style.height = `${el === lastEdge ? (cfg.bottomMarginPx ?? cfg.marginPx) : cfg.marginPx}px`;
+          const pages = paginationKey.getState(v.state)?.pages;
+          el.style.height = `${el === lastEdge ? (pages?.at(-1)?.geometry.margins.bottom ?? (cfg.bottomMarginPx ?? cfg.marginPx) * 15) / 15 : (pages?.[0]?.geometry.margins.top ?? cfg.marginPx * 15) / 15}px`;
           if (on) el.textContent = text;
         }
       };
@@ -671,7 +744,7 @@ export function paginationPlugin(getConfig: () => PageLayoutConfig): Plugin {
       document.fonts?.addEventListener("loadingdone", onLoad);
       return {
         update(v, previous) {
-          if (v.state.doc !== previous.doc) measure(v);
+          if (v.state.doc !== previous.doc) { loadRunning(v); measure(v); }
           syncEdges(v);
         },
         destroy() {
@@ -683,6 +756,7 @@ export function paginationPlugin(getConfig: () => PageLayoutConfig): Plugin {
           view.dom.removeEventListener("compositionend", onLoad);
           document.fonts?.removeEventListener("loadingdone", onLoad);
           observer.disconnect();
+          sourceKey = ""; paintRunning = undefined; runningLayer.remove();
           paintPages = undefined; sheets.remove();
           firstEdge.remove();
           lastEdge.remove();

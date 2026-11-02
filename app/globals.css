@@ -1044,3 +1044,15 @@ kbd.hero-kbd {
 
 .pm-page { --sheet-bg: #fff; }
 .dark .pm-page { --sheet-bg: #262626; }
+
+.pm-paginated-source-row { height: var(--pagination-row-height) !important; }
+.pm-measuring .pm-paginated-source-row { height: var(--pagination-source-height, auto) !important; }
+@media print { .pm-paginated-source-row { height: var(--pagination-source-height, auto) !important; } }
+.edtr-running-content { font-family: Calibri, Carlito, Arial, sans-serif; font-size: 11pt; line-height: 1.2; color: inherit; overflow-wrap: anywhere; }
+.edtr-running-content p { margin: 0; }
+.edtr-running-content table { width: 100%; border-collapse: collapse; }
+.edtr-running-content img { max-width: 100%; height: auto; }
+.edtr-running-content .ProseMirror { min-height: 4em; outline: none; }
+.edtr-document-field { display: inline; border-bottom: 1px dotted currentColor; background: #8881; padding: 0 2px; }
+.pm-running-layer { position: absolute; inset: 0; pointer-events: none; }
+@media print { .pm-running-layer { display: none !important; } }

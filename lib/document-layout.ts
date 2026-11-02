@@ -5,6 +5,8 @@ export type DocumentLayout = {
   pageNumbers?: "off" | "top" | "bottom";
   pageNumberFormat?: "plain" | "of";
   numberingStyle?: { start: number; alignment: string; template: string; format: string; hideFirst: boolean };
+  evenAndOddHeaders?: boolean;
+  running?: Record<string, { html: string; linked: boolean; distance: number; height: number }>;
   source?: string; // Compressed OOXML header/footer dependencies, not the original document.
   section?: string;
   overrides?: { margins?: boolean; orientation?: boolean; pageNumbers?: boolean };

@@ -60,6 +60,7 @@ interface MenuBarProps {
   onShowAbout: () => void;
   onFind: () => void;
   onTableProperties: () => void;
+  onHeaderFooter: () => void;
   onInsertTable: (rows: number, cols: number) => void;
   onPageBreakAdd: () => void;
   onLinkAdd: () => void;
@@ -159,7 +160,7 @@ function MenuBar({
   docTitle, onTitleChange, onNewDoc, onShowHome, onNewFromTemplate, onOpenFile, onExport,
   onSave, onCopyLink, onRenameDoc, onDeleteDoc, onReplace,
   onShowVersions, onShowShortcuts, onShowAbout, onFind,
-  onTableProperties, onInsertTable, onPageBreakAdd, onLinkAdd, onImageAdd, onImageUrlAdd,
+  onTableProperties, onHeaderFooter, onInsertTable, onPageBreakAdd, onLinkAdd, onImageAdd, onImageUrlAdd,
   onInsertDivider, onInsertSymbol, onInsertDate, onInsertVariable,
   onLineSpacing, onClearFormatting,
   zoomPercent, onZoomChange,
@@ -607,6 +608,7 @@ function MenuBar({
           <MenubarItem onClick={onImageAdd}>{t.insert.pictureFile}</MenubarItem>
           <MenubarItem onClick={onImageUrlAdd}>{t.insert.pictureUrl}</MenubarItem>
           <MenubarItem onClick={() => onInsertTable(3, 3)}>{`${t.insert.table} (${t.tableMenu.rowsByCols(3, 3)})`}</MenubarItem>
+          <MenubarItem onClick={onHeaderFooter}>{t.running.title}…</MenubarItem>
           <MenubarItem onClick={onInsertTOC}>{t.insert.tableOfContents}</MenubarItem>
           <MenubarSeparator />
           <MenubarItem onClick={onInsertDivider}>{t.insert.horizontalLine}</MenubarItem>

@@ -19,6 +19,7 @@ type RunFormat = {
   underline?: boolean;
   strike?: boolean;
   vertical?: string;
+  image?: { width: number; ratio: number; align: string };
 };
 
 function child(node: Element | undefined, name: string): Element | undefined {
@@ -413,6 +414,9 @@ export async function prepareDocxFormatting(arrayBuffer: ArrayBuffer) {
         const format = runFormat(
           mergeProperties(mergeStyle(baseRun, inheritedRun), properties(rPr)),
         );
+        const extent = run.getElementsByTagNameNS("http://schemas.openxmlformats.org/drawingml/2006/wordprocessingDrawing", "extent")[0];
+        const imageWidth = Number(extent?.getAttribute("cx")) / 9525, imageHeight = Number(extent?.getAttribute("cy")) / 9525;
+        if (imageWidth > 0 && imageHeight > 0) format.image = { width: imageWidth, ratio: imageWidth / imageHeight, align: ["center", "right"].includes(paragraphProps.jc) ? paragraphProps.jc : "left" };
         const key = JSON.stringify(format);
         let className = formatIds.get(key);
         if (!className) {
@@ -483,6 +487,10 @@ export async function prepareDocxFormatting(arrayBuffer: ArrayBuffer) {
         if (!format) continue;
         span.removeAttribute("class");
         setStyles(span, format.css);
+        if (format.image) for (const image of Array.from(span.querySelectorAll("img"))) {
+          image.setAttribute("data-width", `${format.image.width}px`); image.style.width = `${format.image.width}px`;
+          image.setAttribute("data-aspect-ratio", String(format.image.ratio)); image.setAttribute("data-align", format.image.align);
+        }
         for (const [tag, apply] of [
           ["strong", format.bold],
           ["em", format.italic],

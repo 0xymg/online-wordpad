@@ -5,10 +5,11 @@ import { restoreDocxPackage, parseXml, xmlString, W } from "./docx-preservation"
 import type { DocumentLayout } from "./document-layout";
 import { TableMap } from "prosemirror-tables";
 import { DEFAULT_DOCUMENT_FONT } from "./document-font";
-import type { Node as PMNode, Mark } from "prosemirror-model";
+import { DOMParser as PMParser, type Node as PMNode, type Mark } from "prosemirror-model";
+import { mySchema } from "@/app/components/editor-schema";
 import {
   Document, Packer, Paragraph, TextRun, HeadingLevel, AlignmentType,
-  Table, TableRow, TableCell, WidthType, ImageRun, ExternalHyperlink, Bookmark, Header, Footer, PageNumber,
+  Table, TableRow, TableCell, WidthType, ImageRun, ExternalHyperlink, Bookmark, Header, Footer, PageNumber, SimpleField,
   LevelFormat, ShadingType, BorderStyle, PageBreak, PageOrientation,
   type FileChild, type ParagraphChild, type INumberingOptions,
 } from "docx";
@@ -183,14 +184,18 @@ class DocxBuilder {
         } else {
           out.push(run);
         }
+      } else if (child.type.name === "doc_field") {
+        const marks = readMarks(child.marks);
+        if (child.attrs.kind === "OTHER" && child.attrs.instruction) { out.push(new SimpleField(child.attrs.instruction, child.attrs.cached || "")); return; }
+        out.push(new TextRun({ children: [child.attrs.kind === "NUMPAGES" ? PageNumber.TOTAL_PAGES : PageNumber.CURRENT], font: marks.font, size: marks.size, bold: marks.bold, italics: marks.italics, color: marks.color }));
       } else if (child.type.name === "image") {
         const img = this.imageQueue.shift() ?? null;
         if (img) {
           const attrWidth = String(child.attrs.width || "");
           let width = img.width;
-          if (attrWidth.endsWith("px")) width = Number.parseFloat(attrWidth) || img.width;
-          width = Math.min(width, MAX_IMAGE_WIDTH);
-          const height = Math.round((width / img.width) * img.height);
+          if (attrWidth.endsWith("px") && Number.parseFloat(attrWidth) > 0) width = Number.parseFloat(attrWidth);
+          else width = Math.min(width, MAX_IMAGE_WIDTH);
+          const height = Math.round(child.attrs.aspectRatio ? width / Number(child.attrs.aspectRatio) : (width / img.width) * img.height);
           out.push(new ImageRun({
             type: img.type,
             data: img.data,
@@ -410,7 +415,14 @@ export async function docToDocxBlob(
       children: children.length ? children : [new Paragraph("")],
     }],
   });
-  return restoreDocxPackage(await Packer.toBlob(file), doc, builder.paragraphProperties);
+  const result = await restoreDocxPackage(await Packer.toBlob(file), doc, builder.paragraphProperties);
+  if (!layout?.running || !Object.keys(layout.running).length) return result;
+  const { exportRunning } = await import("./header-footer-export");
+  return exportRunning(result, doc, html => {
+    const body = new DOMParser().parseFromString(html, "text/html");
+    const header = PMParser.fromSchema(mySchema).parse(body.body);
+    return docToDocxBlob(header, title);
+  });
 }
 
 /* ── RTF conversion ─────────────────────────────────────────────────────── */

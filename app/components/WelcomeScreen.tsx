@@ -1,5 +1,6 @@
 "use client";
 
+import BrandCredit from "./BrandCredit";
 import { useEffect, useRef, useState } from "react";
 import { FileText, Plus, UploadSimple, X, SignIn, LinkSimple, Trash, CircleNotch, CaretLeft, CaretRight, DownloadSimple, MagnifyingGlass } from "./icons";
 import { getTemplates, type DocTemplate } from "@/lib/templates";
@@ -625,6 +626,7 @@ export default function WelcomeScreen({
             </button>
           </div>
         )}
+        <footer className="mt-12 border-t border-border pt-6 text-center"><BrandCredit /></footer>
       </div>
     </div>
   );

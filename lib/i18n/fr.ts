@@ -121,6 +121,34 @@ export const fr: Dictionary = {
     default: "Par défaut",
   },
 
+  running: {
+    "title": "En-tête et pied de page",
+    "description": "Modifiez la section et le type de page choisis. Le contenu existant est conservé jusqu’à validation.",
+    "section": "Section",
+    "variant": "Type de page",
+    "normal": "Pages normales",
+    "first": "Première page",
+    "even": "Pages paires",
+    "header": "En-tête",
+    "footer": "Pied de page",
+    "link": "Lier à la section précédente",
+    "distance": "Distance du bord (cm)",
+    "bold": "Gras",
+    "italic": "Italique",
+    "underline": "Souligné",
+    "alignment": "Alignement",
+    "left": "Gauche",
+    "center": "Centré",
+    "right": "Droite",
+    "pageNumber": "Numéro de page",
+    "pageCount": "Nombre de pages",
+    "loading": "Chargement de l’en-tête et du pied de page…",
+    "failed": "Impossible de charger le contenu existant.",
+    "tooTall": "Ce contenu est trop haut. Réduisez le texte ou la distance du bord.",
+    "cancel": "Annuler",
+    "apply": "Appliquer"
+},
+
   tableProperties: {
     "title": "Table properties",
     "description": "Cell settings apply to the selected cells. Leave a setting unchanged to preserve its current formatting.",
@@ -179,9 +207,10 @@ export const fr: Dictionary = {
     about: "À propos d'EDTRpad",
     aboutText:
       "EDTRpad est un traitement de texte en ligne gratuit disponible sur wordpad.info. C'est un projet indépendant, sans aucun lien avec Microsoft.",
+    aboutProjects: "Autres outils Project EDTR",
+    aboutStudio: "Découvrir les produits de 312",
     aboutTagline: "Un traitement de texte déjà ouvert.",
-    aboutBody:
-      "Écrivez, mettez en forme et imprimez vos documents directement depuis le navigateur. Rien à installer, aucun compte requis, et votre travail est enregistré au fil de la frappe. Ouvre les fichiers .docx, .txt, .md et .html, et exporte en Word, PDF, RTF, Markdown et texte brut.",
+    aboutBody: "Rédigez, mettez en forme et imprimez vos documents dans le navigateur avec enregistrement automatique. Ouvrez des fichiers .docx, .txt, .md et .html, puis exportez en Word, PDF, RTF, Markdown ou texte brut.",
     aboutContact: "Questions, bugs, idées",
     aboutMadeBy: "Réalisé par",
   },
