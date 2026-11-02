@@ -207,11 +207,15 @@ function computeLayout(view: EditorView, cfg: PageLayoutConfig): { breaks: PageB
   const scroller = dom.closest(".editor-shell") as HTMLElement | null;
   const scrollTop = scroller?.scrollTop ?? 0;
   const root = dom.getBoundingClientRect(), scale = root.width / Number.parseFloat(getComputedStyle(dom).width);
+  const minimumHeight = dom.style.minHeight;
   const headerHeights = new Map<Element, number>();
   for (const header of Array.from(dom.querySelectorAll(".pm-repeated-header"))) {
     const table = header.parentElement?.closest("table");
     if (table) headerHeights.set(table, header.getBoundingClientRect().height / scale);
   }
+  // Hiding page spacers must not temporarily shorten the scroll container:
+  // Chromium clamps scrollTop before we can restore the measured decorations.
+  if (scale > 0 && Number.isFinite(scale)) dom.style.minHeight = `${root.height / scale}px`;
   dom.classList.add("pm-measuring");
   try {
     if (!scale || !Number.isFinite(scale)) return { breaks: [], lastPagePadPx: 0, complete: false };
@@ -400,6 +404,7 @@ function computeLayout(view: EditorView, cfg: PageLayoutConfig): { breaks: PageB
     return { breaks, pages, tallCells, rowHeights: Array.from(rowHeights.values()), lastPagePadPx, complete: true };
   } finally {
     dom.classList.remove("pm-measuring");
+    dom.style.minHeight = minimumHeight;
     if (scroller && scroller.scrollTop !== scrollTop) scroller.scrollTop = scrollTop;
   }
 }

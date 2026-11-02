@@ -237,6 +237,9 @@ body {
   background: #f5f6f8;
   padding: 40px 0 60px 0;
   overflow-y: auto;
+  /* Page spacers are replaced after measuring. They must not become browser
+     scroll anchors and move the viewport independently of the caret. */
+  overflow-anchor: none;
 }
 
 /* ── A4 beyaz sayfa ── */

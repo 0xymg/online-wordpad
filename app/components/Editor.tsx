@@ -1360,6 +1360,9 @@ export default function Editor({
     // restore them again, and so on. Ignore events for the length of the
     // transition after a toggle so the two can't chase each other.
     let settleUntil = 0;
+    let intentDirection = 0;
+    let intentUntil = 0;
+    let touchY: number | null = null;
     const read = () => {
       raf = 0;
       const y = el.scrollTop;
@@ -1379,7 +1382,7 @@ export default function Editor({
       lastY = y;
       // Nothing to win back on a document that barely scrolls.
       if (el.scrollHeight - el.clientHeight < 160) return;
-      const next = y > 48 && delta > 0;
+      const next = now < intentUntil ? intentDirection > 0 : delta > 0;
       // Keep the title/account controls available while the user is editing them.
       if (next && el.parentElement?.querySelector(".editor-title-bar")?.contains(document.activeElement)) return;
       if (next === chromeCollapsedRef.current) return;
@@ -1390,18 +1393,37 @@ export default function Editor({
     const onScroll = () => { if (!raf) raf = requestAnimationFrame(read); };
     // Intentional scrolling can reverse direction during the resize animation.
     // Only the scroll events caused by the resize itself should be ignored.
-    const onScrollIntent = () => { settleUntil = 0; };
+    const onScrollIntent = (direction: number) => {
+      if (!direction) return;
+      intentDirection = Math.sign(direction);
+      intentUntil = performance.now() + 250;
+      // Repeated downward wheel events must not unlock resize-induced upward
+      // scroll events. Only a genuine reversal may interrupt the animation.
+      if ((intentDirection > 0) !== chromeCollapsedRef.current) settleUntil = 0;
+    };
+    const onWheel = (e: WheelEvent) => onScrollIntent(e.deltaY);
+    const onTouchStart = (e: TouchEvent) => { touchY = e.touches[0]?.clientY ?? null; };
+    const onTouchMove = (e: TouchEvent) => {
+      const y = e.touches[0]?.clientY;
+      if (y === undefined) return;
+      if (touchY !== null) onScrollIntent(touchY - y);
+      touchY = y;
+    };
     const onScrollKey = (e: KeyboardEvent) => {
-      if (["ArrowUp", "ArrowDown", "PageUp", "PageDown", "Home", "End", " "].includes(e.key)) onScrollIntent();
+      if (["ArrowUp", "PageUp", "Home"].includes(e.key)) onScrollIntent(-1);
+      if (["ArrowDown", "PageDown", "End"].includes(e.key)) onScrollIntent(1);
+      if (e.key === " " && !(e.target instanceof HTMLElement && e.target.isContentEditable)) onScrollIntent(e.shiftKey ? -1 : 1);
     };
     el.addEventListener("scroll", onScroll, { passive: true });
-    el.addEventListener("wheel", onScrollIntent, { passive: true });
-    el.addEventListener("touchmove", onScrollIntent, { passive: true });
+    el.addEventListener("wheel", onWheel, { passive: true });
+    el.addEventListener("touchstart", onTouchStart, { passive: true });
+    el.addEventListener("touchmove", onTouchMove, { passive: true });
     el.addEventListener("keydown", onScrollKey);
     return () => {
       el.removeEventListener("scroll", onScroll);
-      el.removeEventListener("wheel", onScrollIntent);
-      el.removeEventListener("touchmove", onScrollIntent);
+      el.removeEventListener("wheel", onWheel);
+      el.removeEventListener("touchstart", onTouchStart);
+      el.removeEventListener("touchmove", onTouchMove);
       el.removeEventListener("keydown", onScrollKey);
       if (raf) cancelAnimationFrame(raf);
     };

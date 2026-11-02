@@ -177,3 +177,5 @@ This version has breaking changes — APIs, conventions, and file structure may 
 This block is written and re-added by `next dev` — verify at `node_modules/next/dist/server/lib/generate-agent-files.js`. Removing it from a diff only re-creates the uncommitted change; committing it with your work keeps the tree clean.
 
 <!-- END:nextjs-agent-rules -->
+
+- Kaydırma: üst bar animasyonu sırasında scrollTop sınırlandırmasını yön değişikliği sayma; wheel/touch yönünü dikkate al, gerçek ters yön girdisine izin ver. Sayfalama ölçümünde spacer’lar gizliyken editörün minimum yüksekliğini koru ve editor-shell üzerinde native scroll anchoring’i kapalı tut. `scripts/check-scroll-stability.cjs` belge sonunda wheel, ters yön ve yazarken yeniden sayfalama sıçramalarını kontrol eder.
