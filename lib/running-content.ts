@@ -42,7 +42,7 @@ export function runningSlot(original: RunningSlots, layout: DocumentLayout | nul
   const edited = layout?.running?.[key], slot = edited || original[key];
   if ((slot?.linked || !slot) && section > 0) return { ...runningSlot(original, layout, section - 1, variant, kind), linked: true };
   const result = slot || { html: "<p></p>", linked: false, distance: 283, height: 0 };
-  if (!edited && layout?.overrides?.pageNumbers) return { ...result, html: numberedHtml(result.html, kind, layout.pageNumbers, layout.pageNumberFormat, variant === "default" || !!slot) };
+  if (!edited && (layout?.overrides?.pageNumbers || !layout?.source && layout?.pageNumbers && layout.pageNumbers !== "off")) return { ...result, html: numberedHtml(result.html, kind, layout.pageNumbers, layout.pageNumberFormat, variant === "default" || !!slot) };
   return result;
 }
 export function runningFragment(html: string, page: string | number = 1, total = 1): DocumentFragment {

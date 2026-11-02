@@ -114,7 +114,7 @@ export const ar: Dictionary = {
       bottom: "أسفل الصفحة",
       top: "أعلى الصفحة",
     },
-    printHeaderFooter: "طباعة رأس الصفحة وتذييلها",
+    printHeaderFooter: "إضافة العنوان والتاريخ ومعلومات الموقع",
     print: "طباعة",
     deleteDoc: "حذف هذا المستند",
   },
@@ -473,6 +473,7 @@ export const ar: Dictionary = {
     saved: "تم الحفظ",
     deleted: (name) => `تم حذف «${name}»`,
     deletedCount: (n) => `تم حذف المستندات المحددة (${n})`,
+    printFailed: "تعذّر تجهيز المستند للطباعة. يُرجى المحاولة مرة أخرى.",
     downloadFailed:
       "تعذّر إنشاء الأرشيف — حاول مجددًا أو صدّر المستندات واحدًا تلو الآخر.",
     linkCopied: "تم نسخ الرابط — يفتح هذا المستند مباشرة.",

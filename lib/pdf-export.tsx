@@ -1,8 +1,14 @@
 // Client-side PDF exporter: ProseMirror doc → .pdf via @react-pdf/renderer.
 // Loaded on demand via dynamic import so the (heavy) renderer stays out of the
-// main bundle. Mirrors the on-screen document: A4 geometry, current
-// orientation/margins, and the editor CSS (globals.css .pm-page rules).
+// main bundle. Uses each document section’s paper size and margins, with
+// rich running content and dynamic page fields resolved for the PDF’s pages.
 import React from "react";
+import { DOMParser as PMParser } from "prosemirror-model";
+import { mySchema } from "@/app/components/editor-schema";
+import { documentSections, type PageGeometry } from "./document-sections";
+import { defaultDocumentLayout, type DocumentLayout } from "./document-layout";
+import { runningSlot, type RunningSlots, type RunningVariant } from "./running-content";
+import { numberLabel } from "./page-number";
 import { resolvedAlignment, textDirection } from "./text-direction";
 import type { Node as PMNode, Mark } from "prosemirror-model";
 import { Document, Page, View, Text, Image, Link, Font, pdf, type DocumentProps } from "@react-pdf/renderer";
@@ -16,8 +22,6 @@ const PX_TO_PT = 0.75;
 const BASE_FONT_PT = 12;          // .pm-page.ProseMirror { font-size: 12pt }
 const BASE_LINE_HEIGHT = 1.5;     // .pm-page.ProseMirror { line-height: 1.5 }
 const INDENT_STEP_PT = 24 * PX_TO_PT; // paragraph indent step is 24px/level
-const A4_PORTRAIT_WIDTH_PT = 595.28;
-const A4_LANDSCAPE_WIDTH_PT = 841.89;
 
 /* ── fonts ──────────────────────────────────────────────────────────────────
    The 14 built-in PDF fonts are WinAnsi-encoded and cannot render Turkish
@@ -156,7 +160,7 @@ class PdfBuilder {
   /** Set by a page_break node; the next rendered block starts a new page. */
   private pendingBreak = false;
 
-  constructor(private contentWidthPt: number, private contentHeightPt: number) {}
+  constructor(private contentWidthPt: number, private contentHeightPt: number, private running = false, private field?: (kind: string, page: { pageNumber: number; totalPages: number; subPageNumber: number }) => string) {}
 
   private k(): string { return `n${this.key++}`; }
 
@@ -182,6 +186,8 @@ class PdfBuilder {
         spans.push(p.link
           ? <Link key={this.k()} src={p.link} style={{ color: "#2563eb", textDecoration: "underline" }}>{el}</Link>
           : el);
+      } else if (child.type.name === "doc_field") {
+        spans.push(<Text key={this.k()} style={spanStyle(readMarks(child.marks))} render={props => child.attrs.kind === "OTHER" ? child.attrs.cached || "" : this.field?.(child.attrs.kind, props) || ""} />);
       } else if (child.type.name === "hard_break") {
         spans.push(<Text key={this.k()}>{"\n"}</Text>);
       } else if (child.type.name === "image") {
@@ -222,6 +228,7 @@ class PdfBuilder {
       // still fits on one page.
       maxHeight: this.contentHeightPt - 0.5 * BASE_FONT_PT,
       objectFit: "contain",
+      ...(a.aspectRatio ? { height: width / Number(a.aspectRatio) } : {}),
     };
     if (transforms.length) imgStyle.transform = transforms.join(" ");
 
@@ -229,7 +236,7 @@ class PdfBuilder {
     const alignItems = align === "center" ? "center" : align === "right" ? "flex-end" : "flex-start";
     if (align === "justify") imgStyle.width = this.contentWidthPt;
     return (
-      <View key={this.k()} style={{ alignItems, marginBottom: 0.5 * BASE_FONT_PT }}>
+      <View key={this.k()} style={{ alignItems, marginBottom: this.running ? 0 : 0.5 * BASE_FONT_PT }}>
         {/* eslint-disable-next-line jsx-a11y/alt-text */}
         <Image src={String(a.src || "")} style={imgStyle} />
       </View>
@@ -241,8 +248,9 @@ class PdfBuilder {
     const lh = node.attrs.lineHeight ? Number.parseFloat(String(node.attrs.lineHeight)) : NaN;
     const indent = Number(node.attrs.indent || 0);
     const s: Style = {
+      fontFamily: "Carlito",
       fontSize,
-      lineHeight: !Number.isNaN(lh) && lh > 0 ? lh : BASE_LINE_HEIGHT,
+      lineHeight: !Number.isNaN(lh) && lh > 0 ? lh : this.running ? 1.2 : BASE_LINE_HEIGHT,
       textAlign: blockAlign(node),
       direction: textDirection(node.textContent),
     };
@@ -255,7 +263,7 @@ class PdfBuilder {
 
   private paragraph(node: PMNode, extra: Style = {}): React.ReactElement[] {
     // .pm-page p { margin: 0 0 0.5em 0 }
-    const style: Style = { ...this.textblockStyle(node, BASE_FONT_PT), marginBottom: 0.5 * BASE_FONT_PT, ...extra };
+    const style: Style = { ...this.textblockStyle(node, this.running ? 11 : BASE_FONT_PT), marginBottom: this.running ? 0 : 0.5 * BASE_FONT_PT, ...extra };
     return this.inlineContent(node, style);
   }
 
@@ -471,64 +479,70 @@ export type PdfExportOptions = {
   pageNumberFormat?: "plain" | "of";
 };
 
-export function buildPdfDocument(doc: PMNode, opts: PdfExportOptions): React.ReactElement<DocumentProps> {
-  const marginPt = opts.marginCm * CM_TO_PT;
-  const landscape = opts.orientation === "landscape";
-  const pageWidthPt = landscape ? A4_LANDSCAPE_WIDTH_PT : A4_PORTRAIT_WIDTH_PT;
-  const pageHeightPt = landscape ? A4_PORTRAIT_WIDTH_PT : A4_LANDSCAPE_WIDTH_PT;
-  const contentWidthPt = pageWidthPt - 2 * marginPt;
-  const contentHeightPt = pageHeightPt - 2 * marginPt;
-  const builder = new PdfBuilder(contentWidthPt, contentHeightPt);
-  const children = builder.body(doc);
+type PdfPageContext = { pageNumber: number; subPageNumber: number; totalPages?: number };
 
-  // Header/footer sit inside the margin band ~0.15cm from the paper edge
-  // (mirrors the print CSS: top: -(margin − 0.15)cm from the content box).
-  const edgeOffsetPt = Math.min(opts.marginCm, 0.15) * CM_TO_PT;
-  const hfStyle: Style = {
-    position: "absolute",
-    left: marginPt,
-    right: marginPt,
-    flexDirection: "row",
-    justifyContent: "space-between",
-    fontSize: 9,
-    color: "#777",
-    fontFamily: "Carlito",
-  };
+/** Document geometry belongs to the file, including inactive-file exports. */
+function pdfLayout(doc: PMNode, opts: PdfExportOptions): PMNode {
+  if (doc.attrs.layout) return doc;
+  const layout = defaultDocumentLayout();
+  if (opts.orientation === "landscape") [layout.width, layout.height] = [layout.height, layout.width];
+  const margin = opts.marginCm * CM_TO_PT * 20;
+  layout.margins = { top: margin, bottom: margin, left: margin, right: margin };
+  layout.pageNumbers = opts.pageNumbers; layout.pageNumberFormat = opts.pageNumberFormat;
+  layout.overrides = { pageNumbers: true };
+  return doc.type.create({ ...doc.attrs, layout }, doc.content);
+}
 
-  return (
-    <Document title={opts.title}>
-      <Page
-        size="A4"
-        orientation={opts.orientation}
-        style={{
-          padding: marginPt,
-          fontFamily: "Carlito",
-          fontSize: BASE_FONT_PT,
-          lineHeight: BASE_LINE_HEIGHT,
-          color: "#000",
-        }}
-      >
-        {opts.headerFooter && (
-          <View fixed style={{ ...hfStyle, top: edgeOffsetPt }}>
-            <Text style={{
-              ...(textDirection(opts.title) === "rtl" ? { fontFamily: "NotoSansArabic", direction: "rtl" } : {}),
-            }}>{opts.title || "Untitled document"}</Text>
-            <Text>{new Date().toLocaleDateString()}</Text>
-          </View>
-        )}
-        {children.length ? children : <Text>{" "}</Text>}
-        {opts.headerFooter && (
-          <View fixed style={{ ...hfStyle, bottom: edgeOffsetPt }}>
-            <Text>EDTRpad</Text>
-            <Text>wordpad.info</Text>
-          </View>
-        )}
-      </Page>
-    </Document>
-  );
+export function buildPdfDocument(source: PMNode, opts: PdfExportOptions, original: RunningSlots = {}): React.ReactElement<DocumentProps> {
+  const doc = pdfLayout(source, opts), layout = doc.attrs.layout as DocumentLayout;
+  const sections = documentSections(doc);
+  const even = layout.evenAndOddHeaders || Object.keys(layout.running || {}).some(key => key.includes(":even:"));
+  // react-pdf resolves final dynamic nodes in page order. Record each section's
+  // physical start only in that final pass, after wrapping has determined it.
+  const starts = new Map<number, number>();
+  function logicalPage(index: number, props: PdfPageContext) {
+    if (props.subPageNumber) starts.set(index, props.pageNumber - props.subPageNumber + 1);
+    for (let previous = index; previous >= 0; previous--) {
+      const start = sections[previous].geometry.numberStart;
+      if (start !== undefined) return props.pageNumber - (starts.get(previous) ?? props.pageNumber) + start;
+    }
+    return props.pageNumber + (layout.numberingStyle?.start ?? 1) - 1;
+  }
+  function running(index: number, kind: "header" | "footer", g: PageGeometry) {
+    const width = (g.width - g.margins.left - g.margins.right) / 20;
+    const slotDocs = Object.fromEntries((["default", "first", "even"] as const).map(variant => {
+      const slot = runningSlot(original, layout, index, variant, kind);
+      return [variant, PMParser.fromSchema(mySchema).parse(new DOMParser().parseFromString(slot.html, "text/html").body)];
+    })) as Record<RunningVariant, PMNode>;
+    return <View key={kind} fixed style={{ position: "absolute", left: g.margins.left / 20, width,
+      ...(kind === "header" ? { top: (g.headerDistance ?? 283) / 20 } : { bottom: (g.footerDistance ?? 283) / 20 }), fontSize: 11, lineHeight: 1.2 }} render={props => {
+      const page = logicalPage(index, props);
+      const variant: RunningVariant = g.differentFirst && (props.subPageNumber || 1) === 1 ? "first" : even && page % 2 === 0 ? "even" : "default";
+      const builder = new PdfBuilder(width, g.height / 20, true, (field, context) => field === "NUMPAGES" ? String(context.totalPages || 1) : numberLabel(logicalPage(index, context), context.totalPages || 1, "plain", { start: 1, alignment: "right", template: "{{PAGE}}", format: g.numberFormat || layout.numberingStyle?.format || "decimal", hideFirst: false }));
+      return builder.body(slotDocs[variant]);
+    }} />;
+  }
+  const date = new Date().toLocaleDateString();
+  return <Document title={opts.title}>{sections.map((section, index) => {
+    const g = section.geometry, margin = g.margins;
+    const nodes: PMNode[] = [];
+    doc.forEach((node, position) => { if (position >= section.from && position < section.to) nodes.push(node); });
+    const content = doc.type.create(null, nodes);
+    const builder = new PdfBuilder((g.width - margin.left - margin.right) / 20, (g.height - margin.top - margin.bottom) / 20);
+    const children = builder.body(content);
+    const credit: Style = { position: "absolute", left: margin.left / 20, right: margin.right / 20, flexDirection: "row", justifyContent: "space-between", fontSize: 9, color: "#777" };
+    return <Page key={index} size={[g.width / 20, g.height / 20]} style={{ paddingTop: margin.top / 20, paddingBottom: margin.bottom / 20, paddingLeft: margin.left / 20, paddingRight: margin.right / 20, fontFamily: "Carlito", fontSize: BASE_FONT_PT, lineHeight: BASE_LINE_HEIGHT, color: "#000" }}>
+      {running(index, "header", g)}
+      {children.length ? children : <Text>{" "}</Text>}
+      {running(index, "footer", g)}
+      {opts.headerFooter && <View fixed style={{ ...credit, top: 3 }}><Text>{opts.title || "Untitled document"}</Text><Text>{date}</Text></View>}
+      {opts.headerFooter && <View fixed style={{ ...credit, bottom: 3 }}><Text>EDTRpad</Text><Text>wordpad.info</Text></View>}
+    </Page>;
+  })}</Document>;
 }
 
 export async function docToPdfBlob(doc: PMNode, opts: PdfExportOptions): Promise<Blob> {
   registerPdfFonts((file) => `${location.origin}/pdf-fonts/${file}`);
-  return pdf(buildPdfDocument(doc, opts)).toBlob();
+  const { readRunningSource } = await import("./header-footer-source");
+  return pdf(buildPdfDocument(doc, opts, await readRunningSource(doc))).toBlob();
 }

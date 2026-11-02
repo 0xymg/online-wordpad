@@ -3,6 +3,7 @@
 // boundary, drawing a gap band between the "pages". The document itself is
 // untouched — spacers are decorations only, so save/export see the plain
 // flow (print hides them via pageStyle and uses real CSS page breaks).
+import { numberLabel } from "@/lib/page-number";
 import { rawSections, runningSlot, runningFragment, type RunningSlots, type RunningVariant } from "@/lib/running-content";
 import { documentSections, sameGeometry, sectionBlockStyle, type PageGeometry } from "@/lib/document-sections";
 import type { DocumentLayout } from "@/lib/document-layout";
@@ -28,22 +29,6 @@ export interface PageLayoutConfig {
   numberingStyle?: DocumentLayout["numberingStyle"];
 }
 
-function numberLabel(page: number, total: number, format: PageNumberFormat, style?: DocumentLayout["numberingStyle"]): string {
-  if (style?.hideFirst && page === 1) return "";
-  if (!style) return format === "of" ? `${page} / ${total}` : String(page);
-  let n = page + style.start - 1;
-  let label = String(n);
-  if (/Roman$/.test(style.format)) {
-    label = "";
-    for (const [value, letters] of [[1000,"M"],[900,"CM"],[500,"D"],[400,"CD"],[100,"C"],[90,"XC"],[50,"L"],[40,"XL"],[10,"X"],[9,"IX"],[5,"V"],[4,"IV"],[1,"I"]] as const) while (n >= value && label.length < 100) { label += letters; n -= value; }
-    if (style.format === "lowerRoman") label = label.toLowerCase();
-  } else if (/Letter$/.test(style.format)) {
-    label = "";
-    while (n > 0) { n--; label = String.fromCharCode(65 + n % 26) + label; n = Math.floor(n / 26); }
-    if (style.format === "lowerLetter") label = label.toLowerCase();
-  }
-  return style.template.replaceAll("{{PAGE}}", label).replaceAll("{{NUMPAGES}}", String(total));
-}
 
 /** A number filling one page-margin band; the CSS pins it to the outer edge. */
 function numberDom(text: string, heightPx: number, place: "top" | "bottom"): HTMLElement {
@@ -663,7 +648,7 @@ export function paginationPlugin(getConfig: () => PageLayoutConfig): Plugin {
           const entry = pages[index], g = entry.geometry;
           if (entry.sectionPage === 0 && g.numberStart !== undefined) counter = g.numberStart;
           else if (index) counter++;
-          const variant: RunningVariant = entry.sectionPage === 0 && g.differentFirst ? "first" : even && (index + 1) % 2 === 0 ? "even" : "default";
+          const variant: RunningVariant = entry.sectionPage === 0 && g.differentFirst ? "first" : even && counter % 2 === 0 ? "even" : "default";
           const formatted = numberLabel(counter, pages.length, "plain", { start: 1, alignment: "right", template: "{{PAGE}}", format: g.numberFormat || cfg.numberingStyle?.format || "decimal", hideFirst: false });
           for (const kind of ["header", "footer"] as const) {
             const slot = runningSlot(runningOriginal, layout, entry.section, variant, kind);

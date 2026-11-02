@@ -1,5 +1,6 @@
 "use client";
 
+import { printPageStyle } from "@/lib/print-style";
 import { updateRunningNumbering } from "@/lib/running-content";
 import { readLayout, defaultDocumentLayout, wrapDocumentHtml, type DocumentLayout } from "@/lib/document-layout";
 import { useEffect, useRef, useCallback, useMemo, useState, lazy, Suspense } from "react";
@@ -1014,46 +1015,16 @@ export default function Editor({
 
   const handlePrint = useReactToPrint({
     contentRef: printRef,
-    pageStyle: `
-      @page { size: ${pageWidthPx}px ${pageHeightPx}px; margin: ${pageMargins.top / 20}pt ${pageMargins.right / 20}pt ${pageMargins.bottom / 20}pt ${pageMargins.left / 20}pt; }
-      body { margin: 0 !important; padding: 0 !important; background: white !important; }
-      .pm-page {
-        zoom: 1 !important;
-        box-shadow: none !important;
-        margin: 0 !important;
-        padding: 0 !important;
-        width: 100% !important;
-        min-height: unset !important;
-      }
-      hr.pm-page-break {
-        border: 0 !important;
-        margin: 0 !important;
-        height: 0 !important;
-        page-break-after: always !important;
-        break-after: page !important;
-      }
-      hr.pm-page-break::after { content: "" !important; display: none !important; }
-      /* On-screen pagination spacers: print uses real CSS page breaks instead. */
-      .pm-page-spacer { display: none !important; }
-      /* The simulated pages are gone in print, so the numbers anchored to them
-         would land in the wrong places. CSS cannot count printed pages
-         (@page margin boxes are unsupported in Chromium) — export to PDF for
-         numbered pages. */
-      .pm-page-number { display: none !important; }
-      .pm-page .ProseMirror { padding-bottom: 0 !important; min-height: unset !important; }
-      /* position:fixed repeats on every printed page (Chromium/Firefox) */
-      .pm-print-header, .pm-print-footer {
-        display: flex !important;
-        position: fixed;
-        left: 0; right: 0;
-        justify-content: space-between;
-        font-family: ${DEFAULT_DOCUMENT_FONT_CSS};
-        font-size: 9px;
-        color: #777;
-      }
-      .pm-print-header { top: -${Math.max(0, pageMarginCm - 0.15)}cm; }
-      .pm-print-footer { bottom: -${Math.max(0, pageMarginCm - 0.15)}cm; }
-    `,
+    documentTitle: docTitle || t.sidebar.untitled,
+    pageStyle: printPageStyle,
+    onBeforePrint: async () => {
+      const view = viewRef.current, host = printRef.current;
+      if (!view || !host) throw new Error("Editor is not ready");
+      const { preparePrintLayout } = await import("@/lib/print-layout");
+      await preparePrintLayout(view, host, printHeaderFooter ? { title: docTitle || t.sidebar.untitled, date: new Date().toLocaleDateString() } : undefined);
+    },
+    onAfterPrint: () => printRef.current?.replaceChildren(),
+    onPrintError: () => { printRef.current?.replaceChildren(); toast.error(tRef.current.toast.printFailed); },
   });
   const [slashMenu, setSlashMenu] = useState<SlashMenuState | null>(null);
   const [imagePopover, setImagePopover] = useState<ImagePopoverState | null>(null);
@@ -3111,13 +3082,7 @@ export default function Editor({
           </div>
         )}
         <TableContextMenu viewRef={viewRef} onProperties={showTableProperties}>
-          <div ref={printRef}>
-            {printHeaderFooter && (
-              <div className="pm-print-header" aria-hidden="true">
-                <span>{docTitle || t.sidebar.untitled}</span>
-                <span>{new Date().toLocaleDateString()}</span>
-              </div>
-            )}
+          <div>
             <div
               className="pm-page"
               ref={editorRef}
@@ -3132,15 +3097,10 @@ export default function Editor({
                 ["zoom" as any]: zoomPercent / 100,
               }}
             />
-            {printHeaderFooter && (
-              <div className="pm-print-footer" aria-hidden="true">
-                <span>EDTRpad</span>
-                <span>wordpad.info</span>
-              </div>
-            )}
           </div>
         </TableContextMenu>
       </div>
+      <div ref={printRef} className="edtr-print-root" style={{ display: "none" }} aria-hidden="true" />
       {focusMode && (
         <button
           type="button"
