@@ -1,6 +1,6 @@
 import { ImageResponse } from "next/og";
 
-export const alt = "EDTRpad: The Online Word Processor That's Already Open";
+export const alt = "EDTRDocs: The Online Word Processor That's Already Open";
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 
@@ -23,7 +23,7 @@ export default function Image() {
         {/* Logo */}
         <div style={{ display: "flex", alignItems: "baseline", gap: "2px", marginBottom: "32px" }}>
           <span style={{ fontSize: 72, fontWeight: 900, letterSpacing: "-2px", color: "#111827" }}>EDTR</span>
-          <span style={{ fontSize: 52, fontWeight: 700, letterSpacing: "4px", color: "#6b7280" }}>PAD</span>
+          <span style={{ fontSize: 52, fontWeight: 700, letterSpacing: "4px", color: "#6b7280" }}>DOCS</span>
         </div>
 
         {/* Headline */}

@@ -11,7 +11,7 @@ export default function AboutDialog({ onClose }: { onClose: () => void }) {
       <DialogHeader>
         <DialogTitle className="sr-only">{t.help.about}</DialogTitle>
         <span className="font-brand select-none leading-none text-start">
-          <span className="text-3xl font-bold tracking-tight text-foreground">EDTR</span><span className="text-xl font-semibold tracking-wider text-muted-foreground">PAD</span>
+          <span className="text-3xl font-bold tracking-tight text-foreground">EDTR</span><span className="text-xl font-semibold tracking-wider text-muted-foreground">DOCS</span>
         </span>
         <DialogDescription className="text-start">{t.help.aboutTagline}</DialogDescription>
       </DialogHeader>

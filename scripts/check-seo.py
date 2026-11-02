@@ -130,7 +130,7 @@ for bot in ["Googlebot", "Bingbot", "OAI-SearchBot", "Claude-SearchBot", "Perple
 for path, content_type in [("/llms.txt", "text/plain"), ("/llms.md", "text/markdown"), ("/llms-full.txt", "text/plain")]:
     status, headers, text = fetch(path)
     assert status == 200 and headers.get("Content-Type", "").startswith(content_type), path
-    assert text.startswith("# EDTRpad") and SITE in text
+    assert text.startswith("# EDTRDocs") and SITE in text
     if path == "/llms.md":
         assert "formatting preserved" not in text and "does not guarantee identical" in text
     if path == "/llms-full.txt":

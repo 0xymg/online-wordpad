@@ -1,8 +1,8 @@
-# EDTRpad (Online WordPad)
+# EDTRDocs (Online WordPad)
 
-> EDTRpad is a free browser-based word processor at wordpad.info, developed by 312. It supports individual writing, DOCX import and document export, with guest editing and optional account sync.
+> EDTRDocs is a free browser-based word processor at wordpad.info, developed by 312. It supports individual writing, DOCX import and document export, with guest editing and optional account sync.
 
-EDTRpad is independent of Microsoft, Google and Notion. It is not Microsoft WordPad or Microsoft Word Online. Guest documents save in the current browser; signed-in documents can sync to an account. DOCX import is content conversion, not a guarantee of identical Word layout. There is no simultaneous multiplayer editing. Product reference reviewed on 2026-10-31.
+EDTRDocs is independent of Microsoft, Google and Notion. It is not Microsoft WordPad or Microsoft Word Online. Guest documents save in the current browser; signed-in documents can sync to an account. DOCX import is content conversion, not a guarantee of identical Word layout. There is no simultaneous multiplayer editing. Product reference reviewed on 2026-10-31.
 
 ## Product reference
 
@@ -15,12 +15,12 @@ EDTRpad is independent of Microsoft, Google and Notion. It is not Microsoft Word
 - [Open DOCX online](https://wordpad.info/guides/open-docx-online/index.md): Open, edit and export a Word file, with formatting and storage limitations.
 - [Google Docs alternative](https://wordpad.info/guides/google-docs-alternative/index.md): Individual writing versus live shared editing.
 - [Export to Word](https://wordpad.info/guides/export-to-word-docx-online/index.md): Download DOCX and choose between editable and fixed-layout formats.
-- [WordPad vs Google Docs](https://wordpad.info/guides/wordpad-vs-google-docs/index.md): Distinguishes classic WordPad, EDTRpad and Google Docs.
+- [WordPad vs Google Docs](https://wordpad.info/guides/wordpad-vs-google-docs/index.md): Distinguishes classic WordPad, EDTRDocs and Google Docs.
 - [WordPad vs Microsoft Word](https://wordpad.info/guides/wordpad-vs-microsoft-word/index.md): Browser and desktop workflows, including free Word web apps.
 
 ## Website
 
-- [EDTRpad homepage](https://wordpad.info/): Product overview and interactive editor demo.
+- [EDTRDocs homepage](https://wordpad.info/): Product overview and interactive editor demo.
 - [Open the editor](https://wordpad.info/pad): Browser application; document content is not part of this public reference.
 - [Arabic homepage](https://wordpad.info/ar): Arabic product overview.
 - [All guides](https://wordpad.info/guides): Public articles; each guide has an index.md representation generated from its source.
@@ -28,4 +28,4 @@ EDTRpad is independent of Microsoft, Google and Notion. It is not Microsoft Word
 ## Optional
 
 - [Sitemap](https://wordpad.info/sitemap.xml): Canonical public HTML URLs and content modification dates.
-- [312](https://312.sh/): The software and product studio developing EDTRpad.
+- [312](https://312.sh/): The software and product studio developing EDTRDocs.

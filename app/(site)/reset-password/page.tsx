@@ -40,7 +40,7 @@ function ResetPasswordForm() {
       <div className="w-full max-w-sm rounded-xl border border-border bg-background p-6 shadow-2xl">
         <div className="mb-4 font-brand leading-none">
           <span className="text-xl font-bold tracking-tight text-foreground">EDTR</span>
-          <span className="text-base font-semibold tracking-wider text-muted-foreground">PAD</span>
+          <span className="text-base font-semibold tracking-wider text-muted-foreground">DOCS</span>
         </div>
 
         <h2 className="mb-1 text-lg font-semibold">Set new password</h2>

@@ -274,9 +274,9 @@ export const fr: Dictionary = {
 
   help: {
     shortcuts: "Raccourcis clavier",
-    about: "À propos d'EDTRpad",
+    about: "À propos d'EDTRDocs",
     aboutText:
-      "EDTRpad est un traitement de texte en ligne gratuit disponible sur wordpad.info. C'est un projet indépendant, sans aucun lien avec Microsoft.",
+      "EDTRDocs est un traitement de texte en ligne gratuit disponible sur wordpad.info. C'est un projet indépendant, sans aucun lien avec Microsoft.",
     aboutProjects: "Autres outils Project EDTR",
     aboutStudio: "Découvrir les produits de 312",
     aboutTagline: "Un traitement de texte déjà ouvert.",
@@ -444,7 +444,7 @@ export const fr: Dictionary = {
     greetingEvening: "Bonsoir",
     greetingNight: "Vous travaillez tard",
     greetingWith: (greeting: string, name: string) => `${greeting}, ${name} !`,
-    titleGuest: "Bienvenue sur EDTRpad",
+    titleGuest: "Bienvenue sur EDTRDocs",
     subtitle:
       "Rédigez, mettez en forme et imprimez vos documents directement dans votre navigateur. Rien à installer, aucun compte requis, et tout est enregistré au fil de la frappe.",
     startNew: "Créer un nouveau document",
@@ -560,7 +560,7 @@ export const fr: Dictionary = {
     ],
     slashTitle: "Un simple [[/]].",
     slashP1:
-      "Chaque commande d'EDTRpad se cache derrière une seule touche. Tapez / n'importe où dans votre document et le menu s'ouvre là où se trouve votre curseur : titres, tableaux, images, listes, sauts de page, mise en forme, export. Continuez à taper pour filtrer, appuyez sur Enter pour insérer.",
+      "Chaque commande d'EDTRDocs se cache derrière une seule touche. Tapez / n'importe où dans votre document et le menu s'ouvre là où se trouve votre curseur : titres, tableaux, images, listes, sauts de page, mise en forme, export. Continuez à taper pour filtrer, appuyez sur Enter pour insérer.",
     slashP2:
       "Si vous avez utilisé Notion, vos mains connaissent déjà le geste. Sinon, voici ce que cela veut dire en pratique : vous ne quittez jamais le clavier pour insérer un tableau, et vous ne partez plus jamais à la recherche d'un bouton.",
     slashP3:
@@ -580,7 +580,7 @@ export const fr: Dictionary = {
     frictionP1:
       "Vous connaissez la séquence. Ouvrir Word et attendre qu'il se charge, puis fermer l'invite de connexion, puis passer une galerie de modèles que personne n'a demandée. Ou ouvrir Google Docs, se connecter au bon compte, attendre la liste des fichiers, cliquer sur Nouveau.",
     frictionP2:
-      "EDTRpad saute tout cela. **Vous êtes déjà dans l'éditeur.** Tapez, mettez en forme, imprimez ou exportez, fermez l'onglet. Le tout prend le temps de l'écriture, pas plus.",
+      "EDTRDocs saute tout cela. **Vous êtes déjà dans l'éditeur.** Tapez, mettez en forme, imprimez ou exportez, fermez l'onglet. Le tout prend le temps de l'écriture, pas plus.",
     frictionP3:
       "C'est la partie de Word que la plupart des gens utilisent vraiment : gras, listes, tableaux, images, impression. Sans rien de la partie qu'ils n'utilisent pas.",
     frictionCta: "Ouvrir l'éditeur →",
@@ -588,10 +588,10 @@ export const fr: Dictionary = {
     goneP1:
       "Microsoft a retiré WordPad de Windows avec la mise à jour 24H2, après une trentaine d'années. Aucun réglage ne permet de le récupérer et il n'existe aucun remplaçant officiel, ce qui laisse un vide gênant : Notepad ne sait pas mettre un mot en gras, et Word est un abonnement.",
     goneP2:
-      "EDTRpad couvre ce que faisait WordPad : texte enrichi, tableaux, images, sauts de page et impression. Il fonctionne dans un onglet de navigateur plutôt que dans une fenêtre installée, donc il marche aussi sur un Mac, un Chromebook, un téléphone ou un ordinateur où vous n'avez pas le droit d'installer de logiciels. Et il est nettement plus rapide à manier, parce qu'aucune barre de menus ne s'interpose entre vous et ce que vous voulez.",
+      "EDTRDocs couvre ce que faisait WordPad : texte enrichi, tableaux, images, sauts de page et impression. Il fonctionne dans un onglet de navigateur plutôt que dans une fenêtre installée, donc il marche aussi sur un Mac, un Chromebook, un téléphone ou un ordinateur où vous n'avez pas le droit d'installer de logiciels. Et il est nettement plus rapide à manier, parce qu'aucune barre de menus ne s'interpose entre vous et ce que vous voulez.",
     goneCta: "Ouvrir l'éditeur →",
     compareTitle: "Où il se situe",
-    compareCols: ["EDTRpad", "Microsoft Word", "Word Online", "Google Docs", "WordPad"],
+    compareCols: ["EDTRDocs", "Microsoft Word", "Word Online", "Google Docs", "WordPad"],
     compareRows: [
       { label: "Menu de commandes slash (/)", cells: ["Oui", "Non", "Non", "En partie (menu @)", "Non"] },
       { label: "Prix", cells: ["Gratuit", "Abonnement", "Version gratuite", "Gratuit", "Retiré de Windows"] },
@@ -604,7 +604,7 @@ export const fr: Dictionary = {
       { label: "Marges d'impression exactes", cells: ["Oui", "Oui", "Oui", "Limité", "Oui"] },
       { label: "Votre fichier quitte votre appareil", cells: ["Non", "Non", "Oui", "Oui", "Non"] },
     ],
-    compareCaption: "EDTRpad est un produit indépendant, sans affiliation avec Microsoft, Google ou Notion.",
+    compareCaption: "EDTRDocs est un produit indépendant, sans affiliation avec Microsoft, Google ou Notion.",
     featuresTitle: "Tout ce que vous attendez. Rien à apprendre.",
     featuresAlsoLabel: "Également inclus :",
     featuresAlsoItems: [
@@ -664,7 +664,7 @@ export const fr: Dictionary = {
     footerMd: "EDTR.md · éditeur Markdown",
     footerPlus: "EDTR.plus · alternative à Notepad++",
     footerCredit: "Fait partie de {project}, proposé par {by}",
-    footerCopyright: (year: number) => `© ${year} EDTRpad. Sans affiliation avec Microsoft, Google ou Notion.`,
+    footerCopyright: (year: number) => `© ${year} EDTRDocs. Sans affiliation avec Microsoft, Google ou Notion.`,
     footerTrademark: "Microsoft Word et WordPad sont des marques de Microsoft Corporation.",
   },
 
@@ -687,21 +687,21 @@ export const fr: Dictionary = {
     q1: "C'est quoi, le menu slash ?",
     a1: "Appuyez sur / en écrivant et un menu avec recherche s'ouvre à votre curseur, avec toutes les commandes de l'éditeur : titres, tableaux, images, listes, sauts de page, export. Tapez pour filtrer, Enter pour insérer. Il remplace la barre d'outils pour presque tout.",
     q2: "J'utilise Notion. Est-ce que je serai en terrain connu ?",
-    a2: "Oui, c'est le principe. Même réflexe /, même édition qui sait s'effacer. La différence, c'est ce qui sort au bout : Notion vous donne une page dans un espace de travail, EDTRpad vous donne un document. De vrais sauts de page, des marges d'impression exactes, et un .docx à envoyer par e-mail à quelqu'un qui n'a jamais entendu parler de tout ça.",
+    a2: "Oui, c'est le principe. Même réflexe /, même édition qui sait s'effacer. La différence, c'est ce qui sort au bout : Notion vous donne une page dans un espace de travail, EDTRDocs vous donne un document. De vrais sauts de page, des marges d'impression exactes, et un .docx à envoyer par e-mail à quelqu'un qui n'a jamais entendu parler de tout ça.",
     q3: "Faut-il un compte ?",
     a3: "Non. Ouvrez l'éditeur et écrivez. Le compte est facultatif et ne sert qu'à synchroniser vos appareils.",
     q4: "Si je ferme l'onglet, est-ce que je perds mon travail ?",
     a4: "Non. Votre document est enregistré en continu dans le stockage local de votre navigateur et vous attend quand vous revenez avec le même navigateur. Si vous effacez vos données de navigation, cette copie disparaît avec elles ; exportez donc un fichier ou créez un compte pour tout ce que vous ne pouvez pas vous permettre de perdre.",
     q5: "Fonctionne-t-il sans connexion internet ?",
-    a5: "Pas pour le moment. EDTRpad a besoin d'une connexion pour charger la page. Une fois la page ouverte, ce que vous tapez est enregistré localement, mais nous préférons vous le dire franchement plutôt que de vous laisser le découvrir dans un avion.",
+    a5: "Pas pour le moment. EDTRDocs a besoin d'une connexion pour charger la page. Une fois la page ouverte, ce que vous tapez est enregistré localement, mais nous préférons vous le dire franchement plutôt que de vous laisser le découvrir dans un avion.",
     q6: "Puis-je coller quelque chose de confidentiel en toute sécurité ?",
     a6: "Les documents invités sont enregistrés dans le navigateur actuel. Si vous vous connectez, ils peuvent être enregistrés et synchronisés avec votre compte sur le serveur. Fermer un onglet ne les supprime pas ; effacer les données du navigateur peut les supprimer. Exportez les documents à conserver.",
     q7: "Mon .docx s'ouvrira-t-il correctement dans Word ?",
-    a7: "Oui. EDTRpad exporte des fichiers .docx standard compatibles avec Word et d’autres éditeurs. Les polices, la pagination et les mises en page complexes peuvent varier selon l’application. Vérifiez la copie exportée avant de la partager.",
+    a7: "Oui. EDTRDocs exporte des fichiers .docx standard compatibles avec Word et d’autres éditeurs. Les polices, la pagination et les mises en page complexes peuvent varier selon l’application. Vérifiez la copie exportée avant de la partager.",
     q8: "Puis-je ouvrir mes fichiers Word existants ?",
     a8: "Oui. Choisissez Fichier > Ouvrir ou Ctrl+O, puis un fichier .docx, .txt, .md, .html ou .htm. Le contenu DOCX est converti en document modifiable ; conservez l’original si la mise en page exacte est importante.",
     q9: "Est-ce Microsoft Word ?",
-    a9: "Non. EDTRpad est un traitement de texte indépendant, sans aucun lien avec Microsoft. Il gère les documents du quotidien ; il ne cherche pas à remplacer Word pour une thèse de 300 pages avec suivi des modifications et citations.",
+    a9: "Non. EDTRDocs est un traitement de texte indépendant, sans aucun lien avec Microsoft. Il gère les documents du quotidien ; il ne cherche pas à remplacer Word pour une thèse de 300 pages avec suivi des modifications et citations.",
     q10: "Qu'est-il arrivé à WordPad ?",
     a10: "Microsoft l'a retiré de Windows à partir de la version 24H2. Ce n'est pas un bug, et il n'existe aucun moyen officiel de le réinstaller.",
     q11: "Est-ce vraiment gratuit ?",

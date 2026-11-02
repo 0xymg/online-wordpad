@@ -5,7 +5,7 @@ import LandingStructuredData from "@/app/components/LandingStructuredData";
 import { LANDING_LANGUAGES } from "@/lib/landing-seo";
 
 export const metadata: Metadata = {
-  title: { absolute: "Online Word Processor with a Slash Menu: Free Word Alternative | EDTRpad" },
+  title: { absolute: "Online Word Processor with a Slash Menu: Free Word Alternative | EDTRDocs" },
   description:
     "A free online Word and WordPad alternative with a Notion-style slash menu. Type / for tables, images, headings and export. No download, no account, ready in a second.",
   keywords: [
@@ -37,7 +37,7 @@ export const metadata: Metadata = {
       "A free online Word and WordPad alternative with a Notion-style slash menu. Type / for tables, images, headings and export. No download, no account, ready in a second.",
     type: "website",
     url: "https://wordpad.info",
-    siteName: "EDTRpad",
+    siteName: "EDTRDocs",
   },
   twitter: {
     images: [SOCIAL_IMAGE.url],

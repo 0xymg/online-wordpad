@@ -161,7 +161,7 @@ const pageLayoutConfig: PageLayoutConfig = {
 const PROFILE_EXIT_MS = 180;
 
 /** Filename for the bulk "download selected" archive. */
-const ZIP_NAME = "edtrpad-documents.zip";
+const ZIP_NAME = "edtrdocs-documents.zip";
 
 function setTextAlignCmd(align: "left" | "center" | "right" | "justify") {
   return (state: EditorState, dispatch?: (tr: Transaction) => void): boolean => {
@@ -2737,7 +2737,7 @@ export default function Editor({
 
   // Browser tab title reflects the active document
   useEffect(() => {
-    document.title = `${docTitle || t.sidebar.untitled} — EDTRpad`;
+    document.title = `${docTitle || t.sidebar.untitled} — EDTRDocs`;
   }, [docTitle, t.sidebar.untitled]);
 
   // Keep the search plugin in sync with the find panel inputs
@@ -3488,7 +3488,7 @@ export default function Editor({
         {/* Brand watermark, centered — only on small screens where the header brand is hidden */}
         <div className="font-brand pointer-events-none absolute inset-x-0 top-1/2 z-0 -translate-y-1/2 hidden max-[799px]:flex items-center justify-center select-none leading-none opacity-60">
           <span className="text-sm font-bold tracking-tight text-muted-foreground">EDTR</span>
-          <span className="text-xs font-semibold tracking-wider text-muted-foreground">PAD</span>
+          <span className="text-xs font-semibold tracking-wider text-muted-foreground">DOCS</span>
         </div>
         <div className="relative z-10 flex items-center justify-between gap-2">
           <div className="flex items-center gap-2 text-muted-foreground">
@@ -3525,7 +3525,7 @@ export default function Editor({
             <div className="flex items-center gap-1.5">
               <span className="text-muted-foreground">{t.status.zoom}</span>
               <Select value={String(zoomPercent)} onValueChange={(v) => setZoomPercent(Number(v))}>
-                <SelectTrigger size="sm" aria-label={t.status.zoom} className="h-6 w-[76px] px-1.5 text-[11px]">
+                <SelectTrigger size="sm" aria-label={t.status.zoom} className="h-7! w-[76px] px-2 py-0 text-[11px]">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent align="end">
@@ -3542,7 +3542,7 @@ export default function Editor({
             <div className="flex items-center gap-1.5 max-[799px]:hidden">
               <span className="text-muted-foreground">{t.status.pageMargin}</span>
               <Select value={presetMargin || "custom"} onValueChange={v=>{if(v==="configure")showMargins();else changeMarginPreset(v);}}>
-                <SelectTrigger size="sm" aria-label={t.status.pageMargin} className="h-6 min-w-[145px] w-auto max-w-[220px] px-2 text-[11px]">
+                <SelectTrigger size="sm" aria-label={t.status.pageMargin} className="h-7! min-w-[145px] w-auto max-w-[220px] px-2 py-0 text-[11px]">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent position="popper" side="top" align="end" collisionPadding={12} className="min-w-[270px] max-w-[calc(100vw-24px)]">
@@ -3559,7 +3559,7 @@ export default function Editor({
                 <PopoverTrigger asChild>
                   <button
                     type="button"
-                    className="inline-flex h-6 items-center gap-1 rounded border border-input bg-background px-1.5"
+                    className="inline-flex h-7 items-center gap-1 rounded border border-input bg-background px-2 shadow-xs"
                     title={uiText(t, "Paper background color")}
                   >
                     <span
@@ -3608,7 +3608,7 @@ export default function Editor({
               onClick={toggleDark}
               title={uiText(t, isDark ? "Switch to light mode" : "Switch to dark mode")}
               aria-label={t.status.toggleDarkMode}
-              className="inline-flex h-6 w-6 items-center justify-center rounded border border-input bg-background text-muted-foreground hover:bg-accent/70 hover:text-foreground transition-colors"
+              className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded border border-input bg-background text-muted-foreground shadow-xs hover:bg-accent/70 hover:text-foreground transition-colors"
             >
               {isDark ? <Sun size={14} /> : <Moon size={14} />}
             </button>

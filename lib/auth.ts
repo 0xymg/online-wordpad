@@ -29,7 +29,7 @@ async function sendMail({ to, subject, html, devLabel }: {
   to: string; subject: string; html: string; devLabel: string;
 }) {
   if (!process.env.RESEND_API_KEY) {
-    console.log(`[EDTRpad] ${devLabel}: ${html.match(/href="([^"]+)"/)?.[1] ?? ""}`);
+    console.log(`[EDTRDocs] ${devLabel}: ${html.match(/href="([^"]+)"/)?.[1] ?? ""}`);
     return;
   }
   try {
@@ -40,14 +40,14 @@ async function sendMail({ to, subject, html, devLabel }: {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        from: process.env.EMAIL_FROM || "EDTRpad <onboarding@resend.dev>",
+        from: process.env.EMAIL_FROM || "EDTRDocs <onboarding@resend.dev>",
         to,
         subject,
         html,
       }),
     });
   } catch (e) {
-    console.error(`[EDTRpad] ${devLabel} failed:`, e);
+    console.error(`[EDTRDocs] ${devLabel} failed:`, e);
   }
 }
 
@@ -59,7 +59,7 @@ async function sendMail({ to, subject, html, devLabel }: {
 const secret = process.env.BETTER_AUTH_SECRET;
 if (!secret && process.env.NODE_ENV === "production") {
   console.error(
-    "[EDTRpad] BETTER_AUTH_SECRET is not set. Sessions will not survive deploys — set it in your environment."
+    "[EDTRDocs] BETTER_AUTH_SECRET is not set. Sessions will not survive deploys — set it in your environment."
   );
 }
 
@@ -92,7 +92,7 @@ export const auth = betterAuth({
     sendResetPassword: async ({ user, url }) => {
       await sendMail({
         to: user.email,
-        subject: "Reset your EDTRpad password",
+        subject: "Reset your EDTRDocs password",
         html: `<p>Click the link below to reset your password. This link expires in 1 hour.</p><p><a href="${url}">Reset password</a></p><p>If you didn't request this, you can ignore this email.</p>`,
         devLabel: `Password reset link for ${user.email}`,
       });
@@ -104,8 +104,8 @@ export const auth = betterAuth({
     sendVerificationEmail: async ({ user, url }) => {
       await sendMail({
         to: user.email,
-        subject: "Verify your EDTRpad email",
-        html: `<p>Welcome to EDTRpad! Please verify your email by clicking the link below:</p><p><a href="${url}">Verify email</a></p>`,
+        subject: "Verify your EDTRDocs email",
+        html: `<p>Welcome to EDTRDocs! Please verify your email by clicking the link below:</p><p><a href="${url}">Verify email</a></p>`,
         devLabel: `Verification link for ${user.email}`,
       });
     },
@@ -134,8 +134,8 @@ export const auth = betterAuth({
       sendChangeEmailVerification: async ({ newEmail, url }: { newEmail: string; url: string }) => {
         await sendMail({
           to: newEmail,
-          subject: "Confirm your new EDTRpad email",
-          html: `<p>Confirm this address to finish changing the email on your EDTRpad account:</p><p><a href="${url}">Confirm email change</a></p><p>If you didn't request this, you can ignore this email.</p>`,
+          subject: "Confirm your new EDTRDocs email",
+          html: `<p>Confirm this address to finish changing the email on your EDTRDocs account:</p><p><a href="${url}">Confirm email change</a></p><p>If you didn't request this, you can ignore this email.</p>`,
           devLabel: `Email change link for ${newEmail}`,
         });
       },

@@ -50,7 +50,7 @@ export default function AuthPageClient({
         <div className="mx-auto flex min-h-16 max-w-6xl flex-wrap gap-3 py-3 items-center justify-between">
           <Link href="/" className="font-brand leading-none">
             <span className="text-lg font-bold tracking-tight">EDTR</span>
-            <span className="text-sm font-semibold tracking-wider text-muted-foreground">PAD</span>
+            <span className="text-sm font-semibold tracking-wider text-muted-foreground">DOCS</span>
           </Link>
           <div className="flex items-center gap-2">
             <Select value={locale} onValueChange={(v) => setLocale(v as typeof locale)}>

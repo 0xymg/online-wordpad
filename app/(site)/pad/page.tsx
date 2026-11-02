@@ -19,16 +19,16 @@ export const metadata = {
   },
   openGraph: {
     images: [SOCIAL_IMAGE],
-    title: "EDTRpad Editor — Free Online WordPad",
+    title: "EDTRDocs Editor — Free Online WordPad",
     description: "Write and format documents in your browser. Export to Word (.docx), RTF, HTML, or TXT. No install.",
     url: "https://wordpad.info/pad",
     type: "website" as const,
-    siteName: "EDTRpad",
+    siteName: "EDTRDocs",
   },
   twitter: {
     images: [SOCIAL_IMAGE.url],
     card: "summary_large_image" as const,
-    title: "EDTRpad Editor — Free Online WordPad",
+    title: "EDTRDocs Editor — Free Online WordPad",
     description: "Write and format documents in your browser. No install, no login.",
   },
 };

@@ -1,6 +1,6 @@
 <div align="center">
-  <img src="public/logo.svg" alt="EDTRpad" width="72" />
-  <h1>EDTRpad</h1>
+  <img src="public/logo.svg" alt="EDTRDocs" width="72" />
+  <h1>EDTRDocs</h1>
   <p><strong>The online word processor that's already open.</strong></p>
   <p>A free Word and WordPad alternative in your browser. Write, format, print, and export — no download or account required.</p>
   <p><a href="https://wordpad.info/pad"><strong>Start writing →</strong></a> · <a href="https://wordpad.info">Explore the features</a></p>
@@ -99,4 +99,4 @@ The repository deploys through its Vercel Git integration. Production uses `main
 
 ---
 
-Part of [Project EDTR](https://ymg.digital). EDTRpad is an independent project and is not affiliated with Microsoft, Google, or Notion. Microsoft Word and WordPad are trademarks of Microsoft Corporation.
+Part of [Project EDTR](https://ymg.digital). EDTRDocs is an independent project and is not affiliated with Microsoft, Google, or Notion. Microsoft Word and WordPad are trademarks of Microsoft Corporation.

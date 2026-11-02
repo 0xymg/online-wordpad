@@ -19,7 +19,7 @@ for name in ('export.pdf', 'print.pdf', 'edited.pdf', 'credits.pdf'):
         expected_width, expected_height = (595.3, 841.9) if index < 3 else (792, 612)
         assert abs(width - expected_width) < 0.5 and abs(height - expected_height) < 0.5, (name, index, width, height)
         if name == 'credits.pdf':
-            assert 'EDTRpad' in text and 'wordpad.info' in text, (name, index, text)
+            assert 'EDTRDocs' in text and 'wordpad.info' in text, (name, index, text)
         assert page.images, (name, index, 'Missing header image')
         # In both engines, the header sits above the body and the footer below it.
         positions = {}

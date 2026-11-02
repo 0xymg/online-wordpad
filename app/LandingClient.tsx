@@ -209,7 +209,7 @@ export default function LandingClient() {
         <div className="relative mx-auto flex h-16 max-w-6xl items-center justify-between px-6">
           <span className="font-brand leading-none">
             <span className="text-2xl font-bold tracking-tight">EDTR</span>
-            <span className="text-lg font-semibold tracking-wider text-[var(--pad-ink-50)]">PAD</span>
+            <span className="text-lg font-semibold tracking-wider text-[var(--pad-ink-50)]">DOCS</span>
           </span>
           <nav className="absolute left-1/2 hidden -translate-x-1/2 items-center gap-6 text-[13px] text-[var(--pad-ink-70)] lg:flex">
             <a href="#slash-menu" className="transition-colors hover:text-[var(--pad-ink)]">{t.landing.navSlash}</a>
@@ -669,7 +669,7 @@ export default function LandingClient() {
           <div className="max-w-xs">
             <span className="font-brand leading-none">
               <span className="text-lg font-bold tracking-tight text-[var(--pad-ink)]">EDTR</span>
-              <span className="text-sm font-semibold tracking-wider text-[var(--pad-ink-50)]">PAD</span>
+              <span className="text-sm font-semibold tracking-wider text-[var(--pad-ink-50)]">DOCS</span>
             </span>
             <p className="mt-2 text-sm text-[var(--pad-ink-50)]">
               {t.landing.footerTagline}
@@ -700,7 +700,7 @@ export default function LandingClient() {
           <div className="flex flex-col gap-10 sm:flex-row sm:gap-20">
           <div>
             <h3 className="text-xs font-semibold uppercase tracking-wide text-[var(--pad-ink-50)]">
-              EDTRpad
+              EDTRDocs
             </h3>
             <div className="mt-3 flex flex-col gap-2 text-sm text-[var(--pad-ink-50)]">
               <Link href="/pad" className="transition-colors hover:text-[var(--pad-ink)]">{t.landing.footerEditor}</Link>

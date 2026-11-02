@@ -4,7 +4,7 @@ import { googleEnabled } from "@/lib/auth-flags";
 // The start screen is app UI over the editor, not standalone content — keep it
 // out of the index and point search engines at the editor instead.
 export const metadata = {
-  title: "Your Documents — EDTRpad",
+  title: "Your Documents — EDTRDocs",
   description: "Start a new document, pick a template, or continue where you left off.",
   alternates: {
     canonical: "https://wordpad.info/pad",

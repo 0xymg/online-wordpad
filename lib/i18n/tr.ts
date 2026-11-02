@@ -274,9 +274,9 @@ export const tr: Dictionary = {
 
   help: {
     shortcuts: "Klavye kısayolları",
-    about: "EDTRpad hakkında",
+    about: "EDTRDocs hakkında",
     aboutText:
-      "EDTRpad, wordpad.info adresinde çalışan ücretsiz bir çevrimiçi kelime işlemcidir. Bağımsız bir projedir ve Microsoft ile ilişkisi yoktur.",
+      "EDTRDocs, wordpad.info adresinde çalışan ücretsiz bir çevrimiçi kelime işlemcidir. Bağımsız bir projedir ve Microsoft ile ilişkisi yoktur.",
     aboutProjects: "Project EDTR’dan diğer araçlar",
     aboutStudio: "312’nin tüm ürünlerini keşfedin",
     aboutTagline: "Zaten açık olan kelime işlemci.",
@@ -444,7 +444,7 @@ export const tr: Dictionary = {
     greetingEvening: "İyi akşamlar",
     greetingNight: "Geç saatlere kaldınız",
     greetingWith: (greeting: string, name: string) => `${greeting}, ${name}!`,
-    titleGuest: "EDTRpad'e hoş geldiniz",
+    titleGuest: "EDTRDocs'e hoş geldiniz",
     subtitle:
       "Belgelerinizi doğrudan tarayıcıda yazın, biçimlendirin ve yazdırın. Kurulum yok, hesap gerekmiyor, yazdıkça kaydediliyor.",
     startNew: "Yeni bir belge başlatın",
@@ -560,7 +560,7 @@ export const tr: Dictionary = {
     ],
     slashTitle: "Sadece bir [[/]].",
     slashP1:
-      "EDTRpad'de her komut tek bir tuşun arkasında. Belgenin herhangi bir yerinde / yazın, menü imlecinizin tam olduğu yerde açılır: başlıklar, tablolar, görseller, listeler, sayfa sonları, biçimlendirme, dışa aktarma. Yazmaya devam ederek filtreleyin, Enter ile ekleyin.",
+      "EDTRDocs'de her komut tek bir tuşun arkasında. Belgenin herhangi bir yerinde / yazın, menü imlecinizin tam olduğu yerde açılır: başlıklar, tablolar, görseller, listeler, sayfa sonları, biçimlendirme, dışa aktarma. Yazmaya devam ederek filtreleyin, Enter ile ekleyin.",
     slashP2:
       "Notion kullandıysanız, elleriniz bunu zaten biliyor. Kullanmadıysanız, pratikte anlamı şu: tablo eklemek için ellerinizi klavyeden hiç kaldırmazsınız ve bir daha asla düğme aramaya çıkmazsınız.",
     slashP3:
@@ -580,7 +580,7 @@ export const tr: Dictionary = {
     frictionP1:
       "Sırayı bilirsiniz. Word'ü açıp yüklenmesini bekleyin, sonra oturum açma istemini kapatın, sonra istemediğiniz bir şablon galerisini geçin. Ya da Google Docs'u açın, doğru hesaba giriş yapın, dosya listesini bekleyin, Yeni'ye tıklayın.",
     frictionP2:
-      "EDTRpad bunların hepsini atlar. **Zaten editörün içindesiniz.** Yazın, biçimlendirin, yazdırın ya da dışa aktarın, sekmeyi kapatın. Bütün iş, yazmanın sürdüğü kadar sürer.",
+      "EDTRDocs bunların hepsini atlar. **Zaten editörün içindesiniz.** Yazın, biçimlendirin, yazdırın ya da dışa aktarın, sekmeyi kapatın. Bütün iş, yazmanın sürdüğü kadar sürer.",
     frictionP3:
       "Word'ün çoğu insanın gerçekten kullandığı kısmı: kalın, listeler, tablolar, görseller, yazdırma. Kullanmadıkları kısım ise hiç yok.",
     frictionCta: "Editörü açın →",
@@ -588,10 +588,10 @@ export const tr: Dictionary = {
     goneP1:
       "Microsoft, yaklaşık otuz yılın ardından WordPad'i 24H2 güncellemesiyle Windows'tan kaldırdı. Geri getirecek bir ayar da resmi bir yedek de yok. Bu da tuhaf bir boşluk bırakıyor, çünkü Notepad bir kelimeyi kalın yapamıyor, Word ise abonelik istiyor.",
     goneP2:
-      "EDTRpad, WordPad'in yaptıklarını karşılar: zengin metin, tablolar, görseller, sayfa sonları ve yazdırma. Kurulu bir pencere yerine tarayıcı sekmesinde çalışır. Bu yüzden Mac'te, Chromebook'ta, telefonda ya da yazılım kurma izninizin olmadığı bir bilgisayarda da işinizi görür. Üstelik kullanımı epey daha hızlı, çünkü sizinle istediğiniz şey arasında bir menü çubuğu yok.",
+      "EDTRDocs, WordPad'in yaptıklarını karşılar: zengin metin, tablolar, görseller, sayfa sonları ve yazdırma. Kurulu bir pencere yerine tarayıcı sekmesinde çalışır. Bu yüzden Mac'te, Chromebook'ta, telefonda ya da yazılım kurma izninizin olmadığı bir bilgisayarda da işinizi görür. Üstelik kullanımı epey daha hızlı, çünkü sizinle istediğiniz şey arasında bir menü çubuğu yok.",
     goneCta: "Editörü açın →",
     compareTitle: "Nereye oturuyor",
-    compareCols: ["EDTRpad", "Microsoft Word", "Word Online", "Google Docs", "WordPad"],
+    compareCols: ["EDTRDocs", "Microsoft Word", "Word Online", "Google Docs", "WordPad"],
     compareRows: [
       { label: "Slash (/) komut menüsü", cells: ["Evet", "Hayır", "Hayır", "Kısmen (@ menüsü)", "Hayır"] },
       { label: "Fiyat", cells: ["Ücretsiz", "Abonelik", "Ücretsiz sürüm", "Ücretsiz", "Windows'tan kaldırıldı"] },
@@ -604,7 +604,7 @@ export const tr: Dictionary = {
       { label: "Hassas yazdırma kenar boşlukları", cells: ["Evet", "Evet", "Evet", "Sınırlı", "Evet"] },
       { label: "Dosyanız cihazınızdan çıkar mı", cells: ["Hayır", "Hayır", "Evet", "Evet", "Hayır"] },
     ],
-    compareCaption: "EDTRpad bağımsız bir üründür; Microsoft, Google veya Notion ile ilişkili değildir.",
+    compareCaption: "EDTRDocs bağımsız bir üründür; Microsoft, Google veya Notion ile ilişkili değildir.",
     featuresTitle: "Beklediğiniz her şey. Öğrenmeniz gereken hiçbir şey.",
     featuresAlsoLabel: "Ayrıca içinde:",
     featuresAlsoItems: [
@@ -664,7 +664,7 @@ export const tr: Dictionary = {
     footerMd: "EDTR.md · Markdown editörü",
     footerPlus: "EDTR.plus · Notepad++ alternatifi",
     footerCredit: "{project} ailesinin bir parçası, {by} tarafından sunulur",
-    footerCopyright: (year: number) => `© ${year} EDTRpad. Microsoft, Google veya Notion ile ilişkili değildir.`,
+    footerCopyright: (year: number) => `© ${year} EDTRDocs. Microsoft, Google veya Notion ile ilişkili değildir.`,
     footerTrademark: "Microsoft Word ve WordPad, Microsoft Corporation'ın ticari markalarıdır.",
   },
 
@@ -687,21 +687,21 @@ export const tr: Dictionary = {
     q1: "Slash menüsü nedir?",
     a1: "Yazarken / tuşuna basın; imlecinizde, editördeki her komutu içeren aranabilir bir menü açılır: başlıklar, tablolar, görseller, listeler, sayfa sonları, dışa aktarma. Yazarak filtreleyin, Enter ile ekleyin. Hemen her iş için araç çubuğunun yerini alır.",
     q2: "Notion kullanıyorum. Burası tanıdık gelir mi?",
-    a2: "Evet, amaç da bu. Aynı / refleksi, aynı araya girmeyen yazma deneyimi. Fark, işin sonunda elinize geçende: Notion size bir çalışma alanında bir sayfa verir, EDTRpad ise bir belge. Gerçek sayfa sonları, hassas yazdırma kenar boşlukları ve bunların hiçbirini duymamış birine e-postayla gönderebileceğiniz bir .docx.",
+    a2: "Evet, amaç da bu. Aynı / refleksi, aynı araya girmeyen yazma deneyimi. Fark, işin sonunda elinize geçende: Notion size bir çalışma alanında bir sayfa verir, EDTRDocs ise bir belge. Gerçek sayfa sonları, hassas yazdırma kenar boşlukları ve bunların hiçbirini duymamış birine e-postayla gönderebileceğiniz bir .docx.",
     q3: "Hesap gerekiyor mu?",
     a3: "Hayır. Editörü açın ve yazın. Hesap isteğe bağlıdır ve yalnızca cihazlar arası eşitleme için vardır.",
     q4: "Sekmeyi kapatırsam çalışmam kaybolur mu?",
     a4: "Hayır. Belgeniz sürekli olarak tarayıcınızın yerel depolamasına kaydedilir ve aynı tarayıcıya döndüğünüzde sizi bekler. Tarama verilerinizi temizlerseniz o kopya da gider, bu yüzden kaybetmeyi göze alamayacağınız her şey için bir dosya dışa aktarın veya hesap oluşturun.",
     q5: "İnternet bağlantısı olmadan çalışıyor mu?",
-    a5: "Şu an için hayır. EDTRpad'in sayfayı yüklemek için bağlantıya ihtiyacı var. Sayfa açıldıktan sonra yazdıklarınız yerel olarak kaydedilir, ama bunu uçakta öğrenmenizdense size açıkça söylemeyi tercih ederiz.",
+    a5: "Şu an için hayır. EDTRDocs'in sayfayı yüklemek için bağlantıya ihtiyacı var. Sayfa açıldıktan sonra yazdıklarınız yerel olarak kaydedilir, ama bunu uçakta öğrenmenizdense size açıkça söylemeyi tercih ederiz.",
     q6: "Gizli bir şey yapıştırmak güvenli mi?",
     a6: "Misafir belgeleri mevcut tarayıcınıza kaydedilir. Giriş yaparsanız belgeler sunucudaki hesabınıza kaydedilip eşitlenebilir. Sekmeyi kapatmak misafir belgesini silmez; tarayıcı verilerini temizlemek silebilir. Saklamak istediğiniz belgeleri dışa aktarın.",
     q7: ".docx dosyam Word'de düzgün açılır mı?",
-    a7: "Evet. EDTRpad, Word ve uyumlu editörlerde açılabilen standart .docx dosyaları oluşturur. Yazı tipleri, sayfalama ve karmaşık düzenler uygulamalar arasında değişebilir; paylaşmadan önce dışa aktarılan kopyayı kontrol edin.",
+    a7: "Evet. EDTRDocs, Word ve uyumlu editörlerde açılabilen standart .docx dosyaları oluşturur. Yazı tipleri, sayfalama ve karmaşık düzenler uygulamalar arasında değişebilir; paylaşmadan önce dışa aktarılan kopyayı kontrol edin.",
     q8: "Elimdeki Word dosyalarını açabilir miyim?",
     a8: "Evet. Dosya > Aç veya Ctrl+O ile .docx, .txt, .md, .html ya da .htm dosyası seçin. DOCX içeriği düzenlenebilir bir belgeye dönüştürülür; biçimlendirme önemliyse orijinal dosyayı saklayın.",
     q9: "Bu Microsoft Word mü?",
-    a9: "Hayır. EDTRpad, Microsoft ile hiçbir bağlantısı olmayan bağımsız bir kelime işlemcidir. Günlük belgelerin hakkını verir; değişiklik izleme ve kaynakçalarla dolu 300 sayfalık bir tez için Word'ün yerini almaya çalışmaz.",
+    a9: "Hayır. EDTRDocs, Microsoft ile hiçbir bağlantısı olmayan bağımsız bir kelime işlemcidir. Günlük belgelerin hakkını verir; değişiklik izleme ve kaynakçalarla dolu 300 sayfalık bir tez için Word'ün yerini almaya çalışmaz.",
     q10: "WordPad'e ne oldu?",
     a10: "Microsoft, 24H2 sürümünden itibaren onu Windows'tan kaldırdı. Bu bir hata değil ve yeniden kurmanın desteklenen bir yolu yok.",
     q11: "Gerçekten ücretsiz mi?",

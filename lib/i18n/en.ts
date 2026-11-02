@@ -343,9 +343,9 @@ export const en = {
 
   help: {
     shortcuts: "Keyboard shortcuts",
-    about: "About EDTRpad",
+    about: "About EDTRDocs",
     aboutText:
-      "EDTRpad is a free online word processor at wordpad.info. It is an independent project, not affiliated with Microsoft.",
+      "EDTRDocs is a free online word processor at wordpad.info. It is an independent project, not affiliated with Microsoft.",
     aboutProjects: "More from Project EDTR",
     aboutStudio: "Explore 312’s products",
     aboutTagline: "A word processor that's already open.",
@@ -513,7 +513,7 @@ export const en = {
     greetingEvening: "Good evening",
     greetingNight: "Working late",
     greetingWith: (greeting: string, name: string) => `${greeting}, ${name}!`,
-    titleGuest: "Welcome to EDTRpad",
+    titleGuest: "Welcome to EDTRDocs",
     subtitle:
       "Write, format, and print documents straight from your browser. Nothing to install, no account needed, and your work is saved as you type.",
     startNew: "Start a new document",
@@ -629,7 +629,7 @@ export const en = {
     ],
     slashTitle: "Just a [[/]].",
     slashP1:
-      "Every command in EDTRpad lives behind one key. Type / anywhere in your document and the menu opens right where your cursor is: headings, tables, images, lists, page breaks, formatting, export. Keep typing to filter it, press Enter to insert.",
+      "Every command in EDTRDocs lives behind one key. Type / anywhere in your document and the menu opens right where your cursor is: headings, tables, images, lists, page breaks, formatting, export. Keep typing to filter it, press Enter to insert.",
     slashP2:
       "If you've used Notion, your hands already know this. If you haven't, here's what it means in practice: you never take your hands off the keyboard to insert a table, and you never go looking for a button again.",
     slashP3:
@@ -649,7 +649,7 @@ export const en = {
     frictionP1:
       "You know the sequence. Open Word and wait for it to load, then dismiss the sign-in prompt, then skip a template gallery you didn't ask for. Or open Google Docs, sign into the right account, wait for the file list, click New.",
     frictionP2:
-      "EDTRpad skips all of it. **You're already in the editor.** Type, format, print or export, close the tab. The whole thing takes as long as the writing does.",
+      "EDTRDocs skips all of it. **You're already in the editor.** Type, format, print or export, close the tab. The whole thing takes as long as the writing does.",
     frictionP3:
       "It's the part of Word most people actually use: bold, lists, tables, images, print. With none of the part they don't.",
     frictionCta: "Open the editor →",
@@ -657,10 +657,10 @@ export const en = {
     goneP1:
       "Microsoft removed WordPad from Windows in the 24H2 update, after about thirty years. There's no setting to bring it back and no official replacement, which leaves an awkward gap, because Notepad can't bold a word and Word is a subscription.",
     goneP2:
-      "EDTRpad covers what WordPad did: rich text, tables, images, page breaks and printing. It runs in a browser tab instead of an installed window, so it also works on a Mac, a Chromebook, a phone, or a computer you don't have permission to install software on. And it's a good deal faster to drive, because there's no menu bar between you and the thing you want.",
+      "EDTRDocs covers what WordPad did: rich text, tables, images, page breaks and printing. It runs in a browser tab instead of an installed window, so it also works on a Mac, a Chromebook, a phone, or a computer you don't have permission to install software on. And it's a good deal faster to drive, because there's no menu bar between you and the thing you want.",
     goneCta: "Open the editor →",
     compareTitle: "Where it fits",
-    compareCols: ["EDTRpad", "Microsoft Word", "Word Online", "Google Docs", "WordPad"],
+    compareCols: ["EDTRDocs", "Microsoft Word", "Word Online", "Google Docs", "WordPad"],
     compareRows: [
       { label: "Slash (/) command menu", cells: ["Yes", "No", "No", "Partly (@ menu)", "No"] },
       { label: "Price", cells: ["Free", "Subscription", "Free tier", "Free", "Removed from Windows"] },
@@ -673,7 +673,7 @@ export const en = {
       { label: "Exact print margins", cells: ["Yes", "Yes", "Yes", "Limited", "Yes"] },
       { label: "Your file leaves your device", cells: ["No", "No", "Yes", "Yes", "No"] },
     ],
-    compareCaption: "EDTRpad is an independent product and is not affiliated with Microsoft, Google or Notion.",
+    compareCaption: "EDTRDocs is an independent product and is not affiliated with Microsoft, Google or Notion.",
     featuresTitle: "Everything you'd expect. Nothing you have to learn.",
     featuresAlsoLabel: "Also in there:",
     featuresAlsoItems: [
@@ -733,7 +733,7 @@ export const en = {
     footerMd: "EDTR.md · Markdown editor",
     footerPlus: "EDTR.plus · Notepad++ alternative",
     footerCredit: "Part of {project}, brought to you by {by}",
-    footerCopyright: (year: number) => `© ${year} EDTRpad. Not affiliated with Microsoft, Google or Notion.`,
+    footerCopyright: (year: number) => `© ${year} EDTRDocs. Not affiliated with Microsoft, Google or Notion.`,
     footerTrademark: "Microsoft Word and WordPad are trademarks of Microsoft Corporation.",
   },
 
@@ -756,21 +756,21 @@ export const en = {
     q1: "What's the slash menu?",
     a1: "Press / while writing and a searchable menu opens at your cursor with every command in the editor: headings, tables, images, lists, page breaks, export. Type to filter, Enter to insert. It replaces the toolbar for almost everything.",
     q2: "I use Notion. Will this feel familiar?",
-    a2: "Yes, that's the idea. Same / reflex, same get-out-of-the-way editing. The difference is what comes out the other end: Notion gives you a page in a workspace, EDTRpad gives you a document. Real page breaks, exact print margins, and a .docx you can email to someone who's never heard of any of this.",
+    a2: "Yes, that's the idea. Same / reflex, same get-out-of-the-way editing. The difference is what comes out the other end: Notion gives you a page in a workspace, EDTRDocs gives you a document. Real page breaks, exact print margins, and a .docx you can email to someone who's never heard of any of this.",
     q3: "Do I need an account?",
     a3: "No. Open the editor and type. An account is optional and exists only for syncing across devices.",
     q4: "If I close the tab, do I lose my work?",
     a4: "No. Your document is saved continuously to your browser's local storage and is waiting when you come back in the same browser. If you clear your browsing data, that copy goes with it, so export a file or create an account for anything you can't afford to lose.",
     q5: "Does it work without an internet connection?",
-    a5: "Not currently. EDTRpad needs a connection to load the page. Once it's open your typing is saved locally, but we'd rather tell you this plainly than have you find out on a plane.",
+    a5: "Not currently. EDTRDocs needs a connection to load the page. Once it's open your typing is saved locally, but we'd rather tell you this plainly than have you find out on a plane.",
     q6: "Is it safe to paste something confidential?",
     a6: "Guest documents are saved in your current browser. If you sign in, documents can be saved and synced to your account on the server. Closing a tab does not delete a guest document; clearing browser data can remove it. Export a copy you want to keep.",
     q7: "Will my .docx open properly in Word?",
-    a7: "Yes. EDTRpad exports standard .docx files that can be opened in Word and other compatible editors. Fonts, pagination and complex layouts may differ between applications, so review the exported copy before sharing it.",
+    a7: "Yes. EDTRDocs exports standard .docx files that can be opened in Word and other compatible editors. Fonts, pagination and complex layouts may differ between applications, so review the exported copy before sharing it.",
     q8: "Can I open Word files I already have?",
     a8: "Yes. Choose File > Open or press Ctrl+O, then select a .docx, .txt, .md, .html or .htm file. DOCX content is converted into an editable document; keep the original if exact formatting matters.",
     q9: "Is this Microsoft Word?",
-    a9: "No. EDTRpad is an independent word processor with no affiliation to Microsoft. It handles everyday documents; it isn't trying to replace Word for a 300-page thesis with tracked changes and citations.",
+    a9: "No. EDTRDocs is an independent word processor with no affiliation to Microsoft. It handles everyday documents; it isn't trying to replace Word for a 300-page thesis with tracked changes and citations.",
     q10: "What happened to WordPad?",
     a10: "Microsoft removed it from Windows starting with version 24H2. It isn't a bug, and there's no supported way to reinstall it.",
     q11: "Is it really free?",

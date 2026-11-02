@@ -41,7 +41,7 @@ export async function generateMetadata({
       url: `https://wordpad.info/guides/${slug}`,
       type: "article",
       authors: [GUIDE_AUTHOR.url],
-      siteName: "EDTRpad",
+      siteName: "EDTRDocs",
       locale:
         guide.language === "es"
           ? "es_ES"
@@ -106,7 +106,7 @@ export default async function GuidePage({
     publisher: {
       "@type": "Organization",
       "@id": ORGANIZATION_ID,
-      name: "EDTRpad",
+      name: "EDTRDocs",
       url: "https://wordpad.info",
       logo: { "@type": "ImageObject", url: "https://wordpad.info/logo.png" },
     },
@@ -207,7 +207,7 @@ export default async function GuidePage({
                 </ol>
               </nav>
               <Link className={styles.primary} href="/pad">
-                Try it in EDTRpad ↗
+                Try it in EDTRDocs ↗
               </Link>
               <small>
                 Write in your browser.

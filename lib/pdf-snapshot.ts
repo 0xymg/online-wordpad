@@ -66,7 +66,7 @@ export async function viewToPdfBlob(view:EditorView,opts:PdfExportOptions):Promi
  try{await document.fonts.ready;css=await getFontEmbedCSS(host);}finally{fontSource.remove();}
  const frame=await snapshotFrame(host);
  try{
-  const pdf=await PDFDocument.create();pdf.registerFontkit(fontkit);pdf.setTitle(opts.title);pdf.setCreator('EDTRpad');
+  const pdf=await PDFDocument.create();pdf.registerFontkit(fontkit);pdf.setTitle(opts.title);pdf.setCreator('EDTRDocs');
   const fonts=new Map<string,Promise<PDFFont>>(),sheets=Array.from(frame.contentDocument!.querySelectorAll<HTMLElement>('.edtr-print-sheet'));
   for(const sheet of sheets){
    const width=Number(sheet.dataset.pageWidth)/20,height=Number(sheet.dataset.pageHeight)/20,page=pdf.addPage([width,height]);

@@ -2,8 +2,8 @@ import type { MetadataRoute } from "next";
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: "EDTRpad — Online WordPad",
-    short_name: "EDTRpad",
+    name: "EDTRDocs — Online WordPad",
+    short_name: "EDTRDocs",
     description:
       "Free online WordPad-style word processor. Rich text, tables, images, export to DOCX/RTF — right in your browser.",
     start_url: "/pad",

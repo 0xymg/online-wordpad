@@ -1,4 +1,4 @@
-# CLAUDE.md — EDTRpad (Online WordPad)
+# CLAUDE.md — EDTRDocs (Online WordPad)
 
 Bu dosya, projeyle çalışan Claude için bağlam ve yönergeler içerir.
 
@@ -9,7 +9,7 @@ Bu dosya, projeyle çalışan Claude için bağlam ve yönergeler içerir.
 **wordpad.info** — Tarayıcı tabanlı, ücretsiz, kayıt gerektirmeyen bir online metin editörü.
 Hedef: WordPad'i arayan, Windows 11'de kaldırılmış bulan veya kurulum yapmak istemeyen kullanıcılara hitap etmek.
 
-**Marka:** EDTRpad · **İşlev/SEO konumlandırması:** "online wordpad". UI ve ürün adı EDTRpad'dir;
+**Marka:** EDTRDocs · **İşlev/SEO konumlandırması:** "online wordpad". UI ve ürün adı EDTRDocs'dir;
 metadata/içerik "online wordpad" anahtar kelimesini hedefler.
 
 - **URL:** https://wordpad.info

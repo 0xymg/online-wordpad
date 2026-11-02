@@ -1,7 +1,7 @@
-// EDTRpad service worker: offline shell for the editor.
+// EDTRDocs service worker: offline shell for the editor.
 // - Immutable Next.js static assets and fonts: cache-first.
 // - /pad navigations: network-first with cached fallback so the editor opens offline.
-const CACHE = "edtrpad-v1";
+const CACHE = "edtrdocs-v2";
 
 self.addEventListener("install", () => {
   self.skipWaiting();

@@ -1,4 +1,4 @@
-# EDTRpad — Product Reference
+# EDTRDocs — Product Reference
 
 Source: https://wordpad.info/
 Last reviewed: 2026-10-31
@@ -7,7 +7,7 @@ Editor: https://wordpad.info/pad
 
 ## Identity and purpose
 
-EDTRpad is a free browser-based word processor, also described as an online WordPad. It is part of Project EDTR and developed by 312. It is independent of Microsoft, Google and Notion, and is not an official Microsoft WordPad or Word product.
+EDTRDocs is a free browser-based word processor, also described as an online WordPad. It is part of Project EDTR and developed by 312. It is independent of Microsoft, Google and Notion, and is not an official Microsoft WordPad or Word product.
 
 It is suited to individual writing, letters, notes, short reports and straightforward document edits. It has both a formatting toolbar and a slash command menu. It does not offer simultaneous multiplayer document editing.
 
@@ -36,7 +36,7 @@ Supported file-picker inputs are `.docx`, `.txt`, `.md`, `.html` and `.htm`. DOC
 
 Exports include DOCX, PDF, RTF, HTML, Markdown and plain text. Importing a file creates an editor document; exporting downloads a new file rather than overwriting the original on the device.
 
-DOCX conversion does not guarantee identical fonts, spacing, pagination, complex table layouts, headers, footers, fields or review markup. Keep the original and review imported and exported documents when layout matters. Word macros, mail merge and a tracked-changes review workflow are not replacements provided by EDTRpad.
+DOCX conversion does not guarantee identical fonts, spacing, pagination, complex table layouts, headers, footers, fields or review markup. Keep the original and review imported and exported documents when layout matters. Word macros, mail merge and a tracked-changes review workflow are not replacements provided by EDTRDocs.
 
 ## Common workflows
 

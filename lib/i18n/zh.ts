@@ -274,9 +274,9 @@ export const zh: Dictionary = {
 
   help: {
     shortcuts: "键盘快捷键",
-    about: "关于 EDTRpad",
+    about: "关于 EDTRDocs",
     aboutText:
-      "EDTRpad 是 wordpad.info 上的免费在线文字处理器。本产品为独立项目，与 Microsoft 无关。",
+      "EDTRDocs 是 wordpad.info 上的免费在线文字处理器。本产品为独立项目，与 Microsoft 无关。",
     aboutProjects: "更多 Project EDTR 工具",
     aboutStudio: "探索 312 的产品",
     aboutTagline: "一个早已打开的文字处理器。",
@@ -442,7 +442,7 @@ export const zh: Dictionary = {
     greetingEvening: "晚上好",
     greetingNight: "夜深了",
     greetingWith: (greeting: string, name: string) => `${greeting}，${name}！`,
-    titleGuest: "欢迎使用 EDTRpad",
+    titleGuest: "欢迎使用 EDTRDocs",
     subtitle: "直接在浏览器里撰写、排版并打印文档。无需安装，不用注册，输入时自动保存。",
     startNew: "新建文档",
     scrollLeft: "模板向左滚动",
@@ -557,7 +557,7 @@ export const zh: Dictionary = {
     ],
     slashTitle: "只需一个 [[/]]。",
     slashP1:
-      "EDTRpad 的每个命令都藏在同一个键后面。在文档任意位置输入 /，菜单就在光标处打开：标题、表格、图片、列表、分页符、格式、导出。继续输入即可筛选，按 Enter 插入。",
+      "EDTRDocs 的每个命令都藏在同一个键后面。在文档任意位置输入 /，菜单就在光标处打开：标题、表格、图片、列表、分页符、格式、导出。继续输入即可筛选，按 Enter 插入。",
     slashP2:
       "如果你用过 Notion，你的手已经会了。如果没用过，它在实践中的意思是：插入表格时手不用离开键盘，你也再不用去找任何按钮。",
     slashP3:
@@ -577,7 +577,7 @@ export const zh: Dictionary = {
     frictionP1:
       "这套流程你很熟。打开 Word，等它加载，关掉登录提示，再跳过一个你没要过的模板库。或者打开 Google Docs，登录对的账号，等文件列表加载，点击新建。",
     frictionP2:
-      "EDTRpad 把这些全部跳过。**你已经在编辑器里了。**输入、排版、打印或导出，关掉标签页。整件事花的时间，就是写作本身的时间。",
+      "EDTRDocs 把这些全部跳过。**你已经在编辑器里了。**输入、排版、打印或导出，关掉标签页。整件事花的时间，就是写作本身的时间。",
     frictionP3:
       "它就是 Word 里大多数人真正会用的那部分：加粗、列表、表格、图片、打印。至于用不上的那部分，一点都没有。",
     frictionCta: "打开编辑器 →",
@@ -585,10 +585,10 @@ export const zh: Dictionary = {
     goneP1:
       "在陪伴了大约三十年之后，Microsoft 在 24H2 更新中把 WordPad 从 Windows 里移除了。没有设置能把它找回来，也没有官方替代品。这留下了一个尴尬的空档：Notepad 连加粗都做不到，而 Word 要订阅。",
     goneP2:
-      "EDTRpad 覆盖了 WordPad 的全部本领：富文本、表格、图片、分页符和打印。它运行在浏览器标签页里，而不是装在系统里的窗口，所以在 Mac、Chromebook、手机，或者一台你没有安装权限的电脑上也照样能用。而且用起来快得多，因为在你和你想要的东西之间，没有一条菜单栏。",
+      "EDTRDocs 覆盖了 WordPad 的全部本领：富文本、表格、图片、分页符和打印。它运行在浏览器标签页里，而不是装在系统里的窗口，所以在 Mac、Chromebook、手机，或者一台你没有安装权限的电脑上也照样能用。而且用起来快得多，因为在你和你想要的东西之间，没有一条菜单栏。",
     goneCta: "打开编辑器 →",
     compareTitle: "它的定位",
-    compareCols: ["EDTRpad", "Microsoft Word", "Word Online", "Google Docs", "WordPad"],
+    compareCols: ["EDTRDocs", "Microsoft Word", "Word Online", "Google Docs", "WordPad"],
     compareRows: [
       { label: "斜杠 (/) 命令菜单", cells: ["是", "否", "否", "部分支持（@ 菜单）", "否"] },
       { label: "价格", cells: ["免费", "订阅", "免费版", "免费", "已从 Windows 移除"] },
@@ -601,7 +601,7 @@ export const zh: Dictionary = {
       { label: "精确打印边距", cells: ["是", "是", "是", "有限", "是"] },
       { label: "文件会离开你的设备", cells: ["否", "否", "是", "是", "否"] },
     ],
-    compareCaption: "EDTRpad 是独立产品，与 Microsoft、Google 或 Notion 均无关联。",
+    compareCaption: "EDTRDocs 是独立产品，与 Microsoft、Google 或 Notion 均无关联。",
     featuresTitle: "该有的都有，要学的一样没有。",
     featuresAlsoLabel: "还有这些：",
     featuresAlsoItems: [
@@ -661,7 +661,7 @@ export const zh: Dictionary = {
     footerMd: "EDTR.md · Markdown 编辑器",
     footerPlus: "EDTR.plus · Notepad++ 替代方案",
     footerCredit: "{project} 项目的一部分，由 {by} 出品",
-    footerCopyright: (year: number) => `© ${year} EDTRpad。与 Microsoft、Google 或 Notion 无关联。`,
+    footerCopyright: (year: number) => `© ${year} EDTRDocs。与 Microsoft、Google 或 Notion 无关联。`,
     footerTrademark: "Microsoft Word 和 WordPad 是 Microsoft Corporation 的商标。",
   },
 
@@ -684,21 +684,21 @@ export const zh: Dictionary = {
     q1: "什么是斜杠菜单？",
     a1: "写作时按下 /，一个可搜索的菜单就在光标处打开，包含编辑器的全部命令：标题、表格、图片、列表、分页符、导出。输入即筛选，按 Enter 插入。它几乎在所有场景下都取代了工具栏。",
     q2: "我用 Notion，会觉得熟悉吗？",
-    a2: "会，这正是我们的用意。同样的 / 反射，同样不碍事的编辑体验。区别在于最后产出的东西：Notion 给你的是工作区里的一个页面，EDTRpad 给你的是一份文档。真正的分页符、精确的打印边距，还有一份可以用邮件发给完全没听说过这些的人的 .docx。",
+    a2: "会，这正是我们的用意。同样的 / 反射，同样不碍事的编辑体验。区别在于最后产出的东西：Notion 给你的是工作区里的一个页面，EDTRDocs 给你的是一份文档。真正的分页符、精确的打印边距，还有一份可以用邮件发给完全没听说过这些的人的 .docx。",
     q3: "需要账户吗？",
     a3: "不需要。打开编辑器就能写。账户是可选的，只用于跨设备同步。",
     q4: "关掉标签页会丢失内容吗？",
     a4: "不会。文档持续保存在浏览器的本地存储里，用同一个浏览器回来时它还在等你。但如果你清除浏览数据，那份副本也会一起消失，所以凡是丢不起的内容，请导出文件或创建账户。",
     q5: "没有网络能用吗？",
-    a5: "目前不行。EDTRpad 需要联网才能加载页面。页面打开后，你输入的内容会保存在本地。但这件事我们宁愿直说，也不想让你在飞机上才发现。",
+    a5: "目前不行。EDTRDocs 需要联网才能加载页面。页面打开后，你输入的内容会保存在本地。但这件事我们宁愿直说，也不想让你在飞机上才发现。",
     q6: "粘贴机密内容安全吗？",
     a6: "访客文档保存在当前浏览器中。登录后，文档可以保存并同步到服务器上的账户。关闭标签页不会删除访客文档，但清除浏览器数据可能会删除它们。请导出需要保留的副本。",
     q7: "导出的 .docx 在 Word 里能正常打开吗？",
-    a7: "可以。EDTRpad 导出标准 .docx 文件，可在 Word 和其他兼容编辑器中打开。字体、分页和复杂布局可能因应用而异，请在分享前检查导出的副本。",
+    a7: "可以。EDTRDocs 导出标准 .docx 文件，可在 Word 和其他兼容编辑器中打开。字体、分页和复杂布局可能因应用而异，请在分享前检查导出的副本。",
     q8: "能打开我已有的 Word 文件吗？",
     a8: "可以。选择文件 > 打开或按 Ctrl+O，再选择 .docx、.txt、.md、.html 或 .htm 文件。DOCX 内容会转换为可编辑文档；如果需要保留精确布局，请保留原文件。",
     q9: "这是 Microsoft Word 吗？",
-    a9: "不是。EDTRpad 是独立的文字处理器，与 Microsoft 没有任何关联。它擅长处理日常文档；它并不打算在一篇带修订和引注的 300 页论文上取代 Word。",
+    a9: "不是。EDTRDocs 是独立的文字处理器，与 Microsoft 没有任何关联。它擅长处理日常文档；它并不打算在一篇带修订和引注的 300 页论文上取代 Word。",
     q10: "WordPad 怎么了？",
     a10: "从 24H2 版本开始，Microsoft 把它从 Windows 里移除了。这不是故障，也没有官方支持的重装办法。",
     q11: "真的免费吗？",

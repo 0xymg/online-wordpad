@@ -21,11 +21,11 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: {
-    default: "EDTRpad — Online WordPad & Free Browser Word Processor",
-    template: "%s | EDTRpad",
+    default: "EDTRDocs — Online WordPad & Free Browser Word Processor",
+    template: "%s | EDTRDocs",
   },
   description:
-    "EDTRpad is a free online WordPad: a browser-based word processor with rich text, tables, images, export to DOCX/RTF/HTML/TXT, and print. No install, no login required.",
+    "EDTRDocs is a free online WordPad: a browser-based word processor with rich text, tables, images, export to DOCX/RTF/HTML/TXT, and print. No install, no login required.",
   metadataBase: new URL("https://wordpad.info"),
   robots: { index: true, follow: true },
   verification: {
@@ -33,7 +33,7 @@ export const metadata: Metadata = {
   },
   openGraph: {
     images: [SOCIAL_IMAGE],
-    siteName: "EDTRpad",
+    siteName: "EDTRDocs",
     type: "website",
   },
   twitter: {
@@ -54,14 +54,14 @@ const jsonLdSite = {
     {
       "@type": "Organization",
       "@id": ORGANIZATION_ID,
-      name: "EDTRpad",
+      name: "EDTRDocs",
       url: SITE_URL,
       logo: `${SITE_URL}/logo.png`,
     },
     {
       "@type": "WebSite",
       "@id": WEBSITE_ID,
-      name: "EDTRpad",
+      name: "EDTRDocs",
       alternateName: "Online WordPad",
       url: SITE_URL,
       publisher: { "@id": ORGANIZATION_ID },

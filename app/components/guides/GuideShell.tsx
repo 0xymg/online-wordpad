@@ -18,10 +18,10 @@ export default function GuideShell({
         <div className={styles.headerInner}>
           <Link
             href="/"
-            aria-label="EDTRpad home"
+            aria-label="EDTRDocs home"
             className={`${styles.brand} font-brand`}
           >
-            EDTR<span>PAD</span>
+            EDTR<span>DOCS</span>
           </Link>
           <nav aria-label="Main navigation">
             <Link href="/guides">Guides</Link>
@@ -35,7 +35,7 @@ export default function GuideShell({
       <footer className={styles.footer}>
         <div>
           <Link className={`${styles.brand} font-brand`} href="/">
-            EDTR<span>PAD</span>
+            EDTR<span>DOCS</span>
           </Link>
           <p>A little help for your next document.</p>
         </div>

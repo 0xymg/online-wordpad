@@ -4,8 +4,8 @@ const {chromium}=require(process.env.PLAYWRIGHT_MODULE||'playwright');
 (async()=>{const browser=await chromium.launch({headless:true,...(process.env.CHROMIUM_PATH?{executablePath:process.env.CHROMIUM_PATH}:{})});try{
  const page=await browser.newPage({viewport:{width:1280,height:1000}}),base=process.env.BASE_URL||'http://localhost:3107';
  await page.goto(base+'/pad'); await page.locator('.ProseMirror').waitFor();
- await page.getByRole('menuitem',{name:'Help',exact:true}).click(); await page.getByRole('menuitem',{name:'About EDTRpad',exact:true}).click();
- const dialog=page.getByRole('dialog',{name:'About EDTRpad',exact:true});await dialog.waitFor();
+ await page.getByRole('menuitem',{name:'Help',exact:true}).click(); await page.getByRole('menuitem',{name:'About EDTRDocs',exact:true}).click();
+ const dialog=page.getByRole('dialog',{name:'About EDTRDocs',exact:true});await dialog.waitFor();
  assert.equal(await dialog.getByRole('link',{name:'hello@312.sh',exact:true}).getAttribute('href'),'mailto:hello@312.sh');
  for(const host of ['https://edtr.md','https://edtr.plus','https://312.sh'])assert.ok(await dialog.locator(`a[href="${host}"]`).count());
  assert.equal(await dialog.locator('a[href*="ymg.digital"]').count(),0);

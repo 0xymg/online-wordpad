@@ -41,7 +41,7 @@ export default function AuthModal({
         <div className="relative mb-8 flex items-center justify-start">
           <div className="font-brand leading-none">
             <span className="text-xl font-bold tracking-tight text-foreground">EDTR</span>
-            <span className="text-base font-semibold tracking-wider text-muted-foreground">PAD</span>
+            <span className="text-base font-semibold tracking-wider text-muted-foreground">DOCS</span>
           </div>
           <button type="button" onClick={onClose} aria-label={t.dialog.close} className="absolute end-0 rounded p-1 hover:bg-accent">
             <X size={16} />

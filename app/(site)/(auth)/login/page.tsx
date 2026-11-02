@@ -4,7 +4,7 @@ import { googleEnabled } from "@/lib/auth-flags";
 
 export const metadata: Metadata = {
   title: "Log in",
-  description: "Sign in to EDTRpad to access your documents on any device.",
+  description: "Sign in to EDTRDocs to access your documents on any device.",
   alternates: { canonical: "https://wordpad.info/login" },
   robots: { index: false, follow: true },
 };

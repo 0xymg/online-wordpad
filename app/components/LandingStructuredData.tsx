@@ -28,7 +28,7 @@ export default function LandingStructuredData({ locale }: { locale: "en" | "ar" 
       "@context": "https://schema.org",
       "@type": "WebApplication",
       "@id": APPLICATION_ID,
-      name: "EDTRpad",
+      name: "EDTRDocs",
       alternateName: locale === "ar"
         ? ["محرر نصوص أون لاين", "وورد باد أون لاين", "بديل وورد مجاني"]
         : ["Online WordPad", "WordPad Online", "Free WordPad Replacement"],

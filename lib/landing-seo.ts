@@ -9,7 +9,7 @@ export const SOCIAL_IMAGE = {
   url: `${SITE_URL}/opengraph-image`,
   width: 1200,
   height: 630,
-  alt: "EDTRpad — Free Online Word Processor",
+  alt: "EDTRDocs — Free Online Word Processor",
 };
 
 // Both pages publish the same complete set, including self-references.
@@ -21,6 +21,6 @@ export const LANDING_LANGUAGES = {
   "x-default": SITE_URL,
 };
 
-export const ARABIC_LANDING_TITLE = "وورد أون لاين مجاني بالعربية — محرر نصوص | EDTRpad";
+export const ARABIC_LANDING_TITLE = "وورد أون لاين مجاني بالعربية — محرر نصوص | EDTRDocs";
 export const ARABIC_LANDING_DESCRIPTION =
-  "اكتب ونسّق مستنداتك بالعربية مع EDTRpad، بديل وورد وWordPad المجاني أون لاين. افتح ملفات Word وصدّر PDF مع دعم الكتابة من اليمين إلى اليسار، بدون تحميل أو تسجيل.";
+  "اكتب ونسّق مستنداتك بالعربية مع EDTRDocs، بديل وورد وWordPad المجاني أون لاين. افتح ملفات Word وصدّر PDF مع دعم الكتابة من اليمين إلى اليسار، بدون تحميل أو تسجيل.";

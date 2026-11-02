@@ -20,8 +20,8 @@ export const metadata: Metadata = {
     url: `${SITE_URL}/ar`,
     locale: "ar_SA",
     alternateLocale: ["en_US"],
-    siteName: "EDTRpad",
-    images: [{ url: `${SITE_URL}/opengraph-image`, width: 1200, height: 630, alt: "EDTRpad — محرر نصوص أون لاين" }],
+    siteName: "EDTRDocs",
+    images: [{ url: `${SITE_URL}/opengraph-image`, width: 1200, height: 630, alt: "EDTRDocs — محرر نصوص أون لاين" }],
     type: "website",
   },
   twitter: {

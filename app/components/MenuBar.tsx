@@ -273,7 +273,7 @@ function MenuBar({
         <div className="flex min-w-0 items-center gap-1.5">
           <span className="font-brand shrink-0 select-none leading-none">
             <span className="text-lg font-bold tracking-tight text-foreground dark:text-[#FFFFE3]">EDTR</span>
-            <span className="text-sm font-semibold tracking-wider text-muted-foreground dark:text-[#FFFFE3]/70">PAD</span>
+            <span className="text-sm font-semibold tracking-wider text-muted-foreground dark:text-[#FFFFE3]/70">DOCS</span>
           </span>
         </div>
         <div className="pointer-events-none order-last flex w-full items-center justify-center border-t border-border/60 py-1 sm:absolute sm:inset-x-0 sm:order-none sm:w-auto sm:border-0 sm:py-0">

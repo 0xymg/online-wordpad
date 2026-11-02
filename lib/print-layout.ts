@@ -57,7 +57,7 @@ export async function preparePrintLayout(view: EditorView, host: HTMLElement, cr
     if (credit) for (const kind of ["header", "footer"]) {
       const band = document.createElement("div");
       band.style.cssText = `position:absolute;left:${g.margins.left / 15}px;right:${g.margins.right / 15}px;${kind === "header" ? "top" : "bottom"}:4px;display:flex;justify-content:space-between;font:9px Calibri,Carlito,Arial,sans-serif;color:#777`;
-      for (const text of kind === "header" ? [credit.title, credit.date] : ["EDTRpad", "wordpad.info"]) { const span = document.createElement("span"); span.textContent = text; band.appendChild(span); }
+      for (const text of kind === "header" ? [credit.title, credit.date] : ["EDTRDocs", "wordpad.info"]) { const span = document.createElement("span"); span.textContent = text; band.appendChild(span); }
       sheet.appendChild(band);
     }
     output.appendChild(sheet);

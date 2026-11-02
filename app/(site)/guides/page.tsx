@@ -25,7 +25,7 @@ export const metadata: Metadata = {
       "WordPad guides, Word and Google Docs alternatives, and help opening and exporting DOCX files.",
     url: "https://wordpad.info/guides",
     type: "website",
-    siteName: "EDTRpad",
+    siteName: "EDTRDocs",
   },
   twitter: {
     images: [SOCIAL_IMAGE.url],
@@ -85,7 +85,7 @@ export default function GuidesIndexPage() {
         <section className={styles.hero}>
           <div>
             <span className={styles.eyebrow}>
-              THE EDTRPAD FIELD GUIDE · BY 312
+              THE EDTRDOCS FIELD GUIDE · BY 312
             </span>
             <h1>
               Less figuring out.
