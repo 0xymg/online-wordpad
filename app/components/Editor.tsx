@@ -12,6 +12,7 @@ import { REFERENCE_LAYOUT_STATUS_EVENT } from "@/lib/reference-layout";
 import { flushDocumentOutputLayout } from "@/lib/document-output-layout";
 import { cloneBibliographyDocumentGraph } from "@/lib/document-bibliography";
 import { bibliographyPlugin } from "@/lib/document-bibliography";
+import { bibliographyLabel } from "@/lib/bibliography-i18n";
 import { bibliographyLayoutPlugin } from "@/lib/bibliography-layout";
 import { notePlugin } from "@/lib/document-notes";
 import "./references.css";
@@ -2345,7 +2346,8 @@ export default function Editor({
     } catch (error) {
       const unsupported = error && typeof error === "object" && "code" in error && error.code === "unsupported-reference";
       const unsupportedNote = error && typeof error === "object" && "code" in error && error.code === "unsupported-note";
-      toast.error(unsupportedNote ? noteLabels(locale).importUnsupported : unsupported ? referenceLabels(locale).importUnsupported : t.toast.openFailed);
+      const unsupportedBibliography = error && typeof error === "object" && "code" in error && error.code === "unsupported-bibliography";
+      toast.error(unsupportedBibliography ? bibliographyLabel(locale, "Source data cannot be restored from this Word file. The open document was kept.") : unsupportedNote ? noteLabels(locale).importUnsupported : unsupported ? referenceLabels(locale).importUnsupported : t.toast.openFailed);
     }
   }, [addNewDocument, closeHome, locale, t.toast.openFailed]);
 

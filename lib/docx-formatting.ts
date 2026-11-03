@@ -83,6 +83,12 @@ function properties(node: Element | undefined): Properties {
       if (a.namespaceURI === W)
         values[`${el.localName}.${a.localName}`] = a.value;
     }
+    if (el.localName === "pBdr") for (const edge of Array.from(el.children)) {
+      if (edge.namespaceURI !== W) continue;
+      values[`pBdr.${edge.localName}`] = attr(edge) ?? "1";
+      for (const a of Array.from(edge.attributes)) if (a.namespaceURI === W)
+        values[`pBdr.${edge.localName}.${a.localName}`] = a.value;
+    }
   }
   return values;
 }
@@ -401,6 +407,17 @@ export async function prepareDocxFormatting(arrayBuffer: ArrayBuffer) {
   }
   function paragraphFormat(props: Properties): Properties {
     const css: Properties = { "margin-top": "0pt", "margin-bottom": "0pt", "line-height": "normal" };
+    // A Word single bottom border sits outside the line box, separated from
+    // the text by its point-valued space. Keep it in layout, not as a text
+    // decoration: later paragraphs must move down by its width and space.
+    if (props["pBdr.bottom"] === "single") {
+      const size = Number(props["pBdr.bottom.sz"]), space = Number(props["pBdr.bottom.space"]);
+      const borderColor = color({ color: props["pBdr.bottom.color"], "color.themeColor": props["pBdr.bottom.themeColor"], "color.themeShade": props["pBdr.bottom.themeShade"], "color.themeTint": props["pBdr.bottom.themeTint"] });
+      if (Number.isFinite(size) && size > 0 && size <= 96) {
+        css["border-bottom"] = `${size / 8}pt solid ${borderColor || "#000000"}`;
+        if (Number.isFinite(space) && space >= 0 && space <= 31) css["padding-bottom"] = `${space}pt`;
+      }
+    }
     const rtl = enabled(props.bidi);
     const alignment =
       {

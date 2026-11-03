@@ -1,4 +1,4 @@
-/** Formatted-copy profile: ordinary native content, paired bookmarks and related v2 metadata.
+/** Formatted-copy profile: ordinary native content, paired bookmarks and related v3 metadata.
  * No content controls (Word Online makes those view-only) or Word CITATION fields. */
 import JSZip from "jszip";
 import { parseXml, xmlString, W } from "./docx-preservation";
@@ -57,6 +57,99 @@ function nativeSignature(content: Element, relations: Document): string {
   });
   return JSON.stringify([signature(content),related]);
 }
+/** v3 correspondence compares effective rich runs rather than serialization boundaries.
+ * Unknown properties remain in the signature. No direction, font or language is discarded. */
+async function semanticContext(zip: JSZip, main: Awaited<ReturnType<typeof mainPart>>) {
+  const rels = Array.from(main.relations.documentElement.children).filter(el => el.getAttribute("Type") === "http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles");
+  if (rels.length > 1 || rels.some(el => el.hasAttribute("TargetMode"))) fail("Bibliography styles relationship ambiguous");
+  const file = zip.file(rels.length ? resolve(main.path, rels[0].getAttribute("Target") || "") : main.path.replace(/[^/]+$/, "styles.xml"));
+  return file ? parseXml(await file.async("string")) : undefined;
+}
+function semanticSignature(content: Element, relations: Document, styles: Document | undefined, paragraph?: Element | null): string {
+  const bool = new Set("b bCs i iCs caps smallCaps strike dstrike outline shadow emboss imprint vanish webHidden rtl cs snapToGrid noProof specVanish oMath".split(" "));
+  const canonical = (el: Element): unknown => {
+    const attrs = Array.from(el.attributes).filter(a => a.namespaceURI !== "http://www.w3.org/2000/xmlns/" && !(a.namespaceURI === W && /^rsid/.test(a.localName)) && !(a.namespaceURI === "http://schemas.microsoft.com/office/word/2010/wordml" && ["paraId","textId"].includes(a.localName)))
+      .map(a => [a.namespaceURI, a.localName, a.value]).sort((a,b) => JSON.stringify(a).localeCompare(JSON.stringify(b)));
+    return [el.namespaceURI,el.localName,attrs,Array.from(el.childNodes).filter(n=>n.nodeType===1 || n.nodeType===3 && ["t","instrText"].includes(el.localName)).map(n=>n.nodeType===1?canonical(n as Element):n.textContent)];
+  };
+  type Properties = Map<string, unknown>;
+  const merge = (target: Properties, properties?: Element) => {
+    if (!properties) return;
+    const seen = new Set<string>();
+    for (const el of Array.from(properties.children)) {
+      const identity=`${el.namespaceURI}:${el.localName}`;
+      if(seen.has(identity))fail("Duplicate bibliography formatting property");seen.add(identity);
+      if(el.namespaceURI === W && ["rStyle","pStyle"].includes(el.localName))continue;
+      const key = `${el.namespaceURI}:${el.localName}`;
+      if(el.namespaceURI === W && bool.has(el.localName) && !el.children.length && Array.from(el.attributes).every(a=>a.namespaceURI === W && a.localName === "val")) {
+        const value = el.getAttributeNS(W,"val");
+        if(value !== null && !["true","false","1","0","on","off"].includes(value))fail("Invalid bibliography boolean property");
+        if(["false","0","off"].includes(value || ""))target.delete(key);else target.set(key,true);
+      } else target.set(key,canonical(el));
+    }
+  };
+  const ordered = (props: Properties) => [...props].sort(([a],[b])=>a.localeCompare(b));
+  const styleElements = styles ? all(styles,"style") : [];
+  const chain = (id: string | null, type: string, seen = new Set<string>()): Element[] => {
+    if(!id)return [];
+    if(seen.has(id))fail("Cyclic bibliography formatting style");seen.add(id);
+    const matches=styleElements.filter(el=>el.getAttributeNS(W,"styleId")===id && el.getAttributeNS(W,"type")===type);
+    // Word exports routinely reference implicit Normal/DefaultParagraphFont.
+    if(!matches.length && ["Normal","DefaultParagraphFont"].includes(id))return [];
+    if(matches.length!==1)fail("Bibliography formatting style missing or ambiguous");
+    return [...chain(children(matches[0],"basedOn")[0]?.getAttributeNS(W,"val") || null,type,seen),matches[0]];
+  };
+  const defaults = styles ? all(styles,"docDefaults")[0] : undefined;
+  const usedStyles = new Map<string,unknown>();
+  const defaultRun = defaults && children(defaults,"rPrDefault")[0];
+  const defaultParagraph = defaults && children(defaults,"pPrDefault")[0];
+  const paragraphProperties = (p?: Element | null) => {
+    const direct=p && children(p,"pPr")[0];
+    const defaultStyle=styleElements.find(el=>el.getAttributeNS(W,"type")==="paragraph" && ["1","true","on"].includes(el.getAttributeNS(W,"default") || ""));
+    const id=direct && children(direct,"pStyle")[0]?.getAttributeNS(W,"val");
+    const inherited=chain(id || defaultStyle?.getAttributeNS(W,"styleId") || null,"paragraph");
+    const pp:Properties=new Map(),rp:Properties=new Map();
+    merge(pp,defaultParagraph && children(defaultParagraph,"pPr")[0]);merge(rp,defaultRun && children(defaultRun,"rPr")[0]);
+    for(const style of inherited){usedStyles.set(`paragraph:${style.getAttributeNS(W,"styleId")}`,Array.from(style.children).filter(el=>el.namespaceURI===W && ["pPr","rPr"].includes(el.localName)).map(canonical));merge(pp,children(style,"pPr")[0]);merge(rp,children(style,"rPr")[0]);}
+    merge(pp,direct || undefined);
+    return {pp,rp};
+  };
+  const encodeChildren = (parent: Element, inherited: Properties): unknown[] => {
+    const result: {key:string;text?:string;node?:unknown}[]=[];
+    for(const el of Array.from(parent.children)) {
+      if(el.namespaceURI === W && el.localName === "pPr")continue;
+      if(el.namespaceURI === W && el.localName === "r") {
+        const props=new Map(inherited),direct=children(el,"rPr")[0];
+        for(const style of chain(direct && children(direct,"rStyle")[0]?.getAttributeNS(W,"val") || null,"character")){usedStyles.set(`character:${style.getAttributeNS(W,"styleId")}`,children(style,"rPr").map(canonical));merge(props,children(style,"rPr")[0]);}
+        merge(props,direct);
+        // Run attributes other than revision IDs retain their full meaning.
+        const shell=el.cloneNode(false) as Element;
+        const key=JSON.stringify([canonical(shell),ordered(props)]);
+        for(const child of Array.from(el.children).filter(c=>!(c.namespaceURI===W && c.localName==="rPr"))) {
+          if(child.namespaceURI===W && child.localName==="t" && Array.from(child.attributes).every(a=>a.namespaceURI==="http://www.w3.org/XML/1998/namespace" && a.localName==="space")) {
+            const last=result[result.length-1];
+            if(last?.key===key && last.text!==undefined)last.text+=child.textContent || "";else result.push({key,text:child.textContent || ""});
+          }else result.push({key,node:canonical(child)});
+        }
+      } else if(el.namespaceURI===W && el.localName==="p") {
+        const {pp,rp}=paragraphProperties(el),shell=el.cloneNode(false) as Element;
+        result.push({key:"paragraph",node:[canonical(shell),ordered(pp),encodeChildren(el,rp)]});
+      } else if(el.namespaceURI===W && el.localName==="hyperlink") {
+        // Canonicalize relationship identity by target, preserving all other attributes.
+        const shell=el.cloneNode(false) as Element,ns="http://schemas.openxmlformats.org/officeDocument/2006/relationships",id=shell.getAttributeNS(ns,"id");
+        let relationship:unknown=null;
+        if(id){const matches=Array.from(relations.documentElement.children).filter(r=>r.getAttribute("Id")===id);if(matches.length!==1)fail("Bibliography hyperlink missing or ambiguous");relationship=[matches[0].getAttribute("Type"),matches[0].getAttribute("Target"),matches[0].getAttribute("TargetMode")];shell.removeAttributeNS(ns,"id");}
+        result.push({key:"hyperlink",node:[canonical(shell),relationship,encodeChildren(el,inherited)]});
+      } else result.push({key:"structural",node:canonical(el)});
+    }
+    return result;
+  };
+  const {pp,rp}=paragraphProperties(paragraph);
+  const encoded=encodeChildren(content,rp);
+  // Retain inherited declarations as well: OOXML style toggles and partially
+  // inherited compound properties must never collapse into a false equivalence.
+  return JSON.stringify([paragraph?ordered(pp):null,encoded,defaults?canonical(defaults):null,[...usedStyles].sort(([a],[b])=>a.localeCompare(b))]);
+}
 function markerRun(doc: Document, marker: string) {
   const run = doc.createElementNS(W, "w:r"), text = doc.createElementNS(W, "w:t"); text.textContent = marker; run.append(text); return run;
 }
@@ -76,6 +169,7 @@ export function createBibliographyExport(graph: BibliographyDocxGraph, carriers:
     const zip = await JSZip.loadAsync(await blob.arrayBuffer()), main = await mainPart(zip);
     if (Array.from(main.relations.documentElement.children).some(el => el.getAttribute("Type") === LEGACY_REL)) fail("Duplicate bibliography metadata");
     const stored: StoredCarrier[] = [];
+    const styles = await semanticContext(zip,main);
     const occupiedBookmarks = new Set(all(main.doc,"bookmarkStart").map(el=>el.getAttributeNS(W,"name")?.toLowerCase()));
     const occupiedIds = new Set([...all(main.doc,"bookmarkStart"),...all(main.doc,"bookmarkEnd")].map(el=>el.getAttributeNS(W,"id"))); let nextBookmarkId=1;
     carriers.forEach((carrier, i) => {
@@ -97,17 +191,31 @@ export function createBibliographyExport(graph: BibliographyDocxGraph, carriers:
       if(carrier.kind === "citation") {parent.insertBefore(first,start);parent.insertBefore(last,end);}
       else {const firstParagraph=nodes[0] as Element,lastParagraph=nodes[nodes.length-1] as Element;const properties=children(firstParagraph,"pPr")[0];firstParagraph.insertBefore(first,properties?properties.nextSibling:firstParagraph.firstChild);lastParagraph.append(last);}
       start.remove();end.remove();
-      stored.push({...carrier,signature:nativeSignature(content,main.relations)});
+      stored.push({...carrier,signature:semanticSignature(content,main.relations,styles,carrier.kind === "citation" ? parent : null)});
     });
     let part = "customXml/itemBibliography.xml", suffix = 0; while(zip.file(part)) part = `customXml/itemBibliography${++suffix}.xml`;
-    const metadata = parseXml(`<bibliography xmlns="${NS}" version="2"/>`); metadata.documentElement.textContent = JSON.stringify({graph,carriers:stored}); zip.file(part,xmlString(metadata));
+    const metadata = parseXml(`<bibliography xmlns="${NS}" version="3"/>`); metadata.documentElement.textContent = JSON.stringify({graph,carriers:stored}); zip.file(part,xmlString(metadata));
     const relationship = main.relations.createElementNS(PKG,"Relationship"); let id = 1; const occupied = new Set(Array.from(main.relations.documentElement.children).map(el=>el.getAttribute("Id"))); while(occupied.has(`rIdBibliography${id}`)) id++;
     relationship.setAttribute("Id",`rIdBibliography${id}`); relationship.setAttribute("Type",REL); relationship.setAttribute("Target",`/${part}`); main.relations.documentElement.append(relationship);
     zip.file(main.path,xmlString(main.doc)); zip.file(main.relPath,xmlString(main.relations)); return new Blob([await zip.generateAsync({type:"arraybuffer"})],{type:blob.type});
   }};
 }
 export async function prepareBibliographyImport(arrayBuffer: ArrayBuffer): Promise<{arrayBuffer: ArrayBuffer; graph?: BibliographyDocxGraph; restore:(html:string)=>string}> {
-  const zip = await JSZip.loadAsync(arrayBuffer), main = await mainPart(zip);
+  const zip = await JSZip.loadAsync(arrayBuffer);
+  // Older plain DOCX writers omit package relationships. Leave this existing
+  // generic-import path untouched only when there is no bibliography ownership.
+  if (!zip.file("_rels/.rels") && zip.file("word/document.xml")) {
+    const document = parseXml(await zip.file("word/document.xml")!.async("string"));
+    const native = [...all(document,"instrText").map(el=>el.textContent || ""),...all(document,"fldSimple").map(el=>el.getAttributeNS(W,"instr") || "")];
+    const owned = all(document,"bookmarkStart").some(el=>el.getAttributeNS(W,"name")?.startsWith(BOOKMARK)) || all(document,"tag").some(el=>el.getAttributeNS(W,"val")?.startsWith(TAG));
+    let metadata = false;
+    for (const [path,file] of Object.entries(zip.files)) {
+      if(!file.dir && /(?:\.xml|\.rels)$/.test(path) && (await file.async("string")).includes(NS))metadata=true;
+    }
+    if(owned || metadata || /\b(?:CITATION|BIBLIOGRAPHY)\b/i.test(native.join(" ")+" "+native.join("")))fail("Bibliography package relationship missing");
+    return {arrayBuffer,restore:html=>html};
+  }
+  const main = await mainPart(zip);
   const owned = all(main.doc,"sdt").filter(el => children(el,"sdtPr").some(pr => children(pr,"tag").some(tag => tag.getAttributeNS(W,"val")?.startsWith(TAG))));
   const bookmarks=all(main.doc,"bookmarkStart").filter(el=>el.getAttributeNS(W,"name")?.startsWith(BOOKMARK));
   const relationships: Element[] = [];
@@ -121,16 +229,17 @@ export async function prepareBibliographyImport(arrayBuffer: ArrayBuffer): Promi
     if(relatedXml.documentElement.namespaceURI === NS)relationships.push(relationship);
   }
   // Native Word fields remain separately gated; never feed them to a generic flattener.
-  const instructions = [...all(main.doc,"instrText").map(el=>el.textContent || ""), ...all(main.doc,"fldSimple").map(el=>el.getAttributeNS(W,"instr") || "")].join(" ");
-  if (/\b(?:CITATION|BIBLIOGRAPHY)\b/i.test(instructions)) fail("Native Word bibliography fields require a separately supported profile");
+  const instructions = [...all(main.doc,"instrText").map(el=>el.textContent || ""), ...all(main.doc,"fldSimple").map(el=>el.getAttributeNS(W,"instr") || "")];
+  if (/\b(?:CITATION|BIBLIOGRAPHY)\b/i.test(instructions.join(" ")+" "+instructions.join(""))) fail("Native Word bibliography fields require a separately supported profile");
   if (!relationships.length && !owned.length && !bookmarks.length) return {arrayBuffer,restore:html=>html};
   if (relationships.length !== 1 || relationships[0].hasAttribute("TargetMode")) fail("Bibliography metadata relationship missing or ambiguous");
   const part = resolve(main.path,relationships[0].getAttribute("Target") || ""), file = zip.file(part); if (!file) fail("Bibliography metadata part missing");
   const metadata = parseXml(await file.async("string"));
-  if (metadata.documentElement.namespaceURI !== NS || metadata.documentElement.localName !== "bibliography" || !["1","2"].includes(metadata.documentElement.getAttribute("version") || "")) fail("Unsupported bibliography metadata version");
+  if (metadata.documentElement.namespaceURI !== NS || metadata.documentElement.localName !== "bibliography" || !["1","2","3"].includes(metadata.documentElement.getAttribute("version") || "")) fail("Unsupported bibliography metadata version");
   let saved: {graph: BibliographyDocxGraph; carriers: StoredCarrier[]};
   try { saved = JSON.parse(metadata.documentElement.textContent || ""); } catch { fail("Malformed bibliography metadata"); }
   if (!saved || !saved.graph || typeof saved.graph.sources !== "object" || !saved.graph.sources || !saved.graph.bibliography || !Array.isArray(saved.carriers) || owned.length + bookmarks.length !== saved.carriers.length) fail("Incomplete bibliography graph or carriers");
+  const styles = metadata.documentElement.getAttribute("version") === "3" ? await semanticContext(zip,main) : undefined;
   const ids = new Set<string>(), replacements: {token:string;html:string;block:boolean}[] = [], token = crypto.randomUUID().replace(/-/g,"");
   for (const [index, carrier] of saved.carriers.entries()) {
     if (!carrier || !/^fld_[0-9a-f]{32}$/.test(carrier.fieldId) || ids.has(carrier.fieldId) || !["citation","bibliography"].includes(carrier.kind) || typeof carrier.html !== "string" || typeof carrier.signature !== "string") fail("Malformed bibliography carrier"); ids.add(carrier.fieldId);
@@ -161,7 +270,7 @@ export async function prepareBibliographyImport(arrayBuffer: ArrayBuffer): Promi
         nodes.forEach(node=>content.append(node.cloneNode(true)));
         for(const el of [...all(content,"bookmarkStart"),...all(content,"bookmarkEnd")])if(el.getAttributeNS(W,"id")===id)el.remove();
       }
-      if(nativeSignature(content,main.relations)!==carrier.signature)fail("Bibliography visible content changed; preserving the source graph would overwrite Word edits");
+      if((metadata.documentElement.getAttribute("version") === "3" ? semanticSignature(content,main.relations,styles,carrier.kind === "citation" ? start.parentElement : null) : nativeSignature(content,main.relations))!==carrier.signature)fail("Bibliography visible content changed; preserving the source graph would overwrite Word edits");
       if(carrier.kind === "citation"){start.replaceWith(run);nodes.forEach(n=>n.parentNode?.removeChild(n));end.remove();}
       else {const p=main.doc.createElementNS(W,"w:p");p.append(run);nodes[0].parentNode!.insertBefore(p,nodes[0]);nodes.forEach(n=>n.parentNode?.removeChild(n));}
     }

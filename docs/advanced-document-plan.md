@@ -168,7 +168,7 @@ Dört dondurulmuş gerçek Word örneği için uygulama PDF sayıları 6/1/5/3 o
 
 Üretim derlemesinde gerçek arayüz, model v3/gelecek sürüm koruması, native dönüş, RTL/cetvel, görsel ve metin kutusu regresyonları geçti. 40 ve 160 sözcük çifti içeren uzun hücre tablolarında gerçek metin/hücre sürükleme seçimi, boş devam alanına yazma/undo, tekrarlanan başlık ve seçiliyken PDF doğrulandı. İki fiziksel sayfalı örnekte içerik sayıları ve PDF işaretleri kayıpsızdı. Tablo taşıma düğmesi açıklamasının model değişikliğine yol açması, native duplicate uzantıların kaybı ve salt görünüm seçimlerinin baskıya taşınması düzeltildi.
 
-**Yayın kabulü:** `2e1f550` canlıda; arayüz, veri koruma, native DOCX, uzun tablo/PDF, görsel/metin kutusu ve 515 işaretlik Word karşılaştırması geçti. Ayrıntılar [columns-acceptance.md](columns-acceptance.md) içinde. A4 canlı referanslar ve içindekiler paketi `c3f8a7e` ile yayımlandı; uygulama, PDF, native Word güncelleme/dönüş ve canlı kabul tamamlandı. Ayrıntılar [references-acceptance.md](references-acceptance.md) içinde. Güncel A5 durumu aşağıdadır; A6 ilk kapsamı `52293af` ile canlıda; A7 uygulaması henüz başlamadı.
+**Yayın kabulü:** `2e1f550` canlıda; arayüz, veri koruma, native DOCX, uzun tablo/PDF, görsel/metin kutusu ve 515 işaretlik Word karşılaştırması geçti. Ayrıntılar [columns-acceptance.md](columns-acceptance.md) içinde. A4 canlı referanslar ve içindekiler paketi `c3f8a7e` ile yayımlandı; uygulama, PDF, native Word güncelleme/dönüş ve canlı kabul tamamlandı. Ayrıntılar [references-acceptance.md](references-acceptance.md) içinde. Güncel A5 durumu aşağıdadır; A6 ilk kapsamı `52293af` ile canlıda; A7.1 ilk ölçülen düzeltmelerin yerel kabulü tamamlandı; A7 genel kabulü açık. [A7 planı](advanced-compatibility-plan.md).
 
 
 ## Uygulama kaydı — A4
@@ -185,3 +185,8 @@ A5b `d97ea95` ile canlıda ve yayın kabulü tamamlandı. Dipnot oluşturma/içe
 ## A6 ilk kaynakça paketi — 2026-11-03
 
 `52293af` ile v6 kaynak havuzu, APA 7 / IEEE canlı atıflar, kitap/makale/web kaynak yönetimi, çok kaynaklı kümeler, dil/locator ayarları ve biçimlendirilmiş DOCX aktarımı yayımlandı. Sol/Terra geliştirmesi; coauthor eklenmedi. Gerçek CSL işlemcisi ve sabitlenmiş çevrimdışı varlıklar, atomik clipboard/undo, bölüm ve not yerleşimi, mobil RTL, kaynak koruma ve canlı çıktılar doğrulandı. Word Online standart customXml çıktısını açıp düzenleyebiliyor; yeniden kaydederken değiştirdiği biçim temsili uygulamanın katı kaynak geri yüklemesinde reddediliyor. Native Word kaynak yöneticisi alan profili ayrı ve kapalıdır. Ayrıntılar [bibliography-acceptance.md](bibliography-acceptance.md) içinde.
+
+
+## A7.1 — ilk ölçülen uyumluluk düzeltmeleri
+
+Başlık altı tek çizgili paragraf sınırları (tema rengi, kalınlık, boşluk, kalıtım ve nil kaldırma), kaynakça için güvenli v3 XML normalizasyonu, sade eski DOCX açılışının korunması ve açıklayıcı kaynakça ret mesajları uygulandı. Sekiz donmuş Word örneği yeniden ölçüldü; sayfa sayısı/boyutu ve benzersiz işaretler eşleşiyor, fakat sekizinin de metin ankrajları hedef toleransı aşıyor. Bu A7'nin tamamlandığı anlamına gelmez. İlk paket üretim derlemesinde doğrulandı; canlı yayın kontrolü bekleniyor. Güncel kanıtlar [advanced-compatibility-acceptance.md](advanced-compatibility-acceptance.md), sıralı sonraki işler [advanced-compatibility-plan.md](advanced-compatibility-plan.md) içinde.

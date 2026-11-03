@@ -285,7 +285,7 @@ class DocxBuilder {
         if (!marker || !Array.isArray(child.attrs.cachedRuns) || child.attrs.status !== "current") throw new Error("Cannot export an unsettled citation");
         out.push(new TextRun(marker.start));
         for (const cached of child.attrs.cachedRuns as BibliographyRun[]) {
-          const run = new TextRun({text:cached.text,bold:cached.bold,italics:cached.italic,underline:cached.underline?{}:undefined,superScript:cached.superscript,subScript:cached.subscript,style:cached.href?"Hyperlink":undefined});
+          const run = new TextRun({text:cached.text,rightToLeft:textDirection(cached.text)==="rtl",bold:cached.bold,italics:cached.italic,underline:cached.underline?{}:undefined,superScript:cached.superscript,subScript:cached.subscript,style:cached.href?"Hyperlink":undefined});
           if(cached.href) out.push(this.hyperlink(run,cached.href)); else out.push(run);
         }
         out.push(new TextRun(marker.end));

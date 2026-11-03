@@ -16,6 +16,43 @@ def display_path(path):
     try: return str(path.resolve().relative_to(ROOT.resolve()))
     except ValueError: return str(path)
 
+def resolve_link(reader, obj):
+    """Resolve named/direct GoTo destinations to page and PDF coordinates."""
+    action=obj.get('/A')
+    if action:
+        action=action.get_object()
+        if action.get('/S')=='/URI': return {'kind':'URI','uri':str(action.get('/URI',''))}
+        if action.get('/S')!='/GoTo': return {'kind':'UNRESOLVED','reason':'unsupported action '+str(action.get('/S'))}
+        destination=action.get('/D')
+    else: destination=obj.get('/Dest')
+    if isinstance(destination,str): destination=reader.named_destinations.get(destination)
+    if destination is None: return {'kind':'UNRESOLVED','reason':'missing destination'}
+    try:
+        if hasattr(destination,'dest_array'): destination=destination.dest_array
+        destination=destination.get_object() if hasattr(destination,'get_object') else destination
+        target=destination[0]
+        page=reader.get_page_number(target.get_object())+1
+        values=[None if value is None or str(value)=='NullObject' else float(value) for value in destination[2:]]
+        return {'kind':'GoTo','page':page,'fit':str(destination[1]),'coordinates':values}
+    except Exception as exc: return {'kind':'UNRESOLVED','reason':str(exc)}
+
+def compare_link_targets(before,after):
+    # Annotation order is retained; no assertion based only on link counts.
+    if len(before)!=len(after): return False
+    unknown=False
+    for left,right in zip(before,after):
+        if 'UNRESOLVED' in (left['kind'],right['kind']): unknown=True; continue
+        if left['kind']!=right['kind']: return False
+        if left['kind']=='URI':
+            if left['uri']!=right['uri']: return False
+        else:
+            if left['page']!=right['page'] or left['fit']!=right['fit']: return False
+            if len(left['coordinates'])!=len(right['coordinates']): return False
+            for a,b in zip(left['coordinates'],right['coordinates']):
+                if (a is None)!=(b is None): return False
+                if a is not None and abs(a-b)>.75: return False
+    return None if unknown else True
+
 def inspect(path):
     reader=PdfReader(str(path)); pages=[]; words=collections.Counter(); full=[]; links=[]
     for number,page in enumerate(reader.pages,1):
@@ -25,9 +62,7 @@ def inspect(path):
         for annotation in page.get('/Annots',[]):
             obj=annotation.get_object()
             if obj.get('/Subtype')!='/Link': continue
-            action=obj.get('/A'); dest=obj.get('/Dest')
-            if action: action=action.get_object(); dest=action.get('/URI') or action.get('/D') or action.get('/S')
-            page_links.append(str(dest) if dest is not None else '(unresolved)')
+            page_links.append(resolve_link(reader,obj))
         links += page_links
         pages.append({'page':number,'media_box_pt':[float(b.left),float(b.bottom),float(b.right),float(b.top)],'link_count':len(page_links)})
     return {'sha256':digest(path),'page_count':len(pages),'pages':pages,'tokens':words,'text':'\n'.join(full),'link_count':len(links),'link_targets':links}
@@ -57,10 +92,13 @@ def compare_anchors(reference,app,tokens):
     return {'status':'EXTRACTED_TEXT_ONLY','anchors':anchors}
 
 def compare(fixture,reference,app,profile,app_record,reference_record):
-    result={'id':fixture['id'],'source_sha256':fixture['sha256'],'status':'PENDING','visual_status':'NOT_ASSESSED','reference_pdf':display_path(reference),'app_pdf':display_path(app)}
+    result={'id':fixture['id'],'source_sha256':fixture['sha256'],'status':'PENDING','visual_status':'NOT_ASSESSED','editability_status':'NOT_ASSESSED','model_retention_status':'NOT_ASSESSED','reference_pdf':display_path(reference),'app_pdf':display_path(app)}
+    if app_record and app_record.get('status') != 'EXPORTED':
+        result.update(status='ERROR',error='Application export failed or was interrupted',export_record=app_record); return result
     if app.is_file() and app_record is not None and (app_record.get('source_sha256') != fixture['sha256'] or app_record.get('pdf_sha256') != digest(app) or app_record.get('status') != 'EXPORTED'):
         result.update(status='ERROR',error='Application PDF provenance does not match the source manifest or export record'); return result
     missing=[label for label,path in (('word_reference',reference),('app_pdf',app)) if not path.is_file()]
+    if app_record is None: missing.append('app_export_provenance')
     if not reference_record and not (profile or {}).get('sources',{}).get(fixture['id']): missing.append('word_reference_provenance')
     if missing: result['pending']=missing; return result
     try: ref=inspect(reference); actual=inspect(app)
@@ -74,7 +112,8 @@ def compare(fixture,reference,app,profile,app_record,reference_record):
         boxes.append({'page':r['page'],'delta_pt':delta,'within_tolerance':all(abs(v)<=.75 for v in delta)})
     checks={'page_count_equal':ref['page_count']==actual['page_count'],'media_boxes_within_0_75pt':all(row['within_tolerance'] for row in boxes) and ref['page_count']==actual['page_count'],
             'token_multisets_equal':not missing_tokens and not extra_tokens,'expected_markers_once':all(v['word']==1 and v['app']==1 for v in counts.values()),
-            'link_count_equal':ref['link_count']==actual['link_count']}
+            'link_count_equal':ref['link_count']==actual['link_count'],
+            'link_destination_geometry_equal':compare_link_targets(ref['link_targets'],actual['link_targets'])}
     anchor_comparison=compare_anchors(reference,app,expected)
     if anchor_comparison['status']=='EXTRACTED_TEXT_ONLY':
         entries=anchor_comparison['anchors'].values()
@@ -82,11 +121,12 @@ def compare(fixture,reference,app,profile,app_record,reference_record):
     else: checks['text_anchors_within_1_css_px'] = None
     record=reference_record or (profile or {}).get('sources',{}).get(fixture['id'],{})
     provenance={'source_sha256_matches':record.get('source_sha256')==fixture['sha256'], 'reference_pdf_sha256_matches':(record.get('pdf_sha256') or record.get('reference_pdf_sha256'))==ref['sha256']}
-    if reference_record and not all(provenance.values()):
+    if not all(provenance.values()):
         result.update(status='ERROR',error='Word reference provenance does not match the source manifest or reference PDF',provenance=provenance); return result
     result.update(status='MEASURED' if all(value is not False for value in checks.values()) else 'MISMATCH', checks=checks, provenance=provenance, expected_marker_counts=counts,
                   missing_tokens=dict(sorted(missing_tokens.items())),extra_tokens=dict(sorted(extra_tokens.items())),media_box_deltas=boxes,
                   reference={k:v for k,v in ref.items() if k not in ('text','tokens')},app={k:v for k,v in actual.items() if k not in ('text','tokens')},
+                  evidence_axes={'content_text':'MATCH' if checks['token_multisets_equal'] and checks['expected_markers_once'] else 'MISMATCH', 'pagination':'MATCH' if checks['page_count_equal'] and checks['media_boxes_within_0_75pt'] else 'MISMATCH', 'link_destinations':'NOT_APPLICABLE' if not ref['link_count'] and not actual['link_count'] else ('UNKNOWN' if checks['link_destination_geometry_equal'] is None else ('MATCH' if checks['link_destination_geometry_equal'] else 'MISMATCH')), 'text_anchor_geometry':'UNKNOWN' if checks['text_anchors_within_1_css_px'] is None else ('MATCH' if checks['text_anchors_within_1_css_px'] else 'MISMATCH'), 'visible_rendering':'NOT_ASSESSED','editability':'NOT_ASSESSED','model_retention':'NOT_ASSESSED'},
                   visual_status='NOT_ASSESSED',text_anchor_positions=anchor_comparison,profile=profile,reference_provenance=record or None)
     return result
 
@@ -108,10 +148,10 @@ def main():
         cases.append(compare(fixture,args.references/(fixture['id']+'.pdf'),args.app/(fixture['id']+'.pdf'),profile,records.get(fixture['id'],{}) if exports else None,reference_record))
     required_profile_fields=('reference_application','capture_date','browser_and_version','paper_settings','fonts')
     profile_missing=[key for key in required_profile_fields if not profile or not profile.get(key)]
-    output={'schema_version':1,'comparison':'Word Online reference PDF versus EDTRDocs PDF','source_manifest':display_path(FIXTURES/'manifest.json'),
+    output={'schema_version':2,'comparison':'Word Online reference PDF versus EDTRDocs PDF','source_manifest':display_path(FIXTURES/'manifest.json'),
             'reference_profile':profile,'profile_status':'INCOMPLETE' if profile_missing else 'RECORDED','profile_missing':profile_missing,
             'summary':dict(collections.Counter(c['status'] for c in cases)),'cases':cases,
-            'limits':['MEASURED covers listed checks only; it does not assert visual fidelity or editing support.', 'Link counts do not prove target equivalence.', 'Token extraction may vary by PDF text encoding.', 'Text anchor coordinates come from extractable PDF text and can differ from visible glyphs; they are not a visual comparison.']}
+            'limits':['MEASURED covers listed checks only; it does not assert visual fidelity or editing support.', 'Link destination checks resolve direct/named GoTo page/fit/coordinates within 0.75 pt and exact URI, in annotation order; unresolved actions remain unknown. This does not establish semantic target identity or clickable source rectangles.', 'Token extraction may vary by PDF text encoding.', 'Text anchor coordinates come from extractable PDF text and can differ from visible glyphs; they are not a visual comparison.']}
     text=json.dumps(output,indent=2,ensure_ascii=False)+'\n'
     if args.output: args.output.parent.mkdir(parents=True,exist_ok=True); args.output.write_text(text)
     else: print(text,end='')

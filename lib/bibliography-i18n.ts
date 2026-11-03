@@ -1,5 +1,11 @@
 /** UI labels only; changing UI locale never changes document bibliography locale. */
 const labels: Record<string, Record<string,string>> = {
+  "Source data cannot be restored from this Word file. The open document was kept.": {
+    tr: "Bu Word dosyasındaki kaynak bilgileri geri yüklenemiyor. Açık belge korundu.",
+    fr: "Impossible de restaurer les sources de ce fichier Word. Le document ouvert a été conservé.",
+    zh: "无法从此 Word 文件恢复来源信息。已保留当前打开的文档。",
+    ar: "تعذرت استعادة المصادر من ملف Word هذا. تم الاحتفاظ بالمستند المفتوح."
+  },
 "Source type and title are required":{"tr": "Kaynak türü ve başlık gerekli", "fr": "Le type et le titre de la source sont obligatoires", "zh": "请填写来源类型和标题", "ar": "نوع المصدر وعنوانه مطلوبان"},
 "Invalid calendar date":{"tr": "Geçersiz takvim tarihi", "fr": "Date non valide", "zh": "日期无效", "ar": "تاريخ غير صالح"},
 "Invalid source name":{"tr": "Geçersiz kaynak yazarı veya editörü", "fr": "Nom d’auteur ou de responsable éditorial non valide", "zh": "作者或编者姓名无效", "ar": "اسم المؤلف أو المحرر غير صالح"},
