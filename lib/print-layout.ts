@@ -33,7 +33,9 @@ export async function preparePrintLayout(view: EditorView, host: HTMLElement, cr
     const edge = source.querySelectorAll<HTMLElement>(".pm-page-number-edge")[index];
     el.style.top = `${edge.offsetTop}px`; el.style.bottom = "auto";
   });
-  template.querySelectorAll(".pm-table-drag-handle,.pm-image-handle,.column-resize-handle,.search-match-overlay").forEach(el => el.remove());
+  // ProseMirror adds a source-less separator img beside trailing inline atoms.
+  // It is editor chrome; rasterizers otherwise fetch the page URL as an image.
+  template.querySelectorAll(".pm-table-drag-handle,.pm-image-handle,.column-resize-handle,.search-match-overlay,.ProseMirror-separator").forEach(el => el.remove());
   template.querySelectorAll("[contenteditable]").forEach(el => el.removeAttribute("contenteditable"));
   template.querySelectorAll(".selectedCell,.ProseMirror-selectednode,.is-selected").forEach(el => el.classList.remove("selectedCell", "ProseMirror-selectednode", "is-selected"));
   const output = document.createDocumentFragment(), style = document.createElement("style");

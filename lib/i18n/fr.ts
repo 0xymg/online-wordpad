@@ -523,7 +523,17 @@ export const fr: Dictionary = {
 
   image: {
     layout: "Disposition de l’image",
-    layoutDescription: "Choisissez comment le texte entoure l’image. Elle se déplace avec le texte.",
+    layoutDescription: "Choisissez la position, l’habillage et l’ordre des images.",
+    position: "Position",
+    moveWithText: "Déplacer avec le texte",
+    fixedOnPage: "Fixer sur la page d’ancrage",
+    fixedHint: "La position reste fixe sur la page du paragraphe d’ancrage. Les images sont placées devant le texte.",
+    xCm: "Depuis le bord gauche (cm)",
+    yCm: "Depuis le bord supérieur (cm)",
+    imageOrder: "Ordre des images",
+    bringToFront: "Mettre au premier plan",
+    sendToBack: "Mettre à l’arrière-plan",
+    invalidPosition: "Choisissez une taille et une position qui tiennent sur la page.",
     wrapping: "Habillage du texte",
     inline: "Aligné sur le texte",
     topBottom: "Haut et bas",

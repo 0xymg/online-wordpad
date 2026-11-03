@@ -1,6 +1,8 @@
 // Block-level commands shared by the toolbar and the menu bar, so both stay in
 // step instead of each keeping its own copy of the logic.
 
+import { documentSections } from "./document-sections";
+import { fixedImageAlignedX } from "./page-image-position";
 import type { Node as PMNode } from "prosemirror-model";
 import { NodeSelection, type EditorState, type Transaction } from "prosemirror-state";
 import { effectiveParagraph } from "./paragraph-format";
@@ -15,6 +17,7 @@ const MAX_INDENT = 12;
 
 /** Inline images have no independent alignment; floating images follow their wrap side. */
 export function imageAlignment(attrs: Record<string, unknown>): string {
+  if (attrs.position === "page") return ["left", "center", "right"].includes(String(attrs.align)) ? String(attrs.align) : "";
   return attrs.wrap === "inline" ? "" : attrs.wrap === "wrapLeft" ? "left" : attrs.wrap === "wrapRight" ? "right" : String(attrs.align || "left");
 }
 
@@ -44,6 +47,12 @@ export function alignParagraphImages(tr: Transaction, pos: number, align: string
   paragraph.forEach((node, offset) => {
     if (node.type.name !== "image" || !["left", "center", "right"].includes(align)) return;
     const attrs = node.attrs;
+    if (attrs.position === "page") {
+      const sections = documentSections(tr.doc);
+      const geometry = (sections.find(section => pos >= section.from && pos < section.to) || sections[0]).geometry;
+      tr.setNodeMarkup(pos + 1 + offset, undefined, { ...attrs, align, x: fixedImageAlignedX(attrs, geometry, align) });
+      return;
+    }
     const floating = attrs.wrap === "wrapLeft" || attrs.wrap === "wrapRight";
     const wrap = floating ? (align === "center" ? "topBottom" : align === "left" ? "wrapLeft" : "wrapRight")
       : attrs.wrap === "inline" && !keepInline ? "topBottom" : attrs.wrap;

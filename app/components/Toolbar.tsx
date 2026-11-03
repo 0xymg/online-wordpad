@@ -363,7 +363,8 @@ function Toolbar({
       block: parent.type === schema.nodes.heading ? `h${parent.attrs.level}`
         : parent.type === schema.nodes.code_block ? "code_block"
         : "paragraph",
-      align: alignmentImage && imageAlignment(alignmentImage.attrs) || resolvedAlignment(effectiveParagraph(parent).alignment, parent.textContent),
+      align: alignmentImage?.attrs.position === "page" ? imageAlignment(alignmentImage.attrs)
+        : alignmentImage && imageAlignment(alignmentImage.attrs) || resolvedAlignment(effectiveParagraph(parent).alignment, parent.textContent),
       image: !!selectedImage || paragraphHasImage(parent),
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps

@@ -21,7 +21,7 @@ type RunFormat = {
   underline?: boolean;
   strike?: boolean;
   vertical?: string;
-  image?: { width: number; ratio: number; align: string; wrap: string; distance: number; rotate: number; flipX: boolean; flipY: boolean };
+  image?: { position: string; x: number; y: number; layer: number; width: number; ratio: number; align: string; wrap: string; distance: number; rotate: number; flipX: boolean; flipY: boolean };
 };
 
 function child(node: Element | undefined, name: string): Element | undefined {
@@ -444,14 +444,19 @@ export async function prepareDocxFormatting(arrayBuffer: ArrayBuffer) {
         if (imageWidth > 0 && imageHeight > 0) {
           const WP = "http://schemas.openxmlformats.org/drawingml/2006/wordprocessingDrawing";
           const anchor = run.getElementsByTagNameNS(WP, "anchor")[0];
-          const horizontal = anchor?.getElementsByTagNameNS(WP, "positionH")[0]?.getElementsByTagNameNS(WP, "align")[0]?.textContent;
-          const align = horizontal || (["center", "right"].includes(paragraphProps.jc) ? paragraphProps.jc : "left");
+          const positionH = anchor?.getElementsByTagNameNS(WP, "positionH")[0];
+          const positionV = anchor?.getElementsByTagNameNS(WP, "positionV")[0];
+          const offsetH = positionH?.getElementsByTagNameNS(WP, "posOffset")[0]?.textContent;
+          const offsetV = positionV?.getElementsByTagNameNS(WP, "posOffset")[0]?.textContent;
+          const fixed = positionH?.getAttribute("relativeFrom") === "page" && positionV?.getAttribute("relativeFrom") === "page" && offsetH != null && offsetV != null && !!anchor?.getElementsByTagNameNS(WP, "wrapNone")[0] && !["1", "true"].includes(anchor?.getAttribute("behindDoc") || "");
+          const horizontal = positionH?.getElementsByTagNameNS(WP, "align")[0]?.textContent;
+          const align = fixed ? "" : horizontal || (["center", "right"].includes(paragraphProps.jc) ? paragraphProps.jc : "left");
           const square = anchor?.getElementsByTagNameNS(WP, "wrapSquare")[0];
           const wrapped = square || anchor?.getElementsByTagNameNS(WP, "wrapTight")[0] || anchor?.getElementsByTagNameNS(WP, "wrapThrough")[0];
           const wrap = !anchor ? "inline" : wrapped ? (align === "right" || wrapped.getAttribute("wrapText") === "left" ? "wrapRight" : "wrapLeft") : "topBottom";
           const distances = ["distT", "distB", "distL", "distR"].map(key => Number(wrapped?.getAttribute(key) || anchor?.getAttribute(key) || 0) / 9525);
           const transform = run.getElementsByTagNameNS(A, "xfrm")[0];
-          format.image = { width: imageWidth, ratio: imageWidth / imageHeight, align, wrap, distance: Math.max(...distances),
+          format.image = { position: fixed ? "page" : "flow", x: fixed ? Number(offsetH) / 9525 : 0, y: fixed ? Number(offsetV) / 9525 : 0, layer: Number(anchor?.getAttribute("relativeHeight")) || 0, width: imageWidth, ratio: imageWidth / imageHeight, align, wrap, distance: Math.max(...distances),
             rotate: Number(transform?.getAttribute("rot") || 0) / 60000, flipX: ["1", "true"].includes(transform?.getAttribute("flipH") || ""), flipY: ["1", "true"].includes(transform?.getAttribute("flipV") || "") };
         }
         const key = JSON.stringify(format);
@@ -535,6 +540,7 @@ export async function prepareDocxFormatting(arrayBuffer: ArrayBuffer) {
         if (format.image) for (const image of Array.from(span.querySelectorAll("img"))) {
           image.setAttribute("data-width", `${format.image.width}px`); image.style.width = `${format.image.width}px`;
           image.setAttribute("data-aspect-ratio", String(format.image.ratio)); image.setAttribute("data-align", format.image.align);
+          image.setAttribute("data-position", format.image.position); image.setAttribute("data-x", String(format.image.x)); image.setAttribute("data-y", String(format.image.y)); image.setAttribute("data-layer", String(format.image.layer));
           image.setAttribute("data-wrap", format.image.wrap); image.setAttribute("data-distance", String(format.image.distance));
           image.setAttribute("data-rotate", String(format.image.rotate)); image.setAttribute("data-flip-x", String(format.image.flipX)); image.setAttribute("data-flip-y", String(format.image.flipY));
         }

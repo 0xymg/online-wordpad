@@ -4,7 +4,7 @@
 // the entire Editor.tsx module graph (react-to-print, dialogs, actions, …).
 
 import { paragraphAttrs, paragraphDOM, paragraphCSS } from "@/lib/paragraph-format";
-import { imageWrap, imageDistance, imageLayoutStyle, imageDataAttrs } from "@/lib/image-layout";
+import { imageWrap, imageDistance, imageLayoutStyle, imageDataAttrs, imagePosition, imageCoordinate, imageLayer } from "@/lib/image-layout";
 import { Schema, Node as PMNode, Mark, type NodeSpec } from "prosemirror-model";
 import { schema as basicSchema } from "prosemirror-schema-basic";
 import { addListNodes } from "prosemirror-schema-list";
@@ -143,6 +143,10 @@ const imageNodeSpec: NodeSpec = {
     align: { default: "left" },
     wrap: { default: "topBottom" },
     distance: { default: 0 },
+    position: { default: "flow" },
+    x: { default: 0 },
+    y: { default: 0 },
+    layer: { default: 0 },
   },
   parseDOM: [{
     tag: "img[src]",
@@ -157,9 +161,13 @@ const imageNodeSpec: NodeSpec = {
         rotate: Number(img.getAttribute("data-rotate") || "0") || 0,
         flipX: img.getAttribute("data-flip-x") === "true",
         flipY: img.getAttribute("data-flip-y") === "true",
-        align: img.getAttribute("data-align") || "left",
+        align: img.getAttribute("data-align") ?? "left",
         wrap: imageWrap(img.getAttribute("data-wrap") || (img.style.float === "left" ? "wrapLeft" : img.style.float === "right" ? "wrapRight" : "topBottom")),
         distance: imageDistance(img.getAttribute("data-distance")),
+        position: imagePosition(img.getAttribute("data-position")),
+        x: imageCoordinate(img.getAttribute("data-x")),
+        y: imageCoordinate(img.getAttribute("data-y")),
+        layer: imageLayer(img.getAttribute("data-layer")),
       };
     },
   }],
@@ -168,7 +176,7 @@ const imageNodeSpec: NodeSpec = {
     const sx = a.flipX ? -1 : 1;
     const sy = a.flipY ? -1 : 1;
     const transform = `rotate(${Number(a.rotate || 0)}deg) scale(${sx}, ${sy})`;
-    const align = String(a.align || "left");
+    const align = String(a.align ?? "left");
     return ["img", {
       src: a.src,
       alt: a.alt || "",
@@ -180,7 +188,7 @@ const imageNodeSpec: NodeSpec = {
       "data-flip-y": a.flipY ? "true" : "false",
       "data-align": align,
       ...imageDataAttrs(a),
-      style: `${imageLayoutStyle(a)}height:auto;${a.aspectRatio ? `aspect-ratio:${a.aspectRatio};` : ""}transform:${transform};transform-origin:center center;`,
+      style: `${imageLayoutStyle({ ...a, position: "flow" })}height:auto;${a.aspectRatio ? `aspect-ratio:${a.aspectRatio};` : ""}transform:${transform};transform-origin:center center;`,
     }];
   },
 };

@@ -592,7 +592,17 @@ export const en = {
 
   image: {
     layout: "Image layout",
-    layoutDescription: "Choose how text flows around the image. The image moves with its text.",
+    layoutDescription: "Choose the image position, text wrapping and image order.",
+    position: "Position",
+    moveWithText: "Move with text",
+    fixedOnPage: "Fixed on anchor page",
+    fixedHint: "The position stays fixed on the page containing the image’s text anchor. Images are placed over text.",
+    xCm: "From left edge (cm)",
+    yCm: "From top edge (cm)",
+    imageOrder: "Image order",
+    bringToFront: "Bring to front",
+    sendToBack: "Send to back",
+    invalidPosition: "Choose a size and position that fit on the page.",
     wrapping: "Text wrapping",
     inline: "In line with text",
     topBottom: "Top and bottom",

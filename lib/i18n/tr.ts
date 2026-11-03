@@ -523,7 +523,17 @@ export const tr: Dictionary = {
 
   image: {
     layout: "Görsel yerleşimi",
-    layoutDescription: "Metnin görsel etrafında nasıl akacağını seçin. Görsel metinle birlikte hareket eder.",
+    layoutDescription: "Görselin konumunu, metin kaydırmayı ve görsel sırasını seçin.",
+    position: "Konum",
+    moveWithText: "Metinle birlikte hareket et",
+    fixedOnPage: "Bağlı olduğu sayfaya sabitle",
+    fixedHint: "Konum, görselin bağlı olduğu paragrafın sayfasında sabit kalır. Görseller metnin üzerinde yer alır.",
+    xCm: "Sol kenardan (cm)",
+    yCm: "Üst kenardan (cm)",
+    imageOrder: "Görsel sırası",
+    bringToFront: "En öne getir",
+    sendToBack: "En arkaya gönder",
+    invalidPosition: "Sayfaya sığan bir boyut ve konum seçin.",
     wrapping: "Metin kaydırma",
     inline: "Metinle aynı hizada",
     topBottom: "Üst ve alt",

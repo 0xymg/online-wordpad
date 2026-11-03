@@ -56,7 +56,8 @@ import {
 import { cn } from "@/lib/utils";
 import { DEFAULT_DOCUMENT_FONT_CSS } from "@/lib/document-font";
 import { authClient, useSession } from "@/lib/auth-client";
-import { applyImageLayout } from "@/lib/image-layout";
+import { imagePageContext, placePageImages } from "@/lib/page-image-position";
+import { imageVisualElement, applyImageLayout } from "@/lib/image-layout";
 import { prepareImageFile, insertWidth } from "@/lib/image-util";
 import { OPEN_ACCEPT } from "@/lib/doc-import";
 import WelcomeScreen from "./WelcomeScreen";
@@ -421,6 +422,7 @@ function linkRangeAt(doc: PMNode, pos: number): { from: number; to: number; href
 class ImageNodeView {
   dom: HTMLElement;
   private img: HTMLImageElement;
+  private frame: HTMLElement;
   private node: PMNode;
   private view: EditorView;
   private getPos: () => number | undefined;
@@ -436,8 +438,11 @@ class ImageNodeView {
     this.dom.className = "pm-image-wrapper";
 
     this.img = document.createElement("img");
+    this.frame = document.createElement("span");
+    this.frame.className = "pm-image-frame";
+    this.frame.appendChild(this.img);
+    this.dom.appendChild(this.frame);
     this.applyAttrs(node);
-    this.dom.appendChild(this.img);
 
     const handles = ["tl", "tr", "bl", "br"] as const;
     handles.forEach((corner) => {
@@ -447,7 +452,7 @@ class ImageNodeView {
       // touch-action:none + pointer events so resizing also works on touch screens.
       handle.style.touchAction = "none";
       handle.addEventListener("pointerdown", (event) => this.startResize(event, corner));
-      this.dom.appendChild(handle);
+      this.frame.appendChild(handle);
     });
 
     this.dom.addEventListener("mousedown", (event) => {
@@ -465,7 +470,7 @@ class ImageNodeView {
     const rotate = Number(node.attrs.rotate || 0);
     const flipX = !!node.attrs.flipX;
     const flipY = !!node.attrs.flipY;
-    const align = String(node.attrs.align || "left");
+    const align = String(node.attrs.align ?? "left");
     const sx = flipX ? -1 : 1;
     const sy = flipY ? -1 : 1;
     this.img.setAttribute("src", node.attrs.src);
@@ -497,18 +502,45 @@ class ImageNodeView {
 
     const startX = event.clientX;
     const scale = this.view.dom.getBoundingClientRect().width / parseFloat(getComputedStyle(this.view.dom).width);
-    const startWidth = this.dom.getBoundingClientRect().width / scale;
+    const visual = imageVisualElement(this.dom);
+    const startWidth = visual.getBoundingClientRect().width / scale;
+    const startHeight = visual.getBoundingClientRect().height / scale;
     const resizeFromLeft = corner === "tl" || corner === "bl";
+    const resizeFromTop = corner === "tl" || corner === "tr";
     const parentWidth = (this.dom.parentElement?.getBoundingClientRect().width ?? window.innerWidth) / scale;
-    const minWidth = 40;
-    const maxWidth = Math.max(minWidth, Math.floor(parentWidth - 8));
+    const fixed = this.node.attrs.position === "page";
+    const pageContext = fixed ? imagePageContext(this.view, pos) : null;
+    const fixedAlignment = ["left", "center", "right"].includes(this.node.attrs.align) ? this.node.attrs.align : "";
+    const ratio = startWidth / Math.max(1, startHeight);
+    const initialLeft = Number.parseFloat(visual.style.left) || 0;
+    const initialTop = Number.parseFloat(visual.style.top) || 0;
+    let previewPosition: { x: number; y: number } | null = null;
+    const horizontalSpace = pageContext
+      ? fixedAlignment === "left" ? pageContext.width - pageContext.margins.left
+        : fixedAlignment === "right" ? pageContext.width - pageContext.margins.right
+        : fixedAlignment === "center" ? 2 * Math.min((pageContext.margins.left + pageContext.width - pageContext.margins.right) / 2, (pageContext.width - pageContext.margins.left + pageContext.margins.right) / 2)
+        : resizeFromLeft ? pageContext.x + startWidth : pageContext.width - pageContext.x
+      : parentWidth - 8;
+    const verticalSpace = pageContext ? (resizeFromTop ? pageContext.y + startHeight : pageContext.height - pageContext.y) * ratio : Infinity;
+    const maxWidth = Math.max(1, Math.floor(Math.min(horizontalSpace, verticalSpace)));
+    const minWidth = Math.min(40, maxWidth);
 
     this.onMove = (moveEvent: MouseEvent) => {
       const dx = (moveEvent.clientX - startX) / scale;
       const rawWidth = resizeFromLeft ? startWidth - dx : startWidth + dx;
-      const nextWidth = Math.max(minWidth, Math.min(maxWidth, rawWidth));
-      this.dom.style.width = `${Math.round(nextWidth)}px`;
-      this.img.setAttribute("data-width", `${Math.round(nextWidth)}px`);
+      const nextWidth = Math.round(Math.max(minWidth, Math.min(maxWidth, rawWidth)));
+      visual.style.width = `${nextWidth}px`;
+      if (pageContext) {
+        const x = fixedAlignment === "left" ? pageContext.margins.left
+          : fixedAlignment === "right" ? pageContext.width - pageContext.margins.right - nextWidth
+          : fixedAlignment === "center" ? (pageContext.margins.left + pageContext.width - pageContext.margins.right - nextWidth) / 2
+          : resizeFromLeft ? pageContext.x + startWidth - nextWidth : pageContext.x;
+        const y = resizeFromTop ? pageContext.y + startHeight - nextWidth / ratio : pageContext.y;
+        previewPosition = { x: Math.max(0, x), y: Math.max(0, y) };
+        visual.style.left = `${initialLeft + previewPosition.x - pageContext.x}px`;
+        visual.style.top = `${initialTop + previewPosition.y - pageContext.y}px`;
+      }
+      this.img.setAttribute("data-width", `${nextWidth}px`);
     };
 
     this.onUp = () => {
@@ -522,6 +554,7 @@ class ImageNodeView {
         const tr = this.view.state.tr.setNodeMarkup(latestPos, undefined, {
           ...this.node.attrs,
           width: nextWidth,
+          ...(previewPosition || {}),
         });
         tr.setSelection(NodeSelection.create(tr.doc, latestPos));
         this.view.dispatch(tr);
@@ -1137,7 +1170,8 @@ export default function Editor({
     };
     const domAtPos = view.nodeDOM(sel.from) as HTMLElement | null;
     if (domAtPos) {
-      const rect = domAtPos.getBoundingClientRect();
+      if (attrs.position === "page") placePageImages(view);
+      const rect = imageVisualElement(domAtPos).getBoundingClientRect();
       setImagePopover({
         ...active,
         left: Math.round(rect.left + rect.width / 2),
@@ -2082,10 +2116,10 @@ export default function Editor({
         table: (node, v, getPos) => new TableNodeView(node, v, getPos as () => number | undefined, uiText(tRef.current, "Drag to move table")),
         image: (node, v, getPos) => new ImageNodeView(node, v, getPos as () => number | undefined),
       },
-      handleClickOn(view, pos, node, _nodePos, event, direct) {
+      handleClickOn(view, _pos, node, nodePos, event, direct) {
         if (!direct || node.type !== mySchema.nodes.image) return false;
         event.preventDefault();
-        view.dispatch(view.state.tr.setSelection(NodeSelection.create(view.state.doc, pos)));
+        view.dispatch(view.state.tr.setSelection(NodeSelection.create(view.state.doc, nodePos)));
         view.focus();
         return true;
       },

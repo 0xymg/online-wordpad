@@ -3,6 +3,7 @@
 // boundary, drawing a gap band between the "pages". The document itself is
 // untouched — spacers are decorations only, so save/export see the plain
 // flow (print hides them via pageStyle and uses real CSS page breaks).
+import { placePageImages } from "@/lib/page-image-position";
 import { effectiveParagraph } from "@/lib/paragraph-format";
 import { numberLabel } from "@/lib/page-number";
 import { rawSections, runningSlot, runningFragment, type RunningSlots, type RunningVariant } from "@/lib/running-content";
@@ -566,6 +567,7 @@ export function paginationPlugin(getConfig: () => PageLayoutConfig): Plugin {
       view.dom.style.paddingBottom = padding > 0.5 ? `${padding}px` : "";
       paintPages?.(pages);
       paintRunning?.(pages);
+      placePageImages(view, pages);
     });
   };
 

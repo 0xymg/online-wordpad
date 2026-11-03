@@ -17,7 +17,7 @@ export function readonlyDocumentView(doc:PMNode){
  const layout=doc.attrs.layout;
  const view=new EditorView(page,{state:EditorState.create({doc,plugins:[paginationPlugin(()=>({pageHeightPx:first.height/15,marginPx:first.margins.top/15,bottomMarginPx:first.margins.bottom/15,pageNumbers:layout?.pageNumbers||"off",pageNumberFormat:layout?.pageNumberFormat||"plain",numberingStyle:layout?.numberingStyle}))]}),editable:()=>false,nodeViews:{
   table(node){const tableView=new TableView(node,25),wrap=document.createElement('div');wrap.className='pm-table-wrapper';const table=tableView.dom.querySelector('table');if(table){const style=document.createElement('div');style.style.cssText=node.attrs.layoutStyle||'';table.style.marginLeft=style.style.marginLeft;table.style.marginRight=style.style.marginRight;}wrap.appendChild(tableView.dom);return{dom:wrap,contentDOM:tableView.contentDOM,ignoreMutation:m=>tableView.ignoreMutation(m)};},
-  image(node){const dom=document.createElement('span'),img=DOMSerializer.fromSchema(node.type.schema).serializeNode(node) as HTMLImageElement;dom.className='pm-image-wrapper';applyImageLayout(dom,img,node.attrs);dom.appendChild(img);return{dom};}
+  image(node){const dom=document.createElement('span'),frame=document.createElement('span'),img=DOMSerializer.fromSchema(node.type.schema).serializeNode(node) as HTMLImageElement;dom.className='pm-image-wrapper';frame.className='pm-image-frame';frame.appendChild(img);dom.appendChild(frame);applyImageLayout(dom,img,node.attrs);return{dom,ignoreMutation:()=>true};}
  }});
  return{view,destroy(){view.destroy();host.remove();}};
 }

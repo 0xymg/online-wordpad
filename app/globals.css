@@ -258,6 +258,8 @@ body {
   padding: var(--page-margin-top, var(--page-margin)) var(--page-margin-right, var(--page-margin)) var(--page-margin-bottom, var(--page-margin)) var(--page-margin-left, var(--page-margin));
   box-shadow: 0 2px 8px rgba(0,0,0,0.18);
   overflow: visible;
+  /* Keep image stacking inside the page, below editor chrome and popovers. */
+  isolation: isolate;
   /* Containing block for the first/last page numbers. */
   position: relative;
 }
@@ -680,10 +682,15 @@ body {
   vertical-align: baseline;
 }
 
-.pm-page .ProseMirror .pm-image-wrapper.is-selected {
+.pm-page .ProseMirror .pm-image-wrapper:not([data-position="page"]).is-selected,
+.pm-page .ProseMirror .pm-image-wrapper[data-position="page"].is-selected > .pm-image-frame {
   outline: 2px solid #3b82f6;
   outline-offset: 2px;
 }
+
+.pm-image-frame { position: relative; display: block; }
+.pm-image-wrapper[data-position="page"] { overflow: visible; }
+
 
 .pm-page .ProseMirror .pm-image-wrapper .pm-image-handle {
   position: absolute;

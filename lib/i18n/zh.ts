@@ -520,7 +520,17 @@ export const zh: Dictionary = {
 
   image: {
     layout: "图片布局",
-    layoutDescription: "选择文字环绕图片的方式。图片随文字移动。",
+    layoutDescription: "选择图片位置、文字环绕和图片顺序。",
+    position: "位置",
+    moveWithText: "随文字移动",
+    fixedOnPage: "固定在锚点所在页",
+    fixedHint: "位置固定于图片锚点段落所在的页面。图片显示在文字上方。",
+    xCm: "距左边缘（厘米）",
+    yCm: "距上边缘（厘米）",
+    imageOrder: "图片顺序",
+    bringToFront: "置于顶层",
+    sendToBack: "置于底层",
+    invalidPosition: "请选择适合页面的尺寸和位置。",
     wrapping: "文字环绕",
     inline: "嵌入行内",
     topBottom: "上下环绕",
