@@ -41,13 +41,13 @@ export function identityFromNativeAlias(name: string): string | null {
   return token && checksum(token) === m![2].toLowerCase() ? `tgt_${token}` : null;
 }
 
-export function nativeTocAlias(id: string): string | null {
+export function nativeTocAlias(id: string, markerOnly = false): string | null {
   const match = /^fld_([0-9a-f]{32})$/.exec(id);
-  return match ? `EDF${match[1]}${checksum(match[1])}` : null;
+  return match ? `ED${markerOnly ? "G" : "F"}${match[1]}${checksum(markerOnly ? `G${match[1]}` : match[1])}` : null;
 }
 function tocIdentityFromAlias(name: string): string | null {
-  const match = /^EDF([0-9a-f]{32})([0-9a-f]{4})$/i.exec(name), token = match?.[1].toLowerCase();
-  return token && checksum(token) === match![2].toLowerCase() ? `fld_${token}` : null;
+  const match = /^ED([FG])([0-9a-f]{32})([0-9a-f]{4})$/i.exec(name), token = match?.[2].toLowerCase();
+  return token && checksum(match![1].toUpperCase() === "G" ? `G${token}` : token) === match![3].toLowerCase() ? `fld_${token}` : null;
 }
 
 function captionSalt(targetId: string): string {
@@ -283,7 +283,7 @@ export async function prepareReferenceImport(arrayBuffer: ArrayBuffer): Promise<
       if (priorRuns.some(run => Array.from(run.children).some(child => child.namespaceURI !== W || child.localName !== "rPr"))) throw new ReferenceDocxError("Cannot safely import prose before a table of contents field");
     }
     const id = (titleAnchor && tocIdentityFromAlias(attr(titleAnchor, "name"))) || `fld_${crypto.randomUUID().replace(/-/g, "")}`;
-    if (titleAnchor) { marker(titleAnchor, { type: "toc-title", attrs: { "data-edtr-toc": JSON.stringify({ fieldId: id, levels }) } }); titleEnd!.remove(); }
+    if (titleAnchor) { marker(titleAnchor, { type: "toc-title", attrs: { "data-edtr-toc": JSON.stringify({ fieldId: id, levels, ...(/^EDG/i.test(attr(titleAnchor,"name")) ? { markerOnly:true } : {}) }) } }); titleEnd!.remove(); }
     const entries = [...new Set(list.slice(separator + 1, last).map(paragraphOf).filter((p): p is Element => !!p))];
     for (const p of entries) {
       const probe = doc.createElementNS(W, "w:r");
@@ -385,6 +385,9 @@ export async function prepareReferenceImport(arrayBuffer: ArrayBuffer): Promise<
         const markerBlock = parsed.createElement("p"); markerBlock.setAttribute("data-edtr-toc", value.attrs["data-edtr-toc"]);
         const prefix = parsed.createRange(); prefix.setStart(block, 0); prefix.setEndBefore(anchors[0]);
         markerBlock.appendChild(prefix.extractContents());
+        if (!markerBlock.textContent?.trim() && !markerBlock.querySelector("img,br,[data-edtr-reference]")) {
+          markerBlock.setAttribute("data-edtr-toc", JSON.stringify({ ...JSON.parse(value.attrs["data-edtr-toc"]), markerOnly: true }));
+        }
         block.before(markerBlock); anchors[0].remove();
         if (!block.textContent?.trim() && !block.querySelector("img,br,[data-edtr-reference]")) block.remove();
         continue;

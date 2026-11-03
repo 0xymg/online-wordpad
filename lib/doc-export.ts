@@ -213,7 +213,7 @@ class DocxBuilder {
     const target = (node.type.name === "heading" || node.attrs.targetKind === "caption") && node.attrs.targetId;
     if (target) out.push(this.marker("start", String(target), undefined, undefined, undefined, node.type.name === "heading" ? Math.max(1, Math.min(6, Number(node.attrs.level) || 1)) : undefined));
     if (node.attrs.toc) {
-      const id = String(node.attrs.toc.fieldId || ""), alias = nativeTocAlias(id);
+      const id = String(node.attrs.toc.fieldId || ""), alias = nativeTocAlias(id, !!node.attrs.toc.markerOnly && !node.content.size);
       if (!alias) throw new Error("Invalid table of contents identity");
       out.push(this.marker("start", id, undefined, alias, `toc-title:${id}`));
       out.push(this.marker("end", id, undefined, alias, `toc-title:${id}`));

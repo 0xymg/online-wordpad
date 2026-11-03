@@ -31,6 +31,10 @@ export function measureNaturalColumnSections(view: EditorView, sections: readonl
     const style = getComputedStyle(element), lineHeight = Number.parseFloat(style.lineHeight) || Number.parseFloat(style.fontSize) * 1.2 || 16;
     const elementRect = element.getBoundingClientRect(), sourceLeft = (elementRect.left - root.left) / scale, sourceWidth = elementRect.width / scale;
     const sourceMarginLeft = Number.parseFloat(style.marginLeft) || 0, sourceMarginRight = Number.parseFloat(style.marginRight) || 0;
+    if (node.attrs.toc?.markerOnly && node.attrs.toc.status !== 'unsupported' && !node.content.size) {
+      mutable[index].push({ from: pos + 1, to: pos + 1, height: 0, kind: 'line', sourceTop: (elementRect.top - root.top) / scale, sourceBlock: pos, sourceLeft, sourceWidth, sourceMarginLeft, sourceMarginRight });
+      return;
+    }
     const marginTop = Math.max(0, Number.parseFloat(style.marginTop) || 0), marginBottom = Math.max(0, Number.parseFloat(style.marginBottom) || 0);
     const topInset = (Number.parseFloat(style.paddingTop) || 0) + (Number.parseFloat(style.borderTopWidth) || 0);
     const bottomInset = (Number.parseFloat(style.paddingBottom) || 0) + (Number.parseFloat(style.borderBottomWidth) || 0);

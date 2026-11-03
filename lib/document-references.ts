@@ -11,7 +11,7 @@ import { allocateDocumentIdentity, isDocumentIdentity, planDocumentIdentities, t
 
 export type ReferenceDisplay = "text" | "number" | "page";
 export type ReferenceStatus = "ok" | "missing-target" | "ambiguous" | "unsupported" | "pending";
-export type TocConfiguration = { fieldId: string; levels: number[]; status?: "unsupported"; nativeSource?: string };
+export type TocConfiguration = { fieldId: string; levels: number[]; status?: "unsupported"; nativeSource?: string; markerOnly?: boolean };
 export type ReferenceTarget = { id: string; pos: number; end: number; text: string; number: string; level: number; kind: "heading" | "bookmark" | "caption"; name: string; nativeName?: string };
 export type ReferenceIndex = { targets: ReferenceTarget[]; byId: Map<string, ReferenceTarget[]>; fields: { pos: number; node: PMNode }[]; tocs: { pos: number; node: PMNode; fieldId: string; levels: number[]; status?: "unsupported"; nativeSource?: string }[] };
 export const referenceParagraphAttrs = { targetId: { default: null }, targetKind: { default: null }, captionLabel: { default: null }, toc: { default: null }, tocOwnerId: { default: null }, tocTargetId: { default: null } };
@@ -22,7 +22,7 @@ export function normalizeTocLevels(value: unknown): number[] {
 }
 export function parseReferenceParagraphAttrs(el: HTMLElement) {
   let toc = null;
-  if (el.hasAttribute("data-edtr-toc")) { try { const value = JSON.parse(el.getAttribute("data-edtr-toc") || ""); if (value && typeof value.fieldId === "string") toc = { fieldId: value.fieldId, levels: normalizeTocLevels(value.levels), ...(value.status === "unsupported" ? { status: "unsupported" as const } : {}), ...(typeof value.nativeSource === "string" ? { nativeSource: value.nativeSource } : {}) }; } catch { /* Invalid metadata is not executable content. */ } }
+  if (el.hasAttribute("data-edtr-toc")) { try { const value = JSON.parse(el.getAttribute("data-edtr-toc") || ""); if (value && typeof value.fieldId === "string") toc = { fieldId: value.fieldId, levels: normalizeTocLevels(value.levels), ...(value.status === "unsupported" ? { status: "unsupported" as const } : {}), ...(typeof value.nativeSource === "string" ? { nativeSource: value.nativeSource } : {}), ...(value.markerOnly === true ? { markerOnly: true } : {}) }; } catch { /* Invalid metadata is not executable content. */ } }
   return { targetId: el.getAttribute("data-target-id"), targetKind: el.getAttribute("data-target-kind") === "caption" ? "caption" : null, captionLabel: el.getAttribute("data-caption-label"), toc, tocOwnerId: el.getAttribute("data-toc-owner-id"), tocTargetId: el.getAttribute("data-toc-target-id") };
 }
 export function referenceParagraphDOM(node: PMNode): Record<string, string> {
@@ -30,6 +30,7 @@ export function referenceParagraphDOM(node: PMNode): Record<string, string> {
   for (const [attr, name] of [["targetId", "target-id"], ["targetKind", "target-kind"], ["captionLabel", "caption-label"], ["tocOwnerId", "toc-owner-id"], ["tocTargetId", "toc-target-id"]]) if (a[attr]) result[`data-${name}`] = String(a[attr]);
   if (a.targetId) { result.id = `edtr-target-${a.targetId}`; result["data-edtr-target-id"] = String(a.targetId); }
   if (a.toc) result["data-edtr-toc"] = JSON.stringify(a.toc);
+  if (a.toc?.markerOnly && a.toc.status !== "unsupported" && !node.content.size) result["data-edtr-toc-marker-only"] = "true";
   if (a.tocOwnerId) result.contenteditable = "false";
   return result;
 }

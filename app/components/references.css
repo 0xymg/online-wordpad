@@ -5,6 +5,7 @@
 .ProseMirror .edtr-reference-unsupported { text-decoration: underline dotted; text-underline-offset: 3px; }
 .ProseMirror .edtr-bookmark-boundary { display: inline; font-size: 0; }
 .ProseMirror [data-edtr-toc] { font-weight: 700; }
+.ProseMirror [data-edtr-toc-marker-only] { height: 0 !important; min-height: 0; margin: 0 !important; padding: 0; line-height: 0 !important; overflow: hidden; }
 @media print {
  .ProseMirror .edtr-reference-field { background: transparent; }
 }

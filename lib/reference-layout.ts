@@ -143,15 +143,21 @@ export function refreshTableOfContents(tr: Transaction): Transaction {
     const geometry = section.geometry, count = section.columns.kind === 'equal' ? section.columns.count : 1;
     const gap = section.columns.kind === 'equal' ? section.columns.space : 0;
     const width = Math.max(1, Math.floor((geometry.width - geometry.margins.left - geometry.margins.right - gap * (count - 1)) / count));
-    const desired = index.targets.filter(target => target.kind === 'heading' && target.text.trim() && toc.levels.includes(target.level) && lookupReferenceTarget(index, target.id).status === 'ok').map(target => {
+    const targets = index.targets.filter(target => target.kind === 'heading' && target.text.trim() && toc.levels.includes(target.level) && lookupReferenceTarget(index, target.id).status === 'ok');
+    const desired = targets.map(target => {
       let fieldId = ids.get(target.id); if (!fieldId) { fieldId = newReferenceIdentity('field', occupied); occupied.add(fieldId); }
+      // A single unbound cached native row unambiguously belongs to the sole
+      // target. Preserve its imported paragraph/run formatting on regeneration.
+      const previous = old.find(node => node.attrs.tocTargetId === target.id) || (toc.node.attrs.toc?.markerOnly && old.length === 1 && targets.length === 1 && !old[0].attrs.tocTargetId ? old[0] : undefined);
       const mark = schema.marks.link?.create({ href: `#edtr-target-${target.id}` });
-      const contents = [schema.text(target.text || ' ', mark ? [mark] : []), schema.nodes.tab.create(), schema.nodes.reference_field.create({ fieldId, targetId: target.id, display: 'page', cached: '', status: 'pending' }, undefined, mark ? [mark] : [])];
-      const previous = old.find(node => node.attrs.tocTargetId === target.id);
-      if (previous) { const f = previous.lastChild; if (f?.type.name === 'reference_field' && f.attrs.targetId === target.id) contents[2] = schema.nodes.reference_field.create(f.attrs, undefined, mark ? [mark] : []); }
+      let inheritedMarks: readonly import('prosemirror-model').Mark[] = [];
+      previous?.descendants(node => { if (node.isText && !inheritedMarks.length) inheritedMarks = node.marks.filter(m => m.type.name !== 'link'); });
+      const marks = mark ? [...inheritedMarks, mark] : [...inheritedMarks];
+      const contents = [schema.text(target.text || ' ', marks), schema.nodes.tab.create(null, undefined, inheritedMarks), schema.nodes.reference_field.create({ fieldId, targetId: target.id, display: 'page', cached: '', status: 'pending' }, undefined, marks)];
+      if (previous) { const f = previous.lastChild; if (f?.type.name === 'reference_field' && f.attrs.targetId === target.id) contents[2] = schema.nodes.reference_field.create(f.attrs, undefined, marks); }
       const strong = target.text.match(/[A-Za-z\u0590-\u08ff\ufb1d-\ufdff\ufe70-\ufeff]/u)?.[0];
       const rtl = !!strong && /[\u0590-\u08ff\ufb1d-\ufdff\ufe70-\ufeff]/u.test(strong), indent = Math.min(width - 1, Math.max(0, target.level - 1) * 240);
-      return schema.nodes.paragraph.create({ tocOwnerId: toc.fieldId, tocTargetId: target.id, paragraphFormat: { ...(rtl ? { right: indent } : { left: indent }), tabs: [{ position: width, alignment: 'right', leader: 'dot' }] } }, contents);
+      return schema.nodes.paragraph.create({ ...previous?.attrs, tocOwnerId: toc.fieldId, tocTargetId: target.id, paragraphFormat: { ...previous?.attrs.paragraphFormat, left: rtl ? 0 : indent, right: rtl ? indent : 0, tabs: [{ position: width, alignment: 'right', leader: 'dot' }] } }, contents);
     });
     // Only replace the contiguous generated range attached to this marker.
     const end = toc.pos + toc.node.nodeSize; let cursor = end; const attached: PMNode[] = [];
