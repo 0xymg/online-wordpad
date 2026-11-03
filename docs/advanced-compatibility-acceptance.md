@@ -1,6 +1,6 @@
 # A7 advanced compatibility acceptance
 
-Status: first local A7 increment implemented; final production acceptance pending, 2026-11-03. A7 overall remains open. The frozen A0 corpus is refreshed against the A1–A6 implementation; this document does not declare deployment or general Word visual equivalence. Original DOCX, Word PDF, provenance, A0 application PDFs and baseline report remain unchanged.
+Status: A7.1 released and live acceptance passed on 2026-11-03 at `fd6dfb1`. A7 overall remains open. The frozen A0 corpus is refreshed against the A1–A6 implementation; this document does not declare general Word visual equivalence. Original DOCX, Word PDF, provenance, A0 application PDFs and baseline report remain unchanged.
 
 Compatibility has independent evidence axes: content/model retention; interactive/native editability; page/object geometry; visible rendering. PDF text tokens, PDF destinations and extracted text anchors answer different questions. None establishes editing support or whole-page visual fidelity.
 
@@ -75,3 +75,5 @@ The final frozen-corpus capture was regenerated after the theme-color correction
 ## Production acceptance
 
 The final production build passed TypeScript and compilation. Actual production UI checks passed inherited/direct/theme border width/color/spacing/nil rules and bibliography DOCX v3 export/reopen, HTML/PDF/TXT/Markdown/RTF plus safe Word-edited refusal. The shared DOCX import regression and five neutral semantic normalization positives/fifteen corruption or meaningful-change negatives passed. Three destination-report tests and the actual Word directional audit passed. Existing local Better Auth/Edge warnings are unchanged.
+
+Code commit [`fd6dfb1`](https://github.com/0xymg/online-wordpad/commit/fd6dfb1f8928486b21325bf073ce6dbb9c89d47a) was published without coauthor trailers. [Vercel deployment](https://vercel.com/312sh/online-wordpad/CEn5rb1Mpw2kPVYDfpmDywjZvMAK) succeeded. Both targeted scripts passed against `https://wordpad.info`: `check-paragraph-border.cjs` and `check-bibliography-ui.cjs`. The live bibliography check covered source/cluster creation, DOCX graph and stable-ID reopening, six export formats, and preserving the open document when edited or actual Word-resaved bibliography files cannot safely restore source data. This closes A7.1, not the remaining corpus geometry gates.

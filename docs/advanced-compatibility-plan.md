@@ -12,6 +12,8 @@ The user approved A7 on 2026-11-03 with Sol/Terra delegation. Reference applicat
 
 Completion of this increment requires targeted import, normalization/negative graph tests, actual app DOCX roundtrip, production build and live smoke checks. It does not complete A7 overall.
 
+All A7.1 gates passed; released at `fd6dfb1` on 2026-11-03 without coauthor trailers. Live border and bibliography DOCX/export/reopen checks passed at `https://wordpad.info`. The remaining priorities below stay open.
+
 ## Next measured priorities
 
 1. Diagnose large mixed/column anchor offsets using raster glyph/object geometry and source model positions. Current mixed maximum is about 749 CSS px; columns/table-columns about 148–151 CSS px. Matching page counts are insufficient evidence.
