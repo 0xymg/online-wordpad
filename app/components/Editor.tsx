@@ -2272,9 +2272,9 @@ export default function Editor({
       const blob = new Blob([`<!DOCTYPE html><html><head><meta charset="utf-8"><title>${file.name}</title></head><body style="font-family:${DEFAULT_DOCUMENT_FONT_CSS};max-width:800px;margin:40px auto;padding:20px">${html}</body></html>`], { type: "text/html" });
       downloadBlob(blob, `${safe}.html`);
     } else if (fmt === "txt") {
-      const tmp = document.createElement("div");
-      tmp.innerHTML = html;
-      downloadBlob(new Blob([tmp.innerText || tmp.textContent || ""], { type: "text/plain" }), `${safe}.txt`);
+      const { docToText } = await import("@/lib/note-text-export");
+      const doc = activeSnapshot || parseHtmlToDoc(html);
+      downloadBlob(new Blob([docToText(doc)], { type: "text/plain" }), `${safe}.txt`);
     } else {
       // Lazy exporter loading may span a document switch. Export the settled
       // immutable snapshot associated with this filename, never the new view.

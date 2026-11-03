@@ -14,6 +14,7 @@ import { getDocumentModel, sectionIdentityOrder, projectDocumentModel } from "./
 import { EditorState } from "prosemirror-state";
 import { unprojectEndnotes } from "./document-notes";
 import { createNoteExport } from "./note-docx";
+import { prepareTextNoteExport, type TextExportNote } from "./note-text-export";
 import { collectReferenceIndex } from "./document-references";
 import { fixedImageWidth } from "./page-image-position";
 import { exportTextBoxes, textBoxBookmark } from "./text-box-docx";
@@ -684,6 +685,8 @@ class RtfBuilder {
   private fonts: string[] = [DEFAULT_DOCUMENT_FONT, "Courier New"];
   body = "";
 
+  constructor(private notes: ReadonlyMap<string, TextExportNote> = new Map()) {}
+
   private colorIndex(hex: string | undefined): number {
     if (!hex) return 0;
     const i = this.colors.indexOf(hex);
@@ -716,7 +719,15 @@ class RtfBuilder {
         if (p.highlight) open += `\\highlight${this.colorIndex(p.highlight)}`;
         if (p.size) open += `\\fs${p.size}`;
         if (p.font) open += `\\f${this.fontIndex(p.font)}`;
-        out += `${open} ${rtfEscape(child.text || "")}}`;
+        const formatted = `${open} ${rtfEscape(child.text || "")}}`;
+        if (p.link && /^(?:https?:|mailto:|tel:)/i.test(p.link)) {
+          const target = rtfEscape(p.link.replace(/"/g, "%22").replace(/[\r\n]/g, ""));
+          out += `{\\field{\\*\\fldinst HYPERLINK "${target}"}{\\fldrslt ${formatted}}}`;
+        } else out += formatted;
+      } else if (child.type.name === "note_reference") {
+        const note = this.notes.get(String(child.attrs.noteId));
+        if (!note) throw new Error("Cannot export a note reference without its canonical body");
+        out += `{\\super [${note.number}]}`;
       } else if (child.type.name === "tab") {
         out += "\\tab ";
       } else if (child.type.name === "image") {
@@ -787,6 +798,19 @@ class RtfBuilder {
     }
   }
 
+  private cellBlock(node: PMNode): string {
+    if (node.isTextblock) return this.inline(node);
+    const parts: string[] = [];
+    if (node.type.name === "bullet_list" || node.type.name === "ordered_list") {
+      let number = Number(node.attrs.order || 1);
+      node.forEach(item => {
+        const body: string[] = []; item.forEach(block => body.push(this.cellBlock(block)));
+        parts.push((node.type.name === "ordered_list" ? `${number++}.\\tab ` : "\\bullet\\tab ") + body.join("\\line "));
+      });
+    } else node.forEach(child => parts.push(this.cellBlock(child)));
+    return parts.join("\\line ");
+  }
+
   private table(table: PMNode): void {
     table.forEach((row) => {
       const cellCount = row.childCount || 1;
@@ -797,7 +821,7 @@ class RtfBuilder {
       row.forEach((cell) => {
         const isHeader = cell.type.name === "table_header";
         let text = "";
-        cell.forEach((block) => { text += this.inline(block) + " "; });
+        cell.forEach((block) => { text += this.cellBlock(block) + "\\line "; });
         this.body += `\\pard\\intbl ${isHeader ? "{\\b " + text + "}" : text}\\cell\n`;
       });
       this.body += "\\row\n";
@@ -818,9 +842,16 @@ class RtfBuilder {
 }
 
 export function docToRtf(doc: PMNode): string {
-  getDocumentModel(doc);
-  const builder = new RtfBuilder();
-  doc.forEach((block) => builder.block(block));
+  const plan = prepareTextNoteExport(doc);
+  const builder = new RtfBuilder(plan.byId);
+  plan.doc.forEach((block) => builder.block(block));
+  if (plan.notes.length) {
+    builder.body += "\\pard\\sa240 {\\b Notes}\\par\n";
+    for (const note of plan.notes) {
+      builder.body += `\\pard\\sa120 {\\b [${note.number}]} (${note.kind})\\par\n`;
+      note.body.forEach(block => builder.block(block));
+    }
+  }
   return builder.toString();
 }
 
@@ -841,7 +872,7 @@ function mdEscape(text: string): string {
   return text.replace(/([\\`*_[\]])/g, "\\$1");
 }
 
-function inlineToMd(node: PMNode): string {
+function inlineToMd(node: PMNode, notes: ReadonlyMap<string, TextExportNote>): string {
   let out = "";
   node.forEach((child) => {
     if (child.isText) {
@@ -857,6 +888,10 @@ function inlineToMd(node: PMNode): string {
       if (has("subscript")) t = `<sub>${t}</sub>`;
       if (link) t = `[${t}](${link.attrs.href})`;
       out += t;
+    } else if (child.type.name === "note_reference") {
+      const note = notes.get(String(child.attrs.noteId));
+      if (!note) throw new Error("Cannot export a note reference without its canonical body");
+      out += `[^${note.markdownKey}]`;
     } else if (child.type.name === "tab") {
       out += "\t";
     } else if (child.type.name === "image") {
@@ -870,33 +905,33 @@ function inlineToMd(node: PMNode): string {
   return out;
 }
 
-function listToMd(list: PMNode, ordered: boolean, indent: string): string {
+function listToMd(list: PMNode, ordered: boolean, indent: string, notes: ReadonlyMap<string, TextExportNote>): string {
   let out = "";
   let n = Number(list.attrs?.order || 1);
   list.forEach((item) => {
     const marker = ordered ? `${n++}. ` : "- ";
     let first = true;
     item.forEach((block) => {
-      if (block.type.name === "bullet_list") out += listToMd(block, false, indent + "  ");
-      else if (block.type.name === "ordered_list") out += listToMd(block, true, indent + "  ");
+      if (block.type.name === "bullet_list") out += listToMd(block, false, indent + "  ", notes);
+      else if (block.type.name === "ordered_list") out += listToMd(block, true, indent + "  ", notes);
       else if (block.type.name === "paragraph") {
-        out += indent + (first ? marker : " ".repeat(marker.length)) + inlineToMd(block) + "\n";
+        out += indent + (first ? marker : " ".repeat(marker.length)) + inlineToMd(block, notes) + "\n";
         first = false;
       } else {
-        out += blockToMd(block);
+        out += blockToMd(block, notes);
       }
     });
   });
   return out;
 }
 
-function tableToMd(table: PMNode): string {
+function tableToMd(table: PMNode, notes: ReadonlyMap<string, TextExportNote>): string {
   const rows: string[][] = [];
   table.forEach((row) => {
     const cells: string[] = [];
     row.forEach((cell) => {
       let text = "";
-      cell.forEach((block) => { text += inlineToMd(block) + " "; });
+      cell.forEach((block) => { text += (block.isTextblock ? inlineToMd(block, notes) : blockToMd(block, notes).trimEnd().replace(/\n/g, "<br>")) + " "; });
       cells.push(text.trim().replace(/\|/g, "\\|"));
     });
     rows.push(cells);
@@ -911,30 +946,39 @@ function tableToMd(table: PMNode): string {
   ].join("\n") + "\n\n";
 }
 
-function blockToMd(node: PMNode): string {
+function blockToMd(node: PMNode, notes: ReadonlyMap<string, TextExportNote>): string {
   const name = node.type.name;
-  if (name === "paragraph") return inlineToMd(node) + "\n\n";
+  if (name === "paragraph") return inlineToMd(node, notes) + "\n\n";
   if (name === "heading") {
     const level = Math.max(1, Math.min(6, Number(node.attrs.level || 1)));
-    return "#".repeat(level) + " " + inlineToMd(node) + "\n\n";
+    return "#".repeat(level) + " " + inlineToMd(node, notes) + "\n\n";
   }
   if (name === "code_block") return "```\n" + (node.textContent || "") + "\n```\n\n";
   if (name === "blockquote") {
     let inner = "";
-    node.forEach((child) => { inner += blockToMd(child); });
+    node.forEach((child) => { inner += blockToMd(child, notes); });
     return inner.trimEnd().split("\n").map((l) => "> " + l).join("\n") + "\n\n";
   }
-  if (name === "bullet_list") return listToMd(node, false, "") + "\n";
-  if (name === "ordered_list") return listToMd(node, true, "") + "\n";
-  if (name === "table") return tableToMd(node);
+  if (name === "bullet_list") return listToMd(node, false, "", notes) + "\n";
+  if (name === "ordered_list") return listToMd(node, true, "", notes) + "\n";
+  if (name === "table") return tableToMd(node, notes);
   if (name === "horizontal_rule") return "---\n\n";
   if (name === "page_break") return "<!-- page break -->\n\n";
   return node.textContent ? node.textContent + "\n\n" : "";
 }
 
+/** Markdown footnote keys are global export identities, independent of display
+ * labels that can restart for each kind or section. Definitions appear once. */
 export function docToMarkdown(doc: PMNode): string {
-  getDocumentModel(doc);
+  const plan = prepareTextNoteExport(doc);
   let out = "";
-  doc.forEach((block) => { out += blockToMd(block); });
-  return out.replace(/\n{3,}/g, "\n\n").trimEnd() + "\n";
+  plan.doc.forEach((block) => { out += blockToMd(block, plan.byId); });
+  out = out.replace(/\n{3,}/g, "\n\n").trimEnd();
+  for (const note of plan.notes) {
+    let body = ""; note.body.forEach(block => { body += blockToMd(block, plan.byId); });
+    const lines = body.trimEnd().split("\n");
+    out += `\n\n[^${note.markdownKey}]:${lines[0] ? " " + lines[0] : ""}`;
+    for (const line of lines.slice(1)) out += `\n    ${line}`;
+  }
+  return out + "\n";
 }
