@@ -519,6 +519,12 @@ export const zh: Dictionary = {
   },
 
   image: {
+    layersTitle: "图片图层",
+    layersClose: "关闭图片图层",
+    layersEmpty: "此文档中没有图片。",
+    layersFlowHint: "要调整顺序，请在“图片布局”中将此图片固定到页面。",
+    layersSelectHint: "选择图片以调整其顺序。",
+    layersName: (number: number) => `图片 ${number}`,
     layout: "图片布局",
     layoutDescription: "选择图片位置、文字环绕和图片顺序。",
     position: "位置",

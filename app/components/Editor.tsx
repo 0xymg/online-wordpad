@@ -68,6 +68,7 @@ const AboutDialog = lazy(() => import("./AboutDialog"));
 const AuthModal = lazy(() => import("./AuthModal"));
 const HeaderFooterDialog = lazy(() => import("./HeaderFooterDialog"));
 const PageMarginsDialog = lazy(() => import("./PageMarginsDialog"));
+const ImageLayersPanel = lazy(() => import("./ImageLayersPanel"));
 const ImageLayoutDialog = lazy(() => import("./ImageLayoutDialog"));
 const ParagraphDialog = lazy(() => import("./ParagraphDialog"));
 const StylesDialog = lazy(() => import("./StylesDialog"));
@@ -1198,6 +1199,8 @@ export default function Editor({
   });
   const [slashMenu, setSlashMenu] = useState<SlashMenuState | null>(null);
   const [imageLayoutOpen, setImageLayoutOpen] = useState(false);
+  const [imageLayersState, setImageLayersState] = useState<EditorState | null>(null);
+  const imageLayersOpenRef = useRef(false);
   const [imagePopover, setImagePopover] = useState<ImagePopoverState | null>(null);
   const [cropDialogOpen, setCropDialogOpen] = useState(false);
   const [cropSource, setCropSource] = useState<string | null>(null);
@@ -2199,6 +2202,15 @@ export default function Editor({
   const changePageNumberFormat = useCallback((f: PageNumberFormat) => {
     updateDocumentLayout(l => updateRunningNumbering({ ...l, pageNumberFormat: f, overrides: { ...l.overrides, pageNumbers: true } }));
   }, [updateDocumentLayout]);
+  const toggleImageLayers = useCallback(() => {
+    imageLayersOpenRef.current = !imageLayersOpenRef.current;
+    setImageLayersState(imageLayersOpenRef.current ? viewRef.current?.state || null : null);
+  }, []);
+  const closeImageLayers = useCallback(() => {
+    imageLayersOpenRef.current = false;
+    setImageLayersState(null);
+    viewRef.current?.focus();
+  }, []);
   const toggleToolbar = useCallback(() => setShowToolbar((s) => !s), []);
   const toggleRuler = useCallback(() => setShowRuler((s) => !s), []);
   const toggleSpellcheck = useCallback(() => setSpellcheckOn((s) => !s), []);
@@ -2403,6 +2415,7 @@ export default function Editor({
           }
         }
         setTick(n => n + 1);
+        if (imageLayersOpenRef.current) setImageLayersState(next);
         refreshSlashMenu(view);
         refreshImagePopover(view);
         refreshDocInfo(next);
@@ -3230,6 +3243,8 @@ export default function Editor({
         onZoomChange={setZoomPercent}
         showToolbar={showToolbar}
         onToggleToolbar={toggleToolbar}
+        showImageLayers={imageLayersState !== null}
+        onToggleImageLayers={toggleImageLayers}
         showRuler={showRuler}
         onToggleRuler={toggleRuler}
         spellcheckOn={spellcheckOn}
@@ -3294,9 +3309,10 @@ export default function Editor({
           </div>
         </div>
       )}
+      <div className="flex min-h-0 flex-1 flex-col lg:flex-row">
       <div
         ref={editorShellRef}
-        className="editor-shell relative"
+        className="editor-shell relative min-h-0 min-w-0"
         style={{ backgroundColor: paperBgColor, ["--shell-bg" as any]: paperBgColor }}
       >
         {/* Blank documents already look blank, so the shimmer only matters for
@@ -3338,6 +3354,8 @@ export default function Editor({
             />
           </div>
         </TableContextMenu>
+      </div>
+      {imageLayersState && <Suspense fallback={null}><ImageLayersPanel viewRef={viewRef} state={imageLayersState} onClose={closeImageLayers} /></Suspense>}
       </div>
       <div ref={printRef} className="edtr-print-root" style={{ display: "none" }} aria-hidden="true" />
       {focusMode && (

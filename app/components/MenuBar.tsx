@@ -81,6 +81,8 @@ interface MenuBarProps {
   onZoomChange: (zoom: number) => void;
   showToolbar: boolean;
   onToggleToolbar: () => void;
+  showImageLayers: boolean;
+  onToggleImageLayers: () => void;
   showRuler: boolean;
   onToggleRuler: () => void;
   spellcheckOn: boolean;
@@ -168,6 +170,7 @@ function MenuBar({
   onLineSpacing, onClearFormatting,
   zoomPercent, onZoomChange,
   showToolbar, onToggleToolbar, showRuler, onToggleRuler,
+  showImageLayers, onToggleImageLayers,
   spellcheckOn, onToggleSpellcheck,
   spellLang, onSpellLangChange,
   onChangeCase, onInsertTOC,
@@ -540,6 +543,9 @@ function MenuBar({
           {/* What is visible around the page */}
           <MenubarCheckboxItem checked={showToolbar} onClick={onToggleToolbar}>
             {t.view.toolbar}
+          </MenubarCheckboxItem>
+          <MenubarCheckboxItem checked={showImageLayers} onClick={onToggleImageLayers}>
+            {t.image.layersTitle}
           </MenubarCheckboxItem>
           <MenubarCheckboxItem checked={showRuler} onClick={onToggleRuler}>
             {t.view.ruler}

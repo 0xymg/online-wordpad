@@ -522,6 +522,12 @@ export const fr: Dictionary = {
   },
 
   image: {
+    layersTitle: "Calques d’images",
+    layersClose: "Fermer les calques d’images",
+    layersEmpty: "Aucune image dans ce document.",
+    layersFlowHint: "Fixez cette image sur sa page dans Mise en page de l’image pour modifier son ordre.",
+    layersSelectHint: "Sélectionnez une image pour modifier son ordre.",
+    layersName: (number: number) => `Image ${number}`,
     layout: "Disposition de l’image",
     layoutDescription: "Choisissez la position, l’habillage et l’ordre des images.",
     position: "Position",

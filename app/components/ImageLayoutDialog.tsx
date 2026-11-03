@@ -4,6 +4,7 @@ import { useState } from "react";
 import { NodeSelection } from "prosemirror-state";
 import { closeHistory } from "prosemirror-history";
 import type { EditorView } from "prosemirror-view";
+import { reorderPageImage } from "@/lib/image-layer-order";
 import { alignParagraphImages } from "@/lib/editor-commands";
 import { IMAGE_WRAPS, imageWrap, imageDistance, type ImageWrap } from "@/lib/image-layout";
 import { imagePageContext } from "@/lib/page-image-position";
@@ -59,15 +60,7 @@ export default function ImageLayoutDialog({ view, onClose }: { view: EditorView;
           width: `${Math.round(px * 100) / 100}px`, aspectRatio: initial.ratio, distance: gap };
         const tr = closeHistory(view.state.tr).setNodeMarkup(initial.pos, undefined, attrs);
         if (!fixed) alignParagraphImages(tr, tr.doc.resolve(initial.pos).before(), attrs.align, true);
-        if (fixed && layerAction) {
-          const images: { pos: number; layer: number }[] = [];
-          tr.doc.descendants((node, pos) => { if (node.type.name === "image" && node.attrs.position === "page") images.push({pos, layer: Number(node.attrs.layer) || 0}); });
-          images.sort((a, b) => a.layer - b.layer || a.pos - b.pos);
-          const ordered = images.filter(image => image.pos !== initial.pos);
-          if (layerAction === "front") ordered.push({pos: initial.pos, layer: 0});
-          else ordered.unshift({pos: initial.pos, layer: 0});
-          ordered.forEach(({pos}, layer) => tr.setNodeMarkup(pos, undefined, {...tr.doc.nodeAt(pos)!.attrs, layer}));
-        }
+        if (fixed && layerAction) reorderPageImage(tr, initial.pos, layerAction);
         tr.setSelection(NodeSelection.create(tr.doc, initial.pos)); view.dispatch(tr); onClose(); view.focus();
       }} onKeyDown={e => { if ((e.ctrlKey || e.metaKey) && ["s", "o", "p"].includes(e.key.toLowerCase())) { e.preventDefault(); e.stopPropagation(); } }}>
         <DialogHeader><DialogTitle>{labels.layout}</DialogTitle><DialogDescription>{labels.layoutDescription}</DialogDescription></DialogHeader>

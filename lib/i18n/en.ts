@@ -591,6 +591,12 @@ export const en = {
   },
 
   image: {
+    layersTitle: "Image layers",
+    layersClose: "Close image layers",
+    layersEmpty: "No images in this document.",
+    layersFlowHint: "Fix this image on its page in Image layout to change its order.",
+    layersSelectHint: "Select an image to change its order.",
+    layersName: (number: number) => `Image ${number}`,
     layout: "Image layout",
     layoutDescription: "Choose the image position, text wrapping and image order.",
     position: "Position",

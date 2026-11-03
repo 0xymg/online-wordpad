@@ -579,6 +579,12 @@ export const ar: Dictionary = {
     dismiss: "إغلاق",
   },
   image: {
+    layersTitle: "طبقات الصور",
+    layersClose: "إغلاق طبقات الصور",
+    layersEmpty: "لا توجد صور في هذا المستند.",
+    layersFlowHint: "لتغيير ترتيب الصورة، ثبّتها على الصفحة من «تخطيط الصورة».",
+    layersSelectHint: "اختر صورة لتغيير ترتيبها.",
+    layersName: (number: number) => `صورة ${number}`,
     layout: "تخطيط الصورة",
     layoutDescription: "اختر موضع الصورة والتفاف النص وترتيب الصور.",
     position: "الموضع",

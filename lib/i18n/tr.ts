@@ -522,6 +522,12 @@ export const tr: Dictionary = {
   },
 
   image: {
+    layersTitle: "Görsel katmanları",
+    layersClose: "Görsel katmanlarını kapat",
+    layersEmpty: "Bu belgede görsel yok.",
+    layersFlowHint: "Sırasını değiştirmek için Görsel yerleşimi penceresinden görseli sayfaya sabitleyin.",
+    layersSelectHint: "Sırasını değiştirmek için bir görsel seçin.",
+    layersName: (number: number) => `Görsel ${number}`,
     layout: "Görsel yerleşimi",
     layoutDescription: "Görselin konumunu, metin kaydırmayı ve görsel sırasını seçin.",
     position: "Konum",

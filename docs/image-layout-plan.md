@@ -20,8 +20,8 @@ Görseli seçme, yerleştirme, sıralama ve dışa aktarma davranışları birli
 
 | Sıra | Paket | Durum | Bağımlılık / sonuç |
 | --- | --- | --- | --- |
-| 1 | Aynı sayfada sürükleyerek konumlandırma | Yerel testler geçti; yayın hazırlanıyor | Mevcut sabit konum modelini doğrudan kullanma |
-| 2 | Görsel katman paneli | Sıradaki | Üstü örtülmüş görselleri erişilebilir şekilde seçme ve sıralama |
+| 1 | Aynı sayfada sürükleyerek konumlandırma | Tamamlandı — `f85dc4d`, canlıda doğrulandı | Mevcut sabit konum modelini doğrudan kullanma |
+| 2 | Görsel katman paneli | Yerel kabul testleri geçti; yayın hazırlanıyor | Üstü örtülmüş görselleri erişilebilir şekilde seçme ve sıralama |
 | 3 | Metnin önüne / arkasına yerleştirme | Bekliyor | Arkadaki görselin panelden seçilebilmesi için 2 tamamlanmalı |
 | 4 | Sayfalar arasında sürükleme | Bekliyor | Sayfa ve paragraf bağlantısını güvenilir biçimde değiştirme |
 | 5 | Metin kutuları | Bekliyor; uygulama tasarımı henüz yapılmadı | Görsellerde doğrulanan seçim, konum ve katman davranışını kullanma |
@@ -51,6 +51,8 @@ Kabul ölçütleri:
 - Panelden seçim görselin çizildiği yere gider; sıfır boyutlu paragraf bağlantısına kaydırmakla yetinmez.
 - Sıralama tek geri alma işlemidir; kaydet/aç ve Word/PDF çıktısı sıralamayı korur.
 - Klavye ile kullanılabilir; açık/koyu tema ve dar ekranlarda belge düzenlemeyi engellemez.
+
+Doğrulama: `scripts/check-image-layers.cjs` üstü kapalı görsele erişim, panel/editör seçimi, sıralama, geri alma/silme, belge değiştirme ve dar ekranı sınar. Ortak katman komutu için `scripts/check-page-images.cjs` Word/PDF regresyonu korunur.
 
 Bu pakete gizleme, kilitleme, gruplama, çoklu seçim veya yeniden adlandırma eklenmez.
 
@@ -103,7 +105,10 @@ Bağlı metin kutuları, dönen metin, gruplama ve şekiller ilk pakete dahil de
 
 - Aşama 1 yerelde: sürükleme, tek tıklama, akıştan sabit konuma geçiş, Escape, geri alma/yeniden yapma, %50 zoom, kenar sınırları, kalıcılık, ikinci sayfa, katman ve silme testleri geçti. Ek pointercancel, kaydırma ve dokunma olayları da doğrulandı.
 - Mevcut yerleşim, boyutlandırma, Word ve PDF regresyonları geçti.
-- Sıradaki işlem: Aşama 1 üretim derlemesi, yayın ve canlı doğrulama. Ardından yalnız Aşama 2 uygulanacak.
+- Aşama 1 yayını: `f85dc4d`; üretim derlemesi ve Vercel yayını başarılı. `BASE_URL=https://wordpad.info` ile `scripts/check-image-drag.cjs` canlıda geçti.
+- Aşama 2 yerelde tamamlandı: View → Image layers girişi, örtülü görsel seçimi, ortak sıralama komutu, seçim/silme/geri alma ve belge değişimi senkronu, klavye, açık/koyu tema ve dar ekran kontrolleri geçti.
+- Aşama 2 doğrulama: `scripts/check-image-layers.cjs`, `scripts/check-page-images.cjs`, TypeScript, yeni panel/yardımcı/diyalog için odaklı lint ve üretim derlemesi başarılı. Editor/MenuBar içinde önceden var olan lint bulguları değişmedi.
+- Aktif işlem: Aşama 2 yayını ve canlı panel testi. Aşama 3 henüz başlamadı.
 
 ## Bekleyen fikirler
 
