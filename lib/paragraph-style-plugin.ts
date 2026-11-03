@@ -8,6 +8,10 @@ export function paragraphStylePlugin(){return new Plugin({appendTransaction(tran
  // an internal attribute when the font profile changes so its CSS is redrawn.
  if(transactions.some(transaction=>transaction.docChanged)){
   state.doc.descendants((node,pos)=>{
+   // Canonical note projection owns this cache, including nested list bodies.
+   // Refreshing its derived paragraphs independently would cross the note's
+   // read-only boundary and could reset on the next canonical projection.
+   if(node.attrs.noteOwnerId)return false;
    if(!["paragraph","heading"].includes(node.type.name))return;
    const format=effectiveParagraph(node);
    if(format.lineMode!=="multiple"||format.lineBasis!=="font")return;

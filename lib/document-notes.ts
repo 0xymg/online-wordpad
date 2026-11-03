@@ -5,6 +5,7 @@ import { EditorState, Plugin, TextSelection, type Command, type Transaction } fr
 import { closeHistory, isHistoryTransaction } from "prosemirror-history";
 import { Decoration, DecorationSet } from "prosemirror-view";
 import { allocateDocumentIdentity, isDocumentIdentity, planDocumentIdentities, type IdentityTokenFactory } from "./document-identity";
+import { effectiveParagraph, lineMetricFamily } from "./paragraph-format";
 
 export type NoteKind = "footnote" | "endnote";
 export type NoteNumbering = { restart: "continuous" | "eachSection"; start: number; format: "decimal" | "lowerRoman" | "upperRoman" | "lowerLetter" | "upperLetter" };
@@ -252,6 +253,15 @@ function prefixNoteNumber(node: PMNode, label: string, record: NoteRecord, found
   if (!found.value && node.type.name === "paragraph") { found.value = true; const reference = noteBodyReference(record, label, node.type.schema); if (!reference) return node; const prefix = [node.type.schema.text(label, reference.marks), ...(reference.trailingSpace ? [node.type.schema.text(" ")] : [])]; return node.copy(Fragment.fromArray(prefix).append(node.content)); }
   return node.isLeaf ? node : node.copy(Fragment.fromArray(Array.from({ length: node.childCount }, (_, index) => prefixNoteNumber(node.child(index), label, record, found))));
 }
+/** Font metric invalidation belongs to this derived tree. A separate paragraph
+ * refresh cannot edit the protected cache, nor should it write back to bodies. */
+function noteProjectionFontMetrics(node: PMNode): PMNode {
+  const projected = node.isLeaf ? node : node.copy(Fragment.fromArray(Array.from({ length: node.childCount }, (_, index) => noteProjectionFontMetrics(node.child(index)))));
+  if (projected.type.name !== "paragraph" || !Object.hasOwn(projected.type.spec.attrs || {}, "lineMetricFamily")) return projected;
+  const format = effectiveParagraph(projected);
+  if (format.lineMode !== "multiple" || format.lineBasis !== "font") return projected;
+  return projected.type.create({ ...projected.attrs, lineMetricFamily: lineMetricFamily(projected) }, projected.content, projected.marks);
+}
 /** Derived ordinary paragraphs/lists; canonical bodies always remain in the pool. */
 export function projectEndnotes(tr: Transaction): Transaction {
   const model = modelOf(tr.doc); if (!model) return tr;
@@ -272,7 +282,7 @@ export function projectEndnotes(tr: Transaction): Transaction {
       const body = canonical.type.schema.nodeFromJSON(validateNoteBody(entry.record.body, canonical.type.schema)), prefixed = { value: false };
       body.forEach((block, _offset, blockIndex) => {
         if (!Object.hasOwn(block.type.spec.attrs || {}, "noteOwnerId")) fail("unsupported-note-projection", "This body block cannot carry generated note markers");
-        const node = prefixNoteNumber(block, entry.label, entry.record, prefixed);
+        const node = noteProjectionFontMetrics(prefixNoteNumber(block, entry.label, entry.record, prefixed));
         projected.push(node.type.create({ ...node.attrs, noteOwnerId: entry.noteId, noteBlock: blockIndex, noteScope: model.notePolicy.endnote.placement, noteSectionId: endpoint.id, sectionEndId: null }, node.content, node.marks));
       });
     }
