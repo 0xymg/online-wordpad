@@ -1,0 +1,16 @@
+{
+  "reference_application": "Microsoft Word Online",
+  "captured_date": "2026-11-03 UTC",
+  "source_sha256": "c6704635383482fc00556cef091394ed1e4512d44e229e2a3a45e14cae6f91d1",
+  "raw_word_download_sha256": "3d440c5dcaad8173cede9d016b700c98ffd03f23dd7f77b8c74caa4316a58e93",
+  "sanitized_fixture_sha256": "85ff8af164a69797da0986ef81fc2993d5c8e13644e95574a4ceb8f7c23485f5",
+  "sanitization": "Only docProps/core.xml lastModifiedBy was replaced with Synthetic editor; word/document.xml and docProps/custom.xml remain byte-identical to the Word download.",
+  "method": "Edited source in Word Online and downloaded a native DOCX copy",
+  "browser": "Codex in-app browser; engine version unavailable",
+  "verified": [
+    "WORD_METADATA_EDIT present",
+    "EDTRDocs.TabDecimalSeparator equals comma",
+    "ForeignFixtureProperty retained",
+    "custom-properties package relationship retained"
+  ]
+}

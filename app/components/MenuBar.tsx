@@ -34,6 +34,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { getTemplates } from "@/lib/templates";
 import { DATE_FORMATS, formatDate } from "@/lib/doc-variables";
+import { tabLabels } from "@/lib/tab-i18n";
 import { sectionLabels } from "@/lib/section-i18n";
 import { textBoxLabels } from "@/lib/text-box-i18n";
 
@@ -45,6 +46,8 @@ interface MenuBarProps {
   onMarginPreset: (id:string) => void;
   onCustomMargins: () => void;
   onSectionLayout: () => void;
+  onTabStops: () => void;
+  onInsertTab: () => void;
   pageOrientation: "portrait" | "landscape";
   onPageOrientationChange: (o: "portrait" | "landscape") => void;
   onPrint?: () => void;
@@ -167,7 +170,7 @@ function MenuBar({
   headerCollapsed = false,
   viewRef, schema, onPrint,
   marginPreset, onMarginPreset, onCustomMargins,
-  pageOrientation, onPageOrientationChange, onSectionLayout,
+  pageOrientation, onPageOrientationChange, onSectionLayout, onTabStops, onInsertTab,
   docTitle, onTitleChange, onNewDoc, onShowHome, onNewFromTemplate, onOpenFile, onExport,
   onSave, onCopyLink, onRenameDoc, onDeleteDoc, onReplace,
   onShowVersions, onShowShortcuts, onShowAbout, onFind,
@@ -626,6 +629,7 @@ function MenuBar({
           <MenubarItem onClick={onInsertTOC}>{t.insert.tableOfContents}</MenubarItem>
           <MenubarSeparator />
           <MenubarItem onClick={onInsertDivider}>{t.insert.horizontalLine}</MenubarItem>
+          <MenubarItem onClick={onInsertTab}>{tabLabels(locale).insertTab}<MenubarShortcut>Ctrl+Alt+T</MenubarShortcut></MenubarItem>
           <MenubarItem onClick={onPageBreakAdd}>{t.insert.pageBreak}</MenubarItem>
           <MenubarItem onClick={onSectionLayout}>{sectionLabels(locale).title}…</MenubarItem>
           <MenubarSeparator />
@@ -777,6 +781,7 @@ function MenuBar({
             </MenubarSubContent>
           </MenubarSub>
           <MenubarSeparator />
+          <MenubarItem onClick={onTabStops}>{tabLabels(locale).title}…</MenubarItem>
           <MenubarItem onClick={onParagraph}>{t.paragraph.title}…</MenubarItem>
           <MenubarItem onClick={onStyles}>{t.styles.title}…</MenubarItem>
           <MenubarSeparator />

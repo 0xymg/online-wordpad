@@ -124,7 +124,7 @@ Tarayıcı ve Word'ün metin biçimleme/yerleşim farkları nedeniyle tüm karma
 2. İlk kapsam: eşit sütunlar; sonnot ardından dipnot; APA 7 + IEEE; destek matrisiyle ölçülen Word uyumluluğu.
 3. Önce mevcut görsel/metin kutusu işi kapanır; bu planın uygulaması ardından başlar.
 
-Kullanıcı 2 Kasım 2026 tarihinde bu kapsamı ve sırayı onayladı. Görsel/metin kutusu paketi `a4b214f` ile canlıda doğrulanarak kapandı. A0 tamamlandı: sekiz sentetik belge için gerçek Word Online PDF referansları, SHA doğrulaması, uygulama çıktıları ve ölçüm raporu hazır. Sekiz örneğin tamamında en az bir uyumsuzluk ölçüldü; görsel birebirlik henüz değerlendirilmiş sayılmıyor. Ayrıntılar `docs/compatibility-baseline.md` dosyasında. A1 bölüm modeli ve düzenleyicisinin uygulaması ve yerel/gerçek Word kontrolleri tamamlandı; canlı yayın doğrulaması sıradaki kapıdır.
+Kullanıcı 2 Kasım 2026 tarihinde bu kapsamı ve sırayı onayladı. Görsel/metin kutusu paketi `a4b214f` ile canlıda doğrulanarak kapandı. A0 tamamlandı: sekiz sentetik belge için gerçek Word Online PDF referansları, SHA doğrulaması, uygulama çıktıları ve ölçüm raporu hazır. Sekiz örneğin tamamında en az bir uyumsuzluk ölçüldü; görsel birebirlik henüz değerlendirilmiş sayılmıyor. Ayrıntılar `docs/compatibility-baseline.md` dosyasında. A1 `2f6e8bd` ile yayımlandı; canlı bölüm arayüzü ve veri koruma testleri geçti. A2 sekme duraklarının uygulaması ve Word karşılaştırmaları sürüyor.
 
 ## Kaynak notları
 
@@ -137,7 +137,7 @@ Yerel kod incelemesi yukarıda belirtilen mevcut yeteneklerin temelidir. Word do
 
 ## Uygulama kaydı — A1
 
-Bölüm düzenleyicisi uygulandı; yerel doğrulama ve gerçek Word örnek kontrolleri tamamlandı, canlı doğrulama bekleniyor. Menü: **Insert → Section layout** veya **File → Page setup → Section layout**. Durum çubuğu geçerli bölümü gösterir; View menüsü bölüm sınırı işaretlerini açıp kapatır. İşaretler kaydedilen metne ve baskıya girmez.
+Bölüm düzenleyicisi `2f6e8bd` ile canlıda; yerel, gerçek Word ve canlı arayüz/veri koruma kontrolleri tamamlandı. Menü: **Insert → Section layout** veya **File → Page setup → Section layout**. Durum çubuğu geçerli bölümü gösterir; View menüsü bölüm sınırı işaretlerini açıp kapatır. İşaretler kaydedilen metne ve baskıya girmez.
 
 - Sürüm 1 belge modeli, kararlı bölüm kimlikleri ve eski HTML verilerinin doğrulanmış dönüşümü eklendi. Bilinmeyen sürüm kaynak HTML'yi korur ve otomatik kaydı engeller; açıkça yeni belgeyle değiştirilirse özgün kaynak sürüm geçmişine alınır.
 - Sonraki sayfa/sürekli bölüm, bölüm veya bütün belge kapsamında A4/Letter/Legal/özel ölçü/yön/marjin, önceki/sonraki biçimi seçerek sınır kaldırma ve tek işlemle undo/redo eklendi.
@@ -148,3 +148,12 @@ Bölüm düzenleyicisi uygulandı; yerel doğrulama ve gerçek Word örnek kontr
 
 
 A1 yerel kapanış: 37 model/komut kontrolü, kaynak veriyi koruyan gerçek açılış testi, bölüm arayüzü ve native kimlik/geometri testleri geçti. Üstbilgi ve mevcut bölüm testleri; görsel sayfalar arası sürükleme/metin kutusu regresyonları geçti. Sınır işareti satır yüksekliği ve kesintisiz bölüm zemin önbelleği sorunları regresyon testleriyle düzeltildi. TypeScript ve üretim derlemesi başarılı; mevcut Editor/MenuBar `any` ve eski hook lint bulguları bu değişiklikten bağımsızdır. Yeni modüllerin odaklı lint kontrolü temiz.
+
+
+## Uygulama kaydı — A2
+
+Yerel uygulama ve kabul kontrolleri tamamlandı; yayın/canlı doğrulaması bekliyor. Gerçek sekme karakteri/node, paragraf ve stil durakları, sayısal diyalog, sürüklenebilir cetvel, varsayılan aralık/ondalık ayraç ve ortak canlı/PDF/üstbilgi ölçümü eklendi. Model v2, eski uygulamanın yeni sekme bilgilerini sessizce düşürmesini engeller; v1 bölüm kimlikleri dönüşümde korunur. Ayrıntılı destek ve test durumu `docs/tab-stops-support.md` dosyasındadır.
+
+Gerçek Word referanslarıyla seçili LTR/RTL yatay ankrajlar, dar hücre satır grupları ve sekmesiz ondalık hücre hizası doğrulandı. Word'de düzenlenen DOCX özel ondalık ayraç bilgisini ve ilişkisiz özel özelliği korudu; bu metadata Word'ün bölge ayarı değildir. İçe alınmış tablo stili hücre boşlukları, üstbilgi tablo genişliği ve işaretli sekme run'ları düzeltildi. 38 sekme model kontrolü, 13 atom/pano kontrolü, cetvel/diyalog/stil taslağı, salt okunur kaynak koruması, klavye/üstbilgi undo, native koruma ve PDF testleri geçti. TypeScript ve üretim derlemesi başarılı. Bütün sayfa görsel eşitliği iddia edilmez.
+
+Sonraki A3 uygulama devri `docs/columns-implementation-plan.md` içindedir. İlk kapı, tek ProseMirror belgesinde sütunlar arasında bölünen paragrafın gerçek imleç/seçim/koordinat kanıtıdır; bu kanıt çıkmadan sütun arayüzü yayımlanmaz.

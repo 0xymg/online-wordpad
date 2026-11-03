@@ -13,7 +13,7 @@ export async function exportDocumentStyles(blob: Blob,doc: PMNode): Promise<Blob
     for(const old of Array.from(xml.documentElement.children))if(old.localName==="style"&&old.getAttributeNS(W,"styleId")===id)old.remove();
     const el=make("style");el.setAttributeNS(W,"w:type","paragraph");el.setAttributeNS(W,"w:styleId",id);if(id==="Normal")el.setAttributeNS(W,"w:default","1");
     el.appendChild(make("name",style.name));if(style.basedOn)el.appendChild(make("basedOn",style.basedOn));el.appendChild(make("qFormat"));
-    const node=doc.type.schema.nodes.paragraph.create({paragraphFormat:style.paragraph});
+    const node=doc.type.schema.nodes.paragraph.create({paragraphFormat:style.paragraph, docxProperties:(style as typeof style & {rawParagraphProperties?: string}).rawParagraphProperties || null});
     const p=new DOMParser().parseFromString(paragraphXml(node),"application/xml").documentElement;
     if(style.level!==undefined)p.appendChild(make("outlineLvl",style.level?style.level-1:9));el.appendChild(p);
     const r=make("rPr"),text=style.text;

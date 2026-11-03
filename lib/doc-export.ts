@@ -16,7 +16,7 @@ import { exportTextBoxes, textBoxBookmark } from "./text-box-docx";
 import { DOMParser as PMParser, type Node as PMNode, type Mark } from "prosemirror-model";
 import { mySchema } from "@/app/components/editor-schema";
 import {
-  Document, Packer, Paragraph, TextRun, HeadingLevel, AlignmentType,
+  Document, Packer, Paragraph, TextRun, Tab, HeadingLevel, AlignmentType,
   Table, TableRow, TableCell, WidthType, ImageRun, ExternalHyperlink, Bookmark, Header, Footer, PageNumber, SimpleField,
   LevelFormat, ShadingType, BorderStyle, PageBreak, PageOrientation,
   TextWrappingType, TextWrappingSide, HorizontalPositionRelativeFrom, VerticalPositionRelativeFrom,
@@ -192,6 +192,14 @@ class DocxBuilder {
         } else {
           out.push(run);
         }
+      } else if (child.type.name === "tab") {
+        const p = readMarks(child.marks);
+        const run = new TextRun({ children: [new Tab()], font: p.font, size: p.size, bold: p.bold, italics: p.italics,
+          underline: p.underline === false ? { type: "none" } : p.underline ? {} : undefined, strike: p.strike, color: p.color,
+          superScript: p.superScript, subScript: p.subScript,
+          shading: p.highlight ? { type: ShadingType.CLEAR, fill: p.highlight } : undefined,
+          style: p.link ? "Hyperlink" : undefined });
+        if (p.link) out.push(new ExternalHyperlink({ children: [run], link: p.link })); else out.push(run);
       } else if (child.type.name === "doc_field") {
         const marks = readMarks(child.marks);
         if (child.attrs.kind === "OTHER" && child.attrs.instruction) { out.push(new SimpleField(child.attrs.instruction, child.attrs.cached || "")); return; }
@@ -486,7 +494,8 @@ function rtfEscape(text: string): string {
   let out = "";
   for (const ch of text) {
     const code = ch.codePointAt(0)!;
-    if (ch === "\\" || ch === "{" || ch === "}") out += "\\" + ch;
+    if (ch === "\t") out += "\\tab ";
+    else if (ch === "\\" || ch === "{" || ch === "}") out += "\\" + ch;
     else if (code < 128) out += ch;
     else if (code <= 0xffff) out += rtfUnit(code);
     else {
@@ -535,6 +544,8 @@ class RtfBuilder {
         if (p.size) open += `\\fs${p.size}`;
         if (p.font) open += `\\f${this.fontIndex(p.font)}`;
         out += `${open} ${rtfEscape(child.text || "")}}`;
+      } else if (child.type.name === "tab") {
+        out += "\\tab ";
       } else if (child.type.name === "image") {
         out += "{\\i [image]}";
       } else if (child.type.name === "text_box") {
@@ -673,6 +684,8 @@ function inlineToMd(node: PMNode): string {
       if (has("subscript")) t = `<sub>${t}</sub>`;
       if (link) t = `[${t}](${link.attrs.href})`;
       out += t;
+    } else if (child.type.name === "tab") {
+      out += "\t";
     } else if (child.type.name === "image") {
       out += `![${child.attrs.alt || ""}](${child.attrs.src})`;
     } else if (child.type.name === "text_box") {

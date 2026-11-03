@@ -1,0 +1,10 @@
+{
+  "reference_application": "Microsoft Word Online",
+  "captured_date": "2026-11-03 UTC",
+  "source_sha256": "44f2fc92581bfee7d936fccec3809777c3aff7d0fa27f9c584e52004ff305ca3",
+  "pdf_sha256": "436655a31a36bb53f887548859d5550b06348d9ee4d6958f1134498115359b14",
+  "method": "Word Online File > Export > Download as PDF",
+  "browser": "Codex in-app browser; engine version unavailable",
+  "paper": "Native Word section geometry; no browser print override",
+  "fonts": "Arial specified on Normal style; actual substitution unverified"
+}

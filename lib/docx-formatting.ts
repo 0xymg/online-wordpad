@@ -4,7 +4,7 @@
  * This module is reached only through the lazy DOCX import path.
  */
 import JSZip from "jszip";
-import { paragraphFromXml, type ParagraphFormat, type DocumentStyles, type StyleText } from "./paragraph-format";
+import { mergeParagraphFormats, paragraphFromXml, type ParagraphFormat, type DocumentStyles, type StyleText } from "./paragraph-format";
 import { resolveStyle } from "./document-styles";
 import { captureLayout, restoreLayoutProperties } from "./docx-preservation";
 import { wrapDocumentHtml } from "./document-layout";
@@ -374,12 +374,36 @@ export async function prepareDocxFormatting(arrayBuffer: ArrayBuffer) {
     const pPr = child(el,"pPr"), paragraph = paragraphFromXml(pPr || null);
     if (!definition.basedOn) {
       const global = child(child(defaults,"pPrDefault"),"pPr");
-      Object.assign(paragraph,{ before:0,after:0,lineMode:"multiple",lineValue:1,...paragraphFromXml(global || null),...paragraph });
+      Object.assign(paragraph, mergeParagraphFormats({ before:0,after:0,lineMode:"multiple",lineValue:1 }, paragraphFromXml(global || null), paragraph));
     }
     const level = Number(attr(child(pPr,"outlineLvl")));
-    importedStyles[id] = { name:attr(child(el,"name")) || id,basedOn:definition.basedOn,...(Number.isFinite(level) && attr(child(pPr,"outlineLvl")) !== undefined && (level < 6 || level === 9) ? {level:level===9?0:level+1}:{}),paragraph,text };
+    importedStyles[id] = { name:attr(child(el,"name")) || id,basedOn:definition.basedOn,...(Number.isFinite(level) && attr(child(pPr,"outlineLvl")) !== undefined && (level < 6 || level === 9) ? {level:level===9?0:level+1}:{}),paragraph,text,
+      ...(pPr ? { rawParagraphProperties: new XMLSerializer().serializeToString(pPr) } : {}) };
   }
   preservation.layout.styles = importedStyles;
+  // Table cell margins can be inherited through table styles even when the
+  // table/cell itself has no tblCellMar/tcMar. Resolve these for display only;
+  // the original native styles and cell properties remain intact for export.
+  const tableStyles = new Map<string, Element>(); let defaultTableStyle: string | undefined;
+  for (const style of wordElements(styleXml, "style")) if (attr(style, "type") === "table") {
+    const id = attr(style, "styleId"); if (!id) continue;
+    tableStyles.set(id, style); if (enabled(attr(style, "default"))) defaultTableStyle = id;
+  }
+  const tableStyleMargins = (table: Element): Partial<Record<"top" | "right" | "bottom" | "left", number>> => {
+    const result: Partial<Record<"top" | "right" | "bottom" | "left", number>> = {}, chain: Element[] = [], seen = new Set<string>();
+    let id = attr(child(child(table, "tblPr"), "tblStyle")) || defaultTableStyle;
+    while (id && !seen.has(id)) { seen.add(id); const style = tableStyles.get(id); if (!style) break; chain.unshift(style); id = attr(child(style, "basedOn")); }
+    for (const style of chain) {
+      const margins = child(child(style, "tblPr"), "tblCellMar");
+      for (const side of ["top", "right", "bottom", "left"] as const) {
+        const margin = child(margins, side); if (!margin) continue;
+        const value = Number(attr(margin, "w"));
+        if (attr(margin, "type") === "nil") result[side] = 0;
+        else if (Number.isFinite(value) && value >= 0) result[side] = value;
+      }
+    }
+    return result;
+  };
   const paragraphMeta = new Map<string,{ id:string; direct:ParagraphFormat }>();
   const prefix = `EDTRimport${crypto.randomUUID().replace(/-/g, "")}`;
   const paragraphFormats = new Map<string, Properties>();
@@ -546,7 +570,7 @@ export async function prepareDocxFormatting(arrayBuffer: ArrayBuffer) {
         if (block && css) setStyles(block, css);
         const original = sourceParagraphs.get(marker.id);
         if (block && original) {
-          restoreLayoutProperties(original, block, preservation.sectionXml);
+          restoreLayoutProperties(original, block, preservation.sectionXml, tableStyleMargins);
           const sectionId = nativeSectionIds?.boundaries.get(original);
           if (sectionId) block.setAttribute("data-edtr-section-end", sectionId);
         }
@@ -605,6 +629,21 @@ export async function prepareDocxFormatting(arrayBuffer: ArrayBuffer) {
           const empty = (el: Element) => !el.textContent?.trim() && !el.querySelector("img,br");
           if (empty(block)) block.remove(); if (empty(after)) after.remove();
         } else marker.replaceWith(separator);
+      }
+      // Mammoth retains Word run tabs as U+0009. Preserve their structural
+      // identity when ProseMirror parses the restored, styled HTML.
+      const walker = doc.createTreeWalker(doc.body, NodeFilter.SHOW_TEXT), tabTexts: Text[] = [];
+      while (walker.nextNode()) {
+        const text = walker.currentNode as Text;
+        if (text.data.includes("\t") && text.parentElement?.closest("p,h1,h2,h3,h4,h5,h6,li,td,th")) tabTexts.push(text);
+      }
+      for (const text of tabTexts) {
+        const parts = text.data.split("\t"), fragment = doc.createDocumentFragment();
+        parts.forEach((part, index) => {
+          if (index) { const tab = doc.createElement("span"); tab.setAttribute("data-edtr-tab", "true"); tab.textContent = "\t"; fragment.appendChild(tab); }
+          if (part) fragment.appendChild(doc.createTextNode(part));
+        });
+        text.replaceWith(fragment);
       }
       const result = wrapDocumentHtml(doc.body.innerHTML, preservation.layout);
       if (!nativeSectionIds) return result;

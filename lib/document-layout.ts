@@ -1,10 +1,13 @@
 import type { DocumentStyles } from "./paragraph-format";
-import type { DocumentModelV1 } from "./document-model";
+import type { DocumentModel, DocumentModelV1 } from "./document-model";
+import type { DecimalSeparator } from "./tab-stops";
 /** Small, shared document metadata. Kept in the document, never in user preferences. */
 export type DocumentLayout = {
   width: number; height: number;
   margins: { top: number; right: number; bottom: number; left: number };
   styles?: DocumentStyles;
+  defaultTabStop?: number;
+  decimalSeparator?: DecimalSeparator;
   sectionMargins?: Record<string, {top:number;right:number;bottom:number;left:number}>;
   pageNumbers?: "off" | "top" | "bottom";
   pageNumberFormat?: "plain" | "of";
@@ -25,7 +28,7 @@ export function readLayout(root: HTMLElement): DocumentLayout | null {
     return data;
   } catch { return null; }
 }
-export function wrapDocumentHtml(html: string, layout: DocumentLayout | null, model?: DocumentModelV1 | null): string {
+export function wrapDocumentHtml(html: string, layout: DocumentLayout | null, model?: DocumentModel | DocumentModelV1 | null): string {
   if (!layout && !model) return html;
   const wrapper = document.createElement("div");
   if (layout) wrapper.setAttribute(LAYOUT_ATTRIBUTE, JSON.stringify(layout));

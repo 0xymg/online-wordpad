@@ -10,6 +10,9 @@ export const W = "http://schemas.openxmlformats.org/wordprocessingml/2006/main";
 const R = "http://schemas.openxmlformats.org/officeDocument/2006/relationships";
 const PKG = "http://schemas.openxmlformats.org/package/2006/relationships";
 const CT = "http://schemas.openxmlformats.org/package/2006/content-types";
+const CUSTOM = "http://schemas.openxmlformats.org/officeDocument/2006/custom-properties";
+const VT = "http://schemas.openxmlformats.org/officeDocument/2006/docPropsVTypes";
+const DECIMAL_PROPERTY = "EDTRDocs.TabDecimalSeparator";
 export const parseXml = (s: string) => {
   const doc = new DOMParser().parseFromString(s, "application/xml");
   if (doc.getElementsByTagName("parsererror").length) throw new Error("Invalid DOCX layout XML");
@@ -44,6 +47,19 @@ export async function captureLayout(zip: JSZip, mainPath: string, main: Document
   const source = new JSZip();
   const relations = parseXml(await zip.file(relPath(mainPath))?.async("string") || `<Relationships xmlns="${PKG}"/>`);
   const savedRelations = parseXml(`<Relationships xmlns="${PKG}"/>`);
+  // Preserve user custom properties separately from the main-document part
+  // graph; they may contain values owned by unrelated applications.
+  const rootRelationships = parseXml(await zip.file("_rels/.rels")?.async("string") || `<Relationships xmlns="${PKG}"/>`);
+  const customRel = Array.from(rootRelationships.documentElement.children).find(rel => rel.getAttribute("Type")?.endsWith("/custom-properties") && rel.getAttribute("TargetMode") !== "External");
+  const customPath = customRel && targetPath("document.xml", customRel.getAttribute("Target") || "");
+  const customXml = customPath && await zip.file(customPath)?.async("string");
+  let importedDecimal: "." | "," | "٫" | undefined;
+  if (customXml) {
+    source.file("edtr-custom-properties.xml", customXml);
+    const properties = parseXml(customXml), own = Array.from(properties.documentElement.children).filter(el => el.namespaceURI === CUSTOM && el.localName === "property" && el.getAttribute("name") === DECIMAL_PROPERTY);
+    const value = own.length === 1 ? Array.from(own[0].children).find(el => el.namespaceURI === VT && el.localName === "lpwstr")?.textContent : undefined;
+    if (value === "." || value === "," || value === "٫") importedDecimal = value;
+  }
   const seen = new Set<string>();
   async function copyPart(path: string) {
     if (seen.has(path)) return;
@@ -95,13 +111,17 @@ export async function captureLayout(zip: JSZip, mainPath: string, main: Document
   }
   source.file("[Content_Types].xml", xmlString(capturedTypes));
   let evenAndOddHeaders = false;
+  let importedDefaultTabStop: number | undefined;
   const settingsRel = Array.from(relations.documentElement.children).find(r => r.getAttribute("Type")?.endsWith("/settings"));
   if (settingsRel) {
     const settings = await zip.file(targetPath(mainPath, settingsRel.getAttribute("Target")!))?.async("string");
     if (settings) {
       source.file("edtr-settings.xml", settings);
-      const even = all(parseXml(settings), "evenAndOddHeaders")[0];
+      const settingsXml = parseXml(settings);
+      const even = all(settingsXml, "evenAndOddHeaders")[0];
       evenAndOddHeaders = !!even && !["0", "false", "off"].includes(val(even));
+      const tabStop = Number(val(all(settingsXml, "defaultTabStop")[0]));
+      if (Number.isInteger(tabStop) && tabStop > 0 && tabStop <= 31680) importedDefaultTabStop = tabStop;
     }
   }
   const themeRel = Array.from(relations.documentElement.children).find(r => r.getAttribute("Type")?.endsWith("/theme"));
@@ -153,6 +173,8 @@ export async function captureLayout(zip: JSZip, mainPath: string, main: Document
     width: Number(val(size, "w")) || 11906, height: Number(val(size, "h")) || 16838,
     margins: Object.fromEntries(["top", "right", "bottom", "left"].map(k => [k, val(margins, k) ? Number(val(margins, k)) : 1440])) as DocumentLayout["margins"],
     pageNumbers, pageNumberFormat, numberingStyle, evenAndOddHeaders,
+    ...(importedDefaultTabStop !== undefined ? { defaultTabStop: importedDefaultTabStop } : {}),
+    ...(importedDecimal !== undefined ? { decimalSeparator: importedDecimal } : {}),
     section: section ? sectionXml(section) : undefined,
     source: await source.generateAsync({ type: "base64", compression: "DEFLATE" }),
   };
@@ -160,7 +182,7 @@ export async function captureLayout(zip: JSZip, mainPath: string, main: Document
 }
 
 /** Called using the existing import bookmark identity, not text/index matching. */
-export function restoreLayoutProperties(p: Element, block: HTMLElement, sectionXml: (s: Element) => string) {
+export function restoreLayoutProperties(p: Element, block: HTMLElement, sectionXml: (s: Element) => string, tableStyleMargins?: (table: Element) => Partial<Record<"top" | "right" | "bottom" | "left", number>>) {
   const props = first(p, "pPr");
   if (props) {
     const copy = props.cloneNode(true) as Element;
@@ -188,12 +210,14 @@ export function restoreLayoutProperties(p: Element, block: HTMLElement, sectionX
     const alignment = val(first(tblPr, "jc"));
     if (alignment === "center") { htmlTable.style.marginLeft = "auto"; htmlTable.style.marginRight = "auto"; }
     if (alignment === "right" || alignment === "end") { htmlTable.style.marginLeft = "auto"; htmlTable.style.marginRight = "0"; }
-    const tableMargins = first(tblPr, "tblCellMar");
-    const cellMargins = tcPr && first(tcPr, "tcMar");
-    for (const side of ["top", "right", "bottom", "left"]) {
-      const margin = cellMargins && first(cellMargins, side) || tableMargins && first(tableMargins, side);
-      if (margin && val(margin, "type") !== "nil") htmlCell.style.setProperty(`padding-${side}`, `${Number(val(margin, "w")) / 20}pt`);
-    }
+  }
+  const tableMargins = tblPr && first(tblPr, "tblCellMar");
+  const cellMargins = tcPr && first(tcPr, "tcMar");
+  const inheritedMargins = tableStyleMargins?.(table) || {};
+  for (const side of ["top", "right", "bottom", "left"] as const) {
+    const margin = cellMargins && first(cellMargins, side) || tableMargins && first(tableMargins, side);
+    if (margin) htmlCell.style.setProperty(`padding-${side}`, val(margin, "type") === "nil" ? "0pt" : `${Number(val(margin, "w")) / 20}pt`);
+    else if (inheritedMargins[side] !== undefined) htmlCell.style.setProperty(`padding-${side}`, `${inheritedMargins[side]! / 20}pt`);
   }
   const height = trPr && first(trPr, "trHeight");
   if (height) htmlRow.style.height = `${Number(val(height)) / 20}pt`;
@@ -337,6 +361,70 @@ export async function restoreDocxPackage(blob: Blob, doc: PMNode, paragraphs: Ar
       const type = types.createElementNS(CT, "Override"); type.setAttribute("PartName", "/word/edtr-theme.xml"); type.setAttribute("ContentType", "application/vnd.openxmlformats-officedocument.theme+xml"); types.documentElement.appendChild(type);
     }
     zip.file("word/_rels/document.xml.rels", xmlString(rels)); zip.file("[Content_Types].xml", xmlString(types));
+  }
+  // Restore foreign custom properties and merge only the explicitly owned
+  // decimal setting. This metadata is app-specific, not Word decimalSymbol.
+  const customSource = layout?.source ? await (await JSZip.loadAsync(layout.source, { base64: true })).file("edtr-custom-properties.xml")?.async("string") : undefined;
+  const separator = layout?.decimalSeparator;
+  if (customSource || separator === "." || separator === "," || separator === "٫") {
+    const rels = parseXml(await zip.file("_rels/.rels")?.async("string") || `<Relationships xmlns="${PKG}"/>`);
+    let rel = Array.from(rels.documentElement.children).find(el => el.getAttribute("Type")?.endsWith("/custom-properties") && el.getAttribute("TargetMode") !== "External");
+    const target = rel ? targetPath("document.xml", rel.getAttribute("Target") || "") : "docProps/custom.xml";
+    const existing = await zip.file(target)?.async("string");
+    const custom = parseXml(existing || customSource || `<Properties xmlns="${CUSTOM}" xmlns:vt="${VT}"/>`);
+    if (existing && customSource) {
+      const original = parseXml(customSource);
+      for (const item of Array.from(original.documentElement.children)) {
+        if (item.namespaceURI !== CUSTOM || item.localName !== "property") continue;
+        const name = item.getAttribute("name");
+        if (Array.from(custom.documentElement.children).some(el => el.getAttribute("name") === name)) continue;
+        custom.documentElement.appendChild(custom.importNode(item, true));
+      }
+    }
+    const properties = () => Array.from(custom.documentElement.children).filter(el => el.namespaceURI === CUSTOM && el.localName === "property");
+    if (separator === "." || separator === "," || separator === "٫") {
+      for (const old of properties().filter(el => el.getAttribute("name") === DECIMAL_PROPERTY)) old.remove();
+      const item = custom.createElementNS(CUSTOM, "property");
+      item.setAttribute("fmtid", "{D5CDD505-2E9C-101B-9397-08002B2CF9AE}"); item.setAttribute("name", DECIMAL_PROPERTY);
+      const value = custom.createElementNS(VT, "vt:lpwstr"); value.textContent = separator; item.appendChild(value); custom.documentElement.appendChild(item);
+    }
+    // Keep existing foreign PIDs when possible, allocating only missing or
+    // conflicting identifiers without altering foreign names, types or values.
+    const usedPids = new Set<number>(); let nextPid = 2;
+    for (const item of properties()) {
+      let pid = Number(item.getAttribute("pid"));
+      if (!Number.isInteger(pid) || pid < 2 || usedPids.has(pid)) {
+        while (usedPids.has(nextPid)) nextPid++;
+        pid = nextPid++; item.setAttribute("pid", String(pid));
+      }
+      usedPids.add(pid);
+    }
+    zip.file(target, xmlString(custom));
+    if (!rel) {
+      const used = new Set(Array.from(rels.documentElement.children).map(el => el.getAttribute("Id")));
+      let id = "EDTRCustom", index = 1; while (used.has(id)) id = `EDTRCustom${index++}`;
+      rel = rels.createElementNS(PKG, "Relationship"); rel.setAttribute("Id", id); rel.setAttribute("Type", `${R}/custom-properties`); rel.setAttribute("Target", target); rels.documentElement.appendChild(rel);
+      zip.file("_rels/.rels", xmlString(rels));
+    }
+    const types = parseXml(await zip.file("[Content_Types].xml")!.async("string"));
+    if (!Array.from(types.documentElement.children).some(el => el.getAttribute("PartName") === `/${target}`)) {
+      const override = types.createElementNS(CT, "Override"); override.setAttribute("PartName", `/${target}`); override.setAttribute("ContentType", "application/vnd.openxmlformats-officedocument.custom-properties+xml"); types.documentElement.appendChild(override);
+      zip.file("[Content_Types].xml", xmlString(types));
+    }
+  }
+  // Keep the Word automatic stop interval independent of explicit paragraph
+  // stops. The app decimal separator is not Word's field decimalSymbol.
+  const tabInterval = (layout as (DocumentLayout & { defaultTabStop?: number }) | null)?.defaultTabStop;
+  if (Number.isInteger(tabInterval) && tabInterval! > 0 && tabInterval! <= 31680) {
+    const settings = parseXml(await zip.file("word/settings.xml")!.async("string"));
+    let element = all(settings, "defaultTabStop")[0];
+    if (!element) {
+      element = settings.createElementNS(W, "w:defaultTabStop");
+      const next = all(settings, "characterSpacingControl")[0] || all(settings, "themeFontLang")[0];
+      settings.documentElement.insertBefore(element, next?.parentElement === settings.documentElement ? next : null);
+    }
+    element.setAttributeNS(W, "w:val", String(tabInterval));
+    zip.file("word/settings.xml", xmlString(settings));
   }
   // Retain section boundaries on their paragraph, including differing margins.
   for (const item of paragraphs) {

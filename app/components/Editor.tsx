@@ -2,6 +2,9 @@
 
 import { alignSelection, imageAlignment, setTextAlign as applyTextAlign } from "@/lib/editor-commands";
 
+import { tabLayoutPlugin, createTabNodeView } from "@/lib/tab-layout";
+import "@/lib/tab-layout.css";
+import { insertTabCharacter, tabCharactersPlugin } from "@/lib/tab-node";
 import { parseDocumentHtml, documentModelPlugin } from "@/lib/document-model";
 import { sectionMarkersPlugin, sectionMarkersKey } from "@/lib/section-markers";
 import "./section-markers.css";
@@ -35,7 +38,7 @@ import { keymap } from "prosemirror-keymap";
 import { baseKeymap, toggleMark, setBlockType, wrapIn } from "prosemirror-commands";
 import { wrapInList, splitListItem, liftListItem, sinkListItem } from "prosemirror-schema-list";
 import { inputRules, wrappingInputRule, textblockTypeInputRule, InputRule } from "prosemirror-inputrules";
-import { tableEditing, columnResizing, isInTable, findTable, CellSelection, TableMap, TableView } from "prosemirror-tables";
+import { tableEditing, columnResizing, goToNextCell, isInTable, findTable, CellSelection, TableMap, TableView } from "prosemirror-tables";
 import { mySchema, sanitizeHref, normalizeIndent } from "./editor-schema";
 import MenuBar from "./MenuBar";
 import "./text-box.css";
@@ -75,6 +78,8 @@ import WelcomeScreen from "./WelcomeScreen";
 const AboutDialog = lazy(() => import("./AboutDialog"));
 const AuthModal = lazy(() => import("./AuthModal"));
 const HeaderFooterDialog = lazy(() => import("./HeaderFooterDialog"));
+const TabsDialog = lazy(() => import("./TabsDialog"));
+const TabRuler = lazy(() => import("./TabRuler"));
 const SectionLayoutDialog = lazy(() => import("./SectionLayoutDialog"));
 const PageMarginsDialog = lazy(() => import("./PageMarginsDialog"));
 const ImageLayersPanel = lazy(() => import("./ImageLayersPanel"));
@@ -196,11 +201,13 @@ function buildPlugins() {
       toast.warning(sectionLabels(isLocale(lang) ? lang : "en").boundaryNesting);
     }),
     sectionMarkersPlugin(),
+    tabCharactersPlugin(),
     paragraphStylePlugin(),
     columnResizing(),
     tableEditing(),
     searchPlugin(),
     paginationPlugin(() => pageLayoutConfig),
+    tabLayoutPlugin(),
     keymap({
       "Mod-z":       undo,
       "Mod-y":       redo,
@@ -232,8 +239,15 @@ function buildPlugins() {
         if (dispatch) dispatch(state.tr.setSelection(new AllSelection(state.doc)));
         return true;
       },
-      "Tab":       adjustBlockIndentByTab(1),
-      "Shift-Tab": adjustBlockIndentByTab(-1),
+      "Tab": (state, dispatch) => {
+        if (isInTable(state)) return goToNextCell(1)(state, dispatch);
+        for (let depth = state.selection.$from.depth; depth > 0; depth--) {
+          if (state.selection.$from.node(depth).type === mySchema.nodes.list_item) return adjustBlockIndentByTab(1)(state, dispatch);
+        }
+        return insertTabCharacter(state, dispatch);
+      },
+      "Shift-Tab": (state, dispatch) => isInTable(state) ? goToNextCell(-1)(state, dispatch) : adjustBlockIndentByTab(-1)(state, dispatch),
+      "Mod-Alt-t": insertTabCharacter,
       "Enter": (state,dispatch,view) => splitListItem(mySchema.nodes.list_item)(state,dispatch,view) || splitStyledParagraph(state,dispatch,view),
     }),
     keymap(baseKeymap),
@@ -1193,6 +1207,8 @@ export default function Editor({
     view.state.doc.forEach((node, pos) => { if (pos + node.nodeSize <= position && String(node.attrs.docxProperties || "").includes("sectPr")) section++; });
     setRunningEditor({ id: loadedIdRef.current, section });
   }, []);
+  const [tabsOpen, setTabsOpen] = useState(false);
+  const showTabs = useCallback(() => setTabsOpen(true), []);
   const [sectionLayoutOpen, setSectionLayoutOpen] = useState(false);
   const [documentLoadError, setDocumentLoadError] = useState(false);
   const showSectionLayout = useCallback(() => setSectionLayoutOpen(true), []);
@@ -1229,7 +1245,6 @@ export default function Editor({
   const isLandscape = pageOrientation === "landscape";
   const pageWidthPx = documentLayout ? documentLayout.width / 15 : isLandscape ? 1123 : 794;
   const pageHeightPx = documentLayout ? documentLayout.height / 15 : isLandscape ? 794 : 1123;
-  const pageWidthCm = pageWidthPx / CM_TO_PX;
   const pageMargins = documentLayout?.sectionMargins?.[0] ?? documentLayout?.margins ?? { top: pageMarginCm / 2.54 * 1440, right: pageMarginCm / 2.54 * 1440, bottom: pageMarginCm / 2.54 * 1440, left: pageMarginCm / 2.54 * 1440 };
 
   const [activeMargins,setActiveMargins]=useState<PageMargins>({top:1440,bottom:1440,left:1440,right:1440});
@@ -2359,6 +2374,7 @@ export default function Editor({
     const view = new EditorView(editorRef.current, {
       state,
       nodeViews: {
+        tab: createTabNodeView,
         table: (node, v, getPos) => new TableNodeView(node, v, getPos as () => number | undefined, uiText(tRef.current, "Drag to move table")),
         image: (node, v, getPos) => new ImageNodeView(node, v, getPos as () => number | undefined),
         text_box: (node, v, getPos) => createTextBoxNodeView(node, v, getPos, { onEdit: () => setTextBoxDialogOpen(true) }),
@@ -2838,6 +2854,11 @@ export default function Editor({
 
   const handleImageUrlAdd = useCallback(() => {
     setLinkDialog({ mode: "image", value: "" });
+  }, []);
+
+  const handleInsertTab = useCallback(() => {
+    const view = viewRef.current;
+    if (view && view.editable) { insertTabCharacter(view.state, view.dispatch); view.focus(); }
   }, []);
 
   const handleInsertDivider = useCallback(() => {
@@ -3320,6 +3341,8 @@ export default function Editor({
         schema={mySchema}
         marginPreset={presetMargin}
         onMarginPreset={changeMarginPreset}
+        onTabStops={showTabs}
+        onInsertTab={handleInsertTab}
         onSectionLayout={showSectionLayout}
         onCustomMargins={showMargins}
         pageOrientation={pageOrientation}
@@ -3415,20 +3438,7 @@ export default function Editor({
           compact={chromeCollapsed}
         />
       )}
-      {showRuler && !focusMode && (
-        <div className="border-b border-border bg-card select-none overflow-hidden">
-          <div className="mx-auto h-5 relative" style={{ width: pageWidthPx * (zoomPercent / 100) }}>
-            <div className="absolute inset-0 flex">
-              {Array.from({ length: Math.ceil(pageWidthCm) }, (_, i) => (
-                <div key={i} className="relative shrink-0 border-l border-border/60"
-                  style={{ width: (pageWidthPx / pageWidthCm) * (zoomPercent / 100) }}>
-                  <span className="absolute left-0.5 top-0 text-[8px] leading-none text-muted-foreground/70">{i}</span>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-      )}
+      {showRuler && !focusMode && <Suspense fallback={null}><TabRuler view={viewRef.current} tick={tick} onOpenDialog={showTabs} /></Suspense>}
       <div className="flex min-h-0 flex-1 flex-col lg:flex-row">
       <div
         ref={editorShellRef}
@@ -4059,6 +4069,7 @@ export default function Editor({
         updateDocumentLayout(layout => ({ ...layout, running: { ...layout.running, ...slots } }));
       }} /></Suspense>}
       {documentLoadError && <div role="alert" className="fixed bottom-4 inset-x-4 z-50 rounded border bg-background p-3 text-sm text-destructive">{sectionLabels(locale).unsupportedModel}</div>}
+      {tabsOpen && viewRef.current && <Suspense fallback={null}><TabsDialog view={viewRef.current} onClose={() => setTabsOpen(false)} /></Suspense>}
       {sectionLayoutOpen && viewRef.current && <Suspense fallback={null}><SectionLayoutDialog view={viewRef.current} onClose={() => setSectionLayoutOpen(false)} /></Suspense>}
       {marginsOpen && viewRef.current && <Suspense fallback={null}><PageMarginsDialog view={viewRef.current} onClose={()=>setMarginsOpen(false)}/></Suspense>}
       {textBoxDialogOpen && viewRef.current && <Suspense fallback={null}><TextBoxDialog view={viewRef.current} onClose={() => setTextBoxDialogOpen(false)} /></Suspense>}

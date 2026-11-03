@@ -4,7 +4,7 @@ import { documentSections, type DocumentSection } from "./document-sections";
 import { allocateDocumentIdentity } from "./document-identity";
 import { getDocumentModel, migrateDocumentNode, projectDocumentModel, sectionRecordXml, validSectionPage,
   inheritRemovedSection,
-  type DocumentModelV1, type SectionPage, type SectionRecordV1 } from "./document-model";
+  type DocumentModel, type SectionPage, type SectionRecordV1 } from "./document-model";
 
 export class SectionCommandError extends Error {
   constructor(public code: "unsupported-cursor" | "invalid-geometry" | "missing-section" | "no-boundary" | "invalid-selection" | "unsupported-model", message: string) { super(message); this.name = "SectionCommandError"; }
@@ -14,7 +14,7 @@ export function activeDocumentSection(state: EditorState): DocumentSection & { i
   const index = Math.max(0, sections.findIndex((section, i) => position >= section.from && (position < section.to || i === sections.length - 1)));
   return { ...sections[index], index };
 }
-function command(state: EditorState): { tr: Transaction; model: DocumentModelV1 } {
+function command(state: EditorState): { tr: Transaction; model: DocumentModel } {
   let doc;
   try { doc = migrateDocumentNode(state.doc); } catch { throw new SectionCommandError("unsupported-model", "The document model cannot be edited safely"); }
   const model = getDocumentModel(doc)!;
@@ -50,7 +50,7 @@ export function insertDocumentSection(state: EditorState, start: "nextPage" | "c
   // The old section's endpoint becomes the new right section's endpoint.
   tr.doc.forEach((node, pos) => { if (node.attrs.sectionEndId === currentId) tr.setNodeMarkup(pos, undefined, { ...node.attrs, sectionEndId: newId }); });
   const left = tr.doc.nodeAt(leftPos)!; tr.setNodeMarkup(leftPos, undefined, { ...left.attrs, sectionEndId: currentId });
-  const next: DocumentModelV1 = { ...model, sections: { ...model.sections, [newId]: newFollowingSection(model.sections[currentId], start) },
+  const next: DocumentModel = { ...model, sections: { ...model.sections, [newId]: newFollowingSection(model.sections[currentId], start) },
     finalSectionId: model.finalSectionId === currentId ? newId : model.finalSectionId };
   projectDocumentModel(tr, next);
   tr.setSelection(TextSelection.create(tr.doc, leftPos + tr.doc.nodeAt(leftPos)!.nodeSize + 1));
@@ -74,7 +74,7 @@ export function removeDocumentSectionBoundary(state: EditorState, sectionId: str
     if (node.attrs.sectionEndId === sectionId) tr.setNodeMarkup(pos, undefined, { ...node.attrs, sectionEndId: null });
     else if (node.attrs.sectionEndId === followingId && keepId === sectionId) tr.setNodeMarkup(pos, undefined, { ...node.attrs, sectionEndId: keepId });
   });
-  const next: DocumentModelV1 = { ...model, sections: records, finalSectionId: model.finalSectionId === followingId ? keepId as DocumentModelV1["finalSectionId"] : model.finalSectionId };
+  const next: DocumentModel = { ...model, sections: records, finalSectionId: model.finalSectionId === followingId ? keepId as DocumentModel["finalSectionId"] : model.finalSectionId };
   return projectDocumentModel(tr, next).scrollIntoView();
 }
 export function setSectionGeometry(state: EditorState, patch: Partial<SectionPage>, scope: "section" | "all", sectionId?: string): Transaction {

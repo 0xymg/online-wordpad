@@ -8,6 +8,7 @@ import { effectiveParagraph } from "@/lib/paragraph-format";
 import { numberLabel } from "@/lib/page-number";
 import { rawSections, runningSlot, runningFragment, type RunningSlots, type RunningVariant } from "@/lib/running-content";
 import { documentSections, sectionBlockStyle, type PageGeometry } from "@/lib/document-sections";
+import { layoutRunningTabs } from "@/lib/tab-dom-layout";
 import type { DocumentLayout } from "@/lib/document-layout";
 import { Plugin, PluginKey } from "prosemirror-state";
 import { TableMap } from "prosemirror-tables";
@@ -667,7 +668,12 @@ export function paginationPlugin(getConfig: () => PageLayoutConfig): Plugin {
       paintRunning = (pages) => {
         const layout = view.state.doc.attrs.layout as DocumentLayout | null, cfg = getConfig();
         const signature = JSON.stringify([pages, cfg.pageNumbers, cfg.pageNumberFormat]);
-        if (layout === lastLayout && runningOriginal === lastOriginal && signature === lastRunning) return;
+        const rootRect = view.dom.getBoundingClientRect(), rootWidth = Number.parseFloat(getComputedStyle(view.dom).width);
+        const runningScale = rootRect.width / rootWidth || 1;
+        if (layout === lastLayout && runningOriginal === lastOriginal && signature === lastRunning) {
+          runningLayer.querySelectorAll<HTMLElement>(".edtr-running-content").forEach(box => layoutRunningTabs(box, layout, runningScale));
+          return;
+        }
         lastLayout = layout; lastOriginal = runningOriginal; lastRunning = signature;
         runningLayer.replaceChildren();
         const maximum = Math.max(...documentSections(view.state.doc).map(s => s.geometry.width));
@@ -686,6 +692,7 @@ export function paginationPlugin(getConfig: () => PageLayoutConfig): Plugin {
             const box = document.createElement("div"); box.className = `edtr-running-content pm-running-${kind}`;
             box.style.cssText = `position:absolute;left:${(maximum - g.width) / 30 + g.margins.left / 15}px;width:${(g.width - g.margins.left - g.margins.right) / 15}px;${kind === "header" ? `top:${entry.top + (g.headerDistance ?? slot.distance) / 15}px` : `top:${entry.top + g.height / 15 - (g.footerDistance ?? slot.distance) / 15}px;transform:translateY(-100%)`}`;
             box.appendChild(runningFragment(slot.html, formatted, pages.length)); runningLayer.appendChild(box);
+            layoutRunningTabs(box, layout, runningScale);
             if (cfg.pageNumbers === (kind === "header" ? "top" : "bottom") && (slot.html.includes('data-doc-field="PAGE"') || Object.keys(layout?.running || {}).some(key => key.startsWith(`${entry.section}:`) && key.endsWith(`:${kind}`)))) replacesNumber = true;
           }
         }

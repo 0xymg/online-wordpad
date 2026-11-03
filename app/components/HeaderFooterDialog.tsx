@@ -26,7 +26,7 @@ export default function HeaderFooterDialog({ doc, initialSection, onApply, onClo
     const edits = { ...draft };
     for (const [key, value] of Object.entries(edits)) {
       const index = Number(key.split(":")[0]), g = sections[index].geometry;
-      const height = value.linked ? 0 : runningHeight(value.html, (g.width - g.margins.left - g.margins.right) / 15);
+      const height = value.linked ? 0 : runningHeight(value.html, (g.width - g.margins.left - g.margins.right) / 15, doc.attrs.layout);
       if (height + value.distance > g.height * 0.4) { setError(t.tooTall); return; }
       edits[key] = { ...value, height };
     }
@@ -41,7 +41,7 @@ export default function HeaderFooterDialog({ doc, initialSection, onApply, onClo
       </div>
       {error && <p role="alert" className="mb-3 text-sm text-destructive">{error}</p>}
       {original === null ? <p className="py-8 text-sm text-muted-foreground">{t.loading}</p> : <div className="space-y-5">{(["header", "footer"] as RunningKind[]).map(kind => { const value = slot(kind); return <div key={kind} className="space-y-2">
-        <RunningEditor key={`${runningKey(section, variant, kind)}:${value.linked}`} html={value.html} label={kind === "header" ? t.header : t.footer} disabled={value.linked} onChange={html => update(kind, { html })} />
+        <RunningEditor layout={doc.attrs.layout} width={(sections[section].geometry.width - sections[section].geometry.margins.left - sections[section].geometry.margins.right) / 15} key={`${runningKey(section, variant, kind)}:${value.linked}`} html={value.html} label={kind === "header" ? t.header : t.footer} disabled={value.linked} onChange={html => update(kind, { html })} />
         <div className="flex flex-wrap items-center justify-between gap-3 text-xs text-muted-foreground">
           <label className="flex items-center gap-2"><input type="checkbox" aria-label={`${kind === "header" ? t.header : t.footer} ${t.link}`} checked={value.linked} disabled={section === 0} onChange={e => update(kind, { linked: e.target.checked })} />{t.link}</label>
           <label className="flex items-center gap-2">{t.distance}<input aria-label={`${kind === "header" ? t.header : t.footer} ${t.distance}`} type="number" min="0" max="10" step="0.01" value={Math.round(value.distance / 1440 * 254) / 100} onChange={e => update(kind, { distance: Math.round(Number(e.target.value) / 2.54 * 1440) })} className="h-7 w-20 border border-input bg-background px-2 text-foreground" /></label>

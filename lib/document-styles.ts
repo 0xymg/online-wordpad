@@ -1,7 +1,8 @@
 import type { Node as PMNode, Mark } from "prosemirror-model";
 import type { EditorState, Transaction } from "prosemirror-state";
 import { defaultDocumentLayout, type DocumentLayout } from "./document-layout";
-import { cleanParagraph, cleanStyleText, DEFAULT_PARAGRAPH, DEFAULT_STYLE_TEXT, effectiveParagraph, type DocumentStyle, type DocumentStyles, type ParagraphFormat, type StyleText } from "./paragraph-format";
+import { cleanParagraph, cleanStyleText, DEFAULT_PARAGRAPH, DEFAULT_STYLE_TEXT, effectiveParagraph, mergeParagraphFormats, type DocumentStyle, type DocumentStyles, type ParagraphFormat, type StyleText } from "./paragraph-format";
+import { mergeTabsWithRaw, parseTabStopsXml, cleanTabStops, type OpaqueTabStop, type TabStop } from "./tab-stops";
 export const BUILTIN_STYLES: DocumentStyles = {
   Normal: { name: "Normal", paragraph: { ...DEFAULT_PARAGRAPH }, text: { ...DEFAULT_STYLE_TEXT } },
   Heading1: { name: "Heading 1", basedOn: "Normal", level: 1, paragraph: { before: 240, after: 120, keepNext: true }, text: { size: 24, bold: true } },
@@ -18,7 +19,7 @@ export function documentStyles(layout: DocumentLayout | null): DocumentStyles {
  const result={...BUILTIN_STYLES};
  for(const [id,value]of Object.entries(layout.styles)){
   if(!value||typeof value!=="object"||["__proto__","constructor","prototype"].includes(id))continue;
-  result[id]={name:String(value.name||id).slice(0,80),basedOn:typeof value.basedOn==="string"?value.basedOn:undefined,level:typeof value.level==="number"?Math.max(0,Math.min(6,Math.round(value.level))):undefined,paragraph:cleanParagraph(value.paragraph),text:cleanStyleText(value.text)};
+  result[id]={name:String(value.name||id).slice(0,80),basedOn:typeof value.basedOn==="string"?value.basedOn:undefined,level:typeof value.level==="number"?Math.max(0,Math.min(6,Math.round(value.level))):undefined,paragraph:cleanParagraph(value.paragraph),text:cleanStyleText(value.text),...(typeof value.rawParagraphProperties==="string"?{rawParagraphProperties:value.rawParagraphProperties}:{})};
  }
  styleCache.set(layout.styles,result);return {...result};
 }
@@ -27,7 +28,9 @@ export function resolveStyle(styles: DocumentStyles, id: string, seen = new Set<
   if (!style || seen.has(id) || seen.size > 20) return { paragraph: { ...DEFAULT_PARAGRAPH }, text: { ...DEFAULT_STYLE_TEXT } };
   seen.add(id);
   const base = style.basedOn ? resolveStyle(styles,style.basedOn,seen) : { paragraph: {}, text: DEFAULT_STYLE_TEXT, level: undefined };
-  return { paragraph: { ...base.paragraph,...cleanParagraph(style.paragraph) }, text: { ...base.text,...style.text }, level: style.level ?? base.level };
+  const own = cleanParagraph(style.paragraph), paragraph = mergeParagraphFormats(base.paragraph, own);
+  paragraph.tabs = mergeTabsWithRaw(base.paragraph.tabs, style.rawParagraphProperties, own.tabs);
+  return { paragraph, text: { ...base.text,...style.text }, level: style.level ?? base.level };
 }
 export function selectedParagraphs(state: EditorState): Array<{ node: PMNode; pos: number }> {
   const { from,to,empty,$from } = state.selection, result: Array<{ node: PMNode; pos: number }> = [];
@@ -51,7 +54,7 @@ function equal(a: unknown,b: unknown) { return typeof a === "string" && typeof b
 function restyleText(tr: Transaction, node: PMNode, pos: number, old: StyleText | null, next: StyleText) {
   const specs = { family:["fontFamily","family"],size:["fontSize","size"],bold:["strong",""],italic:["em",""],underline:["underline",""],color:["textColor","color"] } as const;
   node.descendants((child,relative) => {
-    if (!child.isInline || !child.isText && child.type.name !== "doc_field") return;
+    if (!child.isInline || !child.isText && child.type.name !== "doc_field" && child.type.name !== "tab") return;
     const actual = textFormat(child.marks), from = pos+1+relative,to = from+child.nodeSize;
     for (const key of Object.keys(specs) as Array<keyof StyleText>) {
       const [name,attr] = specs[key], type = tr.doc.type.schema.marks[name]; if (!type) continue;
@@ -85,11 +88,49 @@ export function saveDocumentStyle(state: EditorState,id: string,definition: Docu
   tr.setDocAttribute("layout",{ ...(state.doc.attrs.layout || defaultDocumentLayout()),styles });
   return tr;
 }
+/** Opaque native tabs follow the same position precedence as supported tabs. */
+function mergeOpaqueTabs(inherited: OpaqueTabStop[], raw: string | null | undefined, managed?: TabStop[]): OpaqueTabStop[] {
+  const parsed = parseTabStopsXml(raw), replaced = new Set([...parsed.stops, ...(managed || [])].map(stop => stop.position));
+  const ownPositions = new Set(parsed.unsupported.filter(stop => stop.position !== null).map(stop => stop.position));
+  return [...inherited.filter(stop => !replaced.has(stop.position!) && !ownPositions.has(stop.position)), ...parsed.unsupported.filter(stop => !replaced.has(stop.position!))];
+}
+function styleOpaqueTabs(styles: DocumentStyles, id: string, seen = new Set<string>()): OpaqueTabStop[] {
+  if (!Object.hasOwn(styles, id) || seen.has(id) || seen.size > 20) return [];
+  seen.add(id); const style = styles[id];
+  return mergeOpaqueTabs(style.basedOn ? styleOpaqueTabs(styles, style.basedOn, seen) : [], style.rawParagraphProperties, cleanTabStops(style.paragraph.tabs));
+}
+/** Retain the owner's raw properties, including native stops revealed by Reset. */
+function materializeOpaqueTabs(raw: string | null | undefined, inherited: OpaqueTabStop[]): string | null | undefined {
+  if (!inherited.length) return raw;
+  const W = "http://schemas.openxmlformats.org/wordprocessingml/2006/main";
+  const doc = new DOMParser().parseFromString(raw || `<w:pPr xmlns:w="${W}"/>`, "application/xml"), root = doc.documentElement;
+  const own = parseTabStopsXml(root), positions = new Set([...own.stops, ...own.unsupported].filter(stop => stop.position !== null).map(stop => stop.position));
+  const opaqueXml = new Set(own.unsupported.map(stop => stop.xml));
+  let tabs = Array.from(root.children).find(el => el.namespaceURI === W && el.localName === "tabs");
+  for (const stop of inherited) {
+    if (stop.position !== null ? positions.has(stop.position) : opaqueXml.has(stop.xml)) continue;
+    if (!tabs) { tabs = doc.createElementNS(W, "w:tabs"); root.appendChild(tabs); }
+    tabs.appendChild(doc.importNode(new DOMParser().parseFromString(stop.xml, "application/xml").documentElement, true));
+    if (stop.position !== null) positions.add(stop.position); opaqueXml.add(stop.xml);
+  }
+  return new XMLSerializer().serializeToString(root);
+}
 export function removeDocumentStyle(state: EditorState,id: string): Transaction {
   const styles = documentStyles(state.doc.attrs.layout),tr=state.tr;
-  for (const [key,style] of Object.entries(styles)) if (style.basedOn === id) { const resolved=resolveStyle(styles,key); styles[key]={ name:style.name,...resolved }; }
+  // Capture before removing/changing definitions: children and attached paragraphs
+  // must retain native settings that the editable subset cannot represent.
+  const removedOpaque = styleOpaqueTabs(styles,id);
+  for (const [key,style] of Object.entries(styles)) if (style.basedOn === id) {
+    const resolved=resolveStyle(styles,key), raw=materializeOpaqueTabs(style.rawParagraphProperties,styleOpaqueTabs(styles,key));
+    const flattened={...style,...resolved};delete flattened.basedOn;
+    if(raw!==undefined&&raw!==null)flattened.rawParagraphProperties=raw;
+    styles[key]=flattened;
+  }
   delete styles[id];
-  state.doc.descendants((node,pos)=>{ if(node.attrs.styleId===id) tr.setNodeMarkup(pos,undefined,{ ...node.attrs,styleId:null,styleText:null,styleParagraph:{},paragraphFormat:effectiveParagraph(node) }); });
+  state.doc.descendants((node,pos)=>{ if(node.attrs.styleId===id) {
+    const opaque=mergeOpaqueTabs(removedOpaque,node.attrs.docxProperties,cleanTabStops(node.attrs.paragraphFormat?.tabs));
+    tr.setNodeMarkup(pos,undefined,{ ...node.attrs,styleId:null,styleText:null,styleParagraph:{},paragraphFormat:effectiveParagraph(node),docxProperties:materializeOpaqueTabs(node.attrs.docxProperties,opaque) });
+  } });
   tr.setDocAttribute("layout",{ ...(state.doc.attrs.layout || defaultDocumentLayout()),styles }); return tr;
 }
 export function formatParagraphs(state: EditorState,changes: ParagraphFormat): Transaction {

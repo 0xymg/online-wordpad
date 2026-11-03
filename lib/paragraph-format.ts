@@ -1,17 +1,19 @@
 /** Paragraph values use Word twips, except unitless line-spacing multiples. */
 import type { Node as PMNode } from "prosemirror-model";
+import { cleanTabStops, mergeTabStops, effectiveTabs, parseTabStopsXml, writeTabStopsXml, type TabStop } from "./tab-stops";
 export type ParagraphFormat = {
   alignment?: "left" | "center" | "right" | "justify";
   left?: number; right?: number; firstLine?: number;
   before?: number; after?: number;
   lineMode?: "multiple" | "exact" | "atLeast"; lineValue?: number;
   keepNext?: boolean; keepLines?: boolean; pageBreakBefore?: boolean; widowControl?: boolean;
+  tabs?: TabStop[];
 };
 export type StyleText = { family: string; size: number; bold: boolean; italic: boolean; underline: boolean; color: string };
-export type DocumentStyle = { name: string; basedOn?: string; level?: number; paragraph: ParagraphFormat; text: Partial<StyleText> };
+export type DocumentStyle = { name: string; basedOn?: string; level?: number; paragraph: ParagraphFormat; text: Partial<StyleText>; rawParagraphProperties?: string };
 export type DocumentStyles = Record<string, DocumentStyle>;
 export const DEFAULT_STYLE_TEXT: StyleText = { family: "Calibri, Carlito, Arial, sans-serif", size: 12, bold: false, italic: false, underline: false, color: "#000000" };
-export const DEFAULT_PARAGRAPH: Required<ParagraphFormat> = { alignment: "left", left: 0, right: 0, firstLine: 0, before: 0, after: 120, lineMode: "multiple", lineValue: 1.5, keepNext: false, keepLines: false, pageBreakBefore: false, widowControl: true };
+export const DEFAULT_PARAGRAPH: Required<ParagraphFormat> = { alignment: "left", left: 0, right: 0, firstLine: 0, before: 0, after: 120, lineMode: "multiple", lineValue: 1.5, keepNext: false, keepLines: false, pageBreakBefore: false, widowControl: true, tabs: [] };
 export function cleanParagraph(value: unknown): ParagraphFormat {
   if (!value || typeof value !== "object") return {};
   const raw = value as Record<string, unknown>, result: Record<string, unknown> = {};
@@ -19,7 +21,16 @@ export function cleanParagraph(value: unknown): ParagraphFormat {
   for (const key of ["keepNext", "keepLines", "pageBreakBefore", "widowControl"]) if (typeof raw[key] === "boolean") result[key] = raw[key];
   if (["left", "center", "right", "justify"].includes(String(raw.alignment))) result.alignment = raw.alignment;
   if (["multiple", "exact", "atLeast"].includes(String(raw.lineMode))) result.lineMode = raw.lineMode;
+  if (Array.isArray(raw.tabs)) result.tabs = cleanTabStops(raw.tabs);
   return result as ParagraphFormat;
+}
+export function mergeParagraphFormats(...layers: readonly (ParagraphFormat | undefined)[]): ParagraphFormat {
+  let result: ParagraphFormat = {};
+  for (const layer of layers) if (layer) {
+    const tabs = layer.tabs === undefined ? result.tabs : mergeTabStops(result.tabs, layer.tabs);
+    result = { ...result, ...layer, ...(tabs === undefined ? {} : { tabs }) };
+  }
+  return result;
 }
 export function jsonAttribute(el: HTMLElement, key: string): unknown { try { return JSON.parse(el.getAttribute(key) || "null"); } catch { return null; } }
 export function cleanStyleText(value: unknown): Partial<StyleText> {
@@ -53,11 +64,12 @@ export function paragraphFromXml(raw: string | Element | null): ParagraphFormat 
   const line = number("spacing","line"); if (line !== undefined) { result.lineMode = attr("spacing","lineRule") === "exact" ? "exact" : attr("spacing","lineRule") === "atLeast" ? "atLeast" : "multiple"; result.lineValue = line / (result.lineMode === "multiple" ? 240 : 20); }
   const align = attr("jc","val"); if (["left","center","right","both"].includes(align || "")) result.alignment = align === "both" ? "justify" : align as ParagraphFormat["alignment"];
   for (const key of ["keepNext", "keepLines", "pageBreakBefore", "widowControl"] as const) if (element(key)) result[key] = !["0","false","off"].includes(attr(key,"val") || "");
+  if (element("tabs")) result.tabs = parseTabStopsXml(root).stops;
   if(typeof raw==="string"){if(paragraphCache.size>2000)paragraphCache.clear();paragraphCache.set(raw,result);}
   return result;
 }
 export function effectiveParagraph(node: PMNode): ParagraphFormat {
-  return { ...paragraphFromXml(node.attrs.docxProperties), ...(node.attrs.styleParagraph || {}), ...(node.attrs.textAlign ? { alignment: node.attrs.textAlign } : {}), ...(node.attrs.indent ? { left: node.attrs.indent * 360 } : {}), ...(node.attrs.lineHeight ? { lineMode: "multiple", lineValue: Number(node.attrs.lineHeight) } : {}), ...(node.attrs.paragraphFormat || {}) };
+  return { ...paragraphFromXml(node.attrs.docxProperties), ...(node.attrs.styleParagraph || {}), ...(node.attrs.textAlign ? { alignment: node.attrs.textAlign } : {}), ...(node.attrs.indent ? { left: node.attrs.indent * 360 } : {}), ...(node.attrs.lineHeight ? { lineMode: "multiple", lineValue: Number(node.attrs.lineHeight) } : {}), ...(node.attrs.paragraphFormat || {}), tabs: effectiveTabs(node) };
 }
 export function paragraphCSS(node: PMNode): string {
   // Only newly managed values override the original imported CSS.
@@ -86,6 +98,7 @@ export function paragraphXml(node: PMNode, linked = true): string {
   if (p.lineValue !== undefined) { set("spacing","line",Math.round(p.lineValue * (p.lineMode === "multiple" || !p.lineMode ? 240 : 20))); set("spacing","lineRule",p.lineMode === "multiple" || !p.lineMode ? "auto" : p.lineMode); }
   if (p.alignment) set("jc","val",p.alignment === "justify" ? "both" : p.alignment);
   for (const key of ["keepNext","keepLines","pageBreakBefore","widowControl"] as const) if (p[key] !== undefined) set(key,"val",p[key] ? "1" : "0");
+  if (p.tabs !== undefined) writeTabStopsXml(root, p.tabs);
   const order="pStyle keepNext keepLines pageBreakBefore framePr widowControl numPr suppressLineNumbers pBdr shd tabs suppressAutoHyphens kinsoku wordWrap overflowPunct topLinePunct autoSpaceDE autoSpaceDN bidi adjustRightInd snapToGrid spacing ind contextualSpacing mirrorIndents suppressOverlap jc textDirection textAlignment textboxTightWrap outlineLvl divId cnfStyle rPr sectPr pPrChange".split(" ");
   const rank=(element:Element)=>{const index=order.indexOf(element.localName);return index<0?order.length:index;};
   for(const element of Array.from(root.children).sort((a,b)=>rank(a)-rank(b)))root.appendChild(element);

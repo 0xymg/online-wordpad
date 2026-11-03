@@ -5,9 +5,11 @@ import { closeHistory } from "prosemirror-history";
 import { allocateDocumentIdentity, isDocumentIdentity, type DocumentIdentity } from "./document-identity";
 import { defaultDocumentLayout, readLayout, type DocumentLayout } from "./document-layout";
 import { sectionGeometry } from "./document-sections";
+import { normalizeTabCharacters } from "./tab-node";
+import { documentTabSettings } from "./tab-stops";
 
 export const DOCUMENT_MODEL_ATTRIBUTE = "data-edtr-model";
-export const DOCUMENT_MODEL_VERSION = 1;
+export const DOCUMENT_MODEL_VERSION = 2;
 export type SectionStart = "nextPage" | "continuous" | "oddPage" | "evenPage";
 export type SectionPage = Pick<DocumentLayout, "width" | "height" | "margins">;
 export type RunningSlotV1 = NonNullable<DocumentLayout["running"]>[string];
@@ -15,7 +17,8 @@ export type SectionRecordV1 = {
   page: SectionPage; start: SectionStart; numbering: { start?: number; format?: string };
   rawProperties?: string; running: Record<string, RunningSlotV1>;
 };
-export type DocumentModelV1 = { version: 1; id: DocumentIdentity<"document">; finalSectionId: DocumentIdentity<"section">; sections: Record<string, SectionRecordV1> };
+export type DocumentModel = { version: 2; id: DocumentIdentity<"document">; finalSectionId: DocumentIdentity<"section">; sections: Record<string, SectionRecordV1> };
+export type DocumentModelV1 = Omit<DocumentModel, "version"> & { version: 1 };
 export class DocumentModelError extends Error {
   constructor(public code: "unsupported-version" | "invalid-model", message: string) { super(message); this.name = "DocumentModelError"; }
 }
@@ -35,10 +38,10 @@ export function validSectionPage(page: SectionPage): boolean {
     && [m.top, m.right, m.bottom, m.left].every(n => n >= 0)
     && m.left + m.right <= width - 720 && m.top + m.bottom <= height - 720;
 }
-function assertModel(value: unknown): asserts value is DocumentModelV1 {
-  const model = value as DocumentModelV1;
+function assertModel(value: unknown): asserts value is DocumentModel | DocumentModelV1 {
+  const model = value as DocumentModel | DocumentModelV1;
   if (!model || typeof model !== "object" || !Number.isInteger(model.version)) throw new DocumentModelError("invalid-model", "Invalid document model version");
-  if (model.version !== 1) throw new DocumentModelError("unsupported-version", "This document model version is not supported");
+  if (![1, 2].includes(model.version)) throw new DocumentModelError("unsupported-version", "This document model version is not supported");
   if (!isDocumentIdentity(model.id, "document") || !isDocumentIdentity(model.finalSectionId, "section") || !model.sections || typeof model.sections !== "object" || Array.isArray(model.sections))
     throw new DocumentModelError("invalid-model", "Invalid document identity or section registry");
   for (const [id, section] of Object.entries(model.sections)) {
@@ -53,13 +56,13 @@ function assertModel(value: unknown): asserts value is DocumentModelV1 {
   }
   if (!Object.hasOwn(model.sections, model.finalSectionId)) throw new DocumentModelError("invalid-model", "The final section is missing");
 }
-export function getDocumentModel(doc: PMNode): DocumentModelV1 | null {
+export function getDocumentModel(doc: PMNode): DocumentModel | null {
   const value = doc.attrs.documentModel;
   if (value == null) return null;
-  assertModel(value); return value;
+  assertModel(value); return value.version === 1 ? { ...value, version: 2 } : value;
 }
 /** Read this envelope before parsing HTML so a future version cannot be silently dropped. */
-export function readDocumentModel(root: HTMLElement): DocumentModelV1 | null {
+export function readDocumentModel(root: HTMLElement): DocumentModel | DocumentModelV1 | null {
   const el = root.hasAttribute(DOCUMENT_MODEL_ATTRIBUTE) ? root : root.querySelector(`[${DOCUMENT_MODEL_ATTRIBUTE}]`);
   if (!el) return null;
   let value: unknown;
@@ -67,12 +70,12 @@ export function readDocumentModel(root: HTMLElement): DocumentModelV1 | null {
   catch { throw new DocumentModelError("invalid-model", "The document model metadata is invalid"); }
   assertModel(value); return value;
 }
-export function sectionIdentityOrder(doc: PMNode, model: DocumentModelV1): string[] {
+export function sectionIdentityOrder(doc: PMNode, model: DocumentModel): string[] {
   const result: string[] = [];
   doc.forEach(node => { if (node.attrs.sectionEndId) result.push(String(node.attrs.sectionEndId)); });
   result.push(model.finalSectionId); return result;
 }
-function validateBoundaries(doc: PMNode, model: DocumentModelV1) {
+function validateBoundaries(doc: PMNode, model: DocumentModel) {
   doc.descendants((node, _pos, parent) => {
     if (node.attrs.sectionEndId && parent?.type.name !== "doc") throw new DocumentModelError("invalid-model", "Section boundaries cannot be nested inside another block");
   });
@@ -149,7 +152,7 @@ function paragraphProperties(raw: string | null | undefined, section: string): s
   source.documentElement.appendChild(source.importNode(xml(section).documentElement, true)); return serialize(source.documentElement);
 }
 /** layout index maps are projections, regenerated only against this exact ID order. */
-export function projectDocumentModel(tr: Transaction, model: DocumentModelV1): Transaction {
+export function projectDocumentModel(tr: Transaction, model: DocumentModel): Transaction {
   assertModel(model); validateBoundaries(tr.doc, model);
   const order = sectionIdentityOrder(tr.doc, model), layout: DocumentLayout = tr.doc.attrs.layout || defaultDocumentLayout();
   model = { ...model, sections: Object.fromEntries(order.map(id => [id, model.sections[id]])) };
@@ -164,13 +167,13 @@ export function projectDocumentModel(tr: Transaction, model: DocumentModelV1): T
     if (node.attrs.docxProperties !== undefined && node.attrs.docxProperties !== properties) tr.setNodeMarkup(pos, undefined, { ...node.attrs, docxProperties: properties });
   });
   const first = model.sections[order[0]].page;
-  const projected = { ...layout, width: first.width, height: first.height, margins: { ...first.margins }, sectionMargins,
+  const projected = { ...layout, ...documentTabSettings(layout), width: first.width, height: first.height, margins: { ...first.margins }, sectionMargins,
     running, section: sectionRecordXml(model.sections[model.finalSectionId]), overrides: { ...layout.overrides, margins: false, orientation: false } };
   if (JSON.stringify(tr.doc.attrs.documentModel) !== JSON.stringify(model)) tr.setDocAttribute("documentModel", model);
   if (JSON.stringify(layout) !== JSON.stringify(projected)) tr.setDocAttribute("layout", projected);
   return tr;
 }
-/** One-way v0 -> v1 migration. Existing v1 IDs never regenerate on open/restore. */
+/** v0/v1 -> v2 migration. Existing section IDs never regenerate on open/restore. */
 export function migrateDocumentNode(doc: PMNode, createToken: () => string = () => crypto.randomUUID(), importedFinalSectionId?: unknown): PMNode {
   const existing = getDocumentModel(doc);
   if (existing) { validateBoundaries(doc, existing); return projectDocumentModel(EditorState.create({ doc }).tr, existing).doc; }
@@ -188,7 +191,7 @@ export function migrateDocumentNode(doc: PMNode, createToken: () => string = () 
   // A partial/untrusted set is discarded as a whole, rather than mixing identity generations.
   for (const id of [...allMarkers, importedFinalSectionId]) if (isDocumentIdentity(id, "section")) reserved.add(id);
   const fresh = <K extends "document" | "section">(kind: K) => { const id = allocateDocumentIdentity(kind, reserved, createToken); reserved.add(id); return id; };
-  const sections: DocumentModelV1["sections"] = {}, children: PMNode[] = [];
+  const sections: DocumentModel["sections"] = {}, children: PMNode[] = [];
   const make = (raw: string | undefined, index: number) => {
     const id = reuseNativeIds ? nativeIds[index] as DocumentIdentity<"section"> : fresh("section"), geometry = sectionGeometry(raw, layout);
     const page = { width: layout.overrides?.orientation ? layout.width : geometry.width, height: layout.overrides?.orientation ? layout.height : geometry.height,
@@ -204,7 +207,7 @@ export function migrateDocumentNode(doc: PMNode, createToken: () => string = () 
     if (!Object.hasOwn(node.type.spec.attrs || {}, "sectionEndId")) throw new DocumentModelError("invalid-model", "This section boundary cannot be represented safely");
     const id = make(node.attrs.docxProperties, index++); children.push(node.type.create({ ...node.attrs, sectionEndId: id }, node.content, node.marks));
   } else children.push(node.attrs.sectionEndId ? node.type.create({ ...node.attrs, sectionEndId: null }, node.content, node.marks) : node); });
-  const finalSectionId = make(layout.section, index), model: DocumentModelV1 = { version: 1, id: fresh("document"), finalSectionId, sections };
+  const finalSectionId = make(layout.section, index), model: DocumentModel = { version: 2, id: fresh("document"), finalSectionId, sections };
   for (const key of Object.keys(layout.sectionMargins || {})) if (!/^\d+$/.test(key) || Number(key) > index) throw new DocumentModelError("invalid-model", "A legacy section margin has no matching section");
   for (const key of Object.keys(layout.running || {})) if (!/^\d+:(default|first|even):(header|footer)$/.test(key) || Number(key.split(":")[0]) > index) throw new DocumentModelError("invalid-model", "A legacy header or footer has no matching section");
   assertModel(model);
@@ -215,9 +218,9 @@ export function parseDocumentHtml(html: string, schema: Schema): PMNode {
   const dom = new DOMParser().parseFromString(html || "<p></p>", "text/html"), model = readDocumentModel(dom.body);
   const importedFinalSectionId = dom.body.querySelector("[data-edtr-docx-final-section-id]")?.getAttribute("data-edtr-docx-final-section-id");
   const doc = PMParser.fromSchema(schema).parse(dom.body, { topNode: schema.nodes.doc.create({ layout: readLayout(dom.body) || defaultDocumentLayout(), documentModel: model }) });
-  return migrateDocumentNode(doc, undefined, importedFinalSectionId);
+  return migrateDocumentNode(normalizeTabCharacters(doc), undefined, importedFinalSectionId);
 }
-function captureLegacyProjection(doc: PMNode, model: DocumentModelV1): DocumentModelV1 {
+function captureLegacyProjection(doc: PMNode, model: DocumentModel): DocumentModel {
   const layout: DocumentLayout = doc.attrs.layout || defaultDocumentLayout(), sections = { ...model.sections };
   sectionIdentityOrder(doc, model).forEach((id, index) => {
     const previous = sections[id]; if (!previous) return;
@@ -274,7 +277,7 @@ export function documentModelPlugin(onBlocked?: () => void): Plugin {
       }
       model = { ...model, sections: Object.fromEntries(order.map(id => [id, records[id]])) };
       projectDocumentModel(tr, model);
-      return tr.docChanged ? tr : transactions.some(transaction => transaction.getMeta("edtr-section-command")) ? closeHistory(tr).setMeta("addToHistory", false) : null;
+      return tr.docChanged ? tr : transactions.some(transaction => transaction.getMeta("edtr-section-command") || transaction.getMeta("edtr-tab-command")) ? closeHistory(tr).setMeta("addToHistory", false) : null;
     },
   });
 }

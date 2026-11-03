@@ -10,6 +10,7 @@ import { schema as basicSchema } from "prosemirror-schema-basic";
 import { addListNodes } from "prosemirror-schema-list";
 import { tableNodes } from "prosemirror-tables";
 import { readDocxProperties } from "@/lib/document-layout";
+import { tabNodeSpec } from "@/lib/tab-node";
 import { textBoxNodeSpec } from "@/lib/text-box";
 
 function layoutStyles(el: HTMLElement): string {
@@ -240,6 +241,7 @@ export const mySchema = new Schema({
     "block"
   ))
     .append(importedTables)
+    .addToEnd("tab", tabNodeSpec)
     .addToEnd("text_box", textBoxNodeSpec)
     .addToEnd("page_break", pageBreakNodeSpec)
     .addToEnd("doc_field", {

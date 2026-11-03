@@ -1,6 +1,7 @@
 /** Print the measured editor sheets, including rich running content. */
 import type { EditorView } from "prosemirror-view";
 import { paginationKey, remeasurePagination } from "@/app/components/paginationPlugin";
+import { flushTabLayout } from "./tab-layout";
 
 const frame = () => new Promise<void>(resolve => requestAnimationFrame(() => resolve()));
 
@@ -8,11 +9,13 @@ export async function preparePrintLayout(view: EditorView, host: HTMLElement, cr
   const doc = view.state.doc;
   const { readRunningSource } = await import("./header-footer-source");
   await Promise.all([readRunningSource(doc), document.fonts.ready]);
+  await flushTabLayout(view);
   remeasurePagination(view);
   await frame(); await frame(); await frame();
   const source = view.dom.parentElement;
   if (view.isDestroyed || view.state.doc !== doc || !source) throw new Error("Document changed while preparing print");
   await Promise.all(Array.from(source.querySelectorAll("img")).map(img => img.decode().catch(() => {})));
+  await flushTabLayout(view);
   remeasurePagination(view); await frame(); await frame();
   const pages = paginationKey.getState(view.state)?.pages;
   if (!pages?.length || view.state.doc !== doc) throw new Error("Page layout is not ready");

@@ -46,6 +46,11 @@ const script = `window.__sections = (() => { const modules=${JSON.stringify(modu
       const html = L.wrapDocumentHtml(output.innerHTML,state.doc.attrs.layout,state.doc.attrs.documentModel), reopened = M.parseDocumentHtml(html,schema);
       check(same(reopened.toJSON(), state.doc.toJSON()), 'save/reopen is idempotent and preserves identity');
       check(encoded.includes('data-edtr-model'), 'model envelope serializes');
+      const oldVersion=JSON.parse(JSON.stringify(M.getDocumentModel(reopened)));oldVersion.version=1;
+      const upgraded=M.parseDocumentHtml(L.wrapDocumentHtml(output.innerHTML,reopened.attrs.layout,oldVersion),schema);
+      check(upgraded.attrs.documentModel.version===2 && upgraded.attrs.documentModel.id===oldVersion.id && same(D.documentSections(upgraded).map(s=>s.id),D.documentSections(reopened).map(s=>s.id)),'v1 upgrades to v2 without changing document or section identities');
+      const tabsNormalized=M.parseDocumentHtml('<p>LEFT\tRIGHT</p><pre>CODE\tTAB</pre>',schema);let atomCount=0;tabsNormalized.descendants(node=>{if(node.type.name==='tab')atomCount++;});
+      check(atomCount===1 && tabsNormalized.lastChild.textContent==='CODE\tTAB','v2 normalizes real text tabs while preserving code-block literal tabs');
       const imported=(final,first=originalId,extra='')=>`<div data-edtr-docx-final-section-id="${final}">${source.replace('<p ',`<p data-edtr-section-end="${first}" `).replace('<p>GAMMA',`<p ${extra}>GAMMA`)}</div>`;
       const marked=M.parseDocumentHtml(imported(lastId),schema);check(same(D.documentSections(marked).map(s=>s.id),[originalId,lastId]),'complete valid native IDs are reused');
       const duplicate=M.parseDocumentHtml(imported(originalId),schema);check(D.documentSections(duplicate).every(s=>s.id!==originalId),'duplicate native marker set regenerates every section');

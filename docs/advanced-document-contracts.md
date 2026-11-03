@@ -1,8 +1,8 @@
-# A0 — Belge kimliği, geçiş ve referans sözleşmeleri
+# Belge kimliği, geçiş ve referans sözleşmeleri
 
-Durum: kök ajan incelemesinden geçti, 2 Kasım 2026. Bu dosya A1 ve sonraki paketlerin veri sınırlarını tanımlar. A0'da yalnız bağımsız kimlik planlama yardımcısı uygulanmıştır; şema, belge yükleme, bölüm arayüzü, not veya referans davranışı değiştirilmemiştir. Ürün kapsamı ve sıra için `advanced-document-plan.md` esas alınır.
+Durum: A0 sözleşmesi kök ajan incelemesinden geçti; A1 `2f6e8bd` ile canlıda doğrulandı. A2 sekme modeli yerel doğrulamadadır; güncel yazıcı model sürümü 2'dir. Bu dosyanın başlangıç denetimi A0 öncesi durumu kaydeder; sonraki sözleşmeler uygulanan modeli ve ilerideki paketlerin sınırlarını ayırır. Ürün kapsamı ve sıra için `advanced-document-plan.md`, A2'nin ölçülmüş destek sınırı için `tab-stops-support.md` esas alınır.
 
-## Mevcut kodun denetimi
+## A0 başlangıç denetimi — tarihsel durum
 
 | Alan | Bugünkü veri | Sonuç |
 | --- | --- | --- |
@@ -33,31 +33,32 @@ Denetim yerel kaynak koduna dayanır; Word Online ile görsel eşleşme veya hen
 
 ## Sürümlü taşıma ve geçiş
 
-A1'de kanonik ek veri `doc.attrs.documentModel` olacaktır. HTML üst sarmalayıcısı bunu `data-edtr-model` JSON'u ile taşır; mevcut `data-edtr-layout` geometrisi ve ham OOXML koruması ayrı kalır. `documentModel.version` pozitif tamsayıdır; bulunmaması mevcut sürüm 0 anlamına gelir. İlk şema sürümü 1'dir. Mevcut kayıtlara A0'da bu alan eklenmez.
+Kanonik ek veri `doc.attrs.documentModel` içindedir. HTML üst sarmalayıcısı bunu `data-edtr-model` JSON'u ile taşır; `data-edtr-layout` geometrisi ve ham OOXML koruması ayrı kalır. `documentModel.version` pozitif tamsayıdır; bulunmaması eski sürüm 0 anlamına gelir. A1 sürüm 1'i yazdı; A2 sürüm 1'i okuyup kimlikleri koruyarak sürüm 2'ye geçirir. Yeni kayıtlar sürüm 2'dir; 2'den büyük veya bilinmeyen bir sürüm ayrıştırma/otomatik kaydetme başlamadan reddedilir.
 
-Önerilen sürüm 1 şekli:
+Güncel şekil ve geriye dönük okuma tipi:
 
 ```ts
-type DocumentModelV1 = {
-  version: 1;
+type DocumentModel = {
+  version: 2;
   id: DocumentIdentity<"document">;
   finalSectionId: DocumentIdentity<"section">;
   sections: Record<string, SectionRecordV1>;
 };
+type DocumentModelV1 = Omit<DocumentModel, "version"> & { version: 1 };
 
 type SectionRecordV1 = {
   // Record anahtarı sec_… kimliğidir; bu alanlarda ayrıca indeks tutulmaz.
   page: { width: number; height: number; margins: Margins }; // twip
   start: "nextPage" | "continuous" | "oddPage" | "evenPage";
   numbering: { start?: number; format?: string };
-  running: Partial<Record<"default" | "first" | "even", {
-    header?: RunningSlotV1; footer?: RunningSlotV1;
-  }>>;
+  running: Record<string, RunningSlotV1>; // default:header, first:footer vb.
   rawProperties?: string; // tanınmayan sectPr özelliklerinin koruma kaynağı
 };
 ```
 
-Sürüm 1 uygulamasında bu tiplerin gerçek tanımı `document-model.ts` içinde bulunmalıdır; burada henüz ikinci bir çalışma zamanı şeması oluşturulmaz. Not/kaynak/alan havuzları ilgili paketler gelince sürümlü göçle eklenir. Geometri, ham XML ve modelde aynı ayarın iki bağımsız yazılabilir kopyası oluşturulmaz: bilinen ayarı kanonik kayıt yönetir; export bilinmeyen ham özelliklerle birleştirir. Eski layout alanları yalnız sürüm 0 geçişinde okunur.
+Gerçek tipler ve doğrulama `document-model.ts` içindedir; bu belge ikinci bir çalışma zamanı şeması değildir. Not/kaynak/alan havuzları ilgili paketler gelince sürümlü göçle eklenir. Bilinen bölüm ayarını kimlikli kayıt yönetir; export bilinmeyen ham özelliklerle birleştirir. `layout.sectionMargins` ve `layout.running` eski diyaloglar için mevcut kimlik sırasından üretilen uyumluluk görünümleridir. Eski bir diyalog bunları değiştirdiğinde eklenti değişikliği aynı kimlik sırasıyla kayda alır; bölüm ekleme/silme eski indeksleri başka bölüme taşımaz.
+
+Sürüm 2 artışı yalnız JSON şekli için değildir. A2'nin gerçek `tab` atomu ve paragraf/stil sekme attr'ları sürüm 1 ayrıştırıcısında bilinmez; eski okuyucunun bunları sessizce düşürüp belgeyi yeniden kaydetmesi engellenmelidir. A1 okuyucusu 2'yi desteklenmeyen sürüm olarak reddeder. 1 → 2 geçişi `doc_…`, bütün `sec_…`, sınırlar, kayıtlar ve üst/altbilgi bağlantılarını korur; yeni kimlik tahsisi yapmaz. Sürüm 0 ise mevcut sınırlarını bir kez kimliklendirir.
 
 Geçiş sırası ve atomiklik:
 
@@ -66,11 +67,25 @@ Geçiş sırası ve atomiklik:
 3. Aynı özgün sıradan `index → sectionId` eşlemesi üretilir. `sectionMargins` ve `running` yuvaları bu eşleme ile yeni kayıtlara taşınır. İndeks, sonradan kimlik gibi kullanılmaz. Kayıp/aralık dışı indeksli veri sessizce başka bölüme atanmaz; geçiş tanısında korunur ve kaydedilebilir geçiş tamamlanmadan çözülür.
 4. Yerel düzenlemeler, özgün `sectPr`, başlangıç türü, numaralama ve üst/altbilgi ilişkileri birleştirilir. Eski `linked:true`, aynı varyant/tür için önceki bölümden dinamik miras alma anlamını korur. Geçiş, mirası görünür HTML'yi kopyalayarak bağımsızlaştırmaz.
 5. Sonuç yeni şema ve çapraz kayıt kurallarıyla doğrulanır. Tam belge ve model tek yükleme işlemiyle yerleştirilir; migration işlemi undo'ya eklenmez. İlk kullanıcı düzenlemesi tek başına geri alınabilir. Bölüm veya not kayıtları ayrı bir asenkron kayıtla yazılmaz.
-6. Kaydedildikten sonra aynı sürüm yeniden açıldığında geçiş ve kimlik tahsisi tekrar çalışmaz. Sürüm 1 bozuksa tanı üretilir; hedef bağlantısı tahminle düzeltilemez. Geçiş başarısızsa orijinal kullanılabilir kalır.
+6. Başarılı geçiş doğrulanmış kanonik HTML olarak kaydedilir; kullanıcı yazmasa da sonraki açılış aynı kimlikleri kullanır. Sürüm 1, kimlikleri değişmeden 2 olur. Desteklenen bir sürüm bozuksa tanı üretilir; bağlantı tahminle düzeltilmez. Geçiş başarısızsa kaynak HTML korunur ve düzenleme/otomatik kayıt açılmaz.
 
-Tek geçiş girişini aktif yükleme, başlangıç yüklemesi, üye dosya getirme, sürüm geri yükleme, etkin olmayan belge export'u ve HTML/DOCX içe aktarma kullanmalıdır. Şu anki `parseHtmlToDoc` ve `setDocFromHtml` ayrı ayrıştırmalarının yalnız birini değiştirmek yeterli değildir. Üst/altbilgi alt belgeleri ana belgenin modelini yanlışlıkla yeni belge olarak göç ettirmemelidir.
+`parseDocumentHtml` aktif yükleme, başlangıç yüklemesi, üye dosya getirme, sürüm geri yükleme ve tam belge içe aktarma yollarının ortak geçiş girişidir. Üst/altbilgi alt belgeleri ana belgenin modelini yanlışlıkla yeni belge olarak göç ettirmemelidir. Belge yüklemede geçmiş eklentisi sıfırlanır; sayfalama eklentisi korunur. Başarısız yükleme, önceki editör içeriğini reddedilen dosyanın yerine kaydetmez.
 
-Sürüm geçmişi tam içerik grafını saklar. Geri yükleme, kaydın kimliklerini ve iç başvurularını birlikte geri getirir. Yalnız eski sürüm 0 kayıtları ilk açılışta göç eder. Bir önceki yedeğin HTML'si sonradan yerinde değiştirilmez. Misafir kota/karakter sınırı nedeniyle yedek alınamıyorsa mevcut sürüm sistemi bunu tam güvence olarak raporlamamalıdır.
+Sürüm geçmişi tam içerik grafını saklar. Geri yükleme, kaydın kimliklerini ve iç başvurularını birlikte geri getirir; eski 0/1 kayıtları güncel sürüme geçer. Bir önceki yedeğin HTML'si yerinde değiştirilmez. Desteklenmeyen bir belge açıkken kullanıcı yeni belgeyle açıkça değiştirmeyi seçerse güvenlik yedeği boş editörden değil, özgün HTML'den alınır. Misafir kota/karakter sınırı nedeniyle yedek alınamıyorsa bu tam güvence olarak raporlanmaz.
+
+## A2 sekme verisi ve düzenleme sözleşmesi
+
+- Gerçek sekme, şemada `tab` adlı bir satır içi atom ve metin dışa aktarımında tek U+0009 karakteridir. `parseDocumentHtml`, metin içindeki sekmeleri modele geçirirken kod bloklarındaki literal sekmeleri metin olarak bırakır. HTML, `span[data-edtr-tab="true"]` ile atomu taşır. Tablo hücresi gezinmesi ile gerçek sekme ekleme ayrı klavye işlemleridir.
+- `ParagraphFormat.tabs`, `{position, alignment, leader}` dizisidir. Konum tamsayı twip; hizalar `left/center/right/decimal/clear`, liderler `none/dot/dash`tır. Uygulama `dash` değerini native OOXML `hyphen` liderine çevirir. Aynı konumda sonraki katman kazanır; konuma göre sıralama kanoniktir.
+- Stil taban zinciri, özgün native paragraf ayarı ve doğrudan düzenleme konuma göre birleştirilir. `clear` tombstone silinmez: aynı konumdaki devralınan durağı bastırır. Stil değişince diğer konumlar güncellenir; doğrudan elle verilmiş duraklar korunur. Karışık seçim tek paragrafın değerlerini ortak değer diye göstermez.
+- “Durağı kaldır” hedef konuma `clear` yazar. “Özel durakları temizle” desteklenen mevcut konumları temizler. “Sekme düzenlemelerini sıfırla” yönetilen doğrudan değişiklikleri kaldırır; devralınan veya özgün içe aktarılmış native ayarlar yeniden görünür. Bilinmeyen native türler/liderler bu düğmeyle sessizce kaldırılmaz.
+- Bilinmeyen native durakların XML'i paragrafın `docxProperties` kaynağında; stilin özgün `pPr` XML'i `rawParagraphProperties` içinde korunur. Desteklenmeyen bir native durak aynı konumdaki devralınmış durağı gölgeler; yanlışlıkla desteklenen başka bir hizaya çevrilmez. Açıkça düzenlenen aynı konum değiştirilebilir, dokunulmayan konumlar korunur. Koruma, editörde render veya Word ile görsel eşleşme demek değildir.
+- `layout.defaultTabStop` pozitif tamsayı twip; varsayılanı 720'dir. `layout.decimalSeparator`, EDTRDocs için `.` / `,` / `٫` seçeneklerinden biridir; varsayılanı `.`dır. Bu iki ayar belgeyle, HTML ve sürüm geçmişiyle birlikte kalır. Diyalogdaki belge ayarları ile stil taslağındaki duraklar ayrı kapsamdır. Kaydedilmemiş stil taslağı, üst diyalog Kaydet demeden belgeyi değiştirmez.
+- Diyalog, cetvel ve stil düzenlemesi aynı işlem yardımcısını kullanır; birden çok paragraf ve belge ayarı tek undo işlemidir. Cetvel sürükleme önizlemesi kalıcı veri değildir. Yeniden ölçüm, zoom veya bidi segment sarmalayıcıları belgeye kaydedilmez.
+
+Word'deki ondalık sekme davranışı ile EDTRDocs'un belge içi ayıracı ayrı kavramlardır. Microsoft, ondalık sekme ayıracını değiştirmek için bölgesel sayı ayarlarını açıklar; bu kaynak Word Online'ın tüm bölge kombinasyonlarını doğrulamaz. `w:decimalSymbol` alan değerlendirme ayarının sekmeleri yönettiği varsayılmaz. [Microsoft'un ondalık sekme açıklaması](https://support.microsoft.com/en-gb/word/use-decimal-tabs-to-line-up-numbers-with-decimal-points).
+
+EDTRDocs ondalık ayıracı DOCX'te standart özel özellik taşıyıcısındaki uygulamaya ait `EDTRDocs.TabDecimalSeparator` adıyla saklanır. Gerçek Word Online düzenle → indir probunda virgül değeri, ilişkisiz özel özellik ve paket ilişkisi korundu. Uygulamanın tekrar açma/yeniden aktarma testi virgül ve `٫` değerini, yabancı özelliği ve benzersiz property kimliklerini doğruladı (`check-tab-decimal-metadata.cjs`). Bu EDTR tercihinin taşınmasıdır; Word'ün bölgesel sekme davranışını değiştirmez. Native `w:defaultTabStop` desteği bundan bağımsızdır.
 
 ## A1 bölüm sözleşmesi
 
@@ -114,7 +129,7 @@ Gelecek uygulama akışı: fragmanın tanımlarını ve gereken bağlı kayıtla
 
 - Native not numarası, bookmark adı, ilişki kimliği ve parça adı kaynak-format takma adlarıdır. İçe aktarma eşleme anahtarı en az `(importSession, partUri, entityKind, nativeId)` içerir. `footnotes.xml` içindeki `4` ile `endnotes.xml` içindeki `4` aynı nesne sayılmaz.
 - Geçerli EDTR model verisi varsa doğrudan export/import kimlikleri koruyabilir. OOXML alan talimatları ve native bookmark/not ilişkileri yine gerçek düzenlenebilir Word nesneleri olarak yazılır; yalnız özel JSON'a bağlı görünür işlev oluşturulmaz.
-- Gelecekteki özel model parçasının Word Online tarafından tutulması **henüz kanıtlanmış değildir**. A0/A1 örneklerinde native bookmarklar ve ayrı sürümlü model parçası için korunma/yeniden adlandırılma/çıkarılma ölçülür. Kaynak kimliği taşıma stratejisi bu kanıttan sonra sabitlenir; bu dosya desteklenmemiş özel OOXML attr'larının Word'de korunacağını varsaymaz.
+- A1'de native `_edtrsec…` yer imlerinin doğru bölüm terminallerinde Word Online düzenleme/indirme sonrasında kaldığı ölçüldü. İçe aktarma ancak bütün sınırlar ve son bölüm için eksiksiz, geçerli, benzersiz bir küme varsa bu bölüm kimliklerini kullanır; kısmi/bozuk kümede tamamını yeniler. Bu, bütün nesne türlerinin veya özel model parçalarının Word tarafından korunduğu iddiası değildir.
 - Özel metadata yoksa native ilişkiler aynı import oturumunda yeni iç kimliklere eşlenir. Kimlik yenilenmesi raporlanır; görünür metin benzerliğiyle eski kimlikler tahmin edilmez. Görünür içerik/bağlantı eşdeğerliği ile birebir iç kimlik korunması ayrı kabul sonuçlarıdır.
 - Geçici biçimlendirme/export bookmarkları kullanıcı hedef havuzuna alınmaz ve son pakette bırakılmaz. Kaynağın başka parçalarındaki kimlikler yalnız o parçanın kapsamıyla yorumlanır.
 
@@ -124,4 +139,4 @@ A0 yardımcı testleri: `node scripts/check-document-identity.cjs`. On odaklı t
 
 A1 uygulanırken ayrıca eski sürüm 0 örnekleri, yeni sürüm idempotansı, bütün yükleme girişleri, bölüm ekleme/silme ve indeksli üstbilgi/marjin geçişi, kaynak değiştirmeden başarısız migration, bilinmeyen gelecek sürüm, belge değiştirme/undo yalıtımı ve sürüm geri yükleme sınanır. A4'te fragman içi/dışı hedefler, yinelenen ID, güvenilir/güvenilmez kes-yapıştır ve silinen hedef; A5/A6'da bağlı kayıt klonlama testleri eklenir. Terra'nın sentetik fixture markerları içerik kanıtıdır; kimlik yerine kullanılmaz.
 
-Kök ajan bölüm sınırı temsilini onayladı: `sectionEndId` mevcut paragraf/blok sonunda, `finalSectionId` belge modelinde tutulur. Ayrı bölüm-sonu atomu ancak somut bir bölme testi gereğini kanıtlarsa değerlendirilir. DOCX iç kimlik taşıma yöntemi Word Online kanıtı beklemektedir; özel parçaların korunacağı varsayılmaz. A0 referans örnekleri tamamlanmadan yeni şema özellikleri entegre edilmez. Bu kararlar mevcut belge modelini otomatik değiştirmez.
+Onaylanan bölüm temsili A1'de uygulandı: `sectionEndId` mevcut üst düzey paragraf/blok sonunda, `finalSectionId` belge modelindedir. İç içe bölüm sınırı güvenli biçimde temsil edilemiyorsa kaynak yükleme veya sınırı listeye taşıyan düzenleme açıkça reddedilir. Sıradan sınır paragrafı silme, takip eden bölüm ayarlarını korur ve silinen bölümlerden devralınmış üst/altbilgiyi soldan sağa somutlaştırır; undo bütün grafı geri getirir. A2 model doğrulamaları Word görsel uyumluluğu yerine geçmez; ölçüm ve açık işler ayrı destek matrisinde tutulur.

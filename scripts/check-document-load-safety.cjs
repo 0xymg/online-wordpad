@@ -23,6 +23,7 @@ const { chromium } = require(process.env.PLAYWRIGHT_MODULE || 'playwright');
   await page.keyboard.press('Meta+Shift+z');await page.waitForTimeout(200);assert.match(await page.locator('.ProseMirror').innerText(),/NEW DOCUMENT/);
   const beforeReload=await page.evaluate(()=>JSON.parse(localStorage.getItem('wordpad-files'))[0].html);assert.match(beforeReload,/data-edtr-model/,'new document stores versioned model');
   const modelBefore=await page.evaluate(html=>JSON.parse(new DOMParser().parseFromString(html,'text/html').querySelector('[data-edtr-model]').getAttribute('data-edtr-model')),beforeReload);
+  assert.equal(modelBefore.version,2,'tab-capable documents persist model version 2');
   await page.reload();await page.locator('.ProseMirror[contenteditable="true"]').waitFor();await page.waitForTimeout(1100);
   const modelAfter=await page.evaluate(()=>JSON.parse(new DOMParser().parseFromString(JSON.parse(localStorage.getItem('wordpad-files'))[0].html,'text/html').querySelector('[data-edtr-model]').getAttribute('data-edtr-model')));
   assert.deepEqual(modelAfter,modelBefore,'reopen with no typing preserves persisted identities');

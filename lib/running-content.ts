@@ -2,6 +2,7 @@
 import { DOMParser as PMParser, DOMSerializer, type Node as PMNode } from "prosemirror-model";
 import { mySchema } from "@/app/components/editor-schema";
 import type { DocumentLayout } from "./document-layout";
+import { layoutRunningTabs } from "./tab-dom-layout";
 export type RunningKind = "header" | "footer";
 export type RunningVariant = "default" | "first" | "even";
 export type RunningSlot = { html: string; linked: boolean; distance: number; height: number };
@@ -53,9 +54,10 @@ export function runningFragment(html: string, page: string | number = 1, total =
   fragment.querySelectorAll<HTMLElement>("[data-doc-field]").forEach(field => { field.classList.remove("edtr-document-field"); if (field.dataset.docField === "PAGE") field.textContent = String(page); else if (field.dataset.docField === "NUMPAGES") field.textContent = String(total); });
   return fragment;
 }
-export function runningHeight(html: string, width: number): number {
+export function runningHeight(html: string, width: number, layout: DocumentLayout | null = null): number {
   const box = document.createElement("div"); box.className = "edtr-running-content";
   box.style.cssText = `position:fixed;left:-100000px;top:0;visibility:hidden;width:${Math.max(40, width)}px`;
   box.appendChild(runningFragment(html)); document.body.appendChild(box);
+  layoutRunningTabs(box, layout, 1);
   const height = Math.ceil(box.getBoundingClientRect().height * 15); box.remove(); return height;
 }
