@@ -26,7 +26,7 @@ const HexColorInput = lazy(() =>
 // Heavy and rarely used — LazyCropper pulls in react-advanced-cropper AND its
 // stylesheet, so neither loads until the crop dialog opens.
 const Cropper = lazy(() => import("./LazyCropper"));
-import { history, undo, redo } from "prosemirror-history";
+import { history, undo, redo, closeHistory } from "prosemirror-history";
 import { keymap } from "prosemirror-keymap";
 import { baseKeymap, toggleMark, setBlockType, wrapIn } from "prosemirror-commands";
 import { wrapInList, splitListItem, liftListItem, sinkListItem } from "prosemirror-schema-list";
@@ -37,7 +37,7 @@ import MenuBar from "./MenuBar";
 import Toolbar from "./Toolbar";
 import TableContextMenu from "./TableContextMenu";
 import {
-  paginationPlugin, remeasurePagination,
+  paginationPlugin, paginationKey, remeasurePagination,
   type PageLayoutConfig, type PageNumberPosition, type PageNumberFormat,
 } from "./paginationPlugin";
 import {
@@ -428,6 +428,8 @@ class ImageNodeView {
   private getPos: () => number | undefined;
   private onMove?: (event: MouseEvent) => void;
   private onUp?: () => void;
+  private cancelDrag?: () => void;
+  private dragDocument?: PMNode;
 
   constructor(node: PMNode, view: EditorView, getPos: () => number | undefined) {
     this.node = node;
@@ -455,14 +457,134 @@ class ImageNodeView {
       this.frame.appendChild(handle);
     });
 
-    this.dom.addEventListener("mousedown", (event) => {
-      if ((event.target as HTMLElement).classList.contains("pm-image-handle")) return;
-      const pos = this.getPos();
-      if (pos === undefined) return;
+    this.img.draggable = false;
+    this.dom.addEventListener("pointerdown", (event) => this.startDrag(event));
+    this.dom.addEventListener("dragstart", (event) => {
       event.preventDefault();
-      this.view.dispatch(this.view.state.tr.setSelection(NodeSelection.create(this.view.state.doc, pos)));
-      this.view.focus();
+      event.stopPropagation();
     });
+  }
+
+  private startDrag(event: PointerEvent) {
+    if (!event.isPrimary || event.button !== 0 || (event.target as HTMLElement).closest(".pm-image-handle")) return;
+    const pos = this.getPos();
+    const host = this.view.dom.parentElement;
+    if (pos === undefined || !host || this.view.isDestroyed) return;
+    event.preventDefault();
+    this.cancelDrag?.();
+    this.view.dispatch(this.view.state.tr.setSelection(NodeSelection.create(this.view.state.doc, pos)));
+    this.view.focus();
+
+    const originalDoc = this.view.state.doc;
+    this.dragDocument = originalDoc;
+    const $anchor = originalDoc.resolve(pos);
+    const blockPos = $anchor.depth ? $anchor.before(1) : -1;
+    const block = blockPos >= 0 ? originalDoc.nodeAt(blockPos) : null;
+    const previousBlock = $anchor.index(0) > 0 ? originalDoc.child($anchor.index(0) - 1) : null;
+    // Removing a flow image's height must not pull its whole anchor paragraph
+    // back onto the preceding sheet. Preserve that existing page boundary.
+    const keepAnchorPage = this.node.attrs.position !== "page"
+      && block && ["paragraph", "heading"].includes(block.type.name)
+      && previousBlock?.type.name !== "page_break"
+      && paginationKey.getState(this.view.state)?.breaks.some(point => point.pos === blockPos);
+    const page = imagePageContext(this.view, pos);
+    const visualRect = imageVisualElement(this.dom).getBoundingClientRect();
+    const hostRect = host.getBoundingClientRect();
+    const scale = this.view.dom.getBoundingClientRect().width / Number.parseFloat(getComputedStyle(this.view.dom).width) || 1;
+    const pageLeft = (visualRect.left - hostRect.left) / scale - page.x;
+    const pageTop = (visualRect.top - hostRect.top) / scale - page.y;
+    const width = page.imageWidth, height = page.imageHeight;
+    const grabX = (event.clientX - visualRect.left) / scale;
+    const grabY = (event.clientY - visualRect.top) / scale;
+    let clientX = event.clientX, clientY = event.clientY;
+    let x = page.x, y = page.y;
+    let preview: HTMLElement | null = null;
+    let moved = false;
+    let finished = false;
+    const blockClick = (click: MouseEvent) => { click.preventDefault(); click.stopImmediatePropagation(); };
+    const valid = () => !this.view.isDestroyed && this.view.state.doc === originalDoc && this.dom.isConnected;
+    const cleanup = () => {
+      if (finished) return;
+      finished = true;
+      window.removeEventListener("pointermove", move, true);
+      window.removeEventListener("pointerup", release, true);
+      window.removeEventListener("pointercancel", cancel, true);
+      window.removeEventListener("keydown", key, true);
+      window.removeEventListener("scroll", scroll, true);
+      window.removeEventListener("blur", cancel);
+      preview?.remove();
+      this.dom.classList.remove("pm-image-dragging");
+      document.documentElement.classList.remove("pm-image-drag-active");
+      this.cancelDrag = undefined;
+      this.dragDocument = undefined;
+    };
+    const paint = () => {
+      if (!valid()) { cleanup(); return; }
+      const rect = host.getBoundingClientRect();
+      x = Math.max(0, Math.min(Math.max(0, page.width - width), (clientX - rect.left) / scale - pageLeft - grabX));
+      y = Math.max(0, Math.min(Math.max(0, page.height - height), (clientY - rect.top) / scale - pageTop - grabY));
+      if (preview) {
+        preview.style.left = `${rect.left + (pageLeft + x) * scale}px`;
+        preview.style.top = `${rect.top + (pageTop + y) * scale}px`;
+      }
+    };
+    const move = (pointer: PointerEvent) => {
+      if (pointer.pointerId !== event.pointerId) return;
+      clientX = pointer.clientX; clientY = pointer.clientY;
+      if (!valid()) { cleanup(); return; }
+      if (!moved && Math.hypot(clientX - event.clientX, clientY - event.clientY) >= 5) {
+        moved = true;
+        preview = this.frame.cloneNode(true) as HTMLElement;
+        preview.querySelectorAll(".pm-image-handle").forEach(handle => handle.remove());
+        preview.className = "pm-image-drag-preview";
+        preview.setAttribute("aria-hidden", "true");
+        preview.style.cssText = `position:fixed;width:${width * scale}px;height:${height * scale}px;z-index:1000;pointer-events:none;margin:0;line-height:0`;
+        document.body.appendChild(preview);
+        this.dom.classList.add("pm-image-dragging");
+        document.documentElement.classList.add("pm-image-drag-active");
+      }
+      if (moved) { pointer.preventDefault(); paint(); }
+    };
+    const scroll = () => { if (moved) paint(); };
+    const cancel = () => cleanup();
+    const key = (keyboard: KeyboardEvent) => {
+      if (keyboard.key === "Escape") { keyboard.preventDefault(); keyboard.stopImmediatePropagation(); }
+      cleanup();
+    };
+    const release = (pointer: PointerEvent) => {
+      if (pointer.pointerId !== event.pointerId) return;
+      if (moved && valid()) {
+        clientX = pointer.clientX; clientY = pointer.clientY;
+        paint();
+        // Ignore the click synthesized after a completed pointer drag.
+        window.addEventListener("click", blockClick, true);
+        setTimeout(() => window.removeEventListener("click", blockClick, true), 0);
+        const currentPos = this.getPos();
+        if (currentPos !== undefined) {
+          const attrs = { ...this.node.attrs, position: "page", x, y, align: "", width: `${width}px`,
+            aspectRatio: this.node.attrs.aspectRatio || width / Math.max(1, height) };
+          cleanup();
+          const tr = closeHistory(this.view.state.tr).setNodeMarkup(currentPos, undefined, attrs);
+          if (keepAnchorPage) {
+            const anchorBlock = tr.doc.nodeAt(blockPos)!;
+            tr.setNodeMarkup(blockPos, undefined, { ...anchorBlock.attrs,
+              paragraphFormat: { ...anchorBlock.attrs.paragraphFormat, pageBreakBefore: true } });
+          }
+          tr.setSelection(NodeSelection.create(tr.doc, currentPos));
+          this.view.dispatch(tr);
+          this.view.focus();
+          return;
+        }
+      }
+      cleanup();
+    };
+    this.cancelDrag = cleanup;
+    window.addEventListener("pointermove", move, { capture: true, passive: false });
+    window.addEventListener("pointerup", release, true);
+    window.addEventListener("pointercancel", cancel, true);
+    window.addEventListener("keydown", key, true);
+    window.addEventListener("scroll", scroll, true);
+    window.addEventListener("blur", cancel);
   }
 
   private applyAttrs(node: PMNode) {
@@ -571,6 +693,7 @@ class ImageNodeView {
 
   update(node: PMNode) {
     if (node.type !== this.node.type) return false;
+    if (this.dragDocument && this.view.state.doc !== this.dragDocument) this.cancelDrag?.();
     this.node = node;
     this.applyAttrs(node);
     return true;
@@ -594,6 +717,7 @@ class ImageNodeView {
   }
 
   destroy() {
+    this.cancelDrag?.();
     if (this.onMove) window.removeEventListener("pointermove", this.onMove);
     if (this.onUp) {
       window.removeEventListener("pointerup", this.onUp);
@@ -3241,7 +3365,7 @@ export default function Editor({
               }}
             />
           </PopoverAnchor>
-          <PopoverContent side="bottom" align="center" sideOffset={8} onOpenAutoFocus={e => e.preventDefault()} className="w-auto max-w-[calc(100vw-16px)] p-1">
+          <PopoverContent data-image-toolbar="" side="bottom" align="center" sideOffset={8} onOpenAutoFocus={e => e.preventDefault()} className="w-auto max-w-[calc(100vw-16px)] p-1">
             <div className="flex flex-wrap items-center gap-1">
               <button type="button" className="outline-none focus:outline-none focus-visible:outline-none focus:ring-0 focus-visible:ring-0 h-8 rounded px-2 text-xs hover:bg-accent/70" onMouseDown={e=>e.preventDefault()} onClick={()=>setImageLayoutOpen(true)}>{t.image.layout}</button>
               <button type="button" className="outline-none focus:outline-none focus-visible:outline-none focus:ring-0 focus-visible:ring-0 h-8 w-8 rounded hover:bg-accent/70" title={t.image.rotate} aria-label={t.image.rotate} onMouseDown={(e) => e.preventDefault()} onClick={rotateImage}>

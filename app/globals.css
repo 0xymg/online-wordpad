@@ -690,6 +690,12 @@ body {
 
 .pm-image-frame { position: relative; display: block; }
 .pm-image-wrapper[data-position="page"] { overflow: visible; }
+.pm-image-frame > img { cursor: grab; touch-action: none; user-select: none; -webkit-user-drag: none; }
+.pm-image-dragging > .pm-image-frame { opacity: 0.3; }
+.pm-image-drag-preview { outline: 2px solid #3b82f6; outline-offset: 2px; }
+.pm-image-drag-active .pm-page,
+.pm-image-drag-active .pm-page * { cursor: grabbing !important; }
+.pm-image-drag-active [data-image-toolbar] { visibility: hidden; pointer-events: none; }
 
 
 .pm-page .ProseMirror .pm-image-wrapper .pm-image-handle {

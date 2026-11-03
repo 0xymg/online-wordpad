@@ -26,7 +26,7 @@ Variables insert ordinary text. A date in an old letter stays the date you wrote
 ## Everyday documents, properly formatted
 
 - **Rich text:** headings, font families and sizes, bold, italic, underline, text colors, highlights, lists, and line spacing.
-- **Tables and images:** insert tables, merge cells, and add, resize, crop, rotate, flip, and align images. Choose inline, top-and-bottom, or left/right text wrapping, with precise width and spacing controls. Fix images at page-relative coordinates and change the order of overlapping images.
+- **Tables and images:** insert tables, merge cells, and add, resize, crop, rotate, flip, and align images. Choose inline, top-and-bottom, or left/right text wrapping, with precise width and spacing controls. Drag images to a position on the page, set precise page-relative coordinates, and change the order of overlapping images.
 - **Files you can use elsewhere:** open `.docx`, `.txt`, `.md`, and `.html`; export Word, PDF, RTF, HTML, Markdown, or plain text.
 - **Paper-sized pages:** page orientation, margins, page breaks, and printing.
 - **Less interruption:** autosave, version history, find and replace, dark mode, and focus mode.
@@ -92,6 +92,10 @@ npm run lint    # ESLint
 | `lib/doc-export.ts`, `lib/pdf-export.tsx` | Word/RTF and PDF export |
 | `content/guides/` | Guides published from MDX |
 | `public/pdf-fonts/` | Embedded PDF fonts and applicable font licenses |
+
+## Development plan
+
+The [image layout plan](docs/image-layout-plan.md) tracks implementation order, acceptance criteria, and release status.
 
 ## Deployment
 
