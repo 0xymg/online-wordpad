@@ -1,0 +1,9 @@
+{
+  "reference_application": "Microsoft Word Online",
+  "captured_at": "2026-11-03T02:24:27.586033+00:00",
+  "font_profile": "Arial, explicit document defaults and all used paragraph styles",
+  "source_sha256": "a650e8d23a0c2ccc75052013b6080f6229024233f891b3471bbeafadd15cae82",
+  "pdf_sha256": "681232c93e5c36127923668ac4e816a8196e437189bad3d3bf4a1bbf933e84d7",
+  "capture_method": "Word Online File > Export > Download as PDF > Download, authenticated browser UI",
+  "private_document_url_omitted": true
+}

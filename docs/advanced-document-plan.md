@@ -124,7 +124,7 @@ Tarayıcı ve Word'ün metin biçimleme/yerleşim farkları nedeniyle tüm karma
 2. İlk kapsam: eşit sütunlar; sonnot ardından dipnot; APA 7 + IEEE; destek matrisiyle ölçülen Word uyumluluğu.
 3. Önce mevcut görsel/metin kutusu işi kapanır; bu planın uygulaması ardından başlar.
 
-Kullanıcı 2 Kasım 2026 tarihinde bu kapsamı ve sırayı onayladı. Mevcut görsel/metin kutusu paketinin kapanışı bekleniyor.
+Kullanıcı 2 Kasım 2026 tarihinde bu kapsamı ve sırayı onayladı. Görsel/metin kutusu paketi `a4b214f` ile canlıda doğrulanarak kapandı. A0 tamamlandı: sekiz sentetik belge için gerçek Word Online PDF referansları, SHA doğrulaması, uygulama çıktıları ve ölçüm raporu hazır. Sekiz örneğin tamamında en az bir uyumsuzluk ölçüldü; görsel birebirlik henüz değerlendirilmiş sayılmıyor. Ayrıntılar `docs/compatibility-baseline.md` dosyasında. A1 bölüm modeli ve düzenleyicisinin uygulaması başladı; henüz yayımlanmadı.
 
 ## Kaynak notları
 

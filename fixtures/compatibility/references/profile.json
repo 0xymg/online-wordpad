@@ -1,0 +1,12 @@
+{
+  "reference_application": "Microsoft Word Online",
+  "capture_date": "2026-11-03 UTC (2026-11-02 America/Toronto)",
+  "browser_and_version": "Codex in-app browser; exact engine version is not exposed by the supported UI tools",
+  "browser_version_verified": false,
+  "paper_settings": "Native Word Online PDF export; paper sizes and margins from each source DOCX section, no browser print overrides",
+  "fonts": "Arial explicitly specified in document defaults, Normal, Title, Subtitle and Heading 1-9",
+  "limitations": [
+    "Word Online build number and browser engine version were not exposed; capture date and source/PDF hashes identify this reference snapshot.",
+    "These are Microsoft Word-generated PDFs, not browser print or LibreOffice substitutes."
+  ]
+}

@@ -1,0 +1,174 @@
+{
+  "schema_version": 1,
+  "generator": "scripts/compatibility/generate.py",
+  "fixtures": [
+    {
+      "id": "basic",
+      "source": "basic.docx",
+      "sha256": "2845d91783af52023ef345b2d73eebdb0beac55fc7d6b298dbeb6d3ace3a632a",
+      "expected": {
+        "sections": 1,
+        "page_sizes_twips": [
+          [
+            12240,
+            15840
+          ]
+        ],
+        "tokens_once": [
+          "BASIC_START",
+          "BASIC_END"
+        ],
+        "features": [
+          "single_section"
+        ]
+      }
+    },
+    {
+      "id": "mixed-sections",
+      "source": "mixed-sections.docx",
+      "sha256": "00c0f5cc4f512e199e496e3f37c1350dc7cf6a55c8772cee46e3e976ac574205",
+      "expected": {
+        "sections": 3,
+        "page_sizes_twips": [
+          [
+            12240,
+            15840
+          ],
+          [
+            16834,
+            11909
+          ],
+          [
+            11909,
+            16834
+          ]
+        ],
+        "tokens_once": [
+          "SECTION_ONE",
+          "SECTION_TWO",
+          "SECTION_THREE"
+        ],
+        "features": [
+          "mixed_page_sizes",
+          "mixed_orientation",
+          "linked_header",
+          "independent_header"
+        ]
+      }
+    },
+    {
+      "id": "tabs-leaders",
+      "source": "tabs-leaders.docx",
+      "sha256": "4362a9d94b991bc391db4323f4bf4b66573d2fe643abb69ab9ee9ce37b71ed22",
+      "expected": {
+        "tokens_once": [
+          "TABS_START",
+          "TABS_END"
+        ],
+        "features": [
+          "right_tab",
+          "decimal_tab",
+          "dot_leader",
+          "dash_leader"
+        ]
+      }
+    },
+    {
+      "id": "columns",
+      "source": "columns.docx",
+      "sha256": "05c6050e5be6317fdae35036cfdf8509b58a44f7c85e9525d3b122f15fc7cc0b",
+      "expected": {
+        "tokens_once": [
+          "COLUMN_00",
+          "COLUMN_25"
+        ],
+        "features": [
+          "two_equal_columns",
+          "column_separator"
+        ]
+      }
+    },
+    {
+      "id": "table-columns",
+      "source": "table-columns.docx",
+      "sha256": "f4df883b288bfd03e45f1b67ea4f7aa0615ea9924f1ae7db68f47f599cca64ce",
+      "expected": {
+        "tokens_once": [
+          "TABLE_A",
+          "TABLE_B",
+          "TABLE_C",
+          "TABLE_D"
+        ],
+        "features": [
+          "two_equal_columns",
+          "table"
+        ]
+      }
+    },
+    {
+      "id": "notes",
+      "source": "notes.docx",
+      "sha256": "a650e8d23a0c2ccc75052013b6080f6229024233f891b3471bbeafadd15cae82",
+      "expected": {
+        "tokens_once": [
+          "NOTE_ANCHOR",
+          "FOOTNOTE_BODY",
+          "ENDNOTE_BODY"
+        ],
+        "features": [
+          "footnote",
+          "endnote"
+        ]
+      }
+    },
+    {
+      "id": "crossrefs-toc",
+      "source": "crossrefs-toc.docx",
+      "sha256": "9f72432930bbbbd4fc4ef454fb2a82a611dd17158ca4b7f73421a4318d776ecf",
+      "expected": {
+        "tokens_once": [
+          "CROSSREF_START",
+          "CROSSREF_END"
+        ],
+        "features": [
+          "bookmark",
+          "cross_reference_field",
+          "toc_field"
+        ]
+      }
+    },
+    {
+      "id": "mixed",
+      "source": "mixed.docx",
+      "sha256": "e0cf199ae6e900fa5cc3aad546d80d1c50348e579b6258fbaeec092cbd63baf7",
+      "expected": {
+        "tokens_once": [
+          "TABS_START",
+          "TABS_END",
+          "COLUMN_00",
+          "COLUMN_25",
+          "TABLE_A",
+          "TABLE_B",
+          "TABLE_C",
+          "TABLE_D",
+          "NOTE_ANCHOR",
+          "FOOTNOTE_BODY",
+          "ENDNOTE_BODY",
+          "CROSSREF_START",
+          "CROSSREF_END"
+        ],
+        "features": [
+          "tabs",
+          "leaders",
+          "two_equal_columns",
+          "table",
+          "footnote",
+          "endnote",
+          "bookmark",
+          "cross_reference_field",
+          "toc_field"
+        ]
+      }
+    }
+  ]
+}

@@ -1,0 +1,71 @@
+{
+  "schema_version": 1,
+  "base_url": "https://wordpad.info",
+  "captured_at": "2026-11-03T02:02:18.588Z",
+  "results": [
+    {
+      "id": "basic",
+      "source_sha256": "2845d91783af52023ef345b2d73eebdb0beac55fc7d6b298dbeb6d3ace3a632a",
+      "status": "EXPORTED",
+      "pdf_sha256": "f649ddbd9ef01547e19e838ca3e04dadfff45aa4ac1196547c9b9f1322ee1dd4",
+      "pdf_bytes": 73306,
+      "page_errors": []
+    },
+    {
+      "id": "mixed-sections",
+      "source_sha256": "00c0f5cc4f512e199e496e3f37c1350dc7cf6a55c8772cee46e3e976ac574205",
+      "status": "EXPORTED",
+      "pdf_sha256": "08b81421dea56b16e78a0412575115a89ceb5d8a06d1c6614c61c5b78d4ae078",
+      "pdf_bytes": 146230,
+      "page_errors": []
+    },
+    {
+      "id": "tabs-leaders",
+      "source_sha256": "4362a9d94b991bc391db4323f4bf4b66573d2fe643abb69ab9ee9ce37b71ed22",
+      "status": "EXPORTED",
+      "pdf_sha256": "84243106b5a6880da70b6617ec1da633431b09e992128250cce3938439f44868",
+      "pdf_bytes": 58451,
+      "page_errors": []
+    },
+    {
+      "id": "columns",
+      "source_sha256": "05c6050e5be6317fdae35036cfdf8509b58a44f7c85e9525d3b122f15fc7cc0b",
+      "status": "EXPORTED",
+      "pdf_sha256": "e4cea059d15965129af38d2de6f1e3a6ed8bce739612242430346eb738fc5fbc",
+      "pdf_bytes": 497073,
+      "page_errors": []
+    },
+    {
+      "id": "table-columns",
+      "source_sha256": "f4df883b288bfd03e45f1b67ea4f7aa0615ea9924f1ae7db68f47f599cca64ce",
+      "status": "EXPORTED",
+      "pdf_sha256": "6bcba27391acd90322168959a54aae714930b805b9e5742e1fa42a1096133649",
+      "pdf_bytes": 528390,
+      "page_errors": []
+    },
+    {
+      "id": "notes",
+      "source_sha256": "a650e8d23a0c2ccc75052013b6080f6229024233f891b3471bbeafadd15cae82",
+      "status": "EXPORTED",
+      "pdf_sha256": "22bc4578f3e7d5dce05882b20e94a04e4d27c34a9e219daec5e55b6bc2bfd8da",
+      "pdf_bytes": 64574,
+      "page_errors": []
+    },
+    {
+      "id": "crossrefs-toc",
+      "source_sha256": "9f72432930bbbbd4fc4ef454fb2a82a611dd17158ca4b7f73421a4318d776ecf",
+      "status": "EXPORTED",
+      "pdf_sha256": "9f69fc6f84f45c7663d3788e4bddbbc0d22f0a0ce60e6e4ed9687b08048fcbbb",
+      "pdf_bytes": 77111,
+      "page_errors": []
+    },
+    {
+      "id": "mixed",
+      "source_sha256": "e0cf199ae6e900fa5cc3aad546d80d1c50348e579b6258fbaeec092cbd63baf7",
+      "status": "EXPORTED",
+      "pdf_sha256": "0fd70344cfa4922e6775e2b7126c063efeb0a7712fc50c473b4b218308abb35d",
+      "pdf_bytes": 639041,
+      "page_errors": []
+    }
+  ]
+}

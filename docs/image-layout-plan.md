@@ -22,9 +22,9 @@ Görseli seçme, yerleştirme, sıralama ve dışa aktarma davranışları birli
 | --- | --- | --- | --- |
 | 1 | Aynı sayfada sürükleyerek konumlandırma | Tamamlandı — `f85dc4d`, canlıda doğrulandı | Mevcut sabit konum modelini doğrudan kullanma |
 | 2 | Görsel katman paneli | Tamamlandı — `22962a1`, canlıda doğrulandı | Üstü örtülmüş görselleri erişilebilir şekilde seçme ve sıralama |
-| 3 | Metnin önüne / arkasına yerleştirme | Yerelde doğrulandı — yayın bekliyor | Arkadaki görselin panelden seçilebilmesi için 2 tamamlanmalı |
-| 4 | Sayfalar arasında sürükleme | Yerelde doğrulandı — yayın bekliyor | Sayfa ve paragraf bağlantısını güvenilir biçimde değiştirme |
-| 5 | Metin kutuları | Yerelde doğrulandı — yayın bekliyor | Görsellerde doğrulanan seçim, konum ve katman davranışını kullanma |
+| 3 | Metnin önüne / arkasına yerleştirme | Tamamlandı — `a4b214f`, canlıda doğrulandı | Arkadaki görselin panelden seçilebilmesi için 2 tamamlanmalı |
+| 4 | Sayfalar arasında sürükleme | Tamamlandı — `a4b214f`, canlıda doğrulandı | Sayfa ve paragraf bağlantısını güvenilir biçimde değiştirme |
+| 5 | Metin kutuları | Tamamlandı — `a4b214f`, canlıda doğrulandı | Görsellerde doğrulanan seçim, konum ve katman davranışını kullanma |
 
 ### 1. Aynı sayfada sürükleme
 
@@ -117,7 +117,7 @@ Bağlı metin kutuları, dönen metin, gruplama ve şekiller ilk pakete dahil de
 - Aşama 5 yerelde: `docs/text-box-design.md` tasarımı uygulandı. `scripts/check-text-boxes.cjs` Insert, Delete/Backspace, ayrı metin düzenleme/taşıma, boyutlandırma, geri alma, kayıt, native düzenlenebilir DOCX ve PDF, taşma uyarısı, örtülü/arkadaki kutu seçimi ve beş dilde arayüz/dar ekran (Arapça RTL dahil) kontrollerinde geçti. İlk kapsam düz çok satırlı metin; zengin metin, döndürme ve bağlı kutular kapsam dışı.
 - Ortak Katmanlar paneli görselleri ve metin kutularını birlikte sıralar. `scripts/check-image-layers.cjs` karma seçim/sıralama ve Word döngüsünde geçti; DOCX z-sırası tekrar içe alımda kaymıyor.
 - Mevcut `check-image-layout.cjs` ve `check-page-images.cjs` regresyonları geçti. Metin kutusu PDF’si ayrıca rasterleştirilerek görsel olarak kontrol edildi. Üretim derlemesi/TypeScript ve odaklı lint başarılı (doc-export içindeki mevcut üç unused-import uyarısı dışında yeni bulgu yok).
-- 3–5 için üretim yayını ve canlı doğrulama henüz tamamlanmadı.
+- 3–5 yayını: `a4b214f`, co-author olmadan commit/push; Vercel başarılı. `BASE_URL=https://wordpad.info` ile `check-image-cross-page.cjs`, `check-image-text-plane.cjs`, `check-image-layers.cjs` ve `check-text-boxes.cjs` canlıda geçti. Paket kapandı; onaylı ileri belge planında A0 başladı.
 
 ## Bekleyen fikirler
 
