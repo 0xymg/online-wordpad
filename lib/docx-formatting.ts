@@ -9,6 +9,7 @@ import { resolveStyle } from "./document-styles";
 import { captureLayout, restoreLayoutProperties } from "./docx-preservation";
 import { wrapDocumentHtml } from "./document-layout";
 import { DEFAULT_DOCUMENT_FONT_CSS } from "./document-font";
+import { wordAutomaticLineHeight } from "./word-font-metrics";
 
 const W = "http://schemas.openxmlformats.org/wordprocessingml/2006/main";
 const A = "http://schemas.openxmlformats.org/drawingml/2006/main";
@@ -239,11 +240,14 @@ export async function prepareDocxFormatting(arrayBuffer: ArrayBuffer) {
     return target ? partPath(base, target) : fallback;
   };
   const stylesPath = relatedPath("styles");
-  const [stylesDoc, theme] = await Promise.all([
+  const [stylesDoc, theme, settings] = await Promise.all([
     read(stylesPath),
     read(relatedPath("theme", `${base}theme/theme1.xml`)),
+    read(relatedPath("settings", `${base}settings.xml`)),
   ]);
   const styleXml = stylesDoc ?? xml(`<w:styles xmlns:w="${W}"/>`);
+  const compatibilityValue = settings ? wordElements(settings,"compatSetting").find(el => attr(el,"name") === "compatibilityMode")?.getAttributeNS(W,"val") : null;
+  const compatibilityMode = compatibilityValue && /^\d+$/.test(compatibilityValue) ? Number(compatibilityValue) : null;
   const listPosition = nativeListPositions(await read(relatedPath("numbering")), styleXml);
   const listPositions = new Map<string, NativeListPosition>();
   const mainDocument = await read(mainPath);
@@ -405,7 +409,7 @@ export async function prepareDocxFormatting(arrayBuffer: ArrayBuffer) {
       vertical: props.vertAlign,
     };
   }
-  function paragraphFormat(props: Properties): Properties {
+  function paragraphFormat(props: Properties, run: Properties): Properties {
     const css: Properties = { "margin-top": "0pt", "margin-bottom": "0pt", "line-height": "normal" };
     // A Word single bottom border sits outside the line box, separated from
     // the text by its point-valued space. Keep it in layout, not as a text
@@ -428,14 +432,14 @@ export async function prepareDocxFormatting(arrayBuffer: ArrayBuffer) {
       }[props.jc] ?? props.jc;
     if (["left", "right", "center", "justify"].includes(alignment))
       css["text-align"] = alignment;
-    // The editor supports a unitless spacing multiple; exact/minimum Word line
-    // heights and page geometry need separate editor schema support.
+    // Word automatic spacing uses the font's single-line metrics. Preserve the
+    // original native multiple separately; CSS's multiple is relative to em.
     const line = Number(props["spacing.line"]);
     if (
       line > 0 &&
       (!props["spacing.lineRule"] || props["spacing.lineRule"] === "auto")
     )
-      css["line-height"] = String(line / 240);
+      css["line-height"] = String(wordAutomaticLineHeight(line / 240, runFormat(run).css["font-family"] || ""));
     return css;
   }
   const importedStyles: DocumentStyles = {};
@@ -451,12 +455,9 @@ export async function prepareDocxFormatting(arrayBuffer: ArrayBuffer) {
     if (own.i !== undefined) text.italic = !!format.italic;
     if (own.u !== undefined) text.underline = !!format.underline;
     const pPr = child(el,"pPr"), paragraph = paragraphFromXml(pPr || null);
-    if (!definition.basedOn) {
-      const global = child(child(defaults,"pPrDefault"),"pPr");
-      Object.assign(paragraph, mergeParagraphFormats({ before:0,after:0,lineMode:"multiple",lineValue:1 }, paragraphFromXml(global || null), paragraph));
-    }
+    const paragraphDefaults = !definition.basedOn ? mergeParagraphFormats({ before:0,after:0,lineMode:"multiple",lineValue:1,lineBasis:"font" }, paragraphFromXml(child(child(defaults,"pPrDefault"),"pPr") || null)) : undefined;
     const level = Number(attr(child(pPr,"outlineLvl")));
-    importedStyles[id] = { name:attr(child(el,"name")) || id,basedOn:definition.basedOn,...(Number.isFinite(level) && attr(child(pPr,"outlineLvl")) !== undefined && (level < 6 || level === 9) ? {level:level===9?0:level+1}:{}),paragraph,text,
+    importedStyles[id] = { name:attr(child(el,"name")) || id,basedOn:definition.basedOn,...(Number.isFinite(level) && attr(child(pPr,"outlineLvl")) !== undefined && (level < 6 || level === 9) ? {level:level===9?0:level+1}:{}),paragraph,...(paragraphDefaults ? {paragraphDefaults} : {}),text,
       ...(pPr ? { rawParagraphProperties: new XMLSerializer().serializeToString(pPr) } : {}) };
   }
   preservation.layout.styles = importedStyles;
@@ -483,7 +484,17 @@ export async function prepareDocxFormatting(arrayBuffer: ArrayBuffer) {
     }
     return result;
   };
-  const paragraphMeta = new Map<string,{ id:string; direct:ParagraphFormat }>();
+  const tableParagraphProperties = (p: Element): { properties: Properties; paragraph: ParagraphFormat } => {
+    let table = p.parentElement;
+    while (table && !(table.namespaceURI === W && table.localName === "tbl")) table = table.parentElement;
+    if (!table) return {properties:{},paragraph:{}};
+    const chain: Element[] = [], seen = new Set<string>();
+    let id = attr(child(child(table,"tblPr"),"tblStyle")) || defaultTableStyle;
+    while (id && !seen.has(id)) { seen.add(id); const style = tableStyles.get(id); if (!style) break; chain.unshift(style); id = attr(child(style,"basedOn")); }
+    // Conditional table styles remain outside this unconditional cascade.
+    return {properties:Object.assign({}, ...chain.map(style => properties(child(style,"pPr")))),paragraph:mergeParagraphFormats(...chain.map(style => paragraphFromXml(child(style,"pPr") || null)))};
+  };
+  const paragraphMeta = new Map<string,{ id:string; direct:ParagraphFormat; table:ParagraphFormat }>();
   const prefix = `EDTRimport${crypto.randomUUID().replace(/-/g, "")}`;
   const paragraphFormats = new Map<string, Properties>();
   const runFormats = new Map<string, RunFormat>();
@@ -543,9 +554,11 @@ export async function prepareDocxFormatting(arrayBuffer: ArrayBuffer) {
       const paragraphStyle = attr(child(pPr,"pStyle")) ?? defaultParagraph ?? "Normal";
       const list = listPosition(p, path, paragraphStyle);
       const directParagraph = paragraphFromXml(pPr || null);
-      const inherited = resolve(paragraphStyle);
+      const inherited = resolve(definitions.has(paragraphStyle) ? paragraphStyle : defaultParagraph);
+      const tableContext = tableParagraphProperties(p);
       const paragraphProps = {
         ...defaultPara,
+        ...tableContext.properties,
         ...inherited.paragraph,
         ...properties(pPr),
       };
@@ -570,9 +583,9 @@ export async function prepareDocxFormatting(arrayBuffer: ArrayBuffer) {
         columnBreakFormats.set(markerName, runFormat(mergeProperties(mergeStyle(baseRun, inheritedRun), properties(rPr || undefined))));
       }
       const id = `${prefix}p${paragraphFormats.size}`;
-      paragraphFormats.set(id, paragraphFormat(paragraphProps));
+      paragraphFormats.set(id, paragraphFormat(paragraphProps, baseRun));
       if (list) listPositions.set(id, list);
-      if (importedStyles[paragraphStyle]) paragraphMeta.set(id,{ id:paragraphStyle,direct:directParagraph });
+      if (Object.hasOwn(importedStyles,paragraphStyle) || (defaultParagraph && Object.hasOwn(importedStyles,defaultParagraph))) paragraphMeta.set(id,{ id:paragraphStyle,direct:directParagraph,table:tableContext.paragraph });
       sourceParagraphs.set(id, p);
       const bookmark = doc.createElementNS(W, "w:bookmarkStart");
       bookmark.setAttributeNS(W, "w:name", id);
@@ -673,16 +686,17 @@ export async function prepareDocxFormatting(arrayBuffer: ArrayBuffer) {
         if (block && list) restoreListPosition(block, list, restoredLists);
         const original = sourceParagraphs.get(marker.id);
         if (block && original) {
-          restoreLayoutProperties(original, block, preservation.sectionXml, tableStyleMargins);
+          restoreLayoutProperties(original, block, preservation.sectionXml, tableStyleMargins, {styles:styleXml,compatibilityMode});
           const sectionId = nativeSectionIds?.boundaries.get(original);
           if (sectionId) block.setAttribute("data-edtr-section-end", sectionId);
         }
         const meta = paragraphMeta.get(marker.id);
         if (block && meta) {
-          const resolved = resolveStyle(importedStyles,meta.id);
+          const resolved = resolveStyle(importedStyles,Object.hasOwn(importedStyles,meta.id) ? meta.id : defaultParagraph!,new Set(),meta.table);
           block.setAttribute("data-edtr-style",meta.id);
           block.setAttribute("data-edtr-style-text",JSON.stringify(resolved.text));
           block.setAttribute("data-edtr-style-paragraph",JSON.stringify(resolved.paragraph));
+          if (Object.keys(meta.table).length) block.setAttribute("data-edtr-table-style-paragraph",JSON.stringify(meta.table));
           block.setAttribute("data-edtr-paragraph",JSON.stringify(meta.direct));
         }
         marker.remove();

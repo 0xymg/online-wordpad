@@ -193,8 +193,49 @@ export async function captureLayout(zip: JSZip, mainPath: string, main: Document
   return { layout, sectionXml };
 }
 
+export type NativeTableDisplayContext = { styles: Document; compatibilityMode: number | null };
+/** Only unconditional table properties participate here; conditional styles and
+ * floating/RTL table placement are retained natively without inventing geometry. */
+function restoreTableDisplay(table: Element, row: Element, cell: Element, htmlTable: HTMLElement, htmlCell: HTMLElement, context: NativeTableDisplayContext) {
+  const tableProperties = first(table, "tblPr"), rowProperties = first(row, "tblPrEx");
+  const definitions = new Map(all(context.styles, "style").filter(style => val(style, "type") === "table").map(style => [val(style, "styleId"), style]));
+  let id = val(tableProperties && first(tableProperties, "tblStyle")) || [...definitions].find(([, style]) => ["1", "true", "on"].includes(val(style, "default")))?.[0];
+  const chain: Element[] = [], seen = new Set<string>(); let conditional = false;
+  while (id && !seen.has(id)) { seen.add(id); const style = definitions.get(id); if (!style) break; conditional ||= !!first(style, "tblStylePr"); const properties = first(style, "tblPr"); if (properties) chain.unshift(properties); id = val(first(style, "basedOn")); }
+  if (conditional) return;
+  const layers = [...chain, ...(tableProperties ? [tableProperties] : []), ...(rowProperties ? [rowProperties] : [])];
+  const effective = (name: string) => layers.map(layer => first(layer, name)).filter((item): item is Element => !!item).at(-1);
+  const rows = kids(table, "tr"), cells = kids(row, "tc"), cellIndex = cells.indexOf(cell), rowIndex = rows.indexOf(row);
+  const ownBorders = first(first(cell, "tcPr") || cell, "tcBorders");
+  for (const side of ["top", "right", "bottom", "left"] as const) {
+    const edge = side === "top" && rowIndex > 0 || side === "bottom" && rowIndex < rows.length - 1 ? "insideH"
+      : side === "left" && cellIndex > 0 || side === "right" && cellIndex < cells.length - 1 ? "insideV" : side;
+    const border = ownBorders && first(ownBorders, side) || layers.map(layer => { const borders = first(layer, "tblBorders"); return borders && first(borders, edge); }).filter((item): item is Element => !!item).at(-1);
+    if (!border) { htmlCell.style.setProperty(`border-${side}`, "0pt solid #000"); continue; }
+    const kind = val(border), color = val(border, "color"), size = Number(val(border, "sz"));
+    htmlCell.style.setProperty(`border-${side}`, ["nil", "none"].includes(kind) ? "0pt solid #000" : `${(Number.isFinite(size) && size > 0 ? size : 4) / 8}pt ${kind === "double" ? "double" : kind.includes("dash") ? "dashed" : "solid"} ${/^[a-f\d]{6}$/i.test(color) ? `#${color}` : "#000"}`);
+  }
+  const alignment = val(effective("jc")) || "left", indent = effective("tblInd"), width = Number(val(indent, "w"));
+  if (effective("tblpPr") || effective("bidiVisual") && !["0", "false", "off"].includes(val(effective("bidiVisual")))) return;
+  if (alignment === "center") { htmlTable.style.marginLeft = "auto"; htmlTable.style.marginRight = "auto"; return; }
+  if (alignment === "right" || alignment === "end") { htmlTable.style.marginLeft = "auto"; htmlTable.style.marginRight = "0pt"; return; }
+  if (alignment !== "left" && alignment !== "start") return;
+  const indentPt = indent && val(indent, "type") === "dxa" && Number.isFinite(width) ? width / 20 : 0;
+  // Legacy Word (explicit compatibility modes through 2010) aligns the first
+  // cell text with the leading margin. Modern/unknown modes keep the grid edge.
+  // Nested tables do not use that legacy outer-table adjustment.
+  let nested = false;
+  for (let ancestor = table.parentElement; ancestor; ancestor = ancestor.parentElement) if (ancestor.namespaceURI === W && ancestor.localName === "tbl") { nested = true; break; }
+  const legacy = context.compatibilityMode !== null && context.compatibilityMode <= 14 && !nested;
+  const leadingCell = htmlTable.querySelector<HTMLElement>("tr > td, tr > th");
+  const padding = leadingCell ? Number.parseFloat(leadingCell.style.paddingLeft) || 0 : 0;
+  const border = leadingCell && leadingCell.style.borderLeftStyle !== "none" ? Number.parseFloat(leadingCell.style.borderLeftWidth) || 0 : 0;
+  htmlTable.style.marginLeft = `${indentPt - (legacy ? padding + border / 2 : 0)}pt`;
+  htmlTable.style.marginRight = "0pt";
+}
+
 /** Called using the existing import bookmark identity, not text/index matching. */
-export function restoreLayoutProperties(p: Element, block: HTMLElement, sectionXml: (s: Element) => string, tableStyleMargins?: (table: Element) => Partial<Record<"top" | "right" | "bottom" | "left", number>>) {
+export function restoreLayoutProperties(p: Element, block: HTMLElement, sectionXml: (s: Element) => string, tableStyleMargins?: (table: Element) => Partial<Record<"top" | "right" | "bottom" | "left", number>>, tableContext?: NativeTableDisplayContext) {
   const props = first(p, "pPr");
   if (props) {
     const copy = props.cloneNode(true) as Element;
@@ -267,6 +308,7 @@ export function restoreLayoutProperties(p: Element, block: HTMLElement, sectionX
     const color = val(border, "color");
     htmlCell.style.setProperty(`border-${side}`, ["nil", "none"].includes(kind) ? "none" : `${(Number(val(border, "sz")) || 4) / 8}pt ${kind === "double" ? "double" : kind.includes("dash") ? "dashed" : "solid"} ${/^[a-f\d]{6}$/i.test(color) ? `#${color}` : "#000"}`);
   }
+  if (tableContext) restoreTableDisplay(table, row, cell, htmlTable, htmlCell, tableContext);
 }
 
 function replaceProperties(parent: Element, raw: string, preserve: string[] = []) {
@@ -369,11 +411,20 @@ export async function restoreDocxPackage(blob: Blob, doc: PMNode, paragraphs: Ar
     for (const rel of Array.from(originalRels.documentElement.children)) rels.documentElement.appendChild(rel.cloneNode(true));
     const styleDoc = parseXml(await zip.file("word/styles.xml")!.async("string"));
     const originalStyles = parseXml(await source.file("edtr-styles.xml")!.async("string"));
+    // Imported paragraph styles now keep document defaults separate from their
+    // own declarations so table styles can override the defaults correctly.
+    // Retain the complete native defaults, including properties outside the
+    // editable subset, before managed export updates supported values.
+    const defaults = first(originalStyles.documentElement, "docDefaults");
+    if (defaults) {
+      for (const old of kids(styleDoc.documentElement, "docDefaults")) old.remove();
+      styleDoc.documentElement.insertBefore(styleDoc.importNode(defaults, true), styleDoc.documentElement.firstChild);
+    }
     for (const s of all(originalStyles, "style")) styleDoc.documentElement.appendChild(s.cloneNode(true));
     zip.file("word/styles.xml", xmlString(styleDoc));
     const settings = parseXml(await zip.file("word/settings.xml")!.async("string"));
     const originalSettings = await source.file("edtr-settings.xml")?.async("string");
-    if (originalSettings) for (const name of ["evenAndOddHeaders", "mirrorMargins", "gutterAtTop", "defaultTabStop"]) {
+    if (originalSettings) for (const name of ["evenAndOddHeaders", "mirrorMargins", "gutterAtTop", "defaultTabStop", "compat"]) {
       const e = all(parseXml(originalSettings), name)[0];
       if (e) { all(settings, name).forEach(n => n.remove()); settings.documentElement.appendChild(e.cloneNode(true)); }
     }

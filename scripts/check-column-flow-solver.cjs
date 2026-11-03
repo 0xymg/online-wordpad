@@ -17,6 +17,35 @@ flow=solveColumnFlow([sec('a',[unit(0)],{columns:{kind:'preserved',reason:'unequ
 flow=solveColumnFlow([sec('a',[unit(0)]),sec('b',[unit(1)],{geometry:{...geometry,width:9000}})]);assert.equal(columnRelativeXDelta(flow,flow.fragments[0],flow.fragments[1]),-100,'mixed-paper caret x includes sheet centering');
 const band=(groupIndex,height)=>({from:100+groupIndex,to:101+groupIndex,height,kind:'table',table:{tablePos:100,groupIndex,headerHeight:30,band:{top:groupIndex*100,bottom:groupIndex*100+height,continuation:false,headerHeight:0,cells:[]}}});flow=solveColumnFlow([sec('table',[band(0,30),band(1,100),band(2,100)])]);assert.equal(flow.complete,true);assert.equal(flow.fragments[2].columnIndex,1);assert.equal(flow.fragments[2].table.repeatedHeaderHeight,30);assert.equal(flow.fragments[2].rect.y,flow.regions[0].columns[1].y+30,'header space reserved before continuation');
 const headerBand={...band(0,30),table:{...band(0,30).table,headerGroup:true}},bodyBand=n=>band(n,20);flow=solveColumnFlow([sec('table',[unit(0,90),headerBand,bodyBand(1),bodyBand(2),bodyBand(3)])]);assert.equal(flow.complete,true);assert.deepEqual(flow.fragments.slice(1).map(f=>f.columnIndex),[0,0,0,1],'fine bands use residual column space before continuing');assert.equal(flow.fragments.at(-1).table.repeatedHeaderHeight,30);flow=solveColumnFlow([sec('table',[unit(0,120),headerBand,bodyBand(1)])]);assert.deepEqual(flow.fragments.slice(1).map(f=>f.columnIndex),[1,1],'initial header stays with its first body band');
+// A paragraph's last line can fit even if only its after-spacing crosses the
+// physical column edge. Widow/keep decisions and emitted geometry must agree.
+const policy=(i,keepLines=false)=>({block:10,index:i,count:2,keepNext:false,keepLines,widowControl:true,pageBreakBefore:false});
+for (const keepLines of [false,true]) {
+ const lines=[{...unit(1,15),paragraph:policy(0,keepLines)},{...unit(2,25),trailingMargin:10,paragraph:policy(1,keepLines)}];
+ flow=solveColumnFlow([sec('after',[unit(0,125),...lines,unit(3,10)])]);
+ assert.deepEqual(flow.fragments.map(f=>f.columnIndex),[0,0,0,1]);
+ assert.equal(flow.fragments[2].rect.height,20,'only the overflowing after-spacing is trimmed');
+ assert.equal(lines[1].height,25,'measurement remains unchanged');
+ flow=solveColumnFlow([sec('after',[unit(0,135),...lines,unit(3,10)])]);
+ assert.deepEqual(flow.fragments.map(f=>f.columnIndex),[0,1,1,1],'glyph height cannot be trimmed');
+}
+flow=solveColumnFlow([sec('after',[unit(0,30),{...unit(1,170),trailingMargin:20}])]);
+assert.equal(flow.complete,true,'after-spacing is retrimmed after moving to a fresh column');
+assert.equal(flow.fragments[1].columnIndex,1);
+assert.equal(flow.fragments[1].rect.height,160);
+assert.equal(flow.fragments[1].trailingMargin,10);
+// Border paint must subtract the retained margin, not the original margin.
+const {schema}=require('prosemirror-schema-basic');
+const {buildColumnDecorations}=require(path.resolve('lib/column-flow-decorations.ts'));
+const paragraphDoc=schema.nodes.doc.create(null,[schema.nodes.paragraph.create(null,schema.text('x'))]);
+const bordered={from:1,to:2,kind:'line',height:170,trailingMargin:20,sourceBlock:0,sourceTop:0};
+const borderSection=sec('border',[bordered]);
+const borderFlow=solveColumnFlow([borderSection]);
+const makeElement=()=>({style:{cssText:''},children:[],setAttribute(){},appendChild(child){this.children.push(child)},ownerDocument:global.document});
+global.document={createElement:makeElement};
+const rendered=buildColumnDecorations(paragraphDoc,{complete:true,diagnostics:[],sections:[borderSection],tables:[],blocks:[{pos:0,from:1,to:2,top:0,left:0,width:100,height:150,paddingLeft:0,paddingRight:0,marginBottom:20,borderBottom:'1px solid black',borderBottomWidth:1,textblock:true}]},borderFlow);
+assert.equal(rendered.complete,true);
+assert.match(rendered.overlays[0].children[0].style.cssText,/top:169px;/,'border remains at the content edge when after-spacing is clipped');
 flow=solveColumnFlow([sec('a',[unit(0,200)])]);assert.equal(flow.complete,false);assert.equal(flow.diagnostics[0].code,'unit-exceeds-region');
 const keep=(i)=>({...unit(i,40),paragraph:{block:10,index:i-1,count:2,keepNext:false,keepLines:true,widowControl:true,pageBreakBefore:false}});flow=solveColumnFlow([sec('a',[unit(0,100)],{columns:cols(1)}),sec('b',[keep(1),keep(2)],{start:'continuous',columns:cols(1)})]);assert.equal(flow.pages.length,2,'kept paragraph advances from partial continuous band to full page');assert.ok(flow.fragments.slice(1).every(f=>f.pageIndex===1));
 flow=solveColumnFlow([sec('a',[unit(0,100)]),sec('b',[unit(1,140)],{start:'continuous'})]);assert.equal(flow.complete,true);assert.equal(flow.pages.length,2,'unit moves to fresh full-height region when residual band is too short');

@@ -21,9 +21,18 @@ export type ParagraphFlowContext = {
   fullCapacity?: number;
   availableBand?: number;
   partialBand?: boolean;
+  trimAfter?: boolean;
 };
 export type ParagraphFlowDecision = 'place' | 'column' | 'page';
 const EPSILON = 0.01;
+/** Paragraph-after may fall outside the actual column bottom; glyphs and
+ * borders may not. Do not use this for artificial balancing probe heights. */
+export function trimParagraphAfter(unit: FlowUnit, y: number, height: number, capacity: number): number {
+  const trailing = Math.max(0, unit.trailingMargin || 0);
+  return trailing > 0 && y + height > capacity + EPSILON && y + height - trailing <= capacity + EPSILON
+    ? Math.max(0, capacity - y) : height;
+}
+
 
 /** Attach policies to consecutive measured lines. Explicit breaks and tables are barriers. */
 export function annotateParagraphConstraints(doc: PMNode, input: readonly FlowUnit[]): ParagraphFlowUnit[] {
@@ -79,7 +88,8 @@ export function paragraphFlowDecision(units: readonly ParagraphFlowUnit[], index
   const needsFullPage = (height: number) => context.partialBand === true && context.fullCapacity !== undefined && context.availableBand !== undefined
     && height > context.availableBand + EPSILON && height <= context.fullCapacity + EPSILON;
   if (p.index === 0) {
-    const ownHeight = units.slice(index, end).reduce((total, item) => total + item.height, 0);
+    let ownHeight = units.slice(index, end).reduce((total, item) => total + item.height, 0);
+    if (context.trimAfter && end > index) ownHeight = trimParagraphAfter(units[end - 1], y, ownHeight, capacity);
     if (p.keepLines && needsFullPage(ownHeight)) return 'page';
     if (p.keepLines && y > EPSILON && ownHeight <= capacity + EPSILON && ownHeight > remaining + EPSILON) return 'column';
     if (p.keepNext) {
@@ -101,7 +111,7 @@ export function paragraphFlowDecision(units: readonly ParagraphFlowUnit[], index
   if (p.widowControl && p.count > 1) {
     if (end - index >= 2 && needsFullPage(units[index].height + units[index + 1].height)) return 'page';
     let fit = 0, height = 0;
-    for (let i = index; i < end; i++) { height += units[i].height; if (height > remaining + EPSILON) break; fit++; }
+    for (let i = index; i < end; i++) { height += units[i].height; if (context.trimAfter) height = trimParagraphAfter(units[i], y, height, capacity); if (height > remaining + EPSILON) break; fit++; }
     const remainingLines = end - index;
     if (fit < remainingLines) {
       // Avoid a single orphan line at the bottom of a nonempty column.

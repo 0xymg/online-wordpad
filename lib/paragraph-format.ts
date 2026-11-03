@@ -1,19 +1,21 @@
 /** Paragraph values use Word twips, except unitless line-spacing multiples. */
 import type { Node as PMNode } from "prosemirror-model";
 import { cleanTabStops, mergeTabStops, effectiveTabs, parseTabStopsXml, writeTabStopsXml, type TabStop } from "./tab-stops";
+import { wordAutomaticLineHeight } from "./word-font-metrics";
 export type ParagraphFormat = {
   alignment?: "left" | "center" | "right" | "justify";
   left?: number; right?: number; firstLine?: number;
   before?: number; after?: number;
   lineMode?: "multiple" | "exact" | "atLeast"; lineValue?: number;
+  lineBasis?: "em" | "font";
   keepNext?: boolean; keepLines?: boolean; pageBreakBefore?: boolean; widowControl?: boolean;
   tabs?: TabStop[];
 };
 export type StyleText = { family: string; size: number; bold: boolean; italic: boolean; underline: boolean; color: string };
-export type DocumentStyle = { name: string; basedOn?: string; level?: number; paragraph: ParagraphFormat; text: Partial<StyleText>; rawParagraphProperties?: string };
+export type DocumentStyle = { name: string; basedOn?: string; level?: number; paragraph: ParagraphFormat; paragraphDefaults?: ParagraphFormat; text: Partial<StyleText>; rawParagraphProperties?: string };
 export type DocumentStyles = Record<string, DocumentStyle>;
 export const DEFAULT_STYLE_TEXT: StyleText = { family: "Calibri, Carlito, Arial, sans-serif", size: 12, bold: false, italic: false, underline: false, color: "#000000" };
-export const DEFAULT_PARAGRAPH: Required<ParagraphFormat> = { alignment: "left", left: 0, right: 0, firstLine: 0, before: 0, after: 120, lineMode: "multiple", lineValue: 1.5, keepNext: false, keepLines: false, pageBreakBefore: false, widowControl: true, tabs: [] };
+export const DEFAULT_PARAGRAPH: Required<ParagraphFormat> = { alignment: "left", left: 0, right: 0, firstLine: 0, before: 0, after: 120, lineMode: "multiple", lineValue: 1.5, lineBasis: "em", keepNext: false, keepLines: false, pageBreakBefore: false, widowControl: true, tabs: [] };
 export function cleanParagraph(value: unknown): ParagraphFormat {
   if (!value || typeof value !== "object") return {};
   const raw = value as Record<string, unknown>, result: Record<string, unknown> = {};
@@ -21,6 +23,7 @@ export function cleanParagraph(value: unknown): ParagraphFormat {
   for (const key of ["keepNext", "keepLines", "pageBreakBefore", "widowControl"]) if (typeof raw[key] === "boolean") result[key] = raw[key];
   if (["left", "center", "right", "justify"].includes(String(raw.alignment))) result.alignment = raw.alignment;
   if (["multiple", "exact", "atLeast"].includes(String(raw.lineMode))) result.lineMode = raw.lineMode;
+  if (["em", "font"].includes(String(raw.lineBasis))) result.lineBasis = raw.lineBasis;
   if (Array.isArray(raw.tabs)) result.tabs = cleanTabStops(raw.tabs);
   return result as ParagraphFormat;
 }
@@ -44,10 +47,10 @@ export function cleanStyleText(value: unknown): Partial<StyleText> {
 }
 export function paragraphAttrs(el: HTMLElement) {
   const rawText = jsonAttribute(el,"data-edtr-style-text");
-  return { styleId: el.getAttribute("data-edtr-style") || null, styleText: rawText ? { ...DEFAULT_STYLE_TEXT,...cleanStyleText(rawText) } : null, styleParagraph: cleanParagraph(jsonAttribute(el, "data-edtr-style-paragraph")), paragraphFormat: cleanParagraph(jsonAttribute(el, "data-edtr-paragraph")) };
+  return { styleId: el.getAttribute("data-edtr-style") || null, styleText: rawText ? { ...DEFAULT_STYLE_TEXT,...cleanStyleText(rawText) } : null, styleParagraph: cleanParagraph(jsonAttribute(el, "data-edtr-style-paragraph")), tableStyleParagraph: cleanParagraph(jsonAttribute(el,"data-edtr-table-style-paragraph")), paragraphFormat: cleanParagraph(jsonAttribute(el, "data-edtr-paragraph")) };
 }
 export function paragraphDOM(node: PMNode): Record<string, string> {
-  return { ...(effectiveParagraph(node).lineMode ? { "data-edtr-line-mode":effectiveParagraph(node).lineMode! }:{}), ...(node.attrs.styleId ? { "data-edtr-style": node.attrs.styleId, "data-edtr-style-text": JSON.stringify(node.attrs.styleText), "data-edtr-style-paragraph": JSON.stringify(node.attrs.styleParagraph) } : {}), ...(Object.keys(node.attrs.paragraphFormat || {}).length ? { "data-edtr-paragraph": JSON.stringify(node.attrs.paragraphFormat) } : {}) };
+  return { ...(effectiveParagraph(node).lineMode ? { "data-edtr-line-mode":effectiveParagraph(node).lineMode! }:{}), ...(Object.keys(node.attrs.tableStyleParagraph || {}).length ? { "data-edtr-table-style-paragraph":JSON.stringify(node.attrs.tableStyleParagraph) } : {}), ...(node.attrs.styleId ? { "data-edtr-style": node.attrs.styleId, "data-edtr-style-text": JSON.stringify(node.attrs.styleText), "data-edtr-style-paragraph": JSON.stringify(node.attrs.styleParagraph) } : {}), ...(Object.keys(node.attrs.paragraphFormat || {}).length ? { "data-edtr-paragraph": JSON.stringify(node.attrs.paragraphFormat) } : {}) };
 }
 const W = "http://schemas.openxmlformats.org/wordprocessingml/2006/main";
 const paragraphCache = new Map<string,ParagraphFormat>();
@@ -61,7 +64,7 @@ export function paragraphFromXml(raw: string | Element | null): ParagraphFormat 
   const number = (name: string, key: string) => { const v = attr(name,key); return v !== null && v !== undefined && Number.isFinite(Number(v)) ? Number(v) : undefined; };
   for (const [key, name, prop] of [["left","ind","left"],["right","ind","right"],["before","spacing","before"],["after","spacing","after"]] as const) { const n = number(name,prop); if (n !== undefined) result[key] = n; }
   const first = number("ind","firstLine"), hanging = number("ind","hanging"); if (first !== undefined || hanging !== undefined) result.firstLine = (first || 0) - (hanging || 0);
-  const line = number("spacing","line"); if (line !== undefined) { result.lineMode = attr("spacing","lineRule") === "exact" ? "exact" : attr("spacing","lineRule") === "atLeast" ? "atLeast" : "multiple"; result.lineValue = line / (result.lineMode === "multiple" ? 240 : 20); }
+  const line = number("spacing","line"); if (line !== undefined) { result.lineMode = attr("spacing","lineRule") === "exact" ? "exact" : attr("spacing","lineRule") === "atLeast" ? "atLeast" : "multiple"; result.lineValue = line / (result.lineMode === "multiple" ? 240 : 20); if (result.lineMode === "multiple") result.lineBasis = "font"; }
   const align = attr("jc","val"); if (["left","center","right","both"].includes(align || "")) result.alignment = align === "both" ? "justify" : align as ParagraphFormat["alignment"];
   for (const key of ["keepNext", "keepLines", "pageBreakBefore", "widowControl"] as const) if (element(key)) result[key] = !["0","false","off"].includes(attr(key,"val") || "");
   if (element("tabs")) result.tabs = parseTabStopsXml(root).stops;
@@ -71,14 +74,33 @@ export function paragraphFromXml(raw: string | Element | null): ParagraphFormat 
 export function effectiveParagraph(node: PMNode): ParagraphFormat {
   return { ...paragraphFromXml(node.attrs.docxProperties), ...(node.attrs.styleParagraph || {}), ...(node.attrs.textAlign ? { alignment: node.attrs.textAlign } : {}), ...(node.attrs.indent ? { left: node.attrs.indent * 360 } : {}), ...(node.attrs.lineHeight ? { lineMode: "multiple", lineValue: Number(node.attrs.lineHeight) } : {}), ...(node.attrs.paragraphFormat || {}), tabs: effectiveTabs(node) };
 }
+/** The font profile used for Word automatic spacing, derived from actual runs. */
+export function lineMetricFamily(node: PMNode): string {
+  const inherited = node.attrs.styleText?.family || "", families = new Set<string>();
+  node.descendants(child => {
+    if (!child.isText || !child.text?.trim()) return;
+    const family = child.marks.find(mark => mark.type.name === "fontFamily")?.attrs.family || inherited;
+    families.add(String(family).split(",")[0].trim().replace(/^["']|["']$/g, "").toLowerCase());
+  });
+  return families.size > 1 ? "" : [...families][0] || inherited;
+}
 export function paragraphCSS(node: PMNode): string {
-  // Only newly managed values override the original imported CSS.
-  const p = { ...(node.attrs.styleParagraph || {}), ...(node.attrs.textAlign ? {alignment:node.attrs.textAlign}:{}), ...(node.attrs.indent ? {left:node.attrs.indent*360}:{}), ...(node.attrs.lineHeight ? {lineMode:"multiple",lineValue:Number(node.attrs.lineHeight)}:{}), ...(node.attrs.paragraphFormat || {}) } as ParagraphFormat;
+  const native = paragraphFromXml(node.attrs.docxProperties);
+  const p = { ...native, ...(node.attrs.styleParagraph || {}), ...(node.attrs.textAlign ? {alignment:node.attrs.textAlign}:{}), ...(node.attrs.indent ? {left:node.attrs.indent*360}:{}), ...(node.attrs.lineHeight ? {lineMode:"multiple",lineValue:Number(node.attrs.lineHeight)}:{}), ...(node.attrs.paragraphFormat || {}) } as ParagraphFormat;
   const css: string[] = [];
   if (node.attrs.styleId && node.attrs.styleText) { const text = node.attrs.styleText as StyleText; css.push(`font-family:${text.family};font-size:${text.size}pt;font-weight:400;font-style:normal;text-decoration:none;color:#000`); }
   for (const [key, prop] of [["left","margin-left"],["right","margin-right"],["firstLine","text-indent"],["before","margin-top"],["after","margin-bottom"]] as const) if (p[key] !== undefined) css.push(`${prop}:${p[key]! / 20}pt`);
   if (p.alignment !== undefined) css.push(`text-align:${p.alignment}`);
-  if (p.lineValue !== undefined) css.push(`line-height:${p.lineValue}${p.lineMode === "multiple" || !p.lineMode ? "" : "pt"}`);
+  if (p.lineValue !== undefined) {
+    const multiple = p.lineMode === "multiple" || !p.lineMode;
+    // Native automatic spacing uses font metrics. Keep its original multiple
+    // in the model/DOCX; authored HTML multiples still mean CSS em multiples.
+    // A single paragraph-level CSS multiplier cannot represent different font
+    // metric bases on different lines. Keep the fallback for mixed families.
+    const family = lineMetricFamily(node);
+    const line = multiple && (p.lineBasis || native.lineBasis) === "font" ? wordAutomaticLineHeight(p.lineValue, family) : p.lineValue;
+    css.push(`line-height:${line}${multiple ? "" : "pt"}`);
+  }
   if (p.keepNext !== undefined) css.push(`break-after:${p.keepNext ? "avoid" : "auto"}`);
   if (p.keepLines !== undefined) css.push(`break-inside:${p.keepLines ? "avoid" : "auto"}`);
   if (p.pageBreakBefore !== undefined) css.push(`break-before:${p.pageBreakBefore ? "page" : "auto"}`);

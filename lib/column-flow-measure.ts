@@ -7,7 +7,7 @@ import { measureColumnTable, type ColumnTableMeasurement, type TableGroupBand } 
 import { annotateParagraphConstraints } from './column-paragraph-flow';
 
 type Line = { from: number; to: number; top: number; bottom: number; keyTop: number };
-export type NaturalBlock = { pos: number; from: number; to: number; top: number; left: number; width: number; height: number; paddingLeft: number; paddingRight: number; textblock: boolean };
+export type NaturalBlock = { pos: number; from: number; to: number; top: number; left: number; width: number; height: number; paddingLeft: number; paddingRight: number; marginBottom: number; borderBottom: string; borderBottomWidth: number; textblock: boolean };
 export type ColumnMeasurement = { sections: FlowSection[]; blocks: NaturalBlock[]; tables: ColumnTableMeasurement[]; complete: boolean; diagnostics: FlowDiagnostic[] };
 /**
  * The caller must present an unfragmented, column-width view with settled tabs.
@@ -32,6 +32,8 @@ export function measureNaturalColumnSections(view: EditorView, sections: readonl
     const elementRect = element.getBoundingClientRect(), sourceLeft = (elementRect.left - root.left) / scale, sourceWidth = elementRect.width / scale;
     const sourceMarginLeft = Number.parseFloat(style.marginLeft) || 0, sourceMarginRight = Number.parseFloat(style.marginRight) || 0;
     const marginTop = Math.max(0, Number.parseFloat(style.marginTop) || 0), marginBottom = Math.max(0, Number.parseFloat(style.marginBottom) || 0);
+    const topInset = (Number.parseFloat(style.paddingTop) || 0) + (Number.parseFloat(style.borderTopWidth) || 0);
+    const bottomInset = (Number.parseFloat(style.paddingBottom) || 0) + (Number.parseFloat(style.borderBottomWidth) || 0);
     const lines: Line[] = [], breaks: Array<{ at: number; unit: FlowUnit }> = [], floats: Array<{ pos: number; top: number; bottom: number; wrap: string }> = [];
     let line: Line | undefined;
     const finish = () => { if (line && line.to > line.from) lines.push(line); line = undefined; };
@@ -79,9 +81,9 @@ export function measureNaturalColumnSections(view: EditorView, sections: readonl
         fail(index, code, floats[a].pos, floats[b].pos - floats[a].pos + 1); return;
       }
     }
-    if (!lines.length && !breaks.length) { mutable[index].push({ from: pos + 1, to: pos + 1, height: lineHeight + marginTop + marginBottom, kind: 'line', sourceTop: (elementRect.top - root.top) / scale, sourceBlock: pos, sourceLeft, sourceWidth, sourceMarginLeft, sourceMarginRight, offsetY: marginTop }); return; }
+    if (!lines.length && !breaks.length) { mutable[index].push({ from: pos + 1, to: pos + 1, height: lineHeight + marginTop + marginBottom + topInset + bottomInset, kind: 'line', sourceTop: (elementRect.top - root.top) / scale, sourceBlock: pos, sourceLeft, sourceWidth, sourceMarginLeft, sourceMarginRight, offsetY: marginTop + topInset, trailingMargin: marginBottom }); return; }
     let units: FlowUnit[] = lines.map((item, i) => ({ from: item.from, to: item.to, kind: 'line', sourceTop: item.keyTop, sourceBlock: pos, sourceLeft, sourceWidth, sourceMarginLeft, sourceMarginRight, offsetY: item.keyTop - item.top, height: Math.max(item.bottom - item.top, i + 1 < lines.length && lines[i + 1].top > item.top ? lines[i + 1].top - item.top : lineHeight) }));
-    if (units.length) { units[0].height += marginTop; units[0].offsetY = (units[0].offsetY || 0) + marginTop; units[units.length - 1].height += marginBottom; }
+    if (units.length) { units[0].height += marginTop + topInset; units[0].offsetY = (units[0].offsetY || 0) + marginTop + topInset; units[units.length - 1].height += marginBottom + bottomInset; units[units.length - 1].trailingMargin = marginBottom; }
     if (floats.length) {
       const grouped: FlowUnit[] = [];
       for (let start = 0; start < lines.length;) {
@@ -93,11 +95,11 @@ export function measureNaturalColumnSections(view: EditorView, sections: readonl
           for (const item of floats) if (item.pos >= lines[end].from && item.pos < lines[end].to) bottom = Math.max(bottom, item.bottom);
         }
         if (breaks.some(item => item.at > lines[start].from && item.at < lines[end].to)) { fail(index, 'float-crosses-explicit-break', firstFloat.pos, 1); return; }
-        const group = units.slice(start, end + 1), base = lines[start].top, lead = start === 0 ? marginTop : 0;
+        const group = units.slice(start, end + 1), base = lines[start].top, lead = start === 0 ? marginTop + topInset : 0;
         const height = Math.max(group.reduce((sum, item) => sum + item.height, 0), bottom - base + lead);
         const subLines = group.map((item, offset) => ({ from: item.from, to: item.to, sourceTop: item.sourceTop!, offsetY: item.sourceTop! - base + lead,
           height: offset === group.length - 1 ? height - (item.sourceTop! - base + lead) : Math.max(0, item.height - (item.offsetY || 0)) }));
-        grouped.push({ from: group[0].from, to: group[group.length - 1].to, height, kind: 'line', sourceBlock: pos, sourceLeft, sourceWidth, sourceMarginLeft, sourceMarginRight, subLines });
+        grouped.push({ from: group[0].from, to: group[group.length - 1].to, height, kind: 'line', sourceBlock: pos, sourceLeft, sourceWidth, sourceMarginLeft, sourceMarginRight, trailingMargin: group.at(-1)?.trailingMargin, subLines });
         start = end + 1;
       }
       units = grouped;
@@ -150,7 +152,8 @@ export function measureNaturalColumnSections(view: EditorView, sections: readonl
       if (!(element instanceof HTMLElement)) { fail(index, 'missing-measurement-dom', pos, node.nodeSize); return false; }
       const rect = element.getBoundingClientRect(), style = getComputedStyle(element);
       blocks.push({ pos, from: pos + 1, to: pos + node.nodeSize - 1, top: (rect.top - root.top) / scale, left: (rect.left - root.left) / scale,
-        width: rect.width / scale, height: rect.height / scale, paddingLeft: Number.parseFloat(style.paddingLeft) || 0, paddingRight: Number.parseFloat(style.paddingRight) || 0, textblock: node.isTextblock });
+        width: rect.width / scale, height: rect.height / scale, paddingLeft: Number.parseFloat(style.paddingLeft) || 0, paddingRight: Number.parseFloat(style.paddingRight) || 0, marginBottom: Number.parseFloat(style.marginBottom) || 0,
+        borderBottom: style.borderBottom, borderBottomWidth: Number.parseFloat(style.borderBottomWidth) || 0, textblock: node.isTextblock });
     }
     if (node.isTextblock) { collectTextblock(node, pos, index); return false; }
     if (node.isAtom) { fail(index, 'unsupported-structural-object', pos, node.nodeSize); return false; }

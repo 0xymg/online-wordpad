@@ -400,11 +400,11 @@ class TableNodeView {
   ) {
     // prosemirror-tables TableView'ını kullan (column resizing desteği için)
     this.tableView = new TableView(node, 25);
-    this.applyTableStyle(node);
 
     // Wrapper
     this.dom = document.createElement("div");
     this.dom.className = "pm-table-wrapper";
+    this.applyTableStyle(node);
 
     // Drag handle
     this.handle = document.createElement("div");
@@ -438,6 +438,7 @@ class TableNodeView {
   }
 
   private applyTableStyle(node: PMNode) {
+    this.dom.style.margin = node.attrs.docxProperties || node.attrs.docxGrid || node.attrs.docxRows ? "0" : "";
     const table = this.tableView.dom.querySelector("table");
     if (table) {
       const style = document.createElement("table");

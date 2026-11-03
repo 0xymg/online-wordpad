@@ -22,7 +22,9 @@ function readonlyImage(node: PMNode) {
 }
 function readonlyTable(node: PMNode) {
   const tableView = new TableView(node, 25), dom = document.createElement('div');
-  dom.className = 'pm-table-wrapper'; dom.appendChild(tableView.dom);
+  dom.className = 'pm-table-wrapper';
+  if (node.attrs.docxProperties || node.attrs.docxGrid || node.attrs.docxRows) dom.style.margin = '0';
+  dom.appendChild(tableView.dom);
   const table = tableView.dom.querySelector('table'), style = document.createElement('table');
   style.style.cssText = String(node.attrs.layoutStyle || '');
   if (table) { table.style.marginLeft = style.style.marginLeft; table.style.marginRight = style.style.marginRight; }

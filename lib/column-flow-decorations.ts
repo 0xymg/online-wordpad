@@ -28,6 +28,7 @@ export function buildColumnDecorations(doc: PMNode, measurement: ColumnMeasureme
     blocks.push({ ...source, top, bottom, parent, sectionIndex });
   }
   const decorations: Decoration[] = [], overlays: HTMLElement[] = [];
+  let borderLayer: HTMLElement | undefined;
   for (const block of blocks) {
     const node = doc.nodeAt(block.pos), section = measurement.sections[block.sectionIndex];
     if (!node || section.columns.kind !== 'equal') { fail('missing-measured-block', section.id); return empty(); }
@@ -40,7 +41,28 @@ export function buildColumnDecorations(doc: PMNode, measurement: ColumnMeasureme
     const emptyPage = emptyFragment ? flow.pages[emptyFragment.pageIndex] : undefined;
     const emptyShift = emptyFragment && emptyPage ? (rootWidth - emptyPage.geometry.width / 15) / 2 + emptyFragment.rect.x : 0;
     const padding = `padding-left:${block.paddingLeft}px;padding-right:${block.paddingRight + (emptyTextblock ? 0 : extra)}px;`;
-    const style = `position:absolute;top:${block.top - parentTop}px;left:${block.left - parentLeft + emptyShift}px;height:${Math.max(0, block.bottom - block.top)}px;width:${block.width + (emptyTextblock ? 0 : extra)}px;box-sizing:border-box;margin:0;overflow-wrap:anywhere;pointer-events:${emptyTextblock ? 'auto' : 'none'};${padding}`;
+    // The editable block is widened to accommodate moved inline runs. Painting its
+    // border on that box would extend it across the page, so draw it in the
+    // final fragment's column while retaining the measured border in layout.
+    if (block.textblock && block.borderBottomWidth > 0) {
+      const fragments = flow.fragments.filter(fragment => fragment.sourceBlock === block.pos && fragment.kind !== 'table');
+      const last = fragments.at(-1);
+      if (last) {
+        if (!borderLayer) {
+          borderLayer = (view?.dom.ownerDocument || document).createElement('div');
+          borderLayer.setAttribute('aria-hidden', 'true');
+          borderLayer.setAttribute('data-column-paragraph-borders', 'true');
+          borderLayer.style.cssText = `position:absolute;width:${rootWidth}px;height:${flow.pages.at(-1)!.top + flow.pages.at(-1)!.geometry.height / 15}px;pointer-events:none;`;
+          overlays.push(borderLayer);
+        }
+        const page = flow.pages[last.pageIndex], line = borderLayer.ownerDocument.createElement('div');
+        const left = (rootWidth - page.geometry.width / 15) / 2 + last.rect.x + block.left;
+        line.style.cssText = `position:absolute;left:${left}px;top:${last.rect.y + last.rect.height - (last.trailingMargin ?? block.marginBottom) - block.borderBottomWidth}px;width:${block.width}px;border-bottom:${block.borderBottom};box-sizing:border-box;`;
+        borderLayer.appendChild(line);
+      }
+    }
+    const borderOverride = block.textblock && block.borderBottomWidth > 0 ? 'border-bottom-color:transparent;' : '';
+    const style = `position:absolute;top:${block.top - parentTop}px;left:${block.left - parentLeft + emptyShift}px;height:${Math.max(0, block.bottom - block.top)}px;width:${block.width + (emptyTextblock ? 0 : extra)}px;box-sizing:border-box;margin:0;overflow-wrap:anywhere;pointer-events:${emptyTextblock ? 'auto' : 'none'};${padding}${borderOverride}`;
     decorations.push(Decoration.node(block.pos, block.pos + node.nodeSize, { style, 'data-column-block': 'true' }));
   }
   const runs: Run[] = [];

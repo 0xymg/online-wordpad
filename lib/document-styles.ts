@@ -19,15 +19,15 @@ export function documentStyles(layout: DocumentLayout | null): DocumentStyles {
  const result={...BUILTIN_STYLES};
  for(const [id,value]of Object.entries(layout.styles)){
   if(!value||typeof value!=="object"||["__proto__","constructor","prototype"].includes(id))continue;
-  result[id]={name:String(value.name||id).slice(0,80),basedOn:typeof value.basedOn==="string"?value.basedOn:undefined,level:typeof value.level==="number"?Math.max(0,Math.min(6,Math.round(value.level))):undefined,paragraph:cleanParagraph(value.paragraph),text:cleanStyleText(value.text),...(typeof value.rawParagraphProperties==="string"?{rawParagraphProperties:value.rawParagraphProperties}:{})};
+  result[id]={name:String(value.name||id).slice(0,80),basedOn:typeof value.basedOn==="string"?value.basedOn:undefined,level:typeof value.level==="number"?Math.max(0,Math.min(6,Math.round(value.level))):undefined,paragraph:cleanParagraph(value.paragraph),...(value.paragraphDefaults ? {paragraphDefaults:cleanParagraph(value.paragraphDefaults)} : {}),text:cleanStyleText(value.text),...(typeof value.rawParagraphProperties==="string"?{rawParagraphProperties:value.rawParagraphProperties}:{})};
  }
  styleCache.set(layout.styles,result);return {...result};
 }
-export function resolveStyle(styles: DocumentStyles, id: string, seen = new Set<string>()): { paragraph: ParagraphFormat; text: StyleText; level?: number } {
+export function resolveStyle(styles: DocumentStyles, id: string, seen = new Set<string>(), context?: ParagraphFormat): { paragraph: ParagraphFormat; text: StyleText; level?: number } {
   const style = Object.hasOwn(styles,id) ? styles[id] : undefined;
   if (!style || seen.has(id) || seen.size > 20) return { paragraph: { ...DEFAULT_PARAGRAPH }, text: { ...DEFAULT_STYLE_TEXT } };
   seen.add(id);
-  const base = style.basedOn ? resolveStyle(styles,style.basedOn,seen) : { paragraph: {}, text: DEFAULT_STYLE_TEXT, level: undefined };
+  const base = style.basedOn ? resolveStyle(styles,style.basedOn,seen,context) : { paragraph: mergeParagraphFormats(style.paragraphDefaults,context), text: DEFAULT_STYLE_TEXT, level: undefined };
   const own = cleanParagraph(style.paragraph), paragraph = mergeParagraphFormats(base.paragraph, own);
   paragraph.tabs = mergeTabsWithRaw(base.paragraph.tabs, style.rawParagraphProperties, own.tabs);
   return { paragraph, text: { ...base.text,...style.text }, level: style.level ?? base.level };
@@ -66,7 +66,7 @@ function restyleText(tr: Transaction, node: PMNode, pos: number, old: StyleText 
   });
 }
 function styledNode(tr: Transaction,node: PMNode,pos: number,id: string,styles: DocumentStyles,reset: boolean) {
-  const resolved = resolveStyle(styles,id);
+  const resolved = resolveStyle(styles,id,new Set(),node.attrs.tableStyleParagraph || undefined);
   restyleText(tr,node,pos,node.attrs.styleText || (reset ? null : DEFAULT_STYLE_TEXT),resolved.text);
   const type = resolved.level ? node.type.schema.nodes.heading : node.type.schema.nodes.paragraph;
   const point=tr.doc.resolve(pos), index=point.index();

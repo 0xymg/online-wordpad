@@ -58,7 +58,7 @@ const paragraphNodeSpec: NodeSpec = {
   ...basicSchema.spec.nodes.get("paragraph"),
   attrs: {
     ...rawAttrs, ...referenceParagraphAttrs, ...noteProjectionAttrs, ...bibliographyParagraphAttrs,
-    styleId: { default: null }, styleText: { default: null }, styleParagraph: { default: null }, paragraphFormat: { default: null },
+    styleId: { default: null }, styleText: { default: null }, styleParagraph: { default: null }, tableStyleParagraph: { default: null }, paragraphFormat: { default: null }, lineMetricFamily: { default: null },
     textAlign: { default: null },
     indent: { default: 0 },
     lineHeight: { default: null },
@@ -73,7 +73,7 @@ const paragraphNodeSpec: NodeSpec = {
         ...parseRaw(el), ...paragraphAttrs(el), ...parseReferenceParagraphAttrs(el), ...parseNoteProjectionAttrs(el), ...parseBibliographyParagraphAttrs(el),
         textAlign: el.hasAttribute("data-edtr-style") ? null : normalizeTextAlign(el.style.textAlign),
         indent: el.hasAttribute("data-docx-properties") ? 0 : parseIndentFromDom(el),
-        lineHeight: el.hasAttribute("data-edtr-style") || /[a-z%]/i.test(el.style.lineHeight) ? null : normalizeLineHeight(el.style.lineHeight),
+        lineHeight: el.hasAttribute("data-edtr-style") || el.hasAttribute("data-docx-properties") || /[a-z%]/i.test(el.style.lineHeight) ? null : normalizeLineHeight(el.style.lineHeight),
       };
     },
   }],
@@ -98,7 +98,7 @@ const headingNodeSpec: NodeSpec = {
   attrs: {
     level: { default: 1 },
     ...rawAttrs, ...referenceHeadingAttrs,
-    styleId: { default: null }, styleText: { default: null }, styleParagraph: { default: null }, paragraphFormat: { default: null },
+    styleId: { default: null }, styleText: { default: null }, styleParagraph: { default: null }, tableStyleParagraph: { default: null }, paragraphFormat: { default: null }, lineMetricFamily: { default: null },
     textAlign: { default: null },
     indent: { default: 0 },
     lineHeight: { default: null },
@@ -114,7 +114,7 @@ const headingNodeSpec: NodeSpec = {
         ...parseRaw(el), ...paragraphAttrs(el), ...parseReferenceParagraphAttrs(el),
         textAlign: el.hasAttribute("data-edtr-style") ? null : normalizeTextAlign(el.style.textAlign),
         indent: el.hasAttribute("data-docx-properties") ? 0 : parseIndentFromDom(el),
-        lineHeight: el.hasAttribute("data-edtr-style") || /[a-z%]/i.test(el.style.lineHeight) ? null : normalizeLineHeight(el.style.lineHeight),
+        lineHeight: el.hasAttribute("data-edtr-style") || el.hasAttribute("data-docx-properties") || /[a-z%]/i.test(el.style.lineHeight) ? null : normalizeLineHeight(el.style.lineHeight),
       };
     },
   })),

@@ -9,7 +9,21 @@ export async function exportDocumentStyles(blob: Blob,doc: PMNode): Promise<Blob
   const zip=await JSZip.loadAsync(await blob.arrayBuffer());
   const xml=new DOMParser().parseFromString(await zip.file("word/styles.xml")!.async("string"),"application/xml");
   const make=(name:string,value?:string|number)=>{const e=xml.createElementNS(W,`w:${name}`);if(value!==undefined)e.setAttributeNS(W,"w:val",String(value));return e;};
-  for(const [id,style] of Object.entries(documentStyles(doc.attrs.layout))){
+  const styles=documentStyles(doc.attrs.layout);
+  // Native document defaults stay below table and paragraph style declarations.
+  // Serializing them into Normal would incorrectly override table-style spacing.
+  const defaults=Object.values(styles).find(style=>style.paragraphDefaults)?.paragraphDefaults;
+  if(defaults){
+    let root=Array.from(xml.documentElement.children).find(el=>el.localName==="docDefaults");
+    if(!root){root=make("docDefaults");xml.documentElement.insertBefore(root,xml.documentElement.firstChild);}
+    let paragraph=Array.from(root.children).find(el=>el.localName==="pPrDefault");
+    if(!paragraph){paragraph=make("pPrDefault");root.appendChild(paragraph);}
+    const old=Array.from(paragraph.children).find(el=>el.localName==="pPr");
+    const node=doc.type.schema.nodes.paragraph.create({paragraphFormat:defaults,docxProperties:old?new XMLSerializer().serializeToString(old):null});
+    const properties=new DOMParser().parseFromString(paragraphXml(node),"application/xml").documentElement;
+    if(old)old.replaceWith(properties);else paragraph.appendChild(properties);
+  }
+  for(const [id,style] of Object.entries(styles)){
     for(const old of Array.from(xml.documentElement.children))if(old.localName==="style"&&old.getAttributeNS(W,"styleId")===id)old.remove();
     const el=make("style");el.setAttributeNS(W,"w:type","paragraph");el.setAttributeNS(W,"w:styleId",id);if(id==="Normal")el.setAttributeNS(W,"w:default","1");
     el.appendChild(make("name",style.name));if(style.basedOn)el.appendChild(make("basedOn",style.basedOn));el.appendChild(make("qFormat"));

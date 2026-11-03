@@ -4,16 +4,16 @@ import type { EditorView } from 'prosemirror-view';
 import type { Node as PMNode } from 'prosemirror-model';
 import type { TabContentGeometry } from './tab-dom-layout';
 import type { TableGroupBand } from './column-flow-tables';
-import { paragraphFlowDecision, type ParagraphFlowPolicy } from './column-paragraph-flow';
+import { paragraphFlowDecision, trimParagraphAfter, type ParagraphFlowPolicy } from './column-paragraph-flow';
 export type ColumnGeometry = { width: number; height: number; margins: { top: number; right: number; bottom: number; left: number } };
 export type FlowTableUnit = { tablePos: number; groupIndex: number; band: TableGroupBand; headerHeight: number; headerGroup?: boolean };
 export type FlowSubLine = { from: number; to: number; sourceTop: number; offsetY: number; height: number };
-export type FlowUnit = { from: number; to: number; height: number; kind: 'line' | 'block' | 'table' | 'column_break' | 'page_break'; sourceTop?: number; sourceBlock?: number; sourceLeft?: number; sourceWidth?: number; sourceMarginLeft?: number; sourceMarginRight?: number; offsetY?: number; table?: FlowTableUnit; paragraph?: ParagraphFlowPolicy; subLines?: FlowSubLine[] };
+export type FlowUnit = { from: number; to: number; height: number; kind: 'line' | 'block' | 'table' | 'column_break' | 'page_break'; sourceTop?: number; sourceBlock?: number; sourceLeft?: number; sourceWidth?: number; sourceMarginLeft?: number; sourceMarginRight?: number; offsetY?: number; trailingMargin?: number; table?: FlowTableUnit; paragraph?: ParagraphFlowPolicy; subLines?: FlowSubLine[] };
 export type FlowSection = { id: string; geometry: ColumnGeometry; start: 'nextPage' | 'continuous'; columns: SectionColumns; flowDirection: SectionFlowDirection; units: readonly FlowUnit[] };
 export type FlowRect = { x: number; y: number; width: number; height: number };
 export type FlowPage = { top: number; geometry: ColumnGeometry; section: number; sectionPage: number };
 export type FlowRegion = { pageIndex: number; sectionId: string; bandTop: number; bandHeight: number; direction: 'ltr' | 'rtl'; columns: FlowRect[]; separator: boolean; activeColumns: number };
-export type FlowFragment = { from: number; to: number; pageIndex: number; regionIndex: number; columnIndex: number; rect: FlowRect; kind: 'line' | 'block' | 'table'; sourceTop?: number; sourceBlock?: number; sourceLeft?: number; sourceWidth?: number; sourceMarginLeft?: number; sourceMarginRight?: number; table?: FlowTableUnit & { repeatedHeaderHeight: number } };
+export type FlowFragment = { from: number; to: number; pageIndex: number; regionIndex: number; columnIndex: number; rect: FlowRect; kind: 'line' | 'block' | 'table'; sourceTop?: number; sourceBlock?: number; sourceLeft?: number; sourceWidth?: number; sourceMarginLeft?: number; sourceMarginRight?: number; trailingMargin?: number; table?: FlowTableUnit & { repeatedHeaderHeight: number } };
 export type FlowDiagnostic = { code: string; sectionId: string; from?: number; to?: number };
 export type FlowLayout = { pages: FlowPage[]; regions: FlowRegion[]; fragments: FlowFragment[]; complete: boolean; diagnostics: FlowDiagnostic[] };
 /** Physical X shift between logical columns, including centered mixed-size sheets. */
@@ -147,7 +147,7 @@ function fit(units: readonly FlowUnit[], start: number, count: number, capacity:
     if (policy) {
       const placedLines = placements.filter(item => item.column === column && item.unit.paragraph?.block === policy.block).length;
       const decision = paragraphFlowDecision(units, index, { y, capacity, atPageStart: physicalStart && column === 0 && y <= epsilon, placedLines,
-        fullCapacity, availableBand, partialBand: availableBand < fullCapacity - epsilon });
+        fullCapacity, availableBand, partialBand: availableBand < fullCapacity - epsilon, trimAfter: capacity >= availableBand - epsilon });
       if (decision === 'page') { pageBreak = true; break; }
       if (decision === 'column') { if (++column >= count) break; y = 0; continue; }
     }
@@ -161,14 +161,18 @@ function fit(units: readonly FlowUnit[], start: number, count: number, capacity:
     }
     const header = () => unit.table && y <= epsilon && units.slice(0, index).some(prior => prior.table?.tablePos === unit.table?.tablePos) ? unit.table.headerHeight : 0;
     let repeatedHeaderHeight = header(), required = unit.height + repeatedHeaderHeight;
+    if (capacity >= availableBand - epsilon) required = trimParagraphAfter(unit, y, required, capacity);
     if (!Number.isFinite(required) || required < 0 || required > capacity + epsilon && y <= epsilon) return { end: index, placements, used, pageBreak, columnsUsed: Math.min(count, column + 1), overflow: unit, requiredHeight: required };
     if (y + required > capacity + epsilon) {
       if (++column >= count) break;
       y = 0;
       repeatedHeaderHeight = header(); required = unit.height + repeatedHeaderHeight;
+      if (capacity >= availableBand - epsilon) required = trimParagraphAfter(unit, y, required, capacity);
       if (required > capacity + epsilon) return { end: index, placements, used, pageBreak, columnsUsed: Math.min(count, column + 1), overflow: unit, requiredHeight: required };
     }
-    placements.push({ unit, column, y, repeatedHeaderHeight }); y += required; used = Math.max(used, y); index++;
+    const trimmed = unit.height + repeatedHeaderHeight - required;
+    const placedUnit = trimmed > 0 ? { ...unit, height: unit.height - trimmed, trailingMargin: Math.max(0, (unit.trailingMargin || 0) - trimmed), ...(unit.subLines ? { subLines: unit.subLines.map((line, i) => i === unit.subLines!.length - 1 ? { ...line, height: Math.max(0, line.height - trimmed) } : line) } : {}) } : unit;
+    placements.push({ unit: placedUnit, column, y, repeatedHeaderHeight }); y += required; used = Math.max(used, y); index++;
   }
   return { end: index, placements, used, pageBreak, columnsUsed: Math.min(count, column + 1) };
 }
@@ -253,13 +257,13 @@ export function solveColumnFlow(sections: readonly FlowSection[], pageGap = 26, 
           for (const line of item.unit.subLines) result.fragments.push({ from: line.from, to: line.to, pageIndex, regionIndex, columnIndex: item.column,
             rect: { x: col.x, y: col.y + item.y + line.offsetY, width: col.width, height: line.height }, kind: 'line',
             sourceTop: line.sourceTop, sourceBlock: item.unit.sourceBlock, sourceLeft: item.unit.sourceLeft, sourceWidth: item.unit.sourceWidth,
-            sourceMarginLeft: item.unit.sourceMarginLeft, sourceMarginRight: item.unit.sourceMarginRight });
+            sourceMarginLeft: item.unit.sourceMarginLeft, sourceMarginRight: item.unit.sourceMarginRight, trailingMargin: item.unit.trailingMargin });
           continue;
         }
         result.fragments.push({ from: item.unit.from, to: item.unit.to, pageIndex, regionIndex, columnIndex: item.column,
           rect: { x: col.x, y: col.y + item.y + item.repeatedHeaderHeight + (item.unit.offsetY || 0), width: col.width, height: item.unit.height - (item.unit.offsetY || 0) }, kind: item.unit.kind as 'line' | 'block' | 'table',
           sourceTop: item.unit.sourceTop, sourceBlock: item.unit.sourceBlock, sourceLeft: item.unit.sourceLeft, sourceWidth: item.unit.sourceWidth,
-          sourceMarginLeft: item.unit.sourceMarginLeft, sourceMarginRight: item.unit.sourceMarginRight,
+          sourceMarginLeft: item.unit.sourceMarginLeft, sourceMarginRight: item.unit.sourceMarginRight, trailingMargin: item.unit.trailingMargin,
           ...(item.unit.table ? { table: { ...item.unit.table, repeatedHeaderHeight: item.repeatedHeaderHeight } } : {}) });
       }
       if (placed.end <= index) { fail(section.id, 'no-progress', section.units[index]); break; }

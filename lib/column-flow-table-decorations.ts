@@ -79,6 +79,9 @@ export function buildTableGroupDecorations(doc: PMNode, measurement: ColumnTable
   if (!measurement.complete) return reject('incomplete-table-measurement');
   if (!node || node.type.spec.tableRole !== 'table' || placements.length !== measurement.groups.length || !Number.isFinite(rootWidth) || rootWidth <= 0 || !Number.isFinite(topOffset) || new Set(placements.map(item => item.groupIndex)).size !== measurement.groups.length) return reject('invalid-table-group-placements');
   if (!table.paintSupported || measurement.groups.some(group => group.rows.some(row => !row.paintSupported) || group.cells.some(cell => !cell.paint.supported))) return reject('unsupported-table-cell-paint');
+  // This prototype narrows its wrapper; a centered or offset inner table can
+  // then resolve a different margin. The production band renderer handles it.
+  if (table.hasWrapper && Math.abs(table.left) > 0.01) return reject('table-group-offset-unsupported');
   const borders = measurement.groups.flatMap(group => group.cells.flatMap(cell => Object.values(cell.paint.borders))).filter(border => border.width > 0 && border.style === 'solid');
   if (new Set(borders.map(border => `${border.width}:${border.color}`)).size > 1) return reject('complex-table-border-conflict');
   const boxes: CellPaintBox[] = [];
@@ -92,21 +95,22 @@ export function buildTableGroupDecorations(doc: PMNode, measurement: ColumnTable
     const regionKey = `${fragment.regionIndex}:${fragment.columnIndex}`;
     if (initialRegion === null) initialRegion = regionKey;
     const x = (rootWidth - item.page.geometry.width / 15) / 2 + fragment.rect.x, targetTop = fragment.rect.y - topOffset;
+    const paintX = x + table.left;
     if (table.headerRows && regionKey !== initialRegion && !visitedRegions.has(regionKey)) {
       if (!table.headerHtml || Math.abs((item.repeatedHeaderHeight || 0) - table.headerHeight) > 0.5 || targetTop < table.headerHeight) return reject('repeated-table-header-space-unverified');
-      headers.push({ left: x, top: targetTop - table.headerHeight });
+      headers.push({ left: paintX, top: targetTop - table.headerHeight });
     }
     visitedRegions.add(regionKey);
     const y = targetTop - (group.top - table.top);
     for (const row of group.rows) {
       const rowNode = doc.nodeAt(row.pos);
       if (!rowNode || rowNode.type.spec.tableRole !== 'row') return reject('missing-table-row');
-      decorations.push(Decoration.node(row.pos, row.pos + rowNode.nodeSize, { style: `position:relative;left:${x}px;top:${y}px;pointer-events:auto;z-index:2;background:transparent;border-color:transparent`, 'data-column-table-row': `${fragment.pageIndex}:${fragment.columnIndex}` }));
+      decorations.push(Decoration.node(row.pos, row.pos + rowNode.nodeSize, { style: `position:relative;left:${x + (table.hasWrapper ? 0 : table.left)}px;top:${y}px;pointer-events:auto;z-index:2;background:transparent;border-color:transparent`, 'data-column-table-row': `${fragment.pageIndex}:${fragment.columnIndex}` }));
     }
     for (const cell of group.cells) {
       const cellNode = doc.nodeAt(cell.pos);
       if (!cellNode) return reject('missing-table-cell');
-      boxes.push({ left: x + cell.left - table.left, top: targetTop + cell.top - group.top, width: cell.width, height: cell.height, paint: cell.paint, from: cell.from, to: cell.to, lines: cell.lines });
+      boxes.push({ left: paintX + cell.left - table.left, top: targetTop + cell.top - group.top, width: cell.width, height: cell.height, paint: cell.paint, from: cell.from, to: cell.to, lines: cell.lines });
       decorations.push(Decoration.node(cell.pos, cell.pos + cellNode.nodeSize, { class: 'pm-column-table-cell' }));
     }
   }
@@ -144,7 +148,7 @@ export function buildTableBandDecorations(doc: PMNode, measurement: ColumnTableM
   const emptyTargets = new Map<number, { x: number; y: number; id: string }>();
   for (const item of placements) {
     const group = measurement.groups[item.groupIndex]; if (!group) continue;
-    const x = (rootWidth - item.page.geometry.width / 15) / 2 + item.rect.x, top = item.rect.y - topOffset;
+    const x = (rootWidth - item.page.geometry.width / 15) / 2 + item.rect.x + table.left, top = item.rect.y - topOffset;
     for (const cell of group.cells) for (const line of cell.lines) if (line.emptyBlock !== undefined && line.top >= item.band.top - 0.5 && line.bottom <= item.band.bottom + 0.5)
       emptyTargets.set(line.blockPos, { x: x + line.blockLeft - table.left, y: top + line.blockTop - item.band.top, id: `${item.pageIndex}:${item.columnIndex}` });
   }
@@ -162,7 +166,7 @@ export function buildTableBandDecorations(doc: PMNode, measurement: ColumnTableM
     for (let index = 0; index < bands.length; index++) {
       const { band, rect, page, pageIndex, regionIndex, columnIndex, repeatedHeaderHeight } = bands[index];
       if (index && Math.abs(bands[index - 1].band.bottom - band.top) > 0.5 || ![band.top, band.bottom, rect.x, rect.y, rect.width, rect.height, page.geometry.width].every(Number.isFinite) || band.bottom <= band.top || table.width > rect.width + 0.5 || band.bottom - band.top > rect.height + 0.5) return reject('invalid-table-band-placement');
-      const x = (rootWidth - page.geometry.width / 15) / 2 + rect.x, targetTop = rect.y - topOffset;
+      const x = (rootWidth - page.geometry.width / 15) / 2 + rect.x + table.left, targetTop = rect.y - topOffset;
       const regionKey = `${regionIndex}:${columnIndex}`;
       if (initialRegion === null) initialRegion = regionKey;
       if (table.headerRows && regionKey !== initialRegion && !visitedRegions.has(regionKey)) {
