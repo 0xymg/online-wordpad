@@ -153,6 +153,66 @@ function setStyles(element: HTMLElement, css: Properties) {
     element.style.setProperty(property, value);
 }
 
+type NativeListPosition = { numId: string; level: number; ordinal: number; ordered: boolean };
+/** Mammoth retains list nesting/type but drops start and concrete overrides.
+ * Count in each original Word story before HTML grouping loses those values. */
+function nativeListPositions(numbering: Document | undefined, styles: Document) {
+  const abstracts = new Map((numbering ? wordElements(numbering, "abstractNum") : []).map(el => [attr(el, "abstractNumId"), el]));
+  const concrete = new Map((numbering ? wordElements(numbering, "num") : []).map(el => [attr(el, "numId"), el]));
+  const styleNodes = new Map(wordElements(styles, "style").map(el => [attr(el, "styleId"), el]));
+  const counters = new Map<string, Map<number, number>>();
+  function styleNumber(id: string | undefined, seen = new Set<string>()): { numId?: string; level?: string } {
+    if (!id || seen.has(id)) return {};
+    seen.add(id); const style = styleNodes.get(id), own = child(child(style, "pPr"), "numPr"), parent = styleNumber(attr(child(style, "basedOn")), seen);
+    return { numId: attr(child(own, "numId")) ?? parent.numId, level: attr(child(own, "ilvl")) ?? parent.level };
+  }
+  function definition(numId: string, level: number, seen = new Set<string>()): { start: number; ordered: boolean; restart: number } | null {
+    if (seen.has(numId)) throw new Error("Cyclic DOCX numbering style");
+    seen.add(numId); const num = concrete.get(numId), abstract = abstracts.get(attr(child(num, "abstractNumId")));
+    if (!num || !abstract) return null;
+    const styleLink = attr(child(abstract, "numStyleLink"));
+    if (styleLink) { const linked = styleNumber(styleLink).numId; return linked ? definition(linked, level, seen) : null; }
+    const override = Array.from(num.children).find(el => el.namespaceURI === W && el.localName === "lvlOverride" && Number(attr(el, "ilvl")) === level);
+    const base = Array.from(abstract.children).find(el => el.namespaceURI === W && el.localName === "lvl" && Number(attr(el, "ilvl")) === level);
+    const effective = child(override, "lvl") || base; if (!effective) return null;
+    const ordered = attr(child(effective, "numFmt")) !== "bullet";
+    let start = Number(attr(child(override, "startOverride")) ?? attr(child(effective, "start")) ?? 1);
+    if (!Number.isSafeInteger(start) || start < 1 || start > 2147483647) {
+      if (ordered) throw new Error("Unsupported DOCX ordered-list start");
+      start = 1; // A bullet's numeric start is not visible ordered-list data.
+    }
+    const explicitRestart = attr(child(effective, "lvlRestart"));
+    return { start, ordered, restart: explicitRestart === "0" ? -1 : explicitRestart === undefined ? level - 1 : Number(explicitRestart) - 1 };
+  }
+  return (p: Element, path: string, paragraphStyle: string): NativeListPosition | null => {
+    const inherited = styleNumber(paragraphStyle), numPr = child(child(p, "pPr"), "numPr"), numId = attr(child(numPr, "numId")) ?? inherited.numId, level = Number(attr(child(numPr, "ilvl")) ?? inherited.level ?? 0);
+    let story = p.getAttributeNS("urn:edtr:docx-import:note-story", "story");
+    p.removeAttributeNS("urn:edtr:docx-import:note-story", "story");
+    if (!numId || numId === "0" || !Number.isInteger(level) || level < 0 || level > 8) return null;
+    if (!story) { let ancestor = p.parentElement; while (ancestor && !["footnote", "endnote", "comment"].includes(ancestor.localName)) ancestor = ancestor.parentElement; story = ancestor ? `${ancestor.localName}:${attr(ancestor, "id")}` : "main"; }
+    const own = definition(numId, level); if (!own) return null;
+    const key = `${path}:${story}:${numId}`, values = counters.get(key) || new Map<number, number>();
+    const ordinal = values.has(level) ? values.get(level)! + 1 : own.start; values.set(level, ordinal);
+    for (const deeper of [...values.keys()]) if (deeper > level && definition(numId, deeper)?.restart === level) values.delete(deeper);
+    counters.set(key, values); return { numId, level, ordinal, ordered: own.ordered };
+  };
+}
+function restoreListPosition(block: HTMLElement, position: NativeListPosition, seen: Map<Element, string>) {
+  if (!position.ordered) return;
+  const item = block.closest("li"), parent = item?.parentElement;
+  if (!item || parent?.tagName !== "OL") return;
+  let list = parent;
+  const items = Array.from(list.children).filter(el => el.tagName === "LI"), index = items.indexOf(item), key = `${position.numId}:${position.level}`;
+  const start = Number(list.getAttribute("start") || 1);
+  if (index > 0 && (seen.get(list) !== key || start + index !== position.ordinal)) {
+    const split = list.cloneNode(false) as HTMLElement;
+    let sibling: ChildNode | null = item;
+    while (sibling) { const next: ChildNode | null = sibling.nextSibling; split.appendChild(sibling); sibling = next; }
+    list.after(split); list = split;
+  }
+  if (!seen.has(list)) { list.setAttribute("start", String(position.ordinal)); seen.set(list, key); }
+}
+
 export async function prepareDocxFormatting(arrayBuffer: ArrayBuffer) {
   const zip = await JSZip.loadAsync(arrayBuffer);
   const read = async (path: string) => {
@@ -178,6 +238,8 @@ export async function prepareDocxFormatting(arrayBuffer: ArrayBuffer) {
     read(relatedPath("theme", `${base}theme/theme1.xml`)),
   ]);
   const styleXml = stylesDoc ?? xml(`<w:styles xmlns:w="${W}"/>`);
+  const listPosition = nativeListPositions(await read(relatedPath("numbering")), styleXml);
+  const listPositions = new Map<string, NativeListPosition>();
   const mainDocument = await read(mainPath);
   if (!mainDocument) throw new Error("DOCX document part is missing");
   const preservation = await captureLayout(zip, mainPath, mainDocument, styleXml);
@@ -462,6 +524,7 @@ export async function prepareDocxFormatting(arrayBuffer: ArrayBuffer) {
     for (const p of wordElements(doc, "p")) {
       let pPr = child(p, "pPr");
       const paragraphStyle = attr(child(pPr,"pStyle")) ?? defaultParagraph ?? "Normal";
+      const list = listPosition(p, path, paragraphStyle);
       const directParagraph = paragraphFromXml(pPr || null);
       const inherited = resolve(paragraphStyle);
       const paragraphProps = {
@@ -491,6 +554,7 @@ export async function prepareDocxFormatting(arrayBuffer: ArrayBuffer) {
       }
       const id = `${prefix}p${paragraphFormats.size}`;
       paragraphFormats.set(id, paragraphFormat(paragraphProps));
+      if (list) listPositions.set(id, list);
       if (importedStyles[paragraphStyle]) paragraphMeta.set(id,{ id:paragraphStyle,direct:directParagraph });
       sourceParagraphs.set(id, p);
       const bookmark = doc.createElementNS(W, "w:bookmarkStart");
@@ -560,6 +624,7 @@ export async function prepareDocxFormatting(arrayBuffer: ArrayBuffer) {
     styleMap,
     restore(html: string): string {
       const doc = new DOMParser().parseFromString(html, "text/html");
+      const restoredLists = new Map<Element, string>();
       for (const marker of Array.from(
         doc.querySelectorAll<HTMLAnchorElement>(`a[id^="${prefix}p"]`),
       )) {
@@ -587,6 +652,8 @@ export async function prepareDocxFormatting(arrayBuffer: ArrayBuffer) {
           }
         }
         if (block && css) setStyles(block, css);
+        const list = listPositions.get(marker.id);
+        if (block && list) restoreListPosition(block, list, restoredLists);
         const original = sourceParagraphs.get(marker.id);
         if (block && original) {
           restoreLayoutProperties(original, block, preservation.sectionXml, tableStyleMargins);

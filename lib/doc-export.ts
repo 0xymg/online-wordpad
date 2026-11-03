@@ -402,7 +402,7 @@ class DocxBuilder {
         if (block.type.name === "bullet_list") {
           out.push(...this.listItems(block, depth + 1, null));
         } else if (block.type.name === "ordered_list") {
-          out.push(...this.listItems(block, depth + 1, this.newNumberRef()));
+          out.push(...this.listItems(block, depth + 1, this.newNumberRef(block)));
         } else if (block.type.name === "paragraph") {
           const marker = firstPara
             ? (numberRef
@@ -423,13 +423,16 @@ class DocxBuilder {
     return out;
   }
 
-  private newNumberRef(): string {
+  private newNumberRef(list: PMNode): string {
+    const start = Number(list.attrs.order ?? 1);
+    if (!Number.isSafeInteger(start) || start < 1 || start > 2147483647) throw new Error("Cannot export an invalid ordered-list start");
     const ref = `ol-${this.numbering.length}`;
     this.numbering.push({
       reference: ref,
       levels: Array.from({ length: 9 }, (_, level) => ({
         level,
         format: LevelFormat.DECIMAL,
+        start,
         text: `%${level + 1}.`,
         alignment: AlignmentType.START,
         style: { paragraph: { indent: { left: 720 * (level + 1), hanging: 360 } } },
@@ -467,7 +470,7 @@ class DocxBuilder {
       }));
     }
     if (name === "bullet_list") return this.listItems(node, 0, null);
-    if (name === "ordered_list") return this.listItems(node, 0, this.newNumberRef());
+    if (name === "ordered_list") return this.listItems(node, 0, this.newNumberRef(node));
     if (name === "table") return [this.tableToDocx(node)];
     if (name === "horizontal_rule") {
       return [new Paragraph({

@@ -57,6 +57,7 @@ export const GOOGLE_FONT_AXES: Record<string, string> = {
 
 /* Families whose stylesheet <link> has already been injected this page. */
 const loadedFamilies = new Set<string>();
+const familyStylesheets = new Map<string, Promise<boolean>>();
 
 /** Extract the primary family name from a CSS font-family value. */
 function primaryFamily(cssFontFamily: string): string {
@@ -92,6 +93,10 @@ export function ensureEditorFont(cssFontFamily: string): void {
   const link = document.createElement("link");
   link.rel = "stylesheet";
   link.href = fontStylesheetUrl(family, axes);
+  familyStylesheets.set(family, new Promise<boolean>(resolve => {
+    link.addEventListener("load", () => resolve(true), { once: true });
+    link.addEventListener("error", () => { loadedFamilies.delete(family); link.remove(); resolve(false); }, { once: true });
+  }));
   document.head.appendChild(link);
 }
 
@@ -108,4 +113,25 @@ export function ensureFontsInHtml(html: string): void {
       ensureEditorFont(family);
     }
   }
+}
+
+/** Wait for requested stylesheet discovery before a measurement's fonts.ready
+ * barrier. Merely inserting a stylesheet does not start FontFaceSet loading. */
+export async function waitForEditorFontStyles(cssValues: readonly string[]): Promise<void> {
+  if (typeof document === "undefined") return;
+  const pending: Promise<boolean>[] = [];
+  for (const value of new Set(cssValues)) {
+    ensureEditorFont(value);
+    const stylesheet = familyStylesheets.get(primaryFamily(value));
+    if (stylesheet) pending.push(stylesheet);
+  }
+  if (!pending.length) return;
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  try {
+    const results = await Promise.race([
+      Promise.all(pending),
+      new Promise<never>((_resolve, reject) => { timer = setTimeout(() => reject(new Error("Document font styles did not load")), 10000); }),
+    ]);
+    if (results.some(ok => !ok)) throw new Error("Document font styles could not load");
+  } finally { if (timer) clearTimeout(timer); }
 }

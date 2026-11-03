@@ -173,7 +173,7 @@ function fit(units: readonly FlowUnit[], start: number, count: number, capacity:
   return { end: index, placements, used, pageBreak, columnsUsed: Math.min(count, column + 1) };
 }
 /** Deterministic region flow. Explicit diagnostics mean callers must not publish a complete layout. */
-export function solveColumnFlow(sections: readonly FlowSection[], pageGap = 26, notes?: { reserveByPage: readonly number[]; advance?: readonly { pos: number; toPage: number }[]; continuationSections?: readonly string[] }): FlowLayout {
+export function solveColumnFlow(sections: readonly FlowSection[], pageGap = 26, notes?: { reserveByPage: readonly number[]; bottomByPage?: readonly number[]; advance?: readonly { pos: number; toPage: number }[]; continuationSections?: readonly string[] }): FlowLayout {
   const result: FlowLayout = { pages: [], regions: [], fragments: [], diagnostics: [], complete: true };
   const fail = (sectionId: string, code: string, unit?: FlowUnit) => { result.complete = false; result.diagnostics.push({ sectionId, code, ...(unit ? { from: unit.from, to: unit.to } : {}) }); };
   let pageIndex = -1, bandTop = 0;
@@ -205,7 +205,9 @@ export function solveColumnFlow(sections: readonly FlowSection[], pageGap = 26, 
       // margins. Its footnote band cannot extend past either bottom boundary.
       const physical = result.pages[pageIndex].geometry;
       const sectionBottom = px(section.geometry.height - section.geometry.margins.bottom);
-      const bottom = (notes ? Math.min(sectionBottom, px(physical.height - physical.margins.bottom)) : sectionBottom) - reserve;
+      const sharedBottom = notes?.bottomByPage?.[pageIndex] ?? Infinity;
+      if (sharedBottom !== Infinity && (!Number.isFinite(sharedBottom) || sharedBottom < 0)) { fail(section.id, 'invalid-note-reservation'); break; }
+      const bottom = (notes ? Math.min(sectionBottom, px(physical.height - physical.margins.bottom), sharedBottom) : sectionBottom) - reserve;
       const available = bottom - bandTop;
       const fullCapacity = bottom - px(section.geometry.margins.top);
       if (fullCapacity <= epsilon) { fail(section.id, 'note-reservation-exceeds-region'); break; }
@@ -268,13 +270,12 @@ export function solveColumnFlow(sections: readonly FlowSection[], pageGap = 26, 
     }
     if (!result.complete) break;
   }
-  // Continuation-only sheets are real physical pages. An adapter may request
-  // them after the body end; arbitrary insertion among sections is not inferred.
+  // Continuation-only sheets are real physical pages. They use the owning
+  // section's geometry; insertion among unfinished body sections is not inferred.
   if (result.complete) for (const sectionId of notes?.continuationSections || []) {
     const sectionIndex = sections.findIndex(section => section.id === sectionId), section = sections[sectionIndex];
-    if (!section || sectionIndex !== sections.length - 1) { fail(sectionId, 'unsupported-note-continuation-section'); break; }
-    const previous = result.pages.at(-1);
-    newPage(section, sectionIndex, previous?.section === sectionIndex ? previous.sectionPage + 1 : 0);
+    if (!section) { fail(sectionId, 'unsupported-note-continuation-section'); break; }
+    newPage(section, sectionIndex, result.pages.filter(page => page.section === sectionIndex).length);
   }
   return result;
 }

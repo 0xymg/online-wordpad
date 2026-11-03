@@ -112,7 +112,22 @@ function validateNativeBody(note: Element, kind: Kind): string | undefined {
   return ownId;
 }
 export async function prepareNoteImport(arrayBuffer: ArrayBuffer, options: { allowFootnotes?: boolean } = {}) {
-  const zip = await JSZip.loadAsync(arrayBuffer), { path, main, rels, body } = await packageMain(zip);
+  const zip = await JSZip.loadAsync(arrayBuffer);
+  // Historical plain packages without OPC root relationships were accepted by
+  // the formatter. Preserve that no-note path, but never guess a note graph.
+  if (!zip.file("_rels/.rels") && zip.file("word/document.xml")) {
+    for (const [name, entry] of Object.entries(zip.files)) {
+      if (entry.dir || !/\.(?:xml|rels)$/i.test(name)) continue;
+      const parsed = parseXml(await entry.async("string")), root = parsed.documentElement;
+      const noteRoot = root.namespaceURI === W && ["footnotes", "endnotes"].includes(root.localName);
+      const noteElements = ["footnoteReference", "endnoteReference", "footnotePr", "endnotePr"].some(tag => all(parsed, tag).length);
+      const noteRelations = Array.from(parsed.getElementsByTagNameNS(PKG, "Relationship")).some(rel => /\/(?:footnotes|endnotes)$/.test(rel.getAttribute("Type") || ""));
+      const noteTypes = Array.from(parsed.getElementsByTagNameNS(CT, "*")).some(type => /wordprocessingml\.(?:footnotes|endnotes)\+xml$/.test(type.getAttribute("ContentType") || ""));
+      if (noteRoot || noteElements || noteRelations || noteTypes || /(?:^|\/)(?:footnotes|endnotes)\.xml$/i.test(name)) fail("Cannot import a native note graph without package relationships");
+    }
+    return { arrayBuffer, restore(html: string) { return { html, notes: {} as Record<string, RecordValue>, notePolicy: defaults(), sectionNotePolicies: [] as SectionPolicy[], hasSettings: false }; } };
+  }
+  const { path, main, rels, body } = await packageMain(zip);
   const policy = defaults();
   // Word uses lowerRoman when native endnote numFmt is absent (MS-OI29500
   // 2.1.306); newly created app notes still use defaultNotePolicy decimal.
@@ -161,7 +176,14 @@ export async function prepareNoteImport(arrayBuffer: ArrayBuffer, options: { all
         if (matching.length !== 1 || matching[0].getAttribute("Type") !== `${R}/hyperlink` || matching[0].getAttribute("TargetMode") !== "External") fail("A native note hyperlink relationship is unsupported or missing");
         const rel = main.importNode(matching[0], true) as Element, relId = `EDTRNoteLink${token}${n}_${all(note, "hyperlink").indexOf(link)}`; rel.setAttribute("Id", relId); rels.documentElement.append(rel); link.setAttributeNS(R, "r:id", relId);
       }
-      prepended.push(markerParagraph(main, start), ...Array.from(note.children).map(el => main.importNode(el, true) as Element), markerParagraph(main, end));
+      const blocks = Array.from(note.children).map(el => {
+        const copy = main.importNode(el, true) as Element;
+        // Shared formatting restores native list counters per Word story even
+        // while note paragraphs temporarily travel through the main part.
+        copy.setAttributeNS("urn:edtr:docx-import:note-story", "edtrNote:story", `${token}-${n}`);
+        return copy;
+      });
+      prepended.push(markerParagraph(main, start), ...blocks, markerParagraph(main, end));
       const t = main.createElementNS(W, "w:t"); t.textContent = owner; ref.replaceWith(t);
       imports.push({ id, kind, nativeId: sourceId, part, start, end, owner });
     }

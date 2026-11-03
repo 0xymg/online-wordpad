@@ -218,7 +218,7 @@ interface FlowUnit {
   rows?: Array<RenderedRow & { top: number; bottom: number }>;
   cells?: Array<{ pos: number; node: PMNode; dom: HTMLElement; blocks: Array<{ node: PMNode; pos: number; dom: HTMLElement }> }>;
 }
-function computeLayout(view: EditorView, cfg: PageLayoutConfig, notes?: { reserveByPage: readonly number[]; extraPages?: number; advance?: readonly { pos: number; toPage: number }[] }): { breaks: PageBreakPoint[]; pages?: RenderedPage[]; tallCells?: number[]; rowHeights?: RenderedRow[]; lastPagePadPx: number; complete: boolean } {
+function computeLayout(view: EditorView, cfg: PageLayoutConfig, notes?: { reserveByPage: readonly number[]; continuationSections?: readonly string[]; advance?: readonly { pos: number; toPage: number }[] }): { breaks: PageBreakPoint[]; pages?: RenderedPage[]; tallCells?: number[]; rowHeights?: RenderedRow[]; lastPagePadPx: number; complete: boolean } {
   const dom = view.dom as HTMLElement;
   const sections = documentSections(view.state.doc);
   const mixed = sections.length > 1;
@@ -412,6 +412,8 @@ function computeLayout(view: EditorView, cfg: PageLayoutConfig, notes?: { reserv
         if (split && split.lineTop > top + MEASURE_EPS) addBreak(unit, split.lineTop, split.pos, true);
         else addBreak(unit, top);
       }
+      const tableAdvance = unit.table ? notes?.advance?.find(item => item.toPage > pages.length - 1 && item.pos >= unit.pos + 1 && item.pos < unit.pos + unit.node.nodeSize - 1) : undefined;
+      if (tableAdvance) addBreak(unit, top);
       const next = units[i + 1];
       if (policy.keep && next && top > pageStart + MEASURE_EPS) {
         const nextBottom = Math.min(bottomOf(next.endDom || next.dom), topOf(next.dom) + Math.max(24, Number.parseFloat(getComputedStyle(next.dom).lineHeight) * 2 || 32));
@@ -446,10 +448,13 @@ function computeLayout(view: EditorView, cfg: PageLayoutConfig, notes?: { reserv
       pages.push({ top: previousPage.top + previousPage.geometry.height / 15 + PAGE_GAP_PX, geometry: nextGeometry, section: nextSection, sectionPage: nextSection === previousPage.section ? previousPage.sectionPage + 1 : 0 });
       lastPagePadPx = pageContentH;
     }
-    for (let extra = 0; extra < (notes?.extraPages || 0); extra++) {
-      const previousPage = pages[pages.length - 1], nextGeometry = sections[currentSection].geometry;
+    for (const sectionId of notes?.continuationSections || []) {
+      const index = sections.findIndex(section => section.id === sectionId);
+      if (index < 0) return { breaks: [], lastPagePadPx: 0, complete: false };
+      const previousPage = pages[pages.length - 1], nextGeometry = sections[index].geometry;
       breaks.push({ pos: view.state.doc.content.size, fillPx: lastPagePadPx, closingMargin: previousPage.geometry.margins.bottom / 15, openingMargin: nextGeometry.margins.top / 15 });
-      pages.push({ top: previousPage.top + previousPage.geometry.height / 15 + PAGE_GAP_PX, geometry: nextGeometry, section: currentSection, sectionPage: previousPage.sectionPage + 1 });
+      const priorCount = pages.filter(page => page.section === index).length;
+      pages.push({ top: previousPage.top + previousPage.geometry.height / 15 + PAGE_GAP_PX, geometry: nextGeometry, section: index, sectionPage: priorCount });
       lastPagePadPx = (nextGeometry.height - nextGeometry.margins.top - nextGeometry.margins.bottom) / 15;
     }
     return { breaks, pages, tallCells, rowHeights: Array.from(rowHeights.values()), lastPagePadPx, complete: true };
@@ -516,14 +521,23 @@ function breakDom(point: PageBreakPoint, top: number, bottom: number, numbers: P
  * in that does not depend on that lifecycle.
  */
 const measurements = new WeakMap<EditorView, (view: EditorView) => void>();
-const noteReservations = new WeakMap<EditorView, { doc: PMNode; reserveByPage: readonly number[]; extraPages: number; advance: readonly { pos: number; toPage: number }[] }>();
+const noteReservations = new WeakMap<EditorView, { doc: PMNode; reserveByPage: readonly number[]; continuationSections: readonly string[]; advance: readonly { pos: number; toPage: number }[]; bottomByPage: readonly number[] }>();
+const noteGeometryRevisions = new WeakMap<EditorView, number>();
+/** Invalidation is synchronous so an in-flight note measurement cannot
+ * publish geometry sampled before a source image or font changed. */
+export function noteGeometryRevision(view: EditorView): number { return noteGeometryRevisions.get(view) || 0; }
+export function invalidateNoteGeometry(view: EditorView): void {
+  noteGeometryRevisions.set(view, noteGeometryRevision(view) + 1);
+  view.dom.parentElement?.querySelectorAll(':scope > .pm-footnote-layer').forEach(layer => layer.remove());
+}
 
 /** A derived reservation is valid only for the document it measured. */
-export function setNoteReservations(view: EditorView, doc: PMNode, reserveByPage: readonly number[] | null, extraPages = 0, advance: readonly { pos: number; toPage: number }[] = []): boolean {
+export function setNoteReservations(view: EditorView, doc: PMNode, reserveByPage: readonly number[] | null, continuationSections: readonly string[] = [], advance: readonly { pos: number; toPage: number }[] = [], bottomByPage: readonly number[] = []): boolean {
   if (view.isDestroyed || view.state.doc !== doc) return false;
-  if (!Number.isInteger(extraPages) || extraPages < 0 || extraPages > 1000) return false;
+  if (continuationSections.length > 1000 || continuationSections.some(id => typeof id !== 'string' || !id)) return false;
   if (advance.some(item => !Number.isInteger(item.pos) || item.pos < 0 || !Number.isInteger(item.toPage) || item.toPage < 0 || item.toPage > 1000)) return false;
-  if (reserveByPage) noteReservations.set(view, { doc, reserveByPage: [...reserveByPage], extraPages, advance: [...advance] });
+  if (bottomByPage.some(value => !Number.isFinite(value) || value < 0)) return false;
+  if (reserveByPage) noteReservations.set(view, { doc, reserveByPage: [...reserveByPage], continuationSections: [...continuationSections], advance: [...advance], bottomByPage: [...bottomByPage] });
   else noteReservations.delete(view);
   remeasurePagination(view); return true;
 }
@@ -611,8 +625,7 @@ export function paginationPlugin(getConfig: () => PageLayoutConfig): Plugin {
         measured = await measureColumnDocument(v);
         if (!measured.complete) return { pages: [], regions: [], fragments: [], complete: false, diagnostics: measured.diagnostics };
         const reserved = noteReservations.get(v);
-        const noteOptions = reserved?.doc === doc ? { reserveByPage: reserved.reserveByPage, advance: reserved.advance,
-          continuationSections: Array.from({ length: reserved.extraPages }, () => measured!.sections.at(-1)!.id) } : undefined;
+        const noteOptions = reserved?.doc === doc ? { reserveByPage: reserved.reserveByPage, bottomByPage: reserved.bottomByPage, advance: reserved.advance, continuationSections: reserved.continuationSections } : undefined;
         const layout = solveColumnFlow(measured.sections, 26, noteOptions);
         built = buildColumnDecorations(doc, measured, layout, v);
         if (!built.complete) return { ...layout, complete: false, diagnostics: built.diagnostics };
@@ -686,6 +699,7 @@ export function paginationPlugin(getConfig: () => PageLayoutConfig): Plugin {
       const cfg = getConfig();
       const sections = documentSections(view.state.doc), mixed = sections.length > 1;
       let useColumns = sections.some(section => section.columns.kind !== 'equal' || section.columns.count > 1);
+      if (!useColumns && noteReservations.get(view)?.doc === view.state.doc && sections.slice(1).some(section => section.geometry.startType === 'continuous')) useColumns = true;
       if (!useColumns) view.state.doc.descendants(node => { if (node.type.name === 'column_break') { useColumns = true; return false; } return !useColumns; });
       if (useColumns && failedColumnDocument === view.state.doc) return;
       if (columnActive && !useColumns) {
@@ -766,7 +780,7 @@ export function paginationPlugin(getConfig: () => PageLayoutConfig): Plugin {
       let used = last ? (last.getBoundingClientRect().bottom - root.top) / scale + (Number.parseFloat(getComputedStyle(last).marginBottom) || 0) : 0;
       // A note-only page has an end-of-document spacer after the final body
       // block. Counting only the block would add that page a second time.
-      if (reserved?.doc === view.state.doc && reserved.extraPages) {
+      if (reserved?.doc === view.state.doc && reserved.continuationSections.length) {
         for (const element of Array.from(view.dom.children)) if (element.classList.contains('pm-page-spacer')) used = Math.max(used, (element.getBoundingClientRect().bottom - root.top) / scale);
       }
       const lastGeometry = pages[pages.length - 1]?.geometry || first;
@@ -1064,9 +1078,12 @@ export function paginationPlugin(getConfig: () => PageLayoutConfig): Plugin {
         if (next !== lastZoom) { lastZoom = next; measure(view); scheduleReferences(); }
       });
       if (page) zoomObserver.observe(page, { attributes: true, attributeFilter: ['style'] });
-      const onLoad = () => { measure(view); scheduleReferences(); };
+      const onLoad = (event?: Event) => {
+        if (event?.type === 'load' && event.target instanceof HTMLImageElement && view.dom.contains(event.target)) invalidateNoteGeometry(view);
+        measure(view); scheduleReferences();
+      };
       const onFontsLoaded = () => {
-        if (noteReservations.has(view)) void import('@/lib/note-single-layout').then(module => { module.invalidateFootnoteLayout(view); scheduleReferences(); });
+        invalidateNoteGeometry(view);
         onLoad();
       };
       const onReferenceCompositionEnd = () => scheduleReferences();

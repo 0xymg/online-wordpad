@@ -1,6 +1,6 @@
 # A5 note acceptance
 
-Status: A5a released in `7258ccf` on 2026-11-03. Vercel deployment succeeded and live editing/import/export/PDF smoke tests passed at https://wordpad.info. A5b development continues on `codex/page-footnotes`. A5a endnotes and A5b real page footnotes are separate acceptance gates. This report does not mark the full A5 milestone complete.
+Status: A5a released in `7258ccf` on 2026-11-03. Vercel deployment succeeded and live editing/import/export/PDF smoke tests passed at https://wordpad.info. A5b implementation and local production acceptance are complete on `codex/page-footnotes`; live release acceptance remains pending. A5a endnotes and A5b real page footnotes have separate acceptance gates.
 
 ## A5a implemented and checked locally
 
@@ -32,7 +32,7 @@ Observed limit: the Word Online editor displayed lower Roman labels despite expl
 - Closed: `check-note-word-roundtrip.cjs` passes the actual Word-normalized fixture through product import/export/reimport, preserving the original note ID, both bodies and explicit decimal policy.
 - Closed: `check-note-output-snapshot.cjs` delays the actual exporter chunk, switches A→B, and confirms FILE_A.docx contains only the settled A content/note while the editor stays on B.
 - Final source checks and production build passed. Live `check-notes-ui.cjs` and `check-note-editing-ui.cjs` passed, covering native DOCX reopen, two-page searchable/linkable PDF, body editing/list/tab/formatting, history, numbering/placement, deletion/undo, read-only and document switching.
-- A5b remains gated for public creation/import/editing/conversion. Saved v5 footnotes have a bounded runtime for single-section one/two-column plain notes and basic lists; unsupported layouts fail with a visible alert and block output. Product PDF/DOCX checks cover two same-line owners, a 600-word continuation, body-before-notes reading order and four bidirectional links. A provisional third blank sheet was caught and removed; the two-column fixture now has exactly two nonempty sheets. Mixed sections/widths, three columns, object/table owners and nested/RTL/non-default-start note lists remain unverified or rejected. Do not describe full A5b as released.
+- A5b creation/import/editing/conversion is enabled in the accepted local build. The live release remains pending. Unsupported layouts fail with a visible alert and block output.
 
 ## Live release evidence
 
@@ -40,3 +40,30 @@ Observed limit: the Word Online editor displayed lower Roman labels despite expl
 - [Vercel successful deployment](https://vercel.com/312sh/online-wordpad/E3ZUM7yt4cYbW2UiYBny7D3hSAVt).
 - Local production tests additionally passed the Word Online-normalized fixture and the gated two-column footnote PDF/DOCX fixture (two nonempty pages).
 - Known baseline local build warnings: missing local Better Auth configuration and Edge runtime deprecation; production build exits successfully. No account settings changed.
+
+## Text export follow-up
+
+`978e2f2` fixes missing canonical note owners/bodies in TXT, Markdown and RTF. Export-only numbers distinguish notes even when native kind/section labels restart. Generated endnote display copies are removed before writing exactly one appendix body; Markdown uses unique footnote keys. Canonical document state is unchanged. Rich RTF marks, tabs, lists and external links remain readable.
+
+The focused graph/GFM tests cover four notes with identical original labels, both kinds, two sections, nested list/table owners, an empty note and a 600-word body. Ordinary TXT field/status and text-box output matches schema-visible text. Vercel deployment succeeded; `check-note-text-ui.cjs` passed on live https://wordpad.info, downloading all three formats and checking all 450 fixture words exactly once and matching owner/body keys.
+
+## A5b local production acceptance (live release pending)
+
+- Actual product PDF/DOCX: two same-line owners, 600-word continuation, one/two/three-column flow, no empty physical pages, body-before-notes extraction and four bidirectional links.
+- Mixed portrait/landscape sections and unequal text widths remeasure only the canonical remaining note range. A 1,600-word five-page fixture retains every word once. Continuous one→two-column sections use one shared note band; actual region margins constrain its width and bottom boundary.
+- Native Word Online fixture: original identities, both bodies and all 600 words survive import → full physical output barrier → native export → reimport. The actual product PDF has two nonempty pages and four links. See `fixtures/notes/README.md` for original-file hashes and the observed Word font-size UI/package discrepancy.
+- Flow-image checks compare painted image rectangles and note bands. Actual single-column inline/wrapLeft and two-column inline/wrapLeft/wrapRight/topBottom PDF fixtures pass. An unresolvable single-column wrapRight pressure case fails visibly with no leftover note layer.
+- Simple table-cell owners pass one/two-column PDF/DOCX, including owners near a page boundary. The two-column boundary fixture verifies the second cell's split text in the correct physical cell lanes across sheets; owner and first note line remain together.
+- `check-note-numbering-layout.cjs`: actual labels 9→10 and 99→100; physical line geometry stays within 1 CSS px at 75%, 125% and 100% user-selected zoom.
+- `FOOTNOTE_REFERENCES=1 check-footnotes-output.cjs`: long footnotes move a heading beyond page one; both PAGEREF and generated TOC match the heading's final PDF page, with all 600 words once. This exercises the shared reference/footnote output loop.
+- `check-note-font-barrier.cjs`: stylesheet discovery remains pending until CSS loads; failure/retry, bounded timeout, late recovery and SSR tested. FontFaceSet readiness alone cannot race ahead of stylesheet discovery.
+- `check-note-rich-render.cjs`: eight full/suffix DOM variants compare original glyph geometry (maximum 0.594 CSS px difference), RTL/LTR, nested/custom-start lists, empty paragraphs, hard breaks and literal paragraph spacing. Entirely marked bold/color/font/link lines retain their enclosing marks across continuations. Dark-theme inherited ink becomes black on paper while explicit red/green remains. Real tab widths and vector dot/dash leaders survive native print PDF; search text is not duplicated.
+- `check-footnote-rich-output.cjs`: actual product two-page PDF/DOCX retains a 600-word bold/red note across both pages alongside RTL, external links, tab leaders and a nested list starting at 7. Text counts, visible color pixels and internal/external links pass.
+- Enabled development UI: `NOTE_KIND=footnote check-note-editing-ui.cjs` and the default endnote run pass insertion, IME, rich editing, numbering, physical-layer navigation, conversion in both directions with identity/history, deletion/undo, read-only and changed-document handling. `check-note-word-footnotes-ui.cjs` directly imports the Word fixture through the public file chooser, edits/exports/reopens native DOCX and verifies a two-page, 600-word PDF with four GoTo links.
+- Delayed source images: one-column completed snapshots invalidate synchronously on the real load event, then regenerate owner targets without changing the document. Two-column layout waits while the asset is pending and completes after release. Both actual PDF/DOCX paths pass with image pixels, exact-once text and correct backlinks.
+- First-use note fonts: an actual inactive-document export initially reproduced `note-layout-stale`. The coordinator now warms all note bodies, then retries at most three times only for a changed geometry epoch with the same connected canonical document. The four-distinct-font first export passes once without errors; the ordinary active-document path remains unchanged.
+- Native ordered-list starts now survive actual export and common import for main text, footnotes and endnotes: root 7, nested 3, ordinary 1, interrupted/resumed 8 and explicit override 9→10. Separate note/main stories do not leak counters. The regression checks actual native start metadata and imported list attributes, not just visible text tokens.
+
+The full shared DOCX import regression passes, including historical no-note packages without root relationships. That fallback returns the original buffer unchanged and rejects any native note graph missing its root relationships. Final TypeScript/scoped lint and production build pass. In the production build, footnote UI/history/conversion and actual native Word import → DOCX download/reopen → two-page PDF pass.
+
+Remaining acceptance: live release. Current explicit backend limits include continuous changes of paper size, page-positioned images, text boxes, nested/merged-cell tables, owner rows too tall to fit, unresolved object overlaps and bounded convergence failures. These are not silently flattened or clipped.
