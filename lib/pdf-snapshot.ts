@@ -2,7 +2,7 @@
  * Page artwork is captured locally at print resolution; an invisible Unicode
  * text layer preserves search/copy without changing the rendered geometry.
  */
-import { PDFDocument,type PDFFont,type PDFPage,PDFName,PDFString } from "pdf-lib";
+import { PDFDocument,type PDFFont,type PDFPage,PDFName,PDFString,PDFHexString,PDFNumber,PDFOperator,PDFOperatorNames,endMarkedContent,beginText,endText,setFontAndSize,setTextMatrix,setTextRenderingMode,TextRenderingMode,pushGraphicsState,popGraphicsState } from "pdf-lib";
 import fontkit from "@pdf-lib/fontkit";
 import { toCanvas,getFontEmbedCSS } from "html-to-image";
 import type { EditorView } from "prosemirror-view";
@@ -26,19 +26,34 @@ async function hiddenText(page:PDFPage,sheet:HTMLElement,fonts:Map<string,Promis
   const node=walker.currentNode as Text,value=node.textContent||'',parent=node.parentElement;if(!parent||!value.trim()||parent.closest('style,script'))continue;
   const css=win.getComputedStyle(parent);if(css.visibility==='hidden'||css.display==='none')continue;
   const range=doc.createRange();range.selectNodeContents(node);if(!Array.from(range.getClientRects()).some(inside))continue;
-  const file=fontFile(css,value);let font=fonts.get(file);
-  if(!font){let bytes=fontBytes.get(file);if(!bytes){bytes=fetch(`${location.origin}/pdf-fonts/${file}`).then(r=>{if(!r.ok)throw new Error('PDF font unavailable');return r.arrayBuffer();});fontBytes.set(file,bytes);}font=bytes.then(data=>page.doc.embedFont(data,{subset:true}));fonts.set(file,font);}
-  const embedded=await font;
-  let line='',rect:DOMRect|null=null;
-  const flush=()=>{if(!line.trim()||!rect){line='';rect=null;return;}const size=Number.parseFloat(css.fontSize)*.75;page.drawText(line,{font:embedded,size,x:Math.max(0,(rect.left-box.left)*.75),y:page.getHeight()-(rect.bottom-box.top)*.75+size*.2,opacity:0});line='';rect=null;};
+  // A mixed-direction text node can have visually distant runs. Latin uses its
+  // own font; Arabic graphemes use their DOM positions and an ActualText span
+  // so conforming PDF readers can copy the logical run as a unit.
+  let line='',rect:DOMRect|null=null,arabic=false,parts:Array<{text:string;rect:DOMRect}>=[];
+  const flush=async()=>{if(!line||!rect){line='';rect=null;return;}const file=fontFile(css,line);let font=fonts.get(file);
+   if(!font){let bytes=fontBytes.get(file);if(!bytes){bytes=fetch(`${location.origin}/pdf-fonts/${file}`).then(r=>{if(!r.ok)throw new Error('PDF font unavailable');return r.arrayBuffer();});fontBytes.set(file,bytes);}font=bytes.then(data=>page.doc.embedFont(data,{subset:true}));fonts.set(file,font);}
+   const embedded=await font,size=Number.parseFloat(css.fontSize)*.75;
+   const draw=(text:string,r:DOMRect)=>page.drawText(text,{font:embedded,size,x:Math.max(0,(r.left-box.left)*.75),y:page.getHeight()-(r.bottom-box.top)*.75+size*.2,opacity:0});
+   if(arabic){page.pushOperators(PDFOperator.of(PDFOperatorNames.BeginMarkedContentSequence,[PDFName.of('Span'),`<< /ActualText ${PDFHexString.fromText(line)} >>`]));for(const part of parts)draw(part.text,part.rect);page.pushOperators(endMarkedContent());}
+   else {
+    // A PDF font can have different advances from the browser font. Position
+    // each grapheme with TJ adjustments while keeping one searchable run.
+    const items=page.doc.context.obj([]);for(let i=0;i<parts.length;i++){const current=parts[i],next=parts[i+1];items.push(embedded.encodeText(current.text));if(next){const advance=embedded.widthOfTextAtSize(current.text,size),target=(next.rect.left-current.rect.left)*.75;items.push(PDFNumber.of((advance-target)*1000/size));}}
+    const fontKey=page.node.newFontDictionary(embedded.name,embedded.ref),x=Math.max(0,(parts[0].rect.left-box.left)*.75),y=page.getHeight()-(rect.bottom-box.top)*.75+size*.2;
+    page.pushOperators(pushGraphicsState(),beginText(),setFontAndSize(fontKey,size),setTextRenderingMode(TextRenderingMode.Invisible),setTextMatrix(1,0,0,1,x,y),PDFOperator.of(PDFOperatorNames.ShowTextAdjusted,[items]),endText(),popGraphicsState());
+   }
+   line='';rect=null;parts=[];};
   for(const part of segmenter.segment(value)){
    range.setStart(node,part.index);range.setEnd(node,part.index+part.segment.length);const r=range.getBoundingClientRect();
-   if(!inside(r)){flush();continue;}
-   if(rect&&Math.abs(r.top-rect.top)>2)flush();
+   if(!inside(r)){await flush();continue;}
+   const nextArabic=/[\u0600-\u08ff\ufb50-\ufdff\ufe70-\ufeff]/u.test(part.segment);
+   if(rect&&(Math.abs(r.top-rect.top)>2||nextArabic!==arabic))await flush();
+   arabic=nextArabic;
    line+=part.segment;
+   parts.push({text:part.segment,rect:r});
    rect=rect?new win.DOMRect(Math.min(rect.left,r.left),Math.min(rect.top,r.top),Math.max(rect.right,r.right)-Math.min(rect.left,r.left),Math.max(rect.bottom,r.bottom)-Math.min(rect.top,r.top)):r;
   }
-  flush();
+  await flush();
  }
  for(const link of Array.from(sheet.querySelectorAll<HTMLAnchorElement>('a[href]'))){const url=new URL(link.href,location.href);if(!['http:','https:','mailto:'].includes(url.protocol))continue;for(const r of Array.from(link.getClientRects())){if(!inside(r))continue;const annotation=page.doc.context.obj({Type:PDFName.of('Annot'),Subtype:PDFName.of('Link'),Rect:[(r.left-box.left)*.75,page.getHeight()-(r.bottom-box.top)*.75,(r.right-box.left)*.75,page.getHeight()-(r.top-box.top)*.75],Border:[0,0,0],A:{S:PDFName.of('URI'),URI:PDFString.of(url.href)}});page.node.addAnnot(page.doc.context.register(annotation));}}
 }

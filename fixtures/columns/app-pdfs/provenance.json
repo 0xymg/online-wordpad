@@ -1,0 +1,33 @@
+{
+  "application": "EDTRDocs",
+  "build": "next build + next start (production, no debug gate)",
+  "captured_utc": "2026-11-03T05:52:19.220771+00:00",
+  "base_commit": "ca3475d11643b773e549abed07a030d771609cda",
+  "application_source_sha256": "e0de90ad68c21748415c53136f7e9f6267b1050dda7ec336f4831986bcbf4de4",
+  "source_digest_definition": "Sorted app/ and lib/ files plus package.json, package-lock.json, next.config.ts, tsconfig.json; each relative path + NUL + bytes + NUL. Tests/docs excluded.",
+  "reference": "../references/report.json",
+  "artifacts": [
+    {
+      "file": "column-widths-balance.pdf",
+      "sha256": "17911e79e314e43e8b00354c5d823dae6cc29baa754e9b9a98ee174f8bec3f8f",
+      "pages": 6
+    },
+    {
+      "file": "continuous-column-changes.pdf",
+      "sha256": "2c7b76954c5f2532e6406fb38f38194ae051f849dbecb831a598e529db2f2dcb",
+      "pages": 1
+    },
+    {
+      "file": "column-page-break-controls.pdf",
+      "sha256": "87dbc2faeac8331833f11aa4bfb2f7754fc65233c59860b6f12f8731e2f87d23",
+      "pages": 5
+    },
+    {
+      "file": "rtl-column-order.pdf",
+      "sha256": "c7a1c6568f25184352cf3c9288452617a96c57391006b3cc02d77e5e18679e26",
+      "pages": 3
+    }
+  ],
+  "result": "515 source markers, no omissions/duplicates; physical pages and columns match the frozen Word Online references.",
+  "visual_fidelity": "NOT_SCORED: PDF text-layer baselines use different embedded fallback fonts; not a pixel-equivalence claim."
+}

@@ -23,10 +23,25 @@ const { chromium } = require(process.env.PLAYWRIGHT_MODULE || 'playwright');
   await page.keyboard.press('Meta+Shift+z');await page.waitForTimeout(200);assert.match(await page.locator('.ProseMirror').innerText(),/NEW DOCUMENT/);
   const beforeReload=await page.evaluate(()=>JSON.parse(localStorage.getItem('wordpad-files'))[0].html);assert.match(beforeReload,/data-edtr-model/,'new document stores versioned model');
   const modelBefore=await page.evaluate(html=>JSON.parse(new DOMParser().parseFromString(html,'text/html').querySelector('[data-edtr-model]').getAttribute('data-edtr-model')),beforeReload);
-  assert.equal(modelBefore.version,2,'tab-capable documents persist model version 2');
+  assert.equal(modelBefore.version,3,'column-capable documents persist model version 3');
   await page.reload();await page.locator('.ProseMirror[contenteditable="true"]').waitFor();await page.waitForTimeout(1100);
   const modelAfter=await page.evaluate(()=>JSON.parse(new DOMParser().parseFromString(JSON.parse(localStorage.getItem('wordpad-files'))[0].html,'text/html').querySelector('[data-edtr-model]').getAttribute('data-edtr-model')));
   assert.deepEqual(modelAfter,modelBefore,'reopen with no typing preserves persisted identities');
+  // Version 2 is upgraded at startup and saved without reallocating identities.
+  await page.evaluate(({html, model})=>{
+   const root=new DOMParser().parseFromString(html,'text/html');
+   const old=JSON.parse(JSON.stringify(model)); old.version=2;
+   for(const record of Object.values(old.sections)){delete record.columns;delete record.flowDirection;}
+   root.querySelector('[data-edtr-model]').setAttribute('data-edtr-model',JSON.stringify(old));
+   localStorage.setItem('wordpad-files',JSON.stringify([{id:'v2-fixture',name:'V2 document',html:root.body.innerHTML}]));
+   localStorage.setItem('wordpad-active','v2-fixture');
+  },{html:beforeReload,model:modelBefore});
+  await page.reload();await page.locator('.ProseMirror[contenteditable="true"]').waitFor();await page.waitForTimeout(1300);
+  const v2Saved=await page.evaluate(()=>JSON.parse(new DOMParser().parseFromString(JSON.parse(localStorage.getItem('wordpad-files'))[0].html,'text/html').querySelector('[data-edtr-model]').getAttribute('data-edtr-model')));
+  assert.equal(v2Saved.version,3,'v2 startup migration is persisted without typing');
+  assert.equal(v2Saved.id,modelBefore.id,'document identity survives v2 startup migration');
+  assert.equal(v2Saved.finalSectionId,modelBefore.finalSectionId,'final section identity survives v2 startup migration');
+  assert.deepEqual(Object.keys(v2Saved.sections),Object.keys(modelBefore.sections),'all section identities survive v2 startup migration');
   // A legacy document is persisted after validated migration, even without typing.
   await page.evaluate(()=>{localStorage.setItem('wordpad-files',JSON.stringify([{id:'legacy-fixture',name:'Legacy document',html:'<p>LEGACY SOURCE</p>'}]));localStorage.setItem('wordpad-active','legacy-fixture');});
   await page.reload();await page.locator('.ProseMirror').waitFor();await page.waitForTimeout(1300);

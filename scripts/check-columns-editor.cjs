@@ -1,0 +1,46 @@
+/* eslint-disable @typescript-eslint/no-require-imports */
+/** Real editor acceptance, using an isolated guest browser and generated DOCX fixture. */
+const assert=require('node:assert/strict');
+const fs=require('node:fs/promises');
+const os=require('node:os');
+const path=require('node:path');
+const {Document,Packer,Paragraph,TextRun,Tab}=require('docx');
+const {PDFDocument}=require('pdf-lib');
+const {chromium}=require(process.env.PLAYWRIGHT_MODULE||'playwright');
+(async()=>{
+ const dir=await fs.mkdtemp(path.join(os.tmpdir(),'edtr-columns-editor-'));
+ const fixture=path.join(dir,'fixture.docx');
+ const words=Array.from({length:470},(_,i)=>`word${String(i).padStart(3,'0')}`).join(' ');
+ const listWords=Array.from({length:55},(_,i)=>`list${String(i).padStart(3,'0')}`).join(' ');
+ await fs.writeFile(fixture,await Packer.toBuffer(new Document({sections:[{children:[
+  new Paragraph({children:[new TextRun('START_MARK '),new TextRun({text:words,bold:true}),new TextRun(' END_MARK')]}),
+  new Paragraph(''),new Paragraph({children:[new TextRun('TAB_LEFT'),new TextRun({children:[new Tab()]}),new TextRun('TAB_RIGHT')]}),
+  new Paragraph({bullet:{level:0},children:[new TextRun(`LIST_START ${listWords} LIST_END`)]}),new Paragraph('FINAL_MARK')
+ ]}]})));
+ const browser=await chromium.launch({headless:true,...(process.env.CHROMIUM_PATH?{executablePath:process.env.CHROMIUM_PATH}:{})});
+ try{
+  const page=await browser.newPage({viewport:{width:1450,height:1600}}),errors=[],consoleErrors=[];page.on('pageerror',e=>errors.push(e.message));page.on('console',message=>{if(message.type()==='error')consoleErrors.push(message.text())});page.setDefaultTimeout(15000);
+  await page.goto((process.env.BASE_URL||'http://localhost:3107')+'/pad');const editor=page.locator('.ProseMirror[contenteditable=true]');await editor.waitFor();await page.waitForTimeout(1000);await editor.fill('Import pending');
+  await page.locator('input[type=file][accept*=".docx"]').setInputFiles(fixture);await page.getByRole('button',{name:'Replace document',exact:true}).click();await page.waitForFunction(()=>document.querySelector('.ProseMirror[contenteditable=true]')?.textContent.includes('FINAL_MARK'));await page.waitForTimeout(700);
+  assert.equal(await editor.count(),1);assert.ok(await editor.locator('li').count(),'list fixture loaded');assert.ok(await editor.locator('.pm-tab').count(),'real tab fixture loaded');assert.ok(await editor.locator('p').evaluateAll(items=>items.some(item=>!item.textContent.trim())),'empty paragraph fixture loaded');
+  const fixtureText=await editor.textContent();
+  async function dialog(){await page.getByRole('menuitem',{name:'Insert',exact:true}).click();await page.getByRole('menuitem',{name:'Section layout…',exact:true}).click();const d=page.getByRole('dialog',{name:'Section layout'});await d.waitFor();return d;}
+  let d=await dialog();await d.getByLabel('Equal columns').selectOption('2');await d.getByRole('button',{name:'Apply',exact:true}).click();
+  await page.waitForFunction(()=>document.querySelector('.ProseMirror[contenteditable=true] [data-column-fragment="0:1"]')||document.querySelector('.ProseMirror[contenteditable=true]')?.hasAttribute('data-column-flow-error'),null,{timeout:30000});
+  async function verifyFailureRecovery(){const alert=page.locator('[data-column-layout-alert]');await alert.waitFor({state:'visible'});assert.equal(await editor.textContent(),fixtureText,'layout failure retains source text');await alert.getByRole('button',{name:'Section layout'}).click();const settings=page.getByRole('dialog',{name:'Section layout'});await settings.getByLabel('Equal columns').selectOption('1');await settings.getByRole('button',{name:'Apply',exact:true}).click();await alert.waitFor({state:'hidden'});assert.equal(await editor.textContent(),fixtureText,'switching to one column retains source text');}
+  const diagnostic=await editor.getAttribute('data-column-flow-error');if(diagnostic)await verifyFailureRecovery();assert.equal(diagnostic,null,`column flow error: ${diagnostic}`);
+  const boxes=await editor.evaluate(el=>[...el.querySelectorAll('[data-column-fragment]')].map(e=>{const r=e.getBoundingClientRect();return{region:e.getAttribute('data-column-fragment'),x:r.left,y:r.top,w:r.width,h:r.height,text:e.textContent}}).filter(x=>x.text.trim()));
+  const left=boxes.find(b=>b.region==='0:0'),right=boxes.find(b=>b.region==='0:1');assert.ok(left&&right,JSON.stringify(boxes));assert.ok(right.x>left.x+100&&Math.abs(right.y-left.y)<300,JSON.stringify({left,right}));assert.ok(boxes.some(b=>b.region.startsWith('1:')),'long fixture must flow to second physical page');
+  const textBefore=await editor.textContent();for(const marker of ['START_MARK','END_MARK','TAB_LEFT','TAB_RIGHT','LIST_START','LIST_END','FINAL_MARK'])assert.equal(textBefore.split(marker).length-1,1,marker);
+  await page.waitForTimeout(1500);const saved=await page.evaluate(()=>{const files=JSON.parse(localStorage.getItem('wordpad-files')),id=localStorage.getItem('wordpad-active');return files.find(file=>file.id===id).html});assert.ok(!saved.includes('data-column-fragment')&&!saved.includes('data-column-block'),'transient decorations must not be serialized');for(const marker of ['START_MARK','END_MARK','TAB_LEFT','TAB_RIGHT','LIST_START','LIST_END','FINAL_MARK'])assert.equal(saved.split(marker).length-1,1,`saved ${marker}`);
+  // Drag with genuine pointer input across the first-column boundary. Text nodes remain canonical.
+  await page.evaluate(()=>window.scrollTo(0,0));const points=await editor.evaluate(el=>{function point(selector,atEnd){const wrappers=[...el.querySelectorAll(selector)],wrapper=atEnd?wrappers.at(-1):wrappers[0];if(!wrapper)return null;const walker=document.createTreeWalker(wrapper,NodeFilter.SHOW_TEXT);let node,last;while((node=walker.nextNode()))if(node.data.trim()){last=node;if(!atEnd)break;}if(!last)return null;const range=document.createRange(),offset=atEnd?Math.max(0,last.length-1):Math.min(2,last.length);range.setStart(last,offset);range.collapse(true);const r=range.getBoundingClientRect();return{x:r.left,y:(r.top+r.bottom)/2};}return{a:point('[data-column-fragment="0:0"]',true),b:point('[data-column-fragment="0:1"]',false)}});assert.ok(points.a&&points.b,JSON.stringify(points));
+  await page.mouse.move(points.a.x,points.a.y);await page.mouse.down();await page.mouse.move(points.b.x,points.b.y,{steps:30});await page.mouse.up();const selected=await page.evaluate(()=>String(window.getSelection()));assert.ok(selected.length>0&&selected.length<textBefore.length,`cross-column native selection length ${selected.length}`);
+  await page.keyboard.type('EDIT_MARK');await page.waitForTimeout(500);assert.ok((await editor.textContent()).includes('EDIT_MARK'));await page.keyboard.press(process.platform==='darwin'?'Meta+z':'Control+z');await page.waitForTimeout(500);assert.equal(await editor.textContent(),textBefore,'one undo restores content');
+  // Export uses the same settled view; inspect cloned read-only content as well as the PDF.
+  await page.evaluate(()=>{window.__columnPrint=null;const observer=new MutationObserver(()=>{const sheets=[...document.querySelectorAll('.edtr-print-sheet')];if(!sheets.length)return;window.__columnPrint={pages:sheets.length,editable:sheets.reduce((n,s)=>n+s.querySelectorAll('[contenteditable]').length,0),fragments:sheets.map(s=>[...s.querySelectorAll('[data-column-fragment]')].map(x=>x.getAttribute('data-column-fragment'))),text:sheets[0].textContent};observer.disconnect()});observer.observe(document.body,{childList:true,subtree:true});});
+  await page.getByRole('menuitem',{name:'File',exact:true}).click();await page.getByRole('menuitem',{name:'Export',exact:true}).hover();let download;try{[download]=await Promise.all([page.waitForEvent('download',{timeout:20000}),page.getByRole('menuitem',{name:'PDF (.pdf)',exact:true}).click()]);}catch(error){const flowError=await editor.getAttribute('data-column-flow-error');console.error('PDF export diagnostics',JSON.stringify({flowError,print:await page.evaluate(()=>window.__columnPrint),alerts:await page.locator('[role="status"],[role="alert"],[data-sonner-toast]').allTextContents(),errors,consoleErrors:[...new Set(consoleErrors)]}));if(flowError)await verifyFailureRecovery();throw error}const pdf=path.join(dir,'columns.pdf');await download.saveAs(pdf);const print=await page.evaluate(()=>window.__columnPrint);assert.ok(print&&print.pages>=2,JSON.stringify(print));assert.equal(print.editable,0);assert.ok(print.fragments[0].includes('0:0')&&print.fragments[0].includes('0:1'));assert.ok(print.text.includes('START_MARK'));assert.ok((await PDFDocument.load(await fs.readFile(pdf))).getPageCount()>=2);
+  d=await dialog();await d.getByLabel('Equal columns').selectOption('1');await d.getByRole('button',{name:'Apply',exact:true}).click();await page.waitForFunction(()=>!document.querySelector('.ProseMirror[contenteditable=true] [data-column-fragment]'),null,{timeout:30000});assert.equal(await editor.textContent(),textBefore);assert.equal(await editor.count(),1);assert.deepEqual(errors,[]);
+  console.log('PASS production editor two-column coordinates, native selection, edit/undo, print clone/PDF and return to one column. Artifacts: '+dir);
+ }finally{await browser.close();}
+})().catch(error=>{console.error(error);process.exitCode=1});

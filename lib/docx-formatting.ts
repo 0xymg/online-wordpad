@@ -408,6 +408,9 @@ export async function prepareDocxFormatting(arrayBuffer: ArrayBuffer) {
   const prefix = `EDTRimport${crypto.randomUUID().replace(/-/g, "")}`;
   const paragraphFormats = new Map<string, Properties>();
   const runFormats = new Map<string, RunFormat>();
+  const columnBreakProperties = new Map<string, Element | null>();
+  const columnBreakFormats = new Map<string, RunFormat>();
+  const columnBreakLinks = new Map<string, string>();
   const formatIds = new Map<string, string>();
   const styleMap: string[] = [];
   const paths = [
@@ -424,17 +427,26 @@ export async function prepareDocxFormatting(arrayBuffer: ArrayBuffer) {
     if (path === mainPath) {
       let breakId = 0;
       for (const run of wordElements(doc, "r")) {
-        if (!Array.from(run.children).some(c => c.localName === "br" && attr(c, "type") === "page")) continue;
+        if (!Array.from(run.children).some(c => c.localName === "br" && ["page", "column"].includes(attr(c, "type") || ""))) continue;
         const fragment = doc.createDocumentFragment();
         const rPr = child(run, "rPr");
         let segment = doc.createElementNS(W, "w:r");
         if (rPr) segment.appendChild(rPr.cloneNode(true));
         for (const item of Array.from(run.children)) {
           if (item === rPr) continue;
-          if (item.localName === "br" && attr(item, "type") === "page") {
+          if (item.localName === "br" && ["page", "column"].includes(attr(item, "type") || "")) {
             if (segment.children.length > (rPr ? 1 : 0)) fragment.appendChild(segment);
             const marker = doc.createElementNS(W, "w:bookmarkStart");
-            marker.setAttributeNS(W, "w:name", `${prefix}b${breakId}`);
+            const markerName = `${prefix}${attr(item, "type") === "column" ? "c" : "b"}${breakId}`;
+            marker.setAttributeNS(W, "w:name", markerName);
+            if (attr(item, "type") === "column") {
+              columnBreakProperties.set(markerName, rPr ? rPr.cloneNode(true) as Element : null);
+              const hyperlink = run.parentElement?.namespaceURI === W && run.parentElement.localName === "hyperlink" ? run.parentElement : null;
+              const relationshipId = hyperlink?.getAttributeNS("http://schemas.openxmlformats.org/officeDocument/2006/relationships", "id");
+              const relation = Array.from(relations?.getElementsByTagNameNS("*", "Relationship") || []).find(el => el.getAttribute("Id") === relationshipId && el.getAttribute("Type")?.endsWith("/hyperlink") && el.getAttribute("TargetMode") === "External");
+              const target = relation?.getAttribute("Target") || (attr(hyperlink || undefined, "anchor") ? `#${attr(hyperlink || undefined, "anchor")}` : "");
+              if (/^(?:https?:|mailto:|tel:|#|\/|\.{1,2}\/|\?)/i.test(target)) columnBreakLinks.set(markerName, target);
+            }
             marker.setAttributeNS(W, "w:id", String(1000000 + breakId++));
             const end = doc.createElementNS(W, "w:bookmarkEnd");
             end.setAttributeNS(W, "w:id", marker.getAttributeNS(W, "id")!);
@@ -470,6 +482,13 @@ export async function prepareDocxFormatting(arrayBuffer: ArrayBuffer) {
         for (const [key, value] of attrs) el.setAttributeNS(W, `w:${key.slice(property.length + 1)}`, value);
       }
       const baseRun = mergeStyle(defaultRun, inherited.run);
+      for (const marker of wordElements(p, "bookmarkStart")) {
+        const markerName = attr(marker, "name") || "";
+        if (!columnBreakProperties.has(markerName)) continue;
+        const rPr = columnBreakProperties.get(markerName);
+        const inheritedRun = resolve(attr(child(rPr || undefined, "rStyle"))).run;
+        columnBreakFormats.set(markerName, runFormat(mergeProperties(mergeStyle(baseRun, inheritedRun), properties(rPr || undefined))));
+      }
       const id = `${prefix}p${paragraphFormats.size}`;
       paragraphFormats.set(id, paragraphFormat(paragraphProps));
       if (importedStyles[paragraphStyle]) paragraphMeta.set(id,{ id:paragraphStyle,direct:directParagraph });
@@ -612,6 +631,18 @@ export async function prepareDocxFormatting(arrayBuffer: ArrayBuffer) {
           wrapper.append(...Array.from(span.childNodes));
           span.appendChild(wrapper);
         }
+      }
+      for (const marker of Array.from(doc.querySelectorAll<HTMLAnchorElement>(`a[id^="${prefix}c"]`))) {
+        const br = doc.createElement("br"); br.setAttribute("data-edtr-column-break", "true");
+        const format = columnBreakFormats.get(marker.id);
+        if (!format) { marker.replaceWith(br); continue; }
+        const span = doc.createElement("span"); setStyles(span, format.css); span.appendChild(br);
+        for (const [tag, apply] of [["strong", format.bold], ["em", format.italic], ["u", format.underline], ["s", format.strike], ["sup", format.vertical === "superscript"], ["sub", format.vertical === "subscript"]] as const) {
+          if (apply) { const wrapper = doc.createElement(tag); wrapper.append(...Array.from(span.childNodes)); span.appendChild(wrapper); }
+        }
+        const target = columnBreakLinks.get(marker.id);
+        if (target && !marker.closest("a[href]")) { const link = doc.createElement("a"); link.setAttribute("href", target); link.appendChild(span); marker.replaceWith(link); }
+        else marker.replaceWith(span);
       }
       for (const marker of Array.from(doc.querySelectorAll<HTMLAnchorElement>(`a[id^="${prefix}b"]`))) {
         const block = marker.closest("p,h1,h2,h3,h4,h5,h6");

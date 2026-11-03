@@ -1,6 +1,6 @@
 # A3 synthetic column reference sources
 
-These four DOCX files are **source probes**, not successful application/Word comparisons. Actual Word references for all four have now been captured; see `REFERENCE_REPORT.md` and `references/report.json`. The source corpus is frozen. Before capture, it was generated with:
+These four DOCX files are **source probes** with frozen actual Word references (`REFERENCE_REPORT.md`, `references/report.json`). The production application now matches physical page/column regions for all 515 source markers; see `app-pdfs/word-comparison.json`, its provenance, and [the acceptance report](../../docs/columns-acceptance.md). This does not establish pixel-equivalent Word rendering. The source corpus is frozen. Before capture, it was generated with:
 
 ```sh
 node scripts/compatibility/generate-column-probes.cjs

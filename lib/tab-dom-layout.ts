@@ -54,14 +54,15 @@ function measure(chunks: Chunk[], separator: string | null, probe: HTMLElement):
   }
   return probe.getBoundingClientRect().width;
 }
-export function measureTabParagraph(dom: HTMLElement, node: PMNode, geometry: TabContentGeometry, settings: TabSettings, probe: HTMLElement): boolean {
+export function measureTabParagraph(dom: HTMLElement, node: PMNode, geometry: TabContentGeometry, settings: TabSettings, probe: HTMLElement, resolveGeometry?: (tab: HTMLElement, fallback: TabContentGeometry) => TabContentGeometry): boolean {
   let changed = false;
   const explicit = effectiveTabs(node).filter(stop => stop.alignment !== "clear").sort((a, b) => a.position - b.position);
   const maxExplicit = explicit.at(-1)?.position || 0, interval = Math.max(1, settings.defaultTabStop);
   let afterImplicit = false;
   for (const entry of entries(dom)) {
+    const entryGeometry = resolveGeometry?.(entry.dom, geometry) ?? geometry;
     const rect = entry.dom.getBoundingClientRect();
-    const current = (geometry.direction === "rtl" ? geometry.originClientX - rect.right : rect.left - geometry.originClientX) / geometry.cssPixelsPerTwip;
+    const current = (entryGeometry.direction === "rtl" ? entryGeometry.originClientX - rect.right : rect.left - entryGeometry.originClientX) / entryGeometry.cssPixelsPerTwip;
     const stop = entry.implicit ? explicit.find(candidate => candidate.alignment === "decimal" && candidate.position > current + 0.5)
       : explicit.find(candidate => candidate.position > current + 0.5);
     const fallback = Math.max(Math.floor(current / interval) + 1, Math.floor(maxExplicit / interval) + 1) * interval;
@@ -71,10 +72,10 @@ export function measureTabParagraph(dom: HTMLElement, node: PMNode, geometry: Ta
     // First-strong isolation mirrors dir=auto without relying on a DOM wrapper
     // surviving across distinct mark boundaries.
     const firstStrong = Array.from(entry.chunks.map(chunk => chunk.text).join("")).find(char => /\p{Letter}/u.test(char));
-    const segmentDirection = firstStrong ? (/[\u0590-\u08ff\ufb1d-\ufdff\ufe70-\ufeff]/u.test(firstStrong) ? "rtl" : "ltr") : geometry.direction;
-    const segment = align === "decimal" ? (segmentDirection === geometry.direction ? prefix : total - prefix) : total;
+    const segmentDirection = firstStrong ? (/[\u0590-\u08ff\ufb1d-\ufdff\ufe70-\ufeff]/u.test(firstStrong) ? "rtl" : "ltr") : entryGeometry.direction;
+    const segment = align === "decimal" ? (segmentDirection === entryGeometry.direction ? prefix : total - prefix) : total;
     const offset = align === "center" ? segment / 2 : segment;
-    let width = Math.max(0, Math.min(geometry.availableWidthTwips / 15, (position - current) / 15 - offset));
+    let width = Math.max(0, Math.min(entryGeometry.availableWidthTwips / 15, (position - current) / 15 - offset));
     if (!entry.implicit && afterImplicit) {
       const text = entry.chunks.map(chunk => chunk.text).join("");
       const token = /^[+\-0-9٠-٩۰-۹.,٫]+/u.exec(text)?.[0];
@@ -83,8 +84,8 @@ export function measureTabParagraph(dom: HTMLElement, node: PMNode, geometry: Ta
         const nextExplicit = explicit.find(candidate => candidate.position > decimalStop.position + 0.5);
         const nextStop = nextExplicit?.position ?? Math.max(Math.floor(decimalStop.position / interval) + 1, Math.floor(maxExplicit / interval) + 1) * interval;
         const tokenWidth = measure(entry.chunks, token.length < text.length ? text[token.length] : null, probe);
-        const remaining = (geometry.availableWidthTwips - nextStop) / 15;
-        if (!nextExplicit && remaining >= 0 && tokenWidth > remaining + 0.2 && nextStop / 15 > geometry.availableWidthTwips / 15 - decimalStop.position / 15)
+        const remaining = (entryGeometry.availableWidthTwips - nextStop) / 15;
+        if (!nextExplicit && remaining >= 0 && tokenWidth > remaining + 0.2 && nextStop / 15 > entryGeometry.availableWidthTwips / 15 - decimalStop.position / 15)
           width = nextStop / 15;
       }
     }

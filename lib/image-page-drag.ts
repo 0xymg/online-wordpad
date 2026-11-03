@@ -1,8 +1,9 @@
 import type { EditorView } from "prosemirror-view";
 import type { ImagePage } from "./page-image-position";
+import { columnContentGeometryAtPos } from "./column-flow";
 
 /** Find an existing inline insertion point whose rendered line belongs to the sheet. */
-export function imageAnchorOnPage(view: EditorView, page: ImagePage, clientY: number): number | null {
+export function imageAnchorOnPage(view: EditorView, page: ImagePage, clientY: number, clientX?: number): number | null {
   const host = view.dom.parentElement;
   if (!host) return null;
   const hostRect = host.getBoundingClientRect();
@@ -22,7 +23,10 @@ export function imageAnchorOnPage(view: EditorView, page: ImagePage, clientY: nu
         const rect = view.coordsAtPos(candidate);
         const mid = (rect.top + rect.bottom) / 2;
         if (mid < top || mid >= bottom) continue;
-        const d = Math.abs(mid - clientY);
+        // Columns can share the same Y range. The horizontal distance keeps a
+        // dropped image attached to text in the column under the pointer.
+        const inColumns = clientX !== undefined && columnContentGeometryAtPos(view, candidate) !== null;
+        const d = inColumns ? Math.hypot(mid - clientY, rect.left - clientX!) : Math.abs(mid - clientY);
         if (d < distance) { best = candidate; distance = d; }
       } catch { /* A transiently unrendered position cannot be an anchor. */ }
     }

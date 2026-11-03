@@ -3,8 +3,10 @@
 import { alignSelection, imageAlignment, setTextAlign as applyTextAlign } from "@/lib/editor-commands";
 
 import { tabLayoutPlugin, createTabNodeView } from "@/lib/tab-layout";
+import { resolveColumnTabGeometry } from "@/lib/column-flow";
 import "@/lib/tab-layout.css";
 import { insertTabCharacter, tabCharactersPlugin } from "@/lib/tab-node";
+import { insertColumnBreak } from "@/lib/column-break";
 import { parseDocumentHtml, documentModelPlugin } from "@/lib/document-model";
 import { sectionMarkersPlugin, sectionMarkersKey } from "@/lib/section-markers";
 import "./section-markers.css";
@@ -19,7 +21,7 @@ import { useEffect, useRef, useCallback, useMemo, useState, lazy, Suspense } fro
 import { useReactToPrint } from "react-to-print";
 import { DOMSerializer, Node as PMNode } from "prosemirror-model";
 import { EditorState, Transaction, AllSelection, TextSelection, NodeSelection } from "prosemirror-state";
-import { EditorView } from "prosemirror-view";
+import { EditorView, type ViewMutationRecord } from "prosemirror-view";
 import type { CropperRef } from "react-advanced-cropper";
 
 // react-colorful ships only when the paper-background popover is opened.
@@ -47,7 +49,7 @@ import { createTextBoxNodeView } from "@/lib/text-box-node-view";
 import Toolbar from "./Toolbar";
 import TableContextMenu from "./TableContextMenu";
 import {
-  paginationPlugin, paginationKey, remeasurePagination,
+  paginationPlugin, paginationKey, remeasurePagination, COLUMN_LAYOUT_STATUS_EVENT,
   type PageLayoutConfig, type PageNumberPosition, type PageNumberFormat,
 } from "./paginationPlugin";
 import {
@@ -207,7 +209,7 @@ function buildPlugins() {
     tableEditing(),
     searchPlugin(),
     paginationPlugin(() => pageLayoutConfig),
-    tabLayoutPlugin(),
+    tabLayoutPlugin({ resolveTabGeometry: resolveColumnTabGeometry }),
     keymap({
       "Mod-z":       undo,
       "Mod-y":       redo,
@@ -248,6 +250,14 @@ function buildPlugins() {
       },
       "Shift-Tab": (state, dispatch) => isInTable(state) ? goToNextCell(-1)(state, dispatch) : adjustBlockIndentByTab(-1)(state, dispatch),
       "Mod-Alt-t": insertTabCharacter,
+      "Mod-Shift-Enter": (state, dispatch, view) => {
+        if (view && !view.editable) return false;
+        if (!insertColumnBreak(state, dispatch) && dispatch) {
+          const lang = document.documentElement.lang;
+          toast.warning(sectionLabels(isLocale(lang) ? lang : "en").columnBreakUnavailable);
+        }
+        return true;
+      },
       "Enter": (state,dispatch,view) => splitListItem(mySchema.nodes.list_item)(state,dispatch,view) || splitStyledParagraph(state,dispatch,view),
     }),
     keymap(baseKeymap),
@@ -423,7 +433,10 @@ class TableNodeView {
     return this.handle.contains(event.target as Node);
   }
 
-  ignoreMutation(mutation: any) {
+  ignoreMutation(mutation: ViewMutationRecord) {
+    // The noneditable drag handle is node-view chrome, not table content.
+    // Locale updates can change its title outside a ProseMirror transaction.
+    if (mutation.type !== "selection" && this.handle.contains(mutation.target)) return true;
     return this.tableView.ignoreMutation(mutation);
   }
 
@@ -633,7 +646,7 @@ class ImageNodeView {
         const destination = target;
         if (currentPos !== undefined && destination && sourcePage) {
           const samePage = destination.index === sourcePage.index;
-          const anchor = samePage ? currentPos : imageAnchorOnPage(this.view, destination.page, clientY);
+          const anchor = samePage ? currentPos : imageAnchorOnPage(this.view, destination.page, clientY, clientX);
           // Preserve representable natural boundaries before removing flow height.
           // A boundary inside a paragraph or table cannot be represented safely.
           const boundaries = preservedBoundaries(destination);
@@ -1211,6 +1224,16 @@ export default function Editor({
   const showTabs = useCallback(() => setTabsOpen(true), []);
   const [sectionLayoutOpen, setSectionLayoutOpen] = useState(false);
   const [documentLoadError, setDocumentLoadError] = useState(false);
+  const [columnLayoutError, setColumnLayoutError] = useState(false);
+  useEffect(() => {
+    const onStatus = (event: Event) => {
+      if (event.target !== viewRef.current?.dom) return;
+      const error = (event as CustomEvent<{ error: string | null }>).detail.error;
+      setColumnLayoutError(Boolean(error));
+    };
+    window.addEventListener(COLUMN_LAYOUT_STATUS_EVENT, onStatus);
+    return () => window.removeEventListener(COLUMN_LAYOUT_STATUS_EVENT, onStatus);
+  }, []);
   const showSectionLayout = useCallback(() => setSectionLayoutOpen(true), []);
   const [marginsOpen,setMarginsOpen] = useState(false);
   const showMargins = useCallback(()=>setMarginsOpen(true),[]);
@@ -2861,6 +2884,13 @@ export default function Editor({
     if (view && view.editable) { insertTabCharacter(view.state, view.dispatch); view.focus(); }
   }, []);
 
+  const handleInsertColumnBreak = useCallback(() => {
+    const view = viewRef.current;
+    if (!view || !view.editable) return;
+    if (!insertColumnBreak(view.state, view.dispatch)) toast.warning(sectionLabels(locale).columnBreakUnavailable);
+    view.focus();
+  }, [locale]);
+
   const handleInsertDivider = useCallback(() => {
     const v = viewRef.current;
     if (!v) return;
@@ -3343,6 +3373,7 @@ export default function Editor({
         onMarginPreset={changeMarginPreset}
         onTabStops={showTabs}
         onInsertTab={handleInsertTab}
+        onInsertColumnBreak={handleInsertColumnBreak}
         onSectionLayout={showSectionLayout}
         onCustomMargins={showMargins}
         pageOrientation={pageOrientation}
@@ -3439,6 +3470,11 @@ export default function Editor({
         />
       )}
       {showRuler && !focusMode && <Suspense fallback={null}><TabRuler view={viewRef.current} tick={tick} onOpenDialog={showTabs} /></Suspense>}
+      {columnLayoutError && <div role="alert" data-column-layout-alert className="flex items-center gap-2 border-b border-amber-300/60 bg-amber-50 px-3 py-2 text-xs text-amber-900 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-200">
+        <Warning size={16} weight="fill" className="shrink-0" />
+        <span className="min-w-0 flex-1">{sectionLabels(locale).columnLayoutError}</span>
+        <button type="button" onClick={showSectionLayout} className="shrink-0 underline underline-offset-2">{sectionLabels(locale).title}</button>
+      </div>}
       <div className="flex min-h-0 flex-1 flex-col lg:flex-row">
       <div
         ref={editorShellRef}

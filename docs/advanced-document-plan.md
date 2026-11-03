@@ -157,3 +157,15 @@ A2 `3a65144` ile yayımlandı ve canlı kabulü tamamlandı. Gerçek sekme karak
 Gerçek Word referanslarıyla seçili LTR/RTL yatay ankrajlar, dar hücre satır grupları ve sekmesiz ondalık hücre hizası doğrulandı. Word'de düzenlenen DOCX özel ondalık ayraç bilgisini ve ilişkisiz özel özelliği korudu; bu metadata Word'ün bölge ayarı değildir. İçe alınmış tablo stili hücre boşlukları, üstbilgi tablo genişliği ve işaretli sekme run'ları düzeltildi. 38 sekme model kontrolü, 13 atom/pano kontrolü, cetvel/diyalog/stil taslağı, salt okunur kaynak koruması, klavye/üstbilgi undo, native koruma ve PDF testleri geçti. TypeScript ve üretim derlemesi başarılı. Bütün sayfa görsel eşitliği iddia edilmez.
 
 Sonraki A3 uygulama devri `docs/columns-implementation-plan.md` içindedir. İlk kapı, tek ProseMirror belgesinde sütunlar arasında bölünen paragrafın gerçek imleç/seçim/koordinat kanıtıdır; bu kanıt çıkmadan sütun arayüzü yayımlanmaz.
+
+## Uygulama kaydı — A3 (yerel üretim kabulü tamamlandı, canlı doğrulama bekleniyor)
+
+`codex/equal-columns` dalında tek editör prototipi 84 etkileşim kontrolünü geçti. Model v3 geçişi, bölüm başına 1/2/3 eşit sütun, aralık/çizgi/yön ayarları, sütun sonu ve native DOCX koruma eklendi. Sütun sonunun biçim ve bağlantı bilgisi, eski bölüm revizyonlarının korunması ve silme/undo ayrı regresyonlarla doğrulandı.
+
+Ürün editöründeki temel paragraf/liste/sekme akışı; gerçek fare seçimi, düzenleme/undo, çok sayfalı PDF ve tekrar tek sütuna dönüş testini geçti. Cetvel etkin imleç sütununu kullanır; baskı ve salt okunur dışa aktarma aynı yerleşim tamamlanmasını bekler. Tamamlanamayan düzen görünür mesaj verir ve PDF/yazdırmayı durdurur; kaynak metni değiştirmez.
+
+Dört dondurulmuş gerçek Word örneği için uygulama PDF sayıları 6/1/5/3 olarak eşleşti. LTR ve RTL örneklerindeki 515 işaret kayıp/tekrar olmadan aynı sayfa ve fiziksel sütunda bulundu. Bu, bütün sayfa görsel eşitliği anlamına gelmez. Karışık RTL PDF metin katmanı ve dar sütundaki uzun sözcük kırılması düzeltildi; farklı PDF okuyucularında Arapça kopyalama/arama sınırları kabul raporunda tutuluyor. Üretim uygulaması PDF'leri, ölçüm ve kaynak özeti `fixtures/columns/app-pdfs` altında arşivlendi.
+
+Üretim derlemesinde gerçek arayüz, model v3/gelecek sürüm koruması, native dönüş, RTL/cetvel, görsel ve metin kutusu regresyonları geçti. 40 ve 160 sözcük çifti içeren uzun hücre tablolarında gerçek metin/hücre sürükleme seçimi, boş devam alanına yazma/undo, tekrarlanan başlık ve seçiliyken PDF doğrulandı. İki fiziksel sayfalı örnekte içerik sayıları ve PDF işaretleri kayıpsızdı. Tablo taşıma düğmesi açıklamasının model değişikliğine yol açması, native duplicate uzantıların kaybı ve salt görünüm seçimlerinin baskıya taşınması düzeltildi.
+
+**Kalan yayın kapısı:** canlı dağıtım ve canlı kabul. Ayrıntılar [columns-acceptance.md](columns-acceptance.md) içinde. A4 için mevcut kod ve veri sözleşmeleri okundu; A4–A7 uygulaması henüz başlamadı.

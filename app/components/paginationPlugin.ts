@@ -9,8 +9,16 @@ import { numberLabel } from "@/lib/page-number";
 import { rawSections, runningSlot, runningFragment, type RunningSlots, type RunningVariant } from "@/lib/running-content";
 import { documentSections, sectionBlockStyle, type PageGeometry } from "@/lib/document-sections";
 import { layoutRunningTabs } from "@/lib/tab-dom-layout";
+import { createColumnFlowCoordinator, flushColumnFlow, type ColumnFlowCoordinator } from "@/lib/column-flow-coordinator";
+import { columnContentGeometryAtPos, columnPageBreakPositions, columnRelativeXDelta, solveColumnFlow, type FlowLayout } from "@/lib/column-flow";
+import { measureColumnDocument } from "@/lib/column-flow-measure-view";
+import { buildColumnDecorations, type ColumnDecorations } from "@/lib/column-flow-decorations";
+import { updateTableOverlaySelection } from "@/lib/column-flow-table-decorations";
+import { guardColumnTableTextDrag } from "@/lib/column-table-drag";
+import { setColumnArtworkStacking } from "@/lib/column-artwork-stacking";
+import type { ColumnMeasurement } from "@/lib/column-flow-measure";
 import type { DocumentLayout } from "@/lib/document-layout";
-import { Plugin, PluginKey } from "prosemirror-state";
+import { Plugin, PluginKey, TextSelection } from "prosemirror-state";
 import { TableMap } from "prosemirror-tables";
 import { Decoration, DecorationSet } from "prosemirror-view";
 import type { EditorView } from "prosemirror-view";
@@ -69,6 +77,7 @@ interface PaginationState {
   /** "<position>:<format>" — the numbering settings the decorations were built from. */
   numbering: string;
   deco: DecorationSet;
+  columnFlow?: FlowLayout;
 }
 
 /** Total pages implied by a set of break points. */
@@ -78,6 +87,8 @@ export const pageCountOf = (breaks: PageBreakPoint[]) => breaks.length + 1;
 const PAGE_GAP_PX = 26;
 
 export const paginationKey = new PluginKey<PaginationState>("pagination");
+/** Bubbles from the editor when a column layout error appears or clears. */
+export const COLUMN_LAYOUT_STATUS_EVENT = 'edtr-column-layout-status';
 
 function spacerDom(
   fillPx: number, marginPx: number, bottomMarginPx: number,
@@ -488,6 +499,18 @@ export function remeasurePagination(view: EditorView | null | undefined): void {
   if (view && !view.isDestroyed) measurements.get(view)?.(view);
 }
 
+/** Settle the active column coordinator or the existing single-column path. */
+export async function flushDocumentLayout(view: EditorView): Promise<void> {
+  if (view.isDestroyed || !view.dom.isConnected) throw new Error("Cannot flush a detached document view");
+  if (view.dom.dataset.columnFlowError) throw new Error(view.dom.dataset.columnFlowError);
+  if (await flushColumnFlow(view)) return;
+  const { flushTabLayout } = await import("@/lib/tab-layout");
+  await flushTabLayout(view);
+  remeasurePagination(view);
+  await new Promise<void>(resolve => requestAnimationFrame(() => requestAnimationFrame(() => resolve())));
+  if (view.isDestroyed || !view.dom.isConnected) throw new Error("Document view was detached during layout");
+}
+
 export function paginationPlugin(getConfig: () => PageLayoutConfig): Plugin {
   let rafId = 0;
   let tries = 0;
@@ -496,6 +519,112 @@ export function paginationPlugin(getConfig: () => PageLayoutConfig): Plugin {
   let suppressNumbering = false;
   let paintRunning: ((pages: RenderedPage[]) => void) | undefined;
   let paintPages: ((pages: RenderedPage[]) => void) | undefined;
+  let paintColumnSeparators: ((layout: FlowLayout | null) => void) | undefined;
+  let columnCoordinator: ColumnFlowCoordinator | undefined;
+  let columnActive = false;
+  let failedColumnDocument: PMNode | undefined;
+  let columnGoalX: { doc: PMNode; head: number; relative: number } | undefined;
+  let columnTableOverlays: HTMLElement[] = [];
+  let stopColumnTableDrag: (() => void) | undefined;
+  const clearColumnOverlays = () => { columnTableOverlays.forEach(element => element.remove()); columnTableOverlays = []; };
+  let savedRootStyle: Record<string, string> | undefined;
+  const setColumnError = (view: EditorView, error: string | null) => {
+    const previous = view.dom.dataset.columnFlowError || null;
+    if (error) view.dom.dataset.columnFlowError = error; else delete view.dom.dataset.columnFlowError;
+    if (previous !== error) view.dom.dispatchEvent(new CustomEvent(COLUMN_LAYOUT_STATUS_EVENT, { bubbles: true, detail: { error } }));
+  };
+
+  const restoreColumnRoot = (view: EditorView, clearError = true) => {
+    clearColumnOverlays();
+    setColumnArtworkStacking(view, false);
+    if (savedRootStyle) for (const [property, value] of Object.entries(savedRootStyle)) view.dom.style.setProperty(property, value);
+    savedRootStyle = undefined;
+    view.dom.parentElement?.classList.remove('pm-page-columns');
+    paintColumnSeparators?.(null);
+    if (clearError) setColumnError(view, null);
+    for (const tab of Array.from(view.dom.querySelectorAll<HTMLElement>('.pm-tab'))) {
+      tab.style.removeProperty('--column-hit-top'); tab.style.removeProperty('--column-hit-height');
+    }
+  };
+  const columnTabHitAreas = (view: EditorView) => {
+    const rect = view.dom.getBoundingClientRect(), width = Number.parseFloat(getComputedStyle(view.dom).width), scale = rect.width / width;
+    if (!Number.isFinite(scale) || scale <= 0) return;
+    for (const tab of Array.from(view.dom.querySelectorAll<HTMLElement>('.pm-tab[data-edtr-tab]'))) {
+      const pos = view.posAtDOM(tab, 0), baseline = view.coordsAtPos(pos), box = tab.getBoundingClientRect();
+      const previous = pos > 0 ? view.coordsAtPos(pos - 1) : null, next = pos < view.state.doc.content.size ? view.coordsAtPos(pos + 1) : null;
+      const distance = (candidate: {top:number;bottom:number} | null) => !candidate ? Infinity : Math.max(candidate.top - baseline.top, 0, baseline.top - candidate.bottom);
+      const beforeWrap = previous && next && next.top > previous.bottom && baseline.top <= next.top;
+      const line = beforeWrap || distance(previous) <= distance(next) ? previous : next;
+      if (!line || line.bottom <= line.top) continue;
+      const top = Math.min(line.top, baseline.top - scale);
+      const bottom = beforeWrap && next ? Math.min(next.top, Math.max(line.bottom, baseline.top + scale)) : Math.max(line.bottom, baseline.top + scale);
+      tab.style.setProperty('--column-hit-top', `${(top - box.top) / scale}px`);
+      tab.style.setProperty('--column-hit-height', `${(bottom - top) / scale}px`);
+    }
+  };
+  const makeColumnCoordinator = (view: EditorView) => {
+    let measured: ColumnMeasurement | undefined, built: ColumnDecorations | undefined;
+    return createColumnFlowCoordinator(view, {
+      async measure(v, doc) {
+        measured = await measureColumnDocument(v);
+        if (!measured.complete) return { pages: [], regions: [], fragments: [], complete: false, diagnostics: measured.diagnostics };
+        const layout = solveColumnFlow(measured.sections);
+        built = buildColumnDecorations(doc, measured, layout, v);
+        if (!built.complete) return { ...layout, complete: false, diagnostics: built.diagnostics };
+        return layout;
+      },
+      async apply(v, doc, layout, assertSafe) {
+        assertSafe();
+        if (!built?.complete || v.state.doc !== doc) throw new Error('Column measurement is no longer current');
+        if (!savedRootStyle) {
+          savedRootStyle = {};
+          for (const property of ['position', 'left', 'top', 'width', 'height', 'overflow', 'min-height', 'padding-bottom', 'margin-bottom']) savedRootStyle[property] = v.dom.style.getPropertyValue(property);
+        }
+        const pages = layout.pages.map(page => ({ ...page, geometry: page.geometry as PageGeometry }));
+        const breaks = columnPageBreakPositions(doc, layout).map(pos => ({ pos, fillPx: 0 }));
+        v.dispatch(v.state.tr.setMeta(paginationKey, { column: { layout, decorations: built.decorations, pages, breaks }, marginPx: getConfig().marginPx, bottomMarginPx: getConfig().bottomMarginPx }));
+        v.dom.style.position = 'relative'; v.dom.style.left = `${built.rootLeft}px`; v.dom.style.top = `${built.rootTop}px`; v.dom.style.width = `${built.rootWidth}px`;
+        v.dom.style.height = `${built.rootHeight}px`; v.dom.style.overflow = 'hidden'; v.dom.style.minHeight = '0'; v.dom.style.paddingBottom = '0';
+        v.dom.style.marginBottom = `${built.rootMarginBottom}px`;
+        v.dom.parentElement?.style.setProperty('--page-margin-bottom', `${pages.at(-1)!.geometry.margins.bottom / 15}px`);
+        v.dom.parentElement?.classList.add('pm-page-columns');
+        clearColumnOverlays();
+        const host = v.dom.parentElement, rootRect = v.dom.getBoundingClientRect(), cssWidth = Number.parseFloat(getComputedStyle(v.dom).width), rootScale = rootRect.width / cssWidth;
+        if (!host || !Number.isFinite(rootScale) || rootScale <= 0) throw new Error('Column table overlay has no page geometry');
+        const hostRect = host.getBoundingClientRect();
+        for (const overlay of built.overlays) {
+          overlay.style.left = `${(rootRect.left - hostRect.left) / rootScale}px`;
+          overlay.style.top = `${(rootRect.top - hostRect.top) / rootScale}px`;
+          updateTableOverlaySelection(overlay, v.state);
+          host.insertBefore(overlay, v.dom); columnTableOverlays.push(overlay);
+        }
+        const { flushTabLayout } = await import('@/lib/tab-layout');
+        await flushTabLayout(v);
+        assertSafe();
+        columnTabHitAreas(v);
+        if (v.state.doc !== doc || v.isDestroyed) throw new Error('Document changed during column placement');
+        const page = v.dom.parentElement, root = v.dom.getBoundingClientRect(), width = Number.parseFloat(getComputedStyle(v.dom).width), scale = root.width / width;
+        if (!page || !Number.isFinite(scale) || scale <= 0) throw new Error('Column placement has no page geometry');
+        const pageTop = page.getBoundingClientRect().top;
+        for (const fragment of layout.fragments) {
+          if (fragment.kind === 'table' && fragment.table) {
+            for (const cell of fragment.table.band.cells) for (const line of cell.lines) {
+              let p = line.from; while (p < line.to && !doc.nodeAt(p)?.isText) p++;
+              if (p >= line.to) continue;
+              const rect = v.coordsAtPos(p), expected = pageTop + (fragment.rect.y + line.top - fragment.table.band.top) * scale;
+              if (Math.abs(rect.top - expected) > 2.5 * scale) throw new Error(`Column table placement changed measured line wrapping at ${p}: expected ${expected.toFixed(2)}, got ${rect.top.toFixed(2)}`);
+            }
+            continue;
+          }
+          if (fragment.from >= fragment.to) continue;
+          const p = Math.min(fragment.to - 1, fragment.from + 1), rect = v.coordsAtPos(p);
+          const expected = pageTop + fragment.rect.y * scale;
+          if (Math.abs(rect.top - expected) > 2.5 * scale) throw new Error(`Column placement changed measured line wrapping at ${p}: expected ${expected.toFixed(2)}, got ${rect.top.toFixed(2)}`);
+        }
+        paintPages?.(pages); paintRunning?.(pages); paintColumnSeparators?.(layout); placePageImages(v, pages); setColumnArtworkStacking(v, true);
+      },
+    });
+  };
 
   const measure = (view: EditorView) => {
     // Latest request wins. Skipping while one is pending would drop the
@@ -511,15 +640,39 @@ export function paginationPlugin(getConfig: () => PageLayoutConfig): Plugin {
       if (view.composing) return;
       const cfg = getConfig();
       const sections = documentSections(view.state.doc), mixed = sections.length > 1;
+      let useColumns = sections.some(section => section.columns.kind !== 'equal' || section.columns.count > 1);
+      if (!useColumns) view.state.doc.descendants(node => { if (node.type.name === 'column_break') { useColumns = true; return false; } return !useColumns; });
+      if (useColumns && failedColumnDocument === view.state.doc) return;
+      if (columnActive && !useColumns) {
+        columnCoordinator?.destroy(); columnCoordinator = undefined; restoreColumnRoot(view); columnActive = false;
+        view.dispatch(view.state.tr.setMeta(paginationKey, { resetColumn: true }).setMeta('addToHistory', false));
+        measure(view);
+        return;
+      }
       const page = view.dom.parentElement;
       const first = sections[0].geometry;
       const maximum = Math.max(...sections.map(s => s.geometry.width));
       if (page) {
-        page.classList.toggle("pm-page-mixed", mixed);
+        page.classList.toggle("pm-page-mixed", mixed || useColumns);
         page.style.setProperty("--page-w", `${maximum / 15}px`);
         page.style.setProperty("--page-margin-top", `${first.margins.top / 15}px`);
         page.style.setProperty("--page-margin-left", `${first.margins.left / 15}px`);
         page.style.setProperty("--page-margin-right", `${first.margins.right / 15}px`);
+      }
+      if (useColumns) {
+        columnActive = true;
+        const coordinator = columnCoordinator ||= makeColumnCoordinator(view);
+        coordinator.invalidate();
+        void coordinator.flush().then(() => { if (columnCoordinator === coordinator && columnActive) setColumnError(view, null); }).catch(error => {
+          if (columnCoordinator !== coordinator || !columnActive || view.isDestroyed || !view.dom.isConnected) return;
+          const message = error instanceof Error ? error.message : String(error);
+          failedColumnDocument = view.state.doc; coordinator.destroy(); columnCoordinator = undefined;
+          restoreColumnRoot(view, false);
+          if (paginationKey.getState(view.state)?.columnFlow) view.dispatch(view.state.tr.setMeta(paginationKey, { resetColumn: true }).setMeta('addToHistory', false));
+          view.dom.parentElement?.classList.remove('pm-page-mixed'); paintPages?.([]); paintRunning?.([]);
+          setColumnError(view, message);
+        });
+        return;
       }
       const { breaks, pages = [], tallCells = [], rowHeights = [], complete } = computeLayout(view, cfg);
       // Replacing a whole document (loading a template, switching files) can
@@ -583,11 +736,16 @@ export function paginationPlugin(getConfig: () => PageLayoutConfig): Plugin {
       apply(tr, prev, _oldState, newState) {
         const meta = tr.getMeta(paginationKey) as
           | {
+              resetColumn?: boolean;
+              column?: { layout: FlowLayout; decorations: DecorationSet; pages: RenderedPage[]; breaks: PageBreakPoint[] };
               breaks: PageBreakPoint[]; pages?: RenderedPage[]; tallCells?: number[]; rowHeights?: RenderedRow[]; marginPx: number;
               bottomMarginPx?: number; numbering: string;
               pageNumbers: PageNumberPosition; pageNumberFormat: PageNumberFormat; numberingStyle?: DocumentLayout["numberingStyle"];
             }
           | undefined;
+        if (meta?.resetColumn) return { breaks: [], marginPx: 0, numbering: 'off:plain', deco: DecorationSet.empty };
+        if (meta?.column) return { breaks: meta.column.breaks, pages: meta.column.pages, marginPx: meta.marginPx,
+          bottomMarginPx: meta.bottomMarginPx, numbering: JSON.stringify(meta.column.pages), deco: meta.column.decorations, columnFlow: meta.column.layout };
         if (meta) {
           const total = pageCountOf(meta.breaks);
           const deco = DecorationSet.create(
@@ -628,7 +786,7 @@ export function paginationPlugin(getConfig: () => PageLayoutConfig): Plugin {
         const sections = documentSections(state.doc);
         const first = sections[0].geometry, maximum = Math.max(...sections.map(s => s.geometry.width));
         const nodes: Decoration[] = [];
-        if (sections.length > 1) state.doc.forEach((node, pos) => {
+        if (sections.length > 1 && !saved?.columnFlow) state.doc.forEach((node, pos) => {
           const index = Math.max(0, sections.findIndex(s => pos >= s.from && pos < s.to));
           nodes.push(Decoration.node(pos, pos + node.nodeSize, { class: "pm-section-block", "data-page-section": String(index), style: sectionBlockStyle(node, sections[index].geometry, first, maximum) }));
         });
@@ -640,8 +798,61 @@ export function paginationPlugin(getConfig: () => PageLayoutConfig): Plugin {
           const node = state.doc.nodeAt(row.pos);
           if (node?.type.spec.tableRole === "row") nodes.push(Decoration.node(row.pos, row.pos + node.nodeSize, { class: "pm-paginated-source-row", style: `--pagination-row-height:${row.height}px;--pagination-source-height:${row.sourceHeight}` }));
         }
+        // A continued table's canonical cells have enlarged hit bounds. Native
+        // selection painting fills those bounds, so paint selected glyphs with
+        // transient inline decorations while keeping the real selection intact.
+        if (saved?.columnFlow && state.selection instanceof TextSelection && !state.selection.empty) {
+          const tables = new Map<number, typeof saved.columnFlow.fragments>();
+          for (const fragment of saved.columnFlow.fragments) {
+            if (fragment.kind !== 'table' || !fragment.table) continue;
+            const list = tables.get(fragment.table.tablePos) || [];
+            list.push(fragment); tables.set(fragment.table.tablePos, list);
+          }
+          for (const [pos, fragments] of tables) {
+            const table = state.doc.nodeAt(pos), firstFragment = fragments[0];
+            if (!table || !firstFragment || !fragments.some(fragment => fragment.regionIndex !== firstFragment.regionIndex || fragment.columnIndex !== firstFragment.columnIndex)) continue;
+            const from = Math.max(pos + 1, state.selection.from), to = Math.min(pos + table.nodeSize - 1, state.selection.to);
+            if (from >= to) continue;
+            state.doc.nodesBetween(from, to, (node, nodePos) => {
+              if (!node.isText) return;
+              const start = Math.max(from, nodePos), end = Math.min(to, nodePos + node.nodeSize);
+              if (start < end) nodes.push(Decoration.inline(start, end, { class: 'pm-column-table-selected' }));
+            });
+          }
+        }
         return (saved?.deco || DecorationSet.empty).add(state.doc, nodes);
       },
+      handleKeyDown(view, event) {
+        if (event.key === 'Shift') return false;
+        if (!['ArrowUp', 'ArrowDown'].includes(event.key) || event.altKey || event.ctrlKey || event.metaKey || view.composing) { columnGoalX = undefined; return false; }
+        if (!view.state.selection.empty && !event.shiftKey) return false;
+        const head = view.state.selection.head, flow = paginationKey.getState(view.state)?.columnFlow;
+        if (!flow || !columnContentGeometryAtPos(view, head)) return false;
+        const index = flow.fragments.findIndex(fragment => fragment.from === fragment.to ? head === fragment.from : head >= fragment.from && head < fragment.to);
+        const current = flow.fragments[index], next = flow.fragments[index + (event.key === 'ArrowDown' ? 1 : -1)];
+        if (current?.kind === 'table' || next?.kind === 'table') return false;
+        if (!current || !next || (current.pageIndex === next.pageIndex && current.regionIndex === next.regionIndex && current.columnIndex === next.columnIndex && current.from !== current.to && next.from !== next.to)) return false;
+        const xDelta = columnRelativeXDelta(flow, current, next); if (xDelta === null) return false;
+        const root = view.dom.getBoundingClientRect(), width = Number.parseFloat(getComputedStyle(view.dom).width), scale = root.width / width;
+        if (!Number.isFinite(scale) || scale <= 0) return false;
+        const page = view.dom.parentElement, currentColumn = flow.regions[current.regionIndex].columns[current.columnIndex];
+        if (!page) return false;
+        const maximum = Math.max(...flow.pages.map(item => item.geometry.width));
+        const currentOrigin = page.getBoundingClientRect().left + ((maximum - flow.pages[current.pageIndex].geometry.width) / 30 + currentColumn.x) * scale;
+        const relative = columnGoalX?.doc === view.state.doc && columnGoalX.head === head ? columnGoalX.relative : (view.coordsAtPos(head).left - currentOrigin) / scale;
+        const desired = currentOrigin + xDelta * scale + relative * scale;
+        let best = next.from, distance = Infinity;
+        for (let p = next.from; p < next.to; p++) { const caret = view.coordsAtPos(p), delta = Math.abs(caret.left - desired); if (delta < distance) { best = p; distance = delta; } }
+        const anchor = event.shiftKey ? view.state.selection.anchor : best;
+        columnGoalX = { doc: view.state.doc, head: best, relative };
+        view.dispatch(view.state.tr.setSelection(TextSelection.create(view.state.doc, anchor, best)).scrollIntoView());
+        return true;
+      },
+      handleDOMEvents: { mousedown(view, event) {
+        columnGoalX = undefined; stopColumnTableDrag?.();
+        stopColumnTableDrag = guardColumnTableTextDrag(view, event);
+        return false;
+      } },
     },
     view(view) {
       measurements.set(view, measure);
@@ -652,6 +863,28 @@ export function paginationPlugin(getConfig: () => PageLayoutConfig): Plugin {
       const page = view.dom.parentElement;
       const runningLayer = document.createElement("div"); runningLayer.className = "pm-running-layer";
       runningLayer.setAttribute("aria-hidden", "true"); page?.appendChild(runningLayer);
+      const columnStyle = document.createElement('style');
+      columnStyle.textContent = '.pm-page-columns .pm-tab[data-edtr-tab]{z-index:1}.pm-page-columns .pm-tab[data-edtr-tab]::before{content:"";position:absolute;left:0;right:0;top:var(--column-hit-top);height:var(--column-hit-height)}.pm-page-columns .pm-column-table-source,.pm-page-columns .pm-column-table-cell,.pm-page-columns .pm-column-table-row{background:transparent!important;border-color:transparent!important}.pm-page-columns .pm-column-table-source>.tableWrapper{width:var(--column-table-natural-width);overflow:visible}.pm-page-columns [data-column-table-bands] *::selection{background:transparent!important;color:inherit!important}.pm-page-columns [data-column-table-bands] .selectedCell::after{display:none}.pm-page-columns .ProseMirror-focused .pm-column-table-selected{background:Highlight;color:HighlightText}.pm-page-columns:has(.ProseMirror-focused) [data-column-cell-selected="true"]::after{content:"";position:absolute;inset:0;background:color-mix(in srgb, Highlight 25%, transparent);pointer-events:none}.pm-page-columns .pm-image-selection-frame,.pm-page-columns .pm-textbox-controls{z-index:1000004}';
+      page?.appendChild(columnStyle);
+      const separatorLayer = document.createElement('div');
+      separatorLayer.className = 'pm-column-separators'; separatorLayer.setAttribute('aria-hidden', 'true');
+      separatorLayer.style.cssText = 'position:absolute;inset:0;pointer-events:none;'; page?.appendChild(separatorLayer);
+      paintColumnSeparators = layout => {
+        separatorLayer.replaceChildren(); if (!layout) return;
+        const maximum = Math.max(...layout.pages.map(item => item.geometry.width));
+        for (const region of layout.regions) {
+          if (!region.separator) continue;
+          const sheet = layout.pages[region.pageIndex];
+          for (let index = 0; index + 1 < region.activeColumns; index++) {
+            const a = region.columns[index], b = region.columns[index + 1];
+            if (!a || !b) continue;
+            const left = Math.max(a.x, b.x) - (Math.max(a.x, b.x) - Math.min(a.x, b.x) - a.width) / 2;
+            const line = document.createElement('div'); line.className = 'pm-column-separator';
+            line.style.cssText = `position:absolute;left:${(maximum - sheet.geometry.width) / 30 + left}px;top:${region.bandTop}px;height:${region.bandHeight}px;width:1px;background:currentColor`;
+            separatorLayer.appendChild(line);
+          }
+        }
+      };
       const loadRunning = (v: EditorView) => {
         const layout = v.state.doc.attrs.layout as DocumentLayout | null;
         const raw = rawSections(v.state.doc).join("");
@@ -714,10 +947,10 @@ export function paginationPlugin(getConfig: () => PageLayoutConfig): Plugin {
         const sections = documentSections(view.state.doc), cfg = getConfig();
         // Sheet backgrounds and @page rules depend on every section, even
         // when a continuous insertion leaves the measured pages unchanged.
-        const signature = JSON.stringify([pages, sections.map(section => section.geometry), cfg.pageNumbers, cfg.pageNumberFormat, cfg.numberingStyle, suppressNumbering]);
+        const signature = JSON.stringify([pages, sections.map(section => section.geometry), cfg.pageNumbers, cfg.pageNumberFormat, cfg.numberingStyle, suppressNumbering, columnActive]);
         if (painted === signature) return; painted = signature;
         sheets.replaceChildren();
-        if (sections.length < 2) return;
+        if (sections.length < 2 && !columnActive) return;
         const maximum = Math.max(...sections.map(s => s.geometry.width));
         for (let i = 0; i < pages.length; i++) {
           const entry = pages[i], g = entry.geometry;
@@ -749,7 +982,7 @@ export function paginationPlugin(getConfig: () => PageLayoutConfig): Plugin {
           [lastEdge, cfg.pageNumbers === "bottom", numberLabel(total, total, cfg.pageNumberFormat, cfg.numberingStyle)],
         ];
         for (const [el, on, text] of entries) {
-          el.style.display = on && !suppressNumbering && documentSections(v.state.doc).length < 2 ? "" : "none";
+          el.style.display = on && !suppressNumbering && documentSections(v.state.doc).length < 2 && !columnActive ? "" : "none";
           el.style.justifyContent = cfg.numberingStyle?.alignment === "center" ? "center" : cfg.numberingStyle?.alignment === "left" ? "flex-start" : "flex-end";
           const pages = paginationKey.getState(v.state)?.pages;
           el.style.height = `${el === lastEdge ? (pages?.at(-1)?.geometry.margins.bottom ?? (cfg.bottomMarginPx ?? cfg.marginPx) * 15) / 15 : (pages?.[0]?.geometry.margins.top ?? cfg.marginPx * 15) / 15}px`;
@@ -761,24 +994,36 @@ export function paginationPlugin(getConfig: () => PageLayoutConfig): Plugin {
       // config changes (orientation/margins change the editor's width).
       const observer = new ResizeObserver(() => measure(view));
       observer.observe(view.dom);
+      // CSS zoom changes the painted scale without necessarily changing the
+      // observed CSS content box, so ResizeObserver alone can miss it.
+      let lastZoom = page?.style.zoom || '';
+      const zoomObserver = new MutationObserver(() => {
+        const next = page?.style.zoom || '';
+        if (next !== lastZoom) { lastZoom = next; measure(view); }
+      });
+      if (page) zoomObserver.observe(page, { attributes: true, attributeFilter: ['style'] });
       const onLoad = () => measure(view);
       view.dom.addEventListener("load", onLoad, true);
       view.dom.addEventListener("compositionend", onLoad);
       document.fonts?.addEventListener("loadingdone", onLoad);
       return {
         update(v, previous) {
-          if (v.state.doc !== previous.doc) { loadRunning(v); measure(v); }
+          if (v.state.doc !== previous.doc) { stopColumnTableDrag?.(); stopColumnTableDrag = undefined; clearColumnOverlays(); failedColumnDocument = undefined; loadRunning(v); measure(v); }
+          else if (!v.state.selection.eq(previous.selection)) for (const overlay of columnTableOverlays) updateTableOverlaySelection(overlay, v.state);
           syncEdges(v);
         },
         destroy() {
+          stopColumnTableDrag?.(); stopColumnTableDrag = undefined;
           // A replacement plugin registers its own measure callback; stale
           // views must not write geometry into its document.
           if (measurements.get(view) === measure) measurements.delete(view);
+          columnCoordinator?.destroy(); columnCoordinator = undefined; restoreColumnRoot(view); columnStyle.remove(); separatorLayer.remove(); paintColumnSeparators = undefined;
           if (rafId) cancelAnimationFrame(rafId);
           view.dom.removeEventListener("load", onLoad, true);
           view.dom.removeEventListener("compositionend", onLoad);
           document.fonts?.removeEventListener("loadingdone", onLoad);
           observer.disconnect();
+          zoomObserver.disconnect();
           sourceKey = ""; paintRunning = undefined; runningLayer.remove();
           paintPages = undefined; sheets.remove();
           firstEdge.remove();

@@ -1,0 +1,14 @@
+{
+  "reference_application": "Microsoft Word Online",
+  "source_sha256": "e23d2b90548729b4a8641bc97d3a45397eb310370684c4bffd4d1d3729025e8a",
+  "pdf_sha256": "f71639f99d618a5162b4904a29ba8d0da93572947f178d1bceae816229746653",
+  "captured_at_utc": "2026-11-03T04:24:03.178490+00:00",
+  "capture_timestamp_basis": "downloaded file mtime in UTC; exact export event time unavailable",
+  "method": "Root opened the exact source and used Word Online File > Export > Download as PDF",
+  "browser": "Codex in-app browser; exact engine version unavailable",
+  "word_build": "not exposed",
+  "paper": "Source Letter portrait 12240x15840 twips, four 1440-twip margins",
+  "font_specification": "Arial 11pt declared; actual substitution not independently verified",
+  "original_download_filename": "terminal-one-column-break.pdf",
+  "capture_notes": "Word Online initially showed page 1 of 1 after load; that initial UI count may be lazy. The exported PDF has two pages."
+}

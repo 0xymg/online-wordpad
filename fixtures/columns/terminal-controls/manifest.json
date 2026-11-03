@@ -1,0 +1,81 @@
+{
+  "schema_version": 1,
+  "generator": "scripts/compatibility/generate-column-terminal-controls.cjs",
+  "page_twips": {
+    "width": 12240,
+    "height": 15840
+  },
+  "margins_twips": {
+    "top": 1440,
+    "right": 1440,
+    "bottom": 1440,
+    "left": 1440
+  },
+  "font": "Arial 11pt (declared)",
+  "line_twips": 280,
+  "question": "Does a terminal column or page break create a blank final physical page?",
+  "cases": [
+    {
+      "id": "terminal-one-column-break",
+      "source": "terminal-one-column-break.docx",
+      "source_sha256": "e23d2b90548729b4a8641bc97d3a45397eb310370684c4bffd4d1d3729025e8a",
+      "column_count": 1,
+      "sequence": [
+        "ONE_COLUMN_TEXT",
+        "column"
+      ],
+      "word_reference": {
+        "status": "CAPTURED",
+        "pdf": "terminal-one-column-break.word.pdf",
+        "provenance": "terminal-one-column-break.provenance.json",
+        "measurement": "terminal-one-column-break.measurement.json",
+        "source_sha256": "e23d2b90548729b4a8641bc97d3a45397eb310370684c4bffd4d1d3729025e8a",
+        "pdf_sha256": "f71639f99d618a5162b4904a29ba8d0da93572947f178d1bceae816229746653",
+        "captured_at_utc": "2026-11-03T04:24:03.178490+00:00",
+        "page_count": 2
+      }
+    },
+    {
+      "id": "terminal-two-column-break",
+      "source": "terminal-two-column-break.docx",
+      "source_sha256": "fecb602c44ceb6b1c6201c09bc0c332b278f1e99f222c8de9004558b8a838d3e",
+      "column_count": 2,
+      "sequence": [
+        "TWO_FIRST",
+        "column",
+        "TWO_SECOND",
+        "column"
+      ],
+      "word_reference": {
+        "status": "CAPTURED",
+        "pdf": "terminal-two-column-break.word.pdf",
+        "provenance": "terminal-two-column-break.provenance.json",
+        "measurement": "terminal-two-column-break.measurement.json",
+        "source_sha256": "fecb602c44ceb6b1c6201c09bc0c332b278f1e99f222c8de9004558b8a838d3e",
+        "pdf_sha256": "79c27c38fc47a797c8e46bd35ca05a72eec75218bc042c916b96083b4dac7b3b",
+        "captured_at_utc": "2026-11-03T04:29:21.575905+00:00",
+        "page_count": 2
+      }
+    },
+    {
+      "id": "terminal-one-page-break",
+      "source": "terminal-one-page-break.docx",
+      "source_sha256": "5de1918878c5d404bf71ddcb1870e57e75294406e987be2205e03a1c56c639d9",
+      "column_count": 1,
+      "sequence": [
+        "ONE_PAGE_TEXT",
+        "page"
+      ],
+      "word_reference": {
+        "status": "CAPTURED",
+        "pdf": "terminal-one-page-break.word.pdf",
+        "provenance": "terminal-one-page-break.provenance.json",
+        "measurement": "terminal-one-page-break.measurement.json",
+        "source_sha256": "5de1918878c5d404bf71ddcb1870e57e75294406e987be2205e03a1c56c639d9",
+        "pdf_sha256": "c078a9242e4260150cbd0e9d19709dcc395a98f8a18aa93eef90a9cd40e3823b",
+        "captured_at_utc": "2026-11-03T04:30:21.816317+00:00",
+        "page_count": 1
+      }
+    }
+  ]
+}

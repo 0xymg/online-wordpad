@@ -33,7 +33,7 @@ export async function flushTabLayout(view: EditorView): Promise<void> {
   await document.fonts.ready;
   if (!await instance.wait()) throw new Error("Tab layout could not settle before export");
 }
-export function tabLayoutPlugin(): Plugin {
+export function tabLayoutPlugin(options: { resolveTabGeometry?: (view: EditorView, paragraphPos: number, tab: HTMLElement, fallback: TabContentGeometry) => TabContentGeometry } = {}): Plugin {
   return new Plugin({
     props: { decorations(state) {
       const decorations: Decoration[] = [];
@@ -58,7 +58,7 @@ export function tabLayoutPlugin(): Plugin {
         };
         node.forEach((child, offset) => {
           const at = pos + 1 + offset;
-          if (child.type.name === "tab" || child.type.name === "hard_break") {
+          if (child.type.name === "tab" || child.type.name === "hard_break" || child.type.name === "column_break") {
             addSegment(at); start = child.type.name === "tab" ? at + child.nodeSize : null;
             firstEnd = 0; lastStart = 0;
           } else if (start !== null) {
@@ -100,7 +100,8 @@ export function tabLayoutPlugin(): Plugin {
         if (!node.isTextblock) return;
         const dom = view.nodeDOM(pos); if (!(dom instanceof HTMLElement) || !dom.querySelector(".pm-tab[data-edtr-tab],.pm-tab-implicit")) return false;
         const geometry = tabContentGeometry(view, pos); if (!geometry) return false;
-        changed = measureTabParagraph(dom, node, geometry, settings, probe) || changed;
+        changed = measureTabParagraph(dom, node, geometry, settings, probe,
+          options.resolveTabGeometry ? (tab, fallback) => options.resolveTabGeometry!(view, pos, tab, fallback) : undefined) || changed;
         return false;
       });
       return changed;

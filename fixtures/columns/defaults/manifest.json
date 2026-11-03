@@ -1,0 +1,59 @@
+{
+  "schema_version": 1,
+  "id": "column-space-defaults",
+  "source_sha256": "3d5771c585ade25c4f859bfc432c98a7972cb5a3f134652ba3ce6ad880ad4627",
+  "generator": "scripts/compatibility/generate-column-defaults.cjs",
+  "sections": [
+    {
+      "marker_prefix": "OMITTED",
+      "num": 2,
+      "equalWidth": true,
+      "separator": false,
+      "space": "OMITTED"
+    },
+    {
+      "marker_prefix": "ZERO",
+      "num": 2,
+      "equalWidth": true,
+      "separator": false,
+      "space": 0
+    },
+    {
+      "marker_prefix": "EXPLICIT720",
+      "num": 2,
+      "equalWidth": true,
+      "separator": false,
+      "space": 720
+    }
+  ],
+  "page_twips": {
+    "width": 12240,
+    "height": 15840
+  },
+  "margins_twips": {
+    "top": 1440,
+    "right": 1440,
+    "bottom": 1440,
+    "left": 1440
+  },
+  "font": "Arial 11pt (declared)",
+  "line_twips": 280,
+  "markers_once": [
+    "OMITTED_LEFT",
+    "OMITTED_RIGHT",
+    "ZERO_LEFT",
+    "ZERO_RIGHT",
+    "EXPLICIT720_LEFT",
+    "EXPLICIT720_RIGHT"
+  ],
+  "question": "Which explicit gap, if either, matches the omitted w:space second-column anchor in actual Word? Expected explicit right x is 306pt for 0 and 324pt for 720, plus shared glyph rounding.",
+  "word_reference": {
+    "status": "CAPTURED",
+    "pdf": "column-space-defaults.word.pdf",
+    "provenance": "column-space-defaults.provenance.json",
+    "source_sha256": "3d5771c585ade25c4f859bfc432c98a7972cb5a3f134652ba3ce6ad880ad4627",
+    "pdf_sha256": "3985cf76e6a0e2c0f8d3744962230a59fda15ef2afc1a4c56e2547761695da80",
+    "captured_at_utc": "2026-11-03T04:16:37.684912+00:00",
+    "page_count": 3
+  }
+}

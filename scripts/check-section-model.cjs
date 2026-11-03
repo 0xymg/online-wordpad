@@ -20,14 +20,14 @@ function bundle(file) {
   }
   modules[index] = { code, deps }; return index;
 }
-const entries = Object.fromEntries(Object.entries({ model: 'lib/document-model.ts', commands: 'lib/section-commands.ts', sections: 'lib/document-sections.ts', layout: 'lib/document-layout.ts', schema: 'app/components/editor-schema.ts', state: 'prosemirror-state', history: 'prosemirror-history', pm: 'prosemirror-model', list: 'prosemirror-schema-list' }).map(([key, file]) => [key, bundle(file.startsWith('lib/') || file.startsWith('app/') ? path.join(root, file) : require.resolve(file))]));
+const entries = Object.fromEntries(Object.entries({ columnBreak: 'lib/column-break.ts', sectionColumns: 'lib/section-columns.ts', model: 'lib/document-model.ts', commands: 'lib/section-commands.ts', sections: 'lib/document-sections.ts', layout: 'lib/document-layout.ts', schema: 'app/components/editor-schema.ts', state: 'prosemirror-state', history: 'prosemirror-history', pm: 'prosemirror-model', list: 'prosemirror-schema-list' }).map(([key, file]) => [key, bundle(file.startsWith('lib/') || file.startsWith('app/') ? path.join(root, file) : require.resolve(file))]));
 const script = `window.__sections = (() => { const modules=${JSON.stringify(modules)},loaded={};function load(i){if(loaded[i])return loaded[i].exports;const module={exports:{}};loaded[i]=module;new Function('require','module','exports',modules[i].code)(name=>load(modules[i].deps[name]),module,module.exports);return module.exports;}return Object.fromEntries(Object.entries(${JSON.stringify(entries)}).map(([key,id])=>[key,load(id)]));})();`;
 (async () => {
   const browser = await chromium.launch({ headless: true, ...(process.env.CHROMIUM_PATH ? { executablePath: process.env.CHROMIUM_PATH } : {}) });
   try {
     const page = await browser.newPage(); await page.goto('http://localhost:3107'); await page.addScriptTag({ content: script });
     const result = await page.evaluate(() => {
-      const { model: M, commands: C, sections: D, layout: L, schema: { mySchema: schema }, state: S, history: H, pm: P, list } = window.__sections;
+      const { columnBreak: B, sectionColumns: SC, model: M, commands: C, sections: D, layout: L, schema: { mySchema: schema }, state: S, history: H, pm: P, list } = window.__sections;
       let checks = 0; const check = (condition, message) => { checks++; if (!condition) throw new Error(message); };
       const same = (a,b) => JSON.stringify(a) === JSON.stringify(b);
       const create = html => S.EditorState.create({ doc: M.parseDocumentHtml(html, schema), plugins: [H.history(), M.documentModelPlugin()] });
@@ -48,7 +48,54 @@ const script = `window.__sections = (() => { const modules=${JSON.stringify(modu
       check(encoded.includes('data-edtr-model'), 'model envelope serializes');
       const oldVersion=JSON.parse(JSON.stringify(M.getDocumentModel(reopened)));oldVersion.version=1;
       const upgraded=M.parseDocumentHtml(L.wrapDocumentHtml(output.innerHTML,reopened.attrs.layout,oldVersion),schema);
-      check(upgraded.attrs.documentModel.version===2 && upgraded.attrs.documentModel.id===oldVersion.id && same(D.documentSections(upgraded).map(s=>s.id),D.documentSections(reopened).map(s=>s.id)),'v1 upgrades to v2 without changing document or section identities');
+      check(upgraded.attrs.documentModel.version===3 && upgraded.attrs.documentModel.id===oldVersion.id && same(D.documentSections(upgraded).map(s=>s.id),D.documentSections(reopened).map(s=>s.id)),'v1 upgrades to v3 without changing document or section identities');
+      const columnRaw = `<w:sectPr xmlns:w="${W}" xmlns:x="urn:test"><w:cols w:num="2" w:equalWidth="1" x:custom="retain"/><w:bidi/><w:docGrid w:linePitch="360"/></w:sectPr>`;
+      const baseline = JSON.parse(JSON.stringify(M.getDocumentModel(reopened)));
+      const columnId = baseline.finalSectionId;
+      baseline.sections[columnId].rawProperties = columnRaw;
+      for (const version of [1,2]) {
+        const old = JSON.parse(JSON.stringify(baseline)); old.version = version;
+        for (const record of Object.values(old.sections)) { delete record.columns; delete record.flowDirection; }
+        const migrated = M.parseDocumentHtml(L.wrapDocumentHtml(output.innerHTML,reopened.attrs.layout,old),schema);
+        const record = M.getDocumentModel(migrated).sections[columnId];
+        check(record.columns.kind==='equal' && record.columns.count===2 && record.columns.space===720 && record.flowDirection==='rtl' && migrated.attrs.documentModel.id===old.id, `v${version} derives native columns and bidi with IDs stable`);
+        check(M.sectionRecordXml(record).includes('custom="retain"') && M.sectionRecordXml(record).includes('linePitch="360"'), 'unknown native properties survive projection');
+      }
+      const current = M.getDocumentModel(reopened), targets = D.documentSections(reopened).map(x=>x.id);
+      let columnsState = S.EditorState.create({doc:reopened,plugins:[H.history(), M.documentModelPlugin()]});
+      const beforeColumns = columnsState.doc.toJSON();
+      columnsState=apply(columnsState,C.setSectionLayout(columnsState,{columns:{kind:'equal',count:2,space:0,separator:true},flowDirection:'rtl'},'all',targets[0]));
+      check(D.documentSections(columnsState.doc).every(x=>x.columns.kind==='equal'&&x.columns.space===0&&x.columns.separator&&x.flowDirection==='rtl'),'all-section command applies zero gap and direction');
+      let columnUndo; H.undo(columnsState,tr=>{columnUndo=apply(columnsState,tr)});check(same(columnUndo.doc.toJSON(),beforeColumns),'one undo restores all columns and direction');
+      let badGeometry=false;try{C.setSectionLayout(columnsState,{columns:{kind:'equal',count:3,space:100000,separator:false}},'all',targets[0])}catch(e){badGeometry=e.code==='invalid-geometry'}check(badGeometry,'invalid geometry rejected atomically');
+      const unsupported = JSON.parse(JSON.stringify(current));unsupported.sections[columnId].rawProperties=columnRaw.replace('w:equalWidth="1"','w:equalWidth="0"');unsupported.version=2;
+      const preservedDoc=M.parseDocumentHtml(L.wrapDocumentHtml(output.innerHTML,reopened.attrs.layout,unsupported),schema), preserved=M.getDocumentModel(preservedDoc).sections[columnId];
+      check(preserved.columns.kind==='preserved' && M.sectionRecordXml(preserved).includes('equalWidth="0"'),'unequal native columns remain preserved');
+      let conversion=false;try{C.setSectionColumns(S.EditorState.create({doc:preservedDoc}),{kind:'equal',count:2,space:720,separator:false},'section',columnId)}catch(e){conversion=e.code==='unsupported-model'}check(conversion,'preserved conversion requires explicit choice');
+      const extra='urn:extension', duplicateRaw=`<w:sectPr xmlns:w="${W}" xmlns:x="${extra}"><w:cols w:num="2" x:first="A"><x:firstChild/></w:cols><w:cols xmlns:z="urn:other" w:num="3" x:second="B" x:qname="z:thing"><w:col w:w="1000"/><x:secondChild/></w:cols><w:bidi x:first="C"><x:directionOne/></w:bidi><w:bidi w:val="0" x:second="D"><x:directionTwo/></w:bidi><w:docGrid w:linePitch="360"/></w:sectPr>`;
+      const duplicateModel=JSON.parse(JSON.stringify(current));duplicateModel.version=2;for(const record of Object.values(duplicateModel.sections)){delete record.columns;delete record.flowDirection;}duplicateModel.sections[columnId].rawProperties=duplicateRaw;
+      const duplicateDoc=M.parseDocumentHtml(L.wrapDocumentHtml(output.innerHTML,reopened.attrs.layout,duplicateModel),schema);let duplicateState=S.EditorState.create({doc:duplicateDoc,plugins:[H.history(),M.documentModelPlugin()]});const originalDuplicate=duplicateState.doc.toJSON();
+      check(M.getDocumentModel(duplicateDoc).sections[columnId].columns.kind==='preserved'&&M.getDocumentModel(duplicateDoc).sections[columnId].flowDirection==='preserved','duplicate native properties remain preserved before conversion');
+      duplicateState=apply(duplicateState,C.setSectionLayout(duplicateState,{columns:{kind:'equal',count:2,space:720,separator:false},flowDirection:'rtl'},'section',columnId,true));
+      const convertedXml=M.sectionRecordXml(M.getDocumentModel(duplicateState.doc).sections[columnId]),converted=new DOMParser().parseFromString(convertedXml,'application/xml'),cols=converted.getElementsByTagNameNS(W,'cols'),bidi=converted.getElementsByTagNameNS(W,'bidi');
+      check(cols.length===1&&bidi.length===1&&cols[0].getAttributeNS(extra,'first')==='A'&&cols[0].getAttributeNS(extra,'second')==='B'&&bidi[0].getAttributeNS(extra,'first')==='C'&&bidi[0].getAttributeNS(extra,'second')==='D','conversion merges all nonconflicting extension attributes');
+      check(['firstChild','secondChild','directionOne','directionTwo'].every(name=>converted.getElementsByTagNameNS(extra,name).length===1)&&converted.getElementsByTagNameNS(W,'col').length===0&&converted.getElementsByTagNameNS(W,'docGrid').length===1&&cols[0].lookupNamespaceURI('z')==='urn:other'&&cols[0].getAttributeNS(extra,'qname')==='z:thing','conversion preserves unknown children, namespace values and unrelated section properties');
+      const convertedBody=document.createElement('div');convertedBody.appendChild(P.DOMSerializer.fromSchema(schema).serializeFragment(duplicateState.doc.content));const convertedReopened=M.parseDocumentHtml(L.wrapDocumentHtml(convertedBody.innerHTML,duplicateState.doc.attrs.layout,duplicateState.doc.attrs.documentModel),schema),reopenedXml=M.sectionRecordXml(M.getDocumentModel(convertedReopened).sections[columnId]);check(reopenedXml.includes('secondChild')&&reopenedXml.includes('directionTwo')&&reopenedXml.includes('z:thing'),'converted native extensions survive save and reopen');
+      let restoredDuplicate;H.undo(duplicateState,tr=>{restoredDuplicate=apply(duplicateState,tr)});check(same(restoredDuplicate.doc.toJSON(),originalDuplicate),'one undo restores original duplicate native records');
+      const conflictRaw=duplicateRaw.replace('x:second="B"','x:first="DIFFERENT"'),conflictModel=JSON.parse(JSON.stringify(duplicateModel));conflictModel.sections[columnId].rawProperties=conflictRaw;
+      const conflictDoc=M.parseDocumentHtml(L.wrapDocumentHtml(output.innerHTML,reopened.attrs.layout,conflictModel),schema),conflictState=S.EditorState.create({doc:conflictDoc,plugins:[H.history(),M.documentModelPlugin()]}),conflictBefore=conflictState.doc.toJSON();
+      let rejectedConflict=false;try{C.setSectionLayout(conflictState,{columns:{kind:'equal',count:2,space:720,separator:false},flowDirection:'rtl'},'all',targets[0],true)}catch(error){rejectedConflict=error.code==='unsupported-model'}check(rejectedConflict&&same(conflictState.doc.toJSON(),conflictBefore),'conflicting extension values reject all-section conversion atomically');
+      const bidiConflict=duplicateRaw.replace('x:second="D"','x:first="CONFLICT"'),direct=new DOMParser().parseFromString(bidiConflict,'application/xml'),beforeDirect=new XMLSerializer().serializeToString(direct.documentElement);let directRejected=false;try{SC.writeSectionColumns(direct.documentElement,{kind:'equal',count:2,space:720,separator:false},'ltr')}catch(error){directRejected=error.code==='unsupported-model'}check(directRejected&&new XMLSerializer().serializeToString(direct.documentElement)===beforeDirect,'direct write validates both properties before mutating either');
+      const prefixConflict=duplicateRaw.replace('xmlns:z="urn:other"','xmlns:x="urn:different" xmlns:z="urn:other"'),prefixDoc=new DOMParser().parseFromString(prefixConflict,'application/xml'),beforePrefix=new XMLSerializer().serializeToString(prefixDoc.documentElement);let prefixRejected=false;try{SC.writeSectionColumns(prefixDoc.documentElement,{kind:'equal',count:2,space:720,separator:false},'preserved')}catch(error){prefixRejected=error.code==='unsupported-model'}check(prefixRejected&&new XMLSerializer().serializeToString(prefixDoc.documentElement)===beforePrefix,'conflicting extension namespace prefixes reject conversion without mutation');
+      const parsedBreak=M.parseDocumentHtml('<p>one<br data-edtr-column-break="true">two<br>three</p>',schema);
+      check(parsedBreak.firstChild.child(1).type.name==='column_break'&&parsedBreak.firstChild.child(3).type.name==='hard_break','column break HTML remains distinct from line break');
+      let breakState=create('<p>text</p>');breakState=withCursor(breakState,5);
+      check(B.insertColumnBreak(breakState,tr=>{breakState=apply(breakState,tr)}),'structural column break inserted');
+      breakState=apply(breakState,breakState.tr.delete(5,6));
+      let breakUndo;check(H.undo(breakState,tr=>{breakUndo=apply(breakState,tr)}),'break deletion undo available');breakState=breakUndo;
+      check(breakState.doc.firstChild.lastChild.type.name==='column_break','first undo restores break after immediate deletion');
+      check(H.undo(breakState,tr=>{breakUndo=apply(breakState,tr)}),'break insertion undo available');breakState=breakUndo;
+      check(breakState.doc.firstChild.childCount===1 && breakState.doc.textContent==='text','second undo removes only insertion');
       const tabsNormalized=M.parseDocumentHtml('<p>LEFT\tRIGHT</p><pre>CODE\tTAB</pre>',schema);let atomCount=0;tabsNormalized.descendants(node=>{if(node.type.name==='tab')atomCount++;});
       check(atomCount===1 && tabsNormalized.lastChild.textContent==='CODE\tTAB','v2 normalizes real text tabs while preserving code-block literal tabs');
       const imported=(final,first=originalId,extra='')=>`<div data-edtr-docx-final-section-id="${final}">${source.replace('<p ',`<p data-edtr-section-end="${first}" `).replace('<p>GAMMA',`<p ${extra}>GAMMA`)}</div>`;

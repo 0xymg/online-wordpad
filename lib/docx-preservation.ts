@@ -23,6 +23,17 @@ const kids = (el: Element, name: string) => Array.from(el.children).filter(e => 
 const first = (el: Element, name: string) => kids(el, name)[0];
 const val = (el: Element | undefined, key = "val") => el?.getAttributeNS(W, key) ?? "";
 const all = (el: Document | Element, name: string) => Array.from(el.getElementsByTagNameNS(W, name));
+/** Historical section properties are source data, not active section boundaries. */
+function liveSectionProperties(doc: Document): Element[] {
+  return all(doc, "sectPr").filter(section => {
+    const parent = section.parentElement;
+    if (parent?.namespaceURI !== W || !["pPr", "body"].includes(parent.localName)) return false;
+    for (let ancestor = parent; ancestor; ancestor = ancestor.parentElement!) {
+      if (ancestor.namespaceURI === W && ["sectPrChange", "pPrChange"].includes(ancestor.localName)) return false;
+    }
+    return true;
+  });
+}
 const canonicalPart = (path: string) => path.replace(/^(?:word\/edtr-source\/)+/, "");
 const sourceId = (id: string) => id.startsWith("EDTRSource_") ? id : `EDTRSource_${id}`;
 const relPath = (p: string) => p.replace(/([^/]+)$/, "_rels/$1.rels");
@@ -84,8 +95,9 @@ export async function captureLayout(zip: JSZip, mainPath: string, main: Document
       source.file(relPath(canonicalPart(path)), xmlString(rels));
     }
   }
-  const sections = all(main, "sectPr");
-  const refs = new Set(sections.flatMap(s => [...kids(s, "headerReference"), ...kids(s, "footerReference")].map(e => e.getAttributeNS(R, "id"))));
+  // Capture relationships used by live and historical section properties.
+  const refs = new Set(all(main, "sectPr").flatMap(s => [...kids(s, "headerReference"), ...kids(s, "footerReference")].map(e => e.getAttributeNS(R, "id"))));
+  const sections = liveSectionProperties(main);
   for (const rel of Array.from(relations.documentElement.children)) {
     if (!refs.has(rel.getAttribute("Id"))) continue;
     const dest = targetPath(mainPath, rel.getAttribute("Target") || "");
@@ -131,7 +143,7 @@ export async function captureLayout(zip: JSZip, mainPath: string, main: Document
   }
   const sectionXml = (s: Element) => {
     const copy = s.cloneNode(true) as Element;
-    for (const ref of [...kids(copy, "headerReference"), ...kids(copy, "footerReference")]) ref.setAttributeNS(R, "r:id", sourceId(ref.getAttributeNS(R, "id") || ""));
+    for (const ref of [...all(copy, "headerReference"), ...all(copy, "footerReference")]) ref.setAttributeNS(R, "r:id", sourceId(ref.getAttributeNS(R, "id") || ""));
     return xmlString(copy);
   };
   const section = sections.at(-1);
@@ -264,6 +276,19 @@ function replaceProperties(parent: Element, raw: string, preserve: string[] = []
   for (const name of preserve) { for (const el of kids(copy, name)) el.remove(); for (const el of old ? kids(old, name) : []) copy.appendChild(el.cloneNode(true)); }
   if (old) old.replaceWith(copy); else parent.insertBefore(copy, parent.firstChild);
 }
+function applySectionLayoutOverrides(main: Document, layout: DocumentLayout | null | undefined) {
+  for (const [index, section] of liveSectionProperties(main).entries()) {
+    const selectedMargins = layout?.sectionMargins?.[index] || (layout?.overrides?.margins ? layout.margins : null);
+    if (selectedMargins) {
+      const margins = first(section, "pgMar") ?? section.appendChild(main.createElementNS(W, "w:pgMar"));
+      for (const [side, n] of Object.entries(selectedMargins)) margins.setAttributeNS(W, `w:${side}`, String(n));
+    }
+    if (layout?.overrides?.orientation) {
+      const size = first(section, "pgSz") ?? section.appendChild(main.createElementNS(W, "w:pgSz"));
+      size.setAttributeNS(W, "w:w", String(layout.width)); size.setAttributeNS(W, "w:h", String(layout.height)); size.setAttributeNS(W, "w:orient", layout.width > layout.height ? "landscape" : "portrait");
+    }
+  }
+}
 /** Apply the canonical section model to native Word section properties.
  * Raw section XML remains the authority for unsupported children, relationship
  * references and attributes; only model-owned values are changed here.
@@ -278,7 +303,7 @@ function applyModeledSections(main: Document, doc: PMNode) {
   doc.forEach(node => { if (node.attrs.sectionEndId) ids.push(String(node.attrs.sectionEndId)); });
   ids.push(model.finalSectionId);
   // Historical sectPr inside sectPrChange is not a live section boundary.
-  const sections = all(main, "sectPr").filter(section => ["pPr", "body"].includes(section.parentElement?.localName || ""));
+  const sections = liveSectionProperties(main);
   if (ids.length !== sections.length || new Set(ids).size !== ids.length || ids.some(id => !model.sections[id]))
     throw new Error("Cannot export inconsistent document section boundaries");
   for (const [index, section] of sections.entries()) {
@@ -440,17 +465,7 @@ export async function restoreDocxPackage(blob: Blob, doc: PMNode, paragraphs: Ar
   const generatedSection = first(body, "sectPr")?.cloneNode(true) as Element | undefined;
   if (layout?.section) replaceProperties(body, layout.section);
   // Explicit user layout changes win over imported settings in every section.
-  for (const [index,section] of all(main, "sectPr").entries()) {
-    const selectedMargins = layout?.sectionMargins?.[index] || (layout?.overrides?.margins ? layout.margins : null);
-    if (selectedMargins) {
-      const margins = first(section, "pgMar") ?? section.appendChild(main.createElementNS(W, "w:pgMar"));
-      for (const [side, n] of Object.entries(selectedMargins)) margins.setAttributeNS(W, `w:${side}`, String(n));
-    }
-    if (layout?.overrides?.orientation) {
-      const size = first(section, "pgSz") ?? section.appendChild(main.createElementNS(W, "w:pgSz"));
-      size.setAttributeNS(W, "w:w", String(layout.width)); size.setAttributeNS(W, "w:h", String(layout.height)); size.setAttributeNS(W, "w:orient", layout.width > layout.height ? "landscape" : "portrait");
-    }
-  }
+  applySectionLayoutOverrides(main, layout);
   applyModeledSections(main, doc);
   if (layout?.overrides?.pageNumbers && generatedSection) {
     const rels = parseXml(await zip.file("word/_rels/document.xml.rels")!.async("string"));
@@ -463,7 +478,7 @@ export async function restoreDocxPackage(blob: Blob, doc: PMNode, paragraphs: Ar
     const generatedPart = generatedRef && await zip.file(target(generatedRef))?.async("string");
     const numberParagraph = generatedPart && all(parseXml(generatedPart), "p")[0];
     const editedParts = new Set<string>();
-    for (const section of all(main, "sectPr")) {
+    for (const section of liveSectionProperties(main)) {
       for (const kind of ["headerReference", "footerReference"]) {
         const refs = kids(section, kind);
         for (const ref of refs) {

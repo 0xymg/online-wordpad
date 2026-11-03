@@ -5,12 +5,14 @@ import type { EditorView } from "prosemirror-view";
 import { applyTabChanges, readTabStops, type TabOperation } from "@/lib/tab-commands";
 import type { TabStop } from "@/lib/tab-stops";
 import { tabContentGeometry } from "@/lib/tab-layout";
+import { columnContentGeometryAtPos, COLUMN_FLOW_READY_EVENT } from "@/lib/column-flow";
 import { tabLabels } from "@/lib/tab-i18n";
 import { useLocale } from "./I18nProvider";
 type Geometry=NonNullable<ReturnType<typeof tabContentGeometry>>;
 type Drag={state:EditorState;stop:TabStop;oldPosition:number|null;pointerId:number;position:number;remove:boolean;capture:HTMLElement};
 const symbols={left:"└",center:"┴",right:"┘",decimal:"⊥"};
 function paragraphPosition(state:EditorState):number|null{const {$head}=state.selection;for(let depth=$head.depth;depth>0;depth--)if(["paragraph","heading"].includes($head.node(depth).type.name))return $head.before(depth);return null;}
+function caretGeometry(view:EditorView,paragraphPos:number):Geometry|null{return columnContentGeometryAtPos(view,view.state.selection.head)??tabContentGeometry(view,paragraphPos);}
 export default function TabRuler({view,tick,onOpenDialog}:{view:EditorView|null;tick:number;onOpenDialog:()=>void}){
  const {locale}=useLocale(),t=tabLabels(locale),track=useRef<HTMLDivElement>(null),drag=useRef<Drag|null>(null);
  const [geometry,setGeometry]=useState<Geometry|null>(null),[left,setLeft]=useState(0),[trackWidth,setTrackWidth]=useState(0),[preview,setPreview]=useState<{position:number;oldPosition:number|null;stop:TabStop;remove:boolean}|null>(null);
@@ -20,14 +22,14 @@ export default function TabRuler({view,tick,onOpenDialog}:{view:EditorView|null;
  const labels={left:t.left,center:t.center,right:t.right,decimal:t.decimal};
  useEffect(()=>{
   if(!view)return;let frame=0;
-  const measure=()=>{cancelAnimationFrame(frame);frame=requestAnimationFrame(()=>{if(view.isDestroyed||!track.current)return;const current=drag.current;if(current&&(!view.editable||view.state.doc!==current.state.doc||!view.state.selection.eq(current.state.selection))){drag.current=null;if(current.capture.hasPointerCapture(current.pointerId))current.capture.releasePointerCapture(current.pointerId);setPreview(null);}const pos=paragraphPosition(view.state),rect=track.current.getBoundingClientRect();setGeometry(pos===null?null:tabContentGeometry(view,pos));setLeft(rect.left);setTrackWidth(rect.width);});};
-  measure();window.addEventListener("resize",measure);window.addEventListener("scroll",measure,true);const observer=new ResizeObserver(measure);if(track.current)observer.observe(track.current);observer.observe(view.dom);document.fonts?.addEventListener("loadingdone",measure);
-  return()=>{cancelAnimationFrame(frame);window.removeEventListener("resize",measure);window.removeEventListener("scroll",measure,true);observer.disconnect();document.fonts?.removeEventListener("loadingdone",measure);};
+  const measure=()=>{cancelAnimationFrame(frame);frame=requestAnimationFrame(()=>{if(view.isDestroyed||!track.current)return;const current=drag.current;if(current&&(!view.editable||view.state.doc!==current.state.doc||!view.state.selection.eq(current.state.selection))){drag.current=null;if(current.capture.hasPointerCapture(current.pointerId))current.capture.releasePointerCapture(current.pointerId);setPreview(null);}const pos=paragraphPosition(view.state),rect=track.current.getBoundingClientRect();setGeometry(pos===null?null:caretGeometry(view,pos));setLeft(rect.left);setTrackWidth(rect.width);});};
+  measure();window.addEventListener("resize",measure);window.addEventListener("scroll",measure,true);view.dom.addEventListener(COLUMN_FLOW_READY_EVENT,measure);const observer=new ResizeObserver(measure);if(track.current)observer.observe(track.current);observer.observe(view.dom);document.fonts?.addEventListener("loadingdone",measure);
+  return()=>{cancelAnimationFrame(frame);window.removeEventListener("resize",measure);window.removeEventListener("scroll",measure,true);view.dom.removeEventListener(COLUMN_FLOW_READY_EVENT,measure);observer.disconnect();document.fonts?.removeEventListener("loadingdone",measure);};
  },[view,tick]);
  useEffect(()=>{
   if(!view)return;
   const cancel=()=>{const current=drag.current;drag.current=null;if(current?.capture.hasPointerCapture(current.pointerId))current.capture.releasePointerCapture(current.pointerId);setPreview(null);};
-  const move=(e:PointerEvent)=>{const current=drag.current;if(!current||current.pointerId!==e.pointerId)return;if(view.isDestroyed||!view.editable||view.state.doc!==current.state.doc||!view.state.selection.eq(current.state.selection)){cancel();return;}const pos=paragraphPosition(current.state),g=pos===null?null:tabContentGeometry(view,pos),rect=track.current?.getBoundingClientRect();if(!g||!rect){cancel();return;}const sign=g.direction==="rtl"?-1:1;current.position=Math.max(0,Math.min(Math.floor(g.availableWidthTwips),Math.round((e.clientX-g.originClientX)*sign/g.cssPixelsPerTwip)));current.remove=e.clientY<rect.top-18||e.clientY>rect.bottom+18;setPreview({position:current.position,oldPosition:current.oldPosition,stop:current.stop,remove:current.remove});e.preventDefault();};
+  const move=(e:PointerEvent)=>{const current=drag.current;if(!current||current.pointerId!==e.pointerId)return;if(view.isDestroyed||!view.editable||view.state.doc!==current.state.doc||!view.state.selection.eq(current.state.selection)){cancel();return;}const pos=paragraphPosition(current.state),g=pos===null?null:caretGeometry(view,pos),rect=track.current?.getBoundingClientRect();if(!g||!rect){cancel();return;}const sign=g.direction==="rtl"?-1:1;current.position=Math.max(0,Math.min(Math.floor(g.availableWidthTwips),Math.round((e.clientX-g.originClientX)*sign/g.cssPixelsPerTwip)));current.remove=e.clientY<rect.top-18||e.clientY>rect.bottom+18;setPreview({position:current.position,oldPosition:current.oldPosition,stop:current.stop,remove:current.remove});e.preventDefault();};
   const up=(e:PointerEvent)=>{const current=drag.current;if(!current||current.pointerId!==e.pointerId)return;move(e);if(!drag.current)return;const operations:TabOperation[]=[];if(current.oldPosition!==null&&(current.remove||current.position!==current.oldPosition))operations.push({type:"remove",position:current.oldPosition});if(!current.remove&&(current.oldPosition===null||current.position!==current.oldPosition))operations.push({type:"upsert",stop:{...current.stop,position:current.position}});cancel();if(!operations.length)return;try{if(view.isDestroyed||!view.editable||view.state.doc!==current.state.doc||!view.state.selection.eq(current.state.selection))return;const tr=applyTabChanges(current.state,{operations});if(tr.docChanged)view.dispatch(tr);view.focus();setError("");}catch{setError(t.failed);}};
   const key=(e:KeyboardEvent)=>{if(e.key==="Escape"&&drag.current){e.preventDefault();e.stopPropagation();cancel();}};
   const pointerCancel=(e:PointerEvent)=>{if(drag.current?.pointerId===e.pointerId)cancel();};
@@ -35,7 +37,7 @@ export default function TabRuler({view,tick,onOpenDialog}:{view:EditorView|null;
   return()=>{cancel();window.removeEventListener("pointermove",move);window.removeEventListener("pointerup",up);window.removeEventListener("pointercancel",pointerCancel);window.removeEventListener("keydown",key,true);};
  },[view,t.failed]);
  function start(e:React.PointerEvent<HTMLElement>,stop?:TabStop){
-  if(!view||view.isDestroyed||!view.editable||!geometry||!e.isPrimary||e.button!==0)return;e.preventDefault();e.stopPropagation();const pos=paragraphPosition(view.state),g=pos===null?null:tabContentGeometry(view,pos);if(!g)return;
+  if(!view||view.isDestroyed||!view.editable||!geometry||!e.isPrimary||e.button!==0)return;e.preventDefault();e.stopPropagation();const pos=paragraphPosition(view.state),g=pos===null?null:caretGeometry(view,pos);if(!g)return;
   const position=stop?.position??Math.max(0,Math.min(Math.floor(g.availableWidthTwips),Math.round((e.clientX-g.originClientX)*(g.direction==="rtl"?-1:1)/g.cssPixelsPerTwip)));
   e.currentTarget.setPointerCapture(e.pointerId);drag.current={state:view.state,stop:stop||{position,alignment,leader:"none"},oldPosition:stop?.position??null,pointerId:e.pointerId,position,remove:false,capture:e.currentTarget};setPreview({position,oldPosition:stop?.position??null,stop:stop||{position,alignment,leader:"none"},remove:false});setError("");
  }

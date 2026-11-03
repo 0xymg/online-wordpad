@@ -18,7 +18,7 @@ import { mySchema } from "@/app/components/editor-schema";
 import {
   Document, Packer, Paragraph, TextRun, Tab, HeadingLevel, AlignmentType,
   Table, TableRow, TableCell, WidthType, ImageRun, ExternalHyperlink, Bookmark, Header, Footer, PageNumber, SimpleField,
-  LevelFormat, ShadingType, BorderStyle, PageBreak, PageOrientation,
+  LevelFormat, ShadingType, BorderStyle, PageBreak, BuilderElement, PageOrientation,
   TextWrappingType, TextWrappingSide, HorizontalPositionRelativeFrom, VerticalPositionRelativeFrom,
   type FileChild, type ParagraphChild, type INumberingOptions,
 } from "docx";
@@ -236,6 +236,15 @@ class DocxBuilder {
         } else {
           out.push(new TextRun({ text: "[image]", italics: true, color: "888888" }));
         }
+      } else if (child.type.name === "column_break") {
+        const p = readMarks(child.marks);
+        const run = new TextRun({ font: p.font, size: p.size, bold: p.bold, italics: p.italics,
+          underline: p.underline === false ? { type: "none" } : p.underline ? {} : undefined, strike: p.strike, color: p.color,
+          superScript: p.superScript, subScript: p.subScript,
+          shading: p.highlight ? { type: ShadingType.CLEAR, fill: p.highlight } : undefined,
+          style: p.link ? "Hyperlink" : undefined });
+        run.addChildElement(new BuilderElement({ name: "w:br", attributes: { type: { key: "w:type", value: "column" } } }));
+        if (p.link) out.push(new ExternalHyperlink({ children: [run], link: p.link })); else out.push(run);
       } else if (child.type.name === "hard_break") {
         out.push(new TextRun({ break: 1 }));
       }
@@ -552,7 +561,7 @@ class RtfBuilder {
         // RTF exports preserve the box text in document flow; geometry is DOCX/HTML only.
         const p = child.attrs;
         out += `{\\f${this.fontIndex(firstFontFamily(p.fontFamily))}\\fs${Math.round(Number(p.fontSize || 12) * 2)}\\cf${this.colorIndex(colorToHex(p.color))} ${String(p.text || "").split("\n").map(rtfEscape).join("\\line ")}}`;
-      } else if (child.type.name === "hard_break") {
+      } else if (child.type.name === "hard_break" || child.type.name === "column_break") {
         out += "\\line ";
       }
     });
@@ -690,7 +699,7 @@ function inlineToMd(node: PMNode): string {
       out += `![${child.attrs.alt || ""}](${child.attrs.src})`;
     } else if (child.type.name === "text_box") {
       out += mdEscape(String(child.attrs.text || ""));
-    } else if (child.type.name === "hard_break") {
+    } else if (child.type.name === "hard_break" || child.type.name === "column_break") {
       out += "  \n";
     }
   });

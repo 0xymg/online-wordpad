@@ -1,7 +1,8 @@
 import type { Locale } from "./i18n";
 
 const en = {
-  title: "Section layout", showBoundaries: "Section boundaries", boundaryNesting: "Move or remove the section boundary before placing this paragraph inside a list or table.", description: "Manage section breaks, page size and margins.", sectionPicker: "Section to edit",
+  columnLayoutError: "This content could not be laid out in columns. Your text is retained. Review section settings before exporting PDF or printing.",
+  insertColumnBreak: "Column break", columnBreakUnavailable: "Place the cursor in a body paragraph or heading, outside tables and lists.", title: "Section layout", showBoundaries: "Section boundaries", boundaryNesting: "Move or remove the section boundary before placing this paragraph inside a list or table.", description: "Manage section breaks, page size and margins.", sectionPicker: "Section to edit",
   sectionName: (number: number) => `Section ${number}`, currentSection: (number: number, total: number) => `At cursor: Section ${number} of ${total}`,
   pageSettings: "Page settings", paper: "Paper size", custom: "Custom", orientation: "Orientation", portrait: "Portrait", landscape: "Landscape",
   width: "Width (cm)", height: "Height (cm)", margins: "Margins (cm)", top: "Top (cm)", bottom: "Bottom (cm)", left: "Left (cm)", right: "Right (cm)",
@@ -20,7 +21,8 @@ type Labels = { [K in keyof typeof en]: (typeof en)[K] };
 const labels: Record<Locale, Labels> = {
   en,
   tr: {
-    title: "Bölüm düzeni", showBoundaries: "Bölüm sınırları", boundaryNesting: "Bu paragrafı liste veya tabloya almadan önce bölüm sınırını taşıyın ya da kaldırın.", description: "Bölüm sonlarını, sayfa boyutunu ve kenar boşluklarını düzenleyin.", sectionPicker: "Düzenlenecek bölüm",
+    columnLayoutError: "Bu içerik sütunlara yerleştirilemedi. Metniniz korunuyor. PDF veya yazdırma öncesinde bölüm ayarlarını gözden geçirin.",
+    insertColumnBreak: "Sütun sonu", columnBreakUnavailable: "İmleci tablo ve listelerin dışında bir gövde paragrafına veya başlığa yerleştirin.", title: "Bölüm düzeni", showBoundaries: "Bölüm sınırları", boundaryNesting: "Bu paragrafı liste veya tabloya almadan önce bölüm sınırını taşıyın ya da kaldırın.", description: "Bölüm sonlarını, sayfa boyutunu ve kenar boşluklarını düzenleyin.", sectionPicker: "Düzenlenecek bölüm",
     sectionName: number => `Bölüm ${number}`, currentSection: (number, total) => `İmleç: ${total} bölümün ${number}. bölümü`,
     pageSettings: "Sayfa ayarları", paper: "Kağıt boyutu", custom: "Özel", orientation: "Yön", portrait: "Dikey", landscape: "Yatay",
     width: "Genişlik (cm)", height: "Yükseklik (cm)", margins: "Kenar boşlukları (cm)", top: "Üst (cm)", bottom: "Alt (cm)", left: "Sol (cm)", right: "Sağ (cm)",
@@ -36,7 +38,8 @@ const labels: Record<Locale, Labels> = {
     invalidSelection: "Bölüm eklemeden önce seçimi tek bir imleç konumuna indirin.", unsupportedModel: "Bu belgenin bölüm verileri henüz güvenle düzenlenemiyor.", actionError: "Bölüm değişikliği uygulanamadı.",
   },
   fr: {
-    title: "Mise en page des sections", showBoundaries: "Limites des sections", boundaryNesting: "Déplacez ou supprimez la limite de section avant de placer ce paragraphe dans une liste ou un tableau.", description: "Gérez les sauts de section, le format du papier et les marges.", sectionPicker: "Section à modifier",
+    columnLayoutError: "Ce contenu n’a pas pu être disposé en colonnes. Votre texte est conservé. Vérifiez les paramètres de section avant l’export PDF ou l’impression.",
+    insertColumnBreak: "Saut de colonne", columnBreakUnavailable: "Placez le curseur dans un paragraphe ou un titre du corps, hors des tableaux et listes.", title: "Mise en page des sections", showBoundaries: "Limites des sections", boundaryNesting: "Déplacez ou supprimez la limite de section avant de placer ce paragraphe dans une liste ou un tableau.", description: "Gérez les sauts de section, le format du papier et les marges.", sectionPicker: "Section à modifier",
     sectionName: number => `Section ${number}`, currentSection: (number, total) => `Au curseur : section ${number} sur ${total}`,
     pageSettings: "Paramètres de page", paper: "Format du papier", custom: "Personnalisé", orientation: "Orientation", portrait: "Portrait", landscape: "Paysage",
     width: "Largeur (cm)", height: "Hauteur (cm)", margins: "Marges (cm)", top: "Haut (cm)", bottom: "Bas (cm)", left: "Gauche (cm)", right: "Droite (cm)",
@@ -52,7 +55,8 @@ const labels: Record<Locale, Labels> = {
     invalidSelection: "Réduisez la sélection à un curseur avant d’insérer une section.", unsupportedModel: "Les données de section de ce document ne peuvent pas encore être modifiées sans risque.", actionError: "La modification de section n’a pas pu être appliquée.",
   },
   zh: {
-    title: "节布局", showBoundaries: "节边界", boundaryNesting: "将此段落放入列表或表格之前，请先移动或删除节边界。", description: "管理分节符、纸张大小和页边距。", sectionPicker: "要编辑的节",
+    columnLayoutError: "无法将此内容排入分栏。您的文字已保留。导出 PDF 或打印前，请检查节设置。",
+    insertColumnBreak: "分栏符", columnBreakUnavailable: "请将光标置于正文段落或标题中，且不在表格或列表内。", title: "节布局", showBoundaries: "节边界", boundaryNesting: "将此段落放入列表或表格之前，请先移动或删除节边界。", description: "管理分节符、纸张大小和页边距。", sectionPicker: "要编辑的节",
     sectionName: number => `第 ${number} 节`, currentSection: (number, total) => `光标位置：第 ${number} 节，共 ${total} 节`,
     pageSettings: "页面设置", paper: "纸张大小", custom: "自定义", orientation: "方向", portrait: "纵向", landscape: "横向",
     width: "宽度（厘米）", height: "高度（厘米）", margins: "页边距（厘米）", top: "上（厘米）", bottom: "下（厘米）", left: "左（厘米）", right: "右（厘米）",
@@ -68,7 +72,8 @@ const labels: Record<Locale, Labels> = {
     invalidSelection: "插入分节符前，请将选区折叠为光标位置。", unsupportedModel: "暂时无法安全编辑此文档的节数据。", actionError: "无法应用节更改。",
   },
   ar: {
-    title: "تخطيط المقاطع", showBoundaries: "حدود المقاطع", boundaryNesting: "انقل حد المقطع أو أزله قبل وضع هذه الفقرة داخل قائمة أو جدول.", description: "إدارة فواصل المقاطع وحجم الورق والهوامش.", sectionPicker: "المقطع المراد تحريره",
+    columnLayoutError: "تعذر توزيع هذا المحتوى على أعمدة. تم الاحتفاظ بالنص. راجع إعدادات المقطع قبل تصدير PDF أو الطباعة.",
+    insertColumnBreak: "فاصل عمود", columnBreakUnavailable: "ضع المؤشر في فقرة أو عنوان من المتن، خارج الجداول والقوائم.", title: "تخطيط المقاطع", showBoundaries: "حدود المقاطع", boundaryNesting: "انقل حد المقطع أو أزله قبل وضع هذه الفقرة داخل قائمة أو جدول.", description: "إدارة فواصل المقاطع وحجم الورق والهوامش.", sectionPicker: "المقطع المراد تحريره",
     sectionName: number => `المقطع ${number}`, currentSection: (number, total) => `عند المؤشر: المقطع ${number} من ${total}`,
     pageSettings: "إعدادات الصفحة", paper: "حجم الورق", custom: "مخصص", orientation: "الاتجاه", portrait: "عمودي", landscape: "أفقي",
     width: "العرض (سم)", height: "الارتفاع (سم)", margins: "الهوامش (سم)", top: "أعلى (سم)", bottom: "أسفل (سم)", left: "يسار (سم)", right: "يمين (سم)",
@@ -85,3 +90,12 @@ const labels: Record<Locale, Labels> = {
   },
 };
 export function sectionLabels(locale: Locale): Labels { return labels[locale]; }
+
+const columnText = {
+  en: { invalidGeometry: "Check the page size, margins and gap; each column needs at least 1.27 cm of width.", heading: "Columns", count: "Equal columns", gap: "Gap (cm)", separator: "Line between columns", direction: "Column order", ltr: "Left to right", rtl: "Right to left", directionHint: "Column order is separate from paragraph text direction.", preserved: "This section has unsupported column settings. They are preserved until you choose a replacement.", unknown: "Unsupported native setting", convert: (n: number) => `Replace unsupported settings in section ${n} with the selected settings`, conversionRequired: "Confirm replacement for every affected section." },
+  tr: { invalidGeometry: "Sayfa boyutunu, kenar boşluklarını ve aralığı kontrol edin; her sütun en az 1,27 cm genişlik gerektirir.", heading: "Sütunlar", count: "Eşit sütun sayısı", gap: "Aralık (cm)", separator: "Sütunlar arasına çizgi", direction: "Sütun sırası", ltr: "Soldan sağa", rtl: "Sağdan sola", directionHint: "Sütun sırası paragraf metin yönünden ayrıdır.", preserved: "Bu bölüm desteklenmeyen sütun ayarları içeriyor. Yeni bir ayar seçene kadar korunur.", unknown: "Desteklenmeyen özgün ayar", convert: (n: number) => `${n}. bölümdeki desteklenmeyen ayarları seçilen ayarlarla değiştir`, conversionRequired: "Etkilenen her bölüm için değiştirmeyi onaylayın." },
+  fr: { invalidGeometry: "Vérifiez la page, les marges et l’espacement ; chaque colonne doit mesurer au moins 1,27 cm.", heading: "Colonnes", count: "Colonnes égales", gap: "Espacement (cm)", separator: "Trait entre les colonnes", direction: "Ordre des colonnes", ltr: "De gauche à droite", rtl: "De droite à gauche", directionHint: "L’ordre des colonnes est indépendant du sens du texte.", preserved: "Cette section contient des colonnes non prises en charge. Elles sont conservées jusqu’au choix d’un remplacement.", unknown: "Paramètre natif non pris en charge", convert: (n: number) => `Remplacer les paramètres non pris en charge de la section ${n} par ceux sélectionnés`, conversionRequired: "Confirmez le remplacement pour chaque section concernée." },
+  zh: { invalidGeometry: "请检查页面大小、页边距和间距；每栏宽度至少需要 1.27 厘米。", heading: "分栏", count: "等宽栏数", gap: "间距（厘米）", separator: "栏间分隔线", direction: "分栏顺序", ltr: "从左到右", rtl: "从右到左", directionHint: "分栏顺序与段落文字方向无关。", preserved: "此节包含不受支持的分栏设置。在选择替换设置之前会予以保留。", unknown: "不受支持的原始设置", convert: (n: number) => `将第 ${n} 节中不受支持的设置替换为所选设置`, conversionRequired: "请确认替换每个受影响节的设置。" },
+  ar: { invalidGeometry: "تحقق من حجم الصفحة والهوامش والمسافة؛ يحتاج كل عمود إلى عرض لا يقل عن 1.27 سم.", heading: "الأعمدة", count: "أعمدة متساوية", gap: "المسافة (سم)", separator: "خط بين الأعمدة", direction: "ترتيب الأعمدة", ltr: "من اليسار إلى اليمين", rtl: "من اليمين إلى اليسار", directionHint: "ترتيب الأعمدة مستقل عن اتجاه نص الفقرة.", preserved: "يحتوي هذا المقطع على إعدادات أعمدة غير مدعومة. ستُحفظ حتى تختار بديلاً.", unknown: "إعداد أصلي غير مدعوم", convert: (n: number) => `استبدال الإعدادات غير المدعومة في المقطع ${n} بالإعدادات المحددة`, conversionRequired: "أكد الاستبدال لكل مقطع متأثر." },
+};
+export function columnLabels(locale: Locale) { return columnText[locale]; }

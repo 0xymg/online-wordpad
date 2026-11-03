@@ -5,8 +5,8 @@ import type { Transaction } from "prosemirror-state";
 import type { EditorView } from "prosemirror-view";
 import { documentSections, type PageGeometry } from "@/lib/document-sections";
 import { requestedMargins } from "@/lib/page-margins";
-import { activeDocumentSection, insertDocumentSection, removeDocumentSectionBoundary, setSectionGeometry } from "@/lib/section-commands";
-import { sectionLabels } from "@/lib/section-i18n";
+import { activeDocumentSection, insertDocumentSection, removeDocumentSectionBoundary, setSectionLayout } from "@/lib/section-commands";
+import { columnLabels, sectionLabels } from "@/lib/section-i18n";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { useLocale } from "./I18nProvider";
@@ -25,7 +25,7 @@ const draftFor = (g: PageGeometry) => ({ width: cm(g.width), height: cm(g.height
 } });
 
 export default function SectionLayoutDialog({ view, onClose }: { view: EditorView; onClose: () => void }) {
-  const { locale } = useLocale(), t = sectionLabels(locale);
+  const { locale } = useLocale(), t = sectionLabels(locale), c = columnLabels(locale);
   const [initial] = useState(() => {
     const state = view.state;
     const sections = documentSections(state.doc).map((section, index) => ({ ...section,
@@ -39,19 +39,27 @@ export default function SectionLayoutDialog({ view, onClose }: { view: EditorVie
   const [draft, setDraft] = useState(() => draftFor(selected.geometry));
   const [paper, setPaper] = useState<Paper>(() => paperFor(selected.geometry));
   const [scope, setScope] = useState<"section" | "all">("section");
+  const [columns, setColumns] = useState(() => selected.columns.kind === "equal" ? selected.columns : { kind: "equal" as const, count: 1 as const, space: 720, separator: false });
+  const [gap, setGap] = useState(() => cm(columns.space));
+  const [columnsChanged, setColumnsChanged] = useState(false);
+  const [direction, setDirection] = useState(selected.flowDirection);
+  const [directionChanged, setDirectionChanged] = useState(false);
+  const [conversions, setConversions] = useState<string[]>([]);
   const [policy, setPolicy] = useState<"keepBefore" | "keepAfter">("keepBefore");
   const [error, setError] = useState("");
   const field = "h-9 w-full rounded-md border border-input bg-background px-2 text-sm";
   const width = twips(draft.width, base.width), height = twips(draft.height, base.height);
   const orientation = (Number.isFinite(width) ? width : base.width) > (Number.isFinite(height) ? height : base.height) ? "landscape" : "portrait";
   const hasBoundary = selectedIndex < initial.sections.length - 1;
+  const targets = scope === "all" ? initial.sections : [selected];
+  const preservedTargets = targets.filter(section => (columnsChanged && section.columns.kind === "preserved") || (directionChanged && section.flowDirection === "preserved"));
 
   function run(operation: () => Transaction) {
-    if (view.isDestroyed || view.state.doc !== initial.state.doc) { setError(t.changed); return; }
+    if (view.isDestroyed || !view.editable || view.state.doc !== initial.state.doc) { setError(t.changed); return; }
     try { view.dispatch(operation()); onClose(); view.focus(); }
     catch (failure) {
       const code = failure && typeof failure === "object" && "code" in failure ? failure.code : "";
-      const messages: Record<string, string> = { "unsupported-cursor": t.unsupportedCursor, "invalid-geometry": t.invalidGeometry,
+      const messages: Record<string, string> = { "unsupported-cursor": t.unsupportedCursor, "invalid-geometry": c.invalidGeometry,
         "missing-section": t.missingSection, "no-boundary": t.noBoundary, "invalid-selection": t.invalidSelection, "unsupported-model": t.unsupportedModel };
       setError(typeof code === "string" ? messages[code] || t.actionError : t.actionError);
     }
@@ -59,7 +67,9 @@ export default function SectionLayoutDialog({ view, onClose }: { view: EditorVie
   function chooseSection(id: string) {
     const section = initial.sections.find(section => section.id === id);
     if (!section) return;
-    setSelectedId(id); setBase(section.geometry); setDraft(draftFor(section.geometry)); setPaper(paperFor(section.geometry)); setError("");
+    const nextColumns = section.columns.kind === "equal" ? section.columns : { kind: "equal" as const, count: 1 as const, space: 720, separator: false };
+    setSelectedId(id); setBase(section.geometry); setDraft(draftFor(section.geometry)); setPaper(paperFor(section.geometry));
+    setColumns(nextColumns); setGap(cm(nextColumns.space)); setColumnsChanged(false); setDirection(section.flowDirection); setDirectionChanged(false); setConversions([]); setError("");
   }
   function choosePaper(value: Paper) {
     setPaper(value); setError("");
@@ -76,8 +86,10 @@ export default function SectionLayoutDialog({ view, onClose }: { view: EditorVie
   }
   function apply() {
     const margins = Object.fromEntries((Object.keys(base.margins) as MarginKey[]).map(key => [key, twips(draft.margins[key], base.margins[key])])) as PageGeometry["margins"];
-    if (![width, height, ...Object.values(margins)].every(Number.isFinite)) { setError(t.invalidGeometry); return; }
-    run(() => setSectionGeometry(initial.state, { width, height, margins }, scope, selectedId));
+    const space = twips(gap, columns.space);
+    if (![width, height, ...Object.values(margins), ...(columnsChanged ? [space] : [])].every(Number.isFinite)) { setError(t.invalidGeometry); return; }
+    if (preservedTargets.some(section => !conversions.includes(section.id))) { setError(c.conversionRequired); return; }
+    run(() => setSectionLayout(initial.state, { page: { width, height, margins }, ...(columnsChanged ? { columns: { ...columns, space } } : {}), ...(directionChanged && direction !== "preserved" ? { flowDirection: direction } : {}) }, scope, selectedId, preservedTargets.length > 0));
   }
   const previewW = Number.isFinite(width) && width > 0 ? width : base.width;
   const previewH = Number.isFinite(height) && height > 0 ? height : base.height;
@@ -91,6 +103,7 @@ export default function SectionLayoutDialog({ view, onClose }: { view: EditorVie
         if ((event.ctrlKey || event.metaKey) && ["s", "o", "p"].includes(event.key.toLowerCase())) { event.preventDefault(); event.stopPropagation(); }
       }}>
         <DialogHeader><DialogTitle>{t.title}</DialogTitle><DialogDescription>{t.description}</DialogDescription></DialogHeader>
+        <fieldset disabled={!view.editable}>
         <p className="mt-3 text-xs text-muted-foreground">{t.currentSection(initial.current + 1, initial.sections.length)}</p>
         <label className="mt-3 block space-y-1 text-sm"><span>{t.sectionPicker}</span><select className={field} value={selectedId} onChange={event => chooseSection(event.target.value)}>{initial.sections.map((section, index) => <option key={section.id} value={section.id}>{t.sectionName(index + 1)}</option>)}</select></label>
         <div className="my-4 grid gap-4 sm:grid-cols-[1fr_130px]">
@@ -101,14 +114,30 @@ export default function SectionLayoutDialog({ view, onClose }: { view: EditorVie
               {(["width", "height"] as const).map(key => <label key={key} className="space-y-1 text-sm"><span>{t[key]}</span><input className={field} type="number" min="1.27" max="55.88" step="0.01" required value={draft[key]} onChange={event => { setDraft(previous => ({ ...previous, [key]: event.target.value })); setPaper("custom"); setError(""); }} /></label>)}
             </div>
             <fieldset><legend className="mb-2 text-xs text-muted-foreground">{t.margins}</legend><div className="grid grid-cols-2 gap-3">{(["top", "bottom", "left", "right"] as const).map(key => <label key={key} className="space-y-1 text-sm"><span>{t[key]}</span><input className={field} type="number" min="0" max="55.88" step="0.01" required value={draft.margins[key]} onChange={event => { setDraft(previous => ({ ...previous, margins: { ...previous.margins, [key]: event.target.value } })); setError(""); }} /></label>)}</div></fieldset>
-            <label className="block space-y-1 text-sm"><span>{t.scope}</span><select className={field} value={scope} onChange={event => setScope(event.target.value as "section" | "all")}><option value="section">{t.sectionScope}</option><option value="all">{t.allScope}</option></select></label>
+            <label className="block space-y-1 text-sm"><span>{t.scope}</span><select className={field} value={scope} onChange={event => { setScope(event.target.value as "section" | "all"); setConversions([]); }}><option value="section">{t.sectionScope}</option><option value="all">{t.allScope}</option></select></label>
           </fieldset>
           <figure className="hidden self-center sm:block"><div role="img" aria-label={t.preview} className="mx-auto box-border border border-border bg-muted" style={{ width: previewW * previewScale, height: previewH * previewScale, padding: `${previewMargin("top")}px ${previewMargin("right")}px ${previewMargin("bottom")}px ${previewMargin("left")}px` }}><div className="h-full min-h-px border border-border bg-background" /></div><figcaption className="mt-2 text-center text-[11px] text-muted-foreground">{start === "continuous" ? t.continuous : start === "nextPage" || !start ? t.nextPage : t.otherStart}</figcaption></figure>
         </div>
+        <fieldset className="space-y-3 border-t border-border py-3"><legend className="text-sm font-semibold">{c.heading}</legend>
+          {selected.columns.kind === "preserved" && <p className="text-sm text-muted-foreground">{c.preserved}</p>}
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+            <label className="space-y-1 text-sm"><span>{c.count}</span><select className={field} value={selected.columns.kind === "preserved" && !columnsChanged ? "preserved" : columns.count} onChange={event => { setColumns(previous => ({ ...previous, count: Number(event.target.value) as 1 | 2 | 3 })); setColumnsChanged(true); setConversions([]); setError(""); }}>
+              {selected.columns.kind === "preserved" && !columnsChanged && <option value="preserved" disabled>{c.unknown}</option>}
+              {[1, 2, 3].map(n => <option key={n} value={n}>{n}</option>)}
+            </select></label>
+            <label className="space-y-1 text-sm"><span>{c.gap}</span><input className={field} type="number" min="0" step="0.01" required value={gap} onChange={event => { setGap(event.target.value); setColumnsChanged(true); setConversions([]); setError(""); }} /></label>
+          </div>
+          <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={columns.separator} onChange={event => { setColumns(previous => ({ ...previous, separator: event.target.checked })); setColumnsChanged(true); setConversions([]); setError(""); }} />{c.separator}</label>
+          <label className="block space-y-1 text-sm"><span>{c.direction}</span><select className={field} value={direction} onChange={event => { setDirection(event.target.value as "ltr" | "rtl"); setDirectionChanged(true); setConversions([]); setError(""); }}>
+            {direction === "preserved" && <option value="preserved" disabled>{c.unknown}</option>}<option value="ltr">{c.ltr}</option><option value="rtl">{c.rtl}</option>
+          </select></label><p className="text-xs text-muted-foreground">{c.directionHint}</p>
+          {preservedTargets.map(section => <label key={section.id} className="flex items-start gap-2 text-sm"><input className="mt-1" type="checkbox" checked={conversions.includes(section.id)} onChange={event => setConversions(previous => event.target.checked ? [...previous, section.id] : previous.filter(id => id !== section.id))} />{c.convert(initial.sections.findIndex(item => item.id === section.id) + 1)}</label>)}
+        </fieldset>
         <section className="space-y-2 border-t border-border py-3"><h3 className="text-sm font-semibold">{t.insertHeading}</h3><p className="text-xs text-muted-foreground">{t.insertHint(initial.current + 1)}</p><div className="flex flex-wrap gap-2"><Button type="button" variant="outline" onClick={() => run(() => insertDocumentSection(initial.state, "nextPage"))}>{t.nextPage}</Button><Button type="button" variant="outline" onClick={() => run(() => insertDocumentSection(initial.state, "continuous"))}>{t.continuous}</Button></div></section>
         <section className="space-y-2 border-t border-border py-3"><h3 className="text-sm font-semibold">{t.removeHeading}</h3><p className="text-xs text-muted-foreground">{hasBoundary ? t.removeHint(selectedIndex + 1, selectedIndex + 2) : t.lastSection}</p><label className="block space-y-1 text-sm"><span>{t.removalPolicy}</span><select className={field} disabled={!hasBoundary} value={policy} onChange={event => setPolicy(event.target.value as "keepBefore" | "keepAfter")}><option value="keepBefore">{t.keepBefore}</option><option value="keepAfter">{t.keepAfter}</option></select></label><Button type="button" variant="outline" disabled={!hasBoundary} onClick={() => run(() => removeDocumentSectionBoundary(initial.state, selectedId, policy))}>{t.remove}</Button></section>
+        </fieldset>
         {error && <p role="alert" className="mb-3 text-sm text-destructive">{error}</p>}
-        <DialogFooter><Button type="button" variant="outline" onClick={onClose}>{t.cancel}</Button><Button type="submit">{t.apply}</Button></DialogFooter>
+        <DialogFooter><Button type="button" variant="outline" onClick={onClose}>{t.cancel}</Button><Button type="submit" disabled={!view.editable}>{t.apply}</Button></DialogFooter>
       </form>
     </DialogContent>
   </Dialog>;

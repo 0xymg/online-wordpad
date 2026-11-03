@@ -1,3 +1,4 @@
+import { parseSectionColumns, type SectionColumns, type SectionFlowDirection } from "./section-columns";
 import { effectiveParagraph } from "./paragraph-format";
 import type { Node as PMNode } from "prosemirror-model";
 import { defaultDocumentLayout, type DocumentLayout } from "./document-layout";
@@ -5,7 +6,7 @@ import { getDocumentModel, sectionRecordXml } from "./document-model";
 export type PageGeometry = Pick<DocumentLayout, "width" | "height" | "margins"> & {
   headerDistance?: number; footerDistance?: number; startType?: string; numberStart?: number; numberFormat?: string; differentFirst?: boolean;
 };
-export type DocumentSection = { id: string; from: number; to: number; geometry: PageGeometry };
+export type DocumentSection = { id: string; from: number; to: number; geometry: PageGeometry; columns: SectionColumns; flowDirection: SectionFlowDirection };
 const W = "http://schemas.openxmlformats.org/wordprocessingml/2006/main";
 const cache = new WeakMap<PMNode, DocumentSection[]>();
 export function sectionGeometry(raw: string | undefined, fallback: PageGeometry): PageGeometry {
@@ -45,11 +46,11 @@ export function documentSections(doc: PMNode): DocumentSection[] {
     if (model ? !id : !raw.includes("sectPr")) return;
     const end = pos + node.nodeSize;
     rawSections.push(raw);
-    sections.push({ id: id || `legacy:${sections.length}`, from, to: end, geometry: model ? sectionGeometry(raw, model.sections[id].page) : applyOverrides(sectionGeometry(raw, fallback)) });
+    sections.push({ id: id || `legacy:${sections.length}`, from, to: end, ...(model ? { columns: model.sections[id].columns, flowDirection: model.sections[id].flowDirection } : parseSectionColumns(raw, fallback)), geometry: model ? sectionGeometry(raw, model.sections[id].page) : applyOverrides(sectionGeometry(raw, fallback)) });
     from = end;
   });
   const finalRaw = model ? sectionRecordXml(model.sections[model.finalSectionId]) : layout?.section || "";
-  sections.push({ id: model?.finalSectionId || `legacy:${sections.length}`, from, to: doc.content.size,
+  sections.push({ id: model?.finalSectionId || `legacy:${sections.length}`, from, to: doc.content.size, ...(model ? { columns: model.sections[model.finalSectionId].columns, flowDirection: model.sections[model.finalSectionId].flowDirection } : parseSectionColumns(finalRaw, fallback)),
     geometry: model ? sectionGeometry(finalRaw, model.sections[model.finalSectionId].page) : applyOverrides(sectionGeometry(finalRaw, fallback)) });
   rawSections.push(finalRaw);
   for (let index = 0; index < sections.length; index++) {

@@ -1,0 +1,22 @@
+{
+  "status": "WORD_REFERENCE_MEASURED",
+  "source_sha256": "5de1918878c5d404bf71ddcb1870e57e75294406e987be2205e03a1c56c639d9",
+  "pdf_sha256": "c078a9242e4260150cbd0e9d19709dcc395a98f8a18aa93eef90a9cd40e3823b",
+  "page_count": 1,
+  "pages": [
+    {
+      "page": 1,
+      "width_pt": 612,
+      "height_pt": 792,
+      "extracted_word_count": 1,
+      "markers": [
+        {
+          "text": "ONE_PAGE_TEXT",
+          "x0_pt": 72.025,
+          "top_pt": 74.59
+        }
+      ]
+    }
+  ],
+  "limits": "Text extraction alone does not prove a visually blank page or application behavior."
+}

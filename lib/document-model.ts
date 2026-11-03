@@ -7,9 +7,10 @@ import { defaultDocumentLayout, readLayout, type DocumentLayout } from "./docume
 import { sectionGeometry } from "./document-sections";
 import { normalizeTabCharacters } from "./tab-node";
 import { documentTabSettings } from "./tab-stops";
+import { parseSectionColumns, validSectionColumns, writeSectionColumns, type SectionColumns, type SectionFlowDirection } from "./section-columns";
 
 export const DOCUMENT_MODEL_ATTRIBUTE = "data-edtr-model";
-export const DOCUMENT_MODEL_VERSION = 2;
+export const DOCUMENT_MODEL_VERSION = 3;
 export type SectionStart = "nextPage" | "continuous" | "oddPage" | "evenPage";
 export type SectionPage = Pick<DocumentLayout, "width" | "height" | "margins">;
 export type RunningSlotV1 = NonNullable<DocumentLayout["running"]>[string];
@@ -17,8 +18,9 @@ export type SectionRecordV1 = {
   page: SectionPage; start: SectionStart; numbering: { start?: number; format?: string };
   rawProperties?: string; running: Record<string, RunningSlotV1>;
 };
-export type DocumentModel = { version: 2; id: DocumentIdentity<"document">; finalSectionId: DocumentIdentity<"section">; sections: Record<string, SectionRecordV1> };
-export type DocumentModelV1 = Omit<DocumentModel, "version"> & { version: 1 };
+export type SectionRecord = SectionRecordV1 & { columns: SectionColumns; flowDirection: SectionFlowDirection };
+export type DocumentModel = { version: 3; id: DocumentIdentity<"document">; finalSectionId: DocumentIdentity<"section">; sections: Record<string, SectionRecord> };
+export type DocumentModelV1 = Omit<DocumentModel, "version" | "sections"> & { version: 1 | 2; sections: Record<string, SectionRecordV1> };
 export class DocumentModelError extends Error {
   constructor(public code: "unsupported-version" | "invalid-model", message: string) { super(message); this.name = "DocumentModelError"; }
 }
@@ -41,13 +43,14 @@ export function validSectionPage(page: SectionPage): boolean {
 function assertModel(value: unknown): asserts value is DocumentModel | DocumentModelV1 {
   const model = value as DocumentModel | DocumentModelV1;
   if (!model || typeof model !== "object" || !Number.isInteger(model.version)) throw new DocumentModelError("invalid-model", "Invalid document model version");
-  if (![1, 2].includes(model.version)) throw new DocumentModelError("unsupported-version", "This document model version is not supported");
+  if (![1, 2, 3].includes(model.version)) throw new DocumentModelError("unsupported-version", "This document model version is not supported");
   if (!isDocumentIdentity(model.id, "document") || !isDocumentIdentity(model.finalSectionId, "section") || !model.sections || typeof model.sections !== "object" || Array.isArray(model.sections))
     throw new DocumentModelError("invalid-model", "Invalid document identity or section registry");
   for (const [id, section] of Object.entries(model.sections)) {
     if (!isDocumentIdentity(id, "section") || !section || !validSectionPage(section.page) || !["nextPage", "continuous", "oddPage", "evenPage"].includes(section.start)
       || !section.numbering || typeof section.numbering !== "object" || Array.isArray(section.numbering) || !section.running || typeof section.running !== "object" || Array.isArray(section.running))
       throw new DocumentModelError("invalid-model", "Invalid section record");
+    if (model.version === 3 && (!validSectionColumns((section as SectionRecord).columns, section.page) || !["ltr", "rtl", "preserved"].includes((section as SectionRecord).flowDirection))) throw new DocumentModelError("invalid-model", "Invalid section columns or direction");
     if (section.numbering.start !== undefined && (!Number.isInteger(section.numbering.start) || section.numbering.start < 1)) throw new DocumentModelError("invalid-model", "Invalid page numbering start");
     if (section.numbering.format !== undefined && typeof section.numbering.format !== "string") throw new DocumentModelError("invalid-model", "Invalid page numbering format");
     if (section.rawProperties !== undefined && typeof section.rawProperties !== "string") throw new DocumentModelError("invalid-model", "Invalid section source properties");
@@ -59,7 +62,7 @@ function assertModel(value: unknown): asserts value is DocumentModel | DocumentM
 export function getDocumentModel(doc: PMNode): DocumentModel | null {
   const value = doc.attrs.documentModel;
   if (value == null) return null;
-  assertModel(value); return value.version === 1 ? { ...value, version: 2 } : value;
+  assertModel(value); return value.version === 3 ? value : { ...value, version: 3, sections: Object.fromEntries(Object.entries(value.sections).map(([id, record]) => [id, { ...record, ...parseSectionColumns(record.rawProperties, record.page) }])) };
 }
 /** Read this envelope before parsing HTML so a future version cannot be silently dropped. */
 export function readDocumentModel(root: HTMLElement): DocumentModel | DocumentModelV1 | null {
@@ -95,7 +98,7 @@ export function removeSectionProperties(raw: string | null | undefined): string 
   all(source, "sectPr").forEach(section => section.remove()); return serialize(source.documentElement);
 }
 /** Updates native known section properties while retaining unrecognized children. */
-export function sectionRecordXml(record: SectionRecordV1): string {
+export function sectionRecordXml(record: SectionRecord): string {
   const source = xml(record.rawProperties || `<w:sectPr xmlns:w="${W}"/>`), section = source.documentElement;
   if (section.namespaceURI !== W || section.localName !== "sectPr") throw new DocumentModelError("invalid-model", "Section source properties must contain a native sectPr root");
   const ensure = (name: string) => {
@@ -122,6 +125,7 @@ export function sectionRecordXml(record: SectionRecordV1): string {
       Array.from(section.children).filter(el => el.localName === `${kind}Reference` && el.getAttributeNS(W, "type") === variant).forEach(el => el.remove());
     }
   }
+  writeSectionColumns(section, record.columns, record.flowDirection);
   const order = "headerReference footerReference footnotePr endnotePr type pgSz pgMar paperSrc pgBorders lnNumType pgNumType cols formProt vAlign noEndnote titlePg textDirection bidi rtlGutter docGrid printerSettings sectPrChange".split(" ");
   Array.from(section.children).map((el, index) => ({ el, index })).sort((a, b) => {
     const left = order.indexOf(a.el.localName), right = order.indexOf(b.el.localName);
@@ -132,7 +136,7 @@ export function sectionRecordXml(record: SectionRecordV1): string {
 /** Keep following geometry while materializing headers inherited through the
  * removed preceding section. Shared by explicit removal and ordinary deletion.
  */
-export function inheritRemovedSection(before: SectionRecordV1, following: SectionRecordV1): SectionRecordV1 {
+export function inheritRemovedSection(before: SectionRecord, following: SectionRecord): SectionRecord {
   const running = { ...following.running };
   const raw = xml(sectionRecordXml(following)), prior = xml(sectionRecordXml(before));
   for (const [key, slot] of Object.entries(before.running)) {
@@ -199,7 +203,7 @@ export function migrateDocumentNode(doc: PMNode, createToken: () => string = () 
     const running = Object.fromEntries(Object.entries(layout.running || {}).filter(([key]) => key.startsWith(`${index}:`)).map(([key, slot]) => [key.slice(key.indexOf(":") + 1), { ...slot }]));
     sections[id] = { page, start: ["nextPage", "continuous", "oddPage", "evenPage"].includes(geometry.startType || "") ? geometry.startType as SectionStart : "nextPage",
       numbering: { ...(geometry.numberStart !== undefined ? { start: geometry.numberStart } : {}), ...(geometry.numberFormat ? { format: geometry.numberFormat } : {}) },
-      rawProperties: rawSection(raw), running };
+      rawProperties: rawSection(raw), running, ...parseSectionColumns(rawSection(raw), page) };
     return id;
   };
   let index = 0;
@@ -207,7 +211,7 @@ export function migrateDocumentNode(doc: PMNode, createToken: () => string = () 
     if (!Object.hasOwn(node.type.spec.attrs || {}, "sectionEndId")) throw new DocumentModelError("invalid-model", "This section boundary cannot be represented safely");
     const id = make(node.attrs.docxProperties, index++); children.push(node.type.create({ ...node.attrs, sectionEndId: id }, node.content, node.marks));
   } else children.push(node.attrs.sectionEndId ? node.type.create({ ...node.attrs, sectionEndId: null }, node.content, node.marks) : node); });
-  const finalSectionId = make(layout.section, index), model: DocumentModel = { version: 2, id: fresh("document"), finalSectionId, sections };
+  const finalSectionId = make(layout.section, index), model: DocumentModel = { version: 3, id: fresh("document"), finalSectionId, sections };
   for (const key of Object.keys(layout.sectionMargins || {})) if (!/^\d+$/.test(key) || Number(key) > index) throw new DocumentModelError("invalid-model", "A legacy section margin has no matching section");
   for (const key of Object.keys(layout.running || {})) if (!/^\d+:(default|first|even):(header|footer)$/.test(key) || Number(key.split(":")[0]) > index) throw new DocumentModelError("invalid-model", "A legacy header or footer has no matching section");
   assertModel(model);
@@ -277,7 +281,7 @@ export function documentModelPlugin(onBlocked?: () => void): Plugin {
       }
       model = { ...model, sections: Object.fromEntries(order.map(id => [id, records[id]])) };
       projectDocumentModel(tr, model);
-      return tr.docChanged ? tr : transactions.some(transaction => transaction.getMeta("edtr-section-command") || transaction.getMeta("edtr-tab-command")) ? closeHistory(tr).setMeta("addToHistory", false) : null;
+      return tr.docChanged ? tr : transactions.some(transaction => transaction.getMeta("edtr-section-command") || transaction.getMeta("edtr-tab-command") || transaction.getMeta("edtr-column-break-command")) ? closeHistory(tr).setMeta("addToHistory", false) : null;
     },
   });
 }

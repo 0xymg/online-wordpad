@@ -1,6 +1,6 @@
 # A3 — Eşit sütunlar için uygulama tasarımı
 
-Durum: A2 canlı kapısı kapandı; A3.0 izole koordinat prototipi sürüyor. Ürün modeli/UI entegrasyonu native caret kapısına bağlı. Kullanıcının onayladığı `advanced-document-plan.md` kapsamını dar, doğrulanabilir adımlara ayırır. Dört gerçek Word Online PDF referansı arşivlendi; ölçümler [columns/REFERENCE_REPORT.md](../fixtures/columns/REFERENCE_REPORT.md) içinde. Referans ölçümü henüz EDTR sütun desteğinin geçtiği anlamına gelmez. Yeni kullanıcı onayı gerektiren ayrı bir özellik paketi önermez.
+Durum: A3 uygulaması ve yerel üretim kabulü tamamlandı; canlı yayın doğrulaması bekleniyor. Nihai destek sınırları, gerçek Word karşılaştırması ve test kanıtları [columns-acceptance.md](columns-acceptance.md) içinde. Aşağıdaki metin onaylı kapsamın tasarım kaydıdır; bütün Word belgeleri için görsel eşitlik iddiası değildir. Dört gerçek Word Online PDF referansı ve kaynakları donduruldu; ölçümler [columns/REFERENCE_REPORT.md](../fixtures/columns/REFERENCE_REPORT.md) içinde.
 
 ## Amaç ve başlangıç sınırı
 
@@ -25,7 +25,9 @@ Bir ProseMirror `EditorView` ve bir kanonik belge korunur. Önerilen yol, doğal
 4. **Koordinat doğrulaması:** seçim için kullanılan gerçek DOM kutuları hedef konumda olmalıdır. `coordsAtPos` ve `posAtCoords` ile ölçülen PM geometrisi esas alınır; sadece başka yerde çizilmiş bir canvas/pseudo görüntü yeterli değildir. Fragman indeksi ölçüm, bölge bulma ve scroll için yardımcıdır; yanlış native seçimi üstünü örtmek için kullanılmaz.
 5. **Tek çıktı:** aynı plan ve dekorasyonlar salt okunur PM görünümüne uygulanır. `preparePrintLayout` fiziksel sayfayı bu DOM'dan kırpar; PDF'nin görünmez metin katmanı ve bağlantıları da aynı gerçek metin kutularından çıkarılır.
 
-Bu yolun kritik kısmı henüz kanıtlanmış değildir: tek paragrafın birden fazla sütuna kaydırılan inline fragmanlarıyla native caret/selection/IME. İlk teknik adım bunun çalışan, ölçülebilir prototipidir. Prototip PM koordinatlarını koruyamazsa dekorasyon yaklaşımı ürün özelliği diye genişletilmez. Kök ajanla mimari tekrar incelenir; çoklu editör veya seçilemeyen görsel kopya otomatik yedek çözüm kabul edilmez.
+PDF metin katmanında karma Arapça/Latin kaynak sırası ve karakter konumları izole testte doğrulandı; Arapça aralıklar mantıksal metni PDF `ActualText` ile de taşır. `pypdf.extract_text()` bu alanı kullanmayıp ayrı konumlandırılan Arapça karakterler arasına satır sonu ekliyor. Bu nedenle tüm PDF okuyucularında Arapça kopyalama ve arama eşdeğerliği henüz doğrulanmış değildir; okuyucuya özgü kabul ayrı kanıt ister. Bu bulgu sayfa görselinin doğruluğu olarak sunulmaz.
+
+İzole prototipte gerçek PM koordinatları ve native etkileşim kapısı 84/84 kontrolden geçti; kanıt [prototip raporunda](columns-prototype-evidence.md). Bu kapı, üretim belgesi entegrasyonunu veya gerçek OS IME davranışını tek başına doğrulamaz. Üretim uygulamasında aynı seçim ve koordinat doğruluğu tekrar sınanır. Kök ajanla mimari tekrar incelenir; çoklu editör veya seçilemeyen görsel kopya otomatik yedek çözüm kabul edilmez.
 
 ## Geçici yerleşim sözleşmesi
 
@@ -53,7 +55,7 @@ type FlowLayout = {
 };
 ```
 
-Sayfa dizini fiziksel sayfayı, sütun dizini o bölgenin okuma sırasını gösterir. Ekrandaki sağ/sol konum ile okuma sırası ayrı tutulur. Gerçek Word probunda paragraf bidi tek başına sütun sırasını çevirmedi; bölüm `w:bidi=1` iki/üç sütunda sağdan sola ilerledi. Bu bölüm özelliği native raw veriden ayrı bir yönetilen alan olarak açılmadan önce koruma/göç sözleşmesi belirlenir; LTR prototipinin RTL desteği sayılmaz. ProseMirror transaction mapping, değişmiş kaynak aralıklarını yeniden ölçüm için geçersizleştirir. Eski plan yalnız aynı immutable belge/ölçü/font sürümüyle kullanılabilir. Export `complete:false` veya kararsız ölçümü başarılı çıktı gibi sunmaz.
+Sayfa dizini fiziksel sayfayı, sütun dizini o bölgenin okuma sırasını gösterir. Ekrandaki sağ/sol konum ile okuma sırası ayrı tutulur. Gerçek Word probunda paragraf bidi tek başına sütun sırasını çevirmedi; bölüm `w:bidi=1` iki/üç sütunda sağdan sola ilerledi. Bölüm yönü sürüm 3 kaydında paragraf yönünden ayrı yönetilir; geçersiz native değer korunmuş durumdur. LTR prototipinin geçmesi üretim RTL desteği sayılmaz. ProseMirror transaction mapping, değişmiş kaynak aralıklarını yeniden ölçüm için geçersizleştirir. Eski plan yalnız aynı immutable belge/ölçü/font sürümüyle kullanılabilir. Export `complete:false` veya kararsız ölçümü başarılı çıktı gibi sunmaz.
 
 Önerilen ortak API'ler: `flowRegionAtPoint(view,x,y)`, `flowRegionAtPos(view,pos)`, `contentGeometryAtPos(view,pos)` ve `flushDocumentLayout(view)`. A2 `tabContentGeometry`, cetvel ve görsel bırakma hedefi bu içerik geometrisinden yararlanır. Sayfa ortasını hesaplayan eski yardımcıları yalnız X'e sütun ekleyerek çoğaltmak yerine bu ortak haritaya bağlamak gerekir.
 
@@ -69,7 +71,7 @@ type SectionColumns =
   | { kind: "preserved"; reason: "unequal" | "unsupported-count" | "invalid-native" };
 ```
 
-Eşit durumda genişlik `(kullanılabilirMetinGenişliği - (count-1)*space)/count` olur. Ayarlar sonlu, tamsayı ve negatif olmayan aralıkla doğrulanır; her sütuna en az 720 twip metin genişliği bırakılır. Yeni çok sütunlu ayar için 720 twip aralık uygulama başlangıç tercihidir ve mevcut A0 örneğiyle uyumludur; her eksik native attr'ın Word'deki varsayılanı diye tahmin edilmez. Native eksik değer kuralları referans probunda ayrıca sabitlenir.
+Eşit durumda genişlik `(kullanılabilirMetinGenişliği - (count-1)*space)/count` olur. Ayarlar sonlu, tamsayı ve negatif olmayan aralıkla doğrulanır; her sütuna en az 720 twip metin genişliği bırakılır. Yeni çok sütunlu ayarın başlangıcı 720 twip'tir. Eksik `w:num` bir, eksik `w:equalWidth` true kabul edilir; ayrı gerçek Word Online probunda iki eşit sütundaki eksik `w:space`, açık 720 ile aynı, açık 0'dan farklı sağ sütun başlangıcı verdi ([ölçüm](../fixtures/columns/defaults/MEASUREMENT.md)). Bu gözlem her Word sürümü ve belge kombinasyonuna genellenmez.
 
 `preserved` durumunun özgün `w:cols` XML'i mevcut `rawProperties` kaynağında kalır; ikinci bir ham kopya eklenmez. Native eşit olmayan `<w:col>` listesi veya destek dışı sütun sayısı otomatik eşit sütuna çevrilmez. UI düzenleme sınırını ve görünüm farkını açıkça gösterir. Kullanıcı açıkça desteklenen eşit düzene dönüştürmedikçe DOCX'te özgün sütun XML'i korunur. Bu durumda fallback görünüm “Word ile eşleşti” sayılmaz.
 
@@ -79,7 +81,7 @@ Eşit durumda genişlik `(kullanılabilirMetinGenişliği - (count-1)*space)/cou
 
 Önerilen `column_break` satır içi atomu paragrafı veya yazıyı çoğaltmaz. HTML'de öncelikli `br[data-edtr-column-break]`, native DOCX'te `w:br w:type="column"` ile taşınır. Plain text/Markdown'ın sütun düzeni yoktur; açıkça newline karşılığı kullanılır. UI'deki kesme işareti dekorasyondur ve baskıya girmez.
 
-Solver bu konumda sonraki sütuna, son sütundaysa sonraki fiziksel sayfaya ilerler. Gerçek Word kontrolünde tek sütundaki column break yeni fiziksel sayfaya geçti; iki sütundaki column break sağ sütuna, page break sonraki sayfanın ilk sütununa geçti. Belgenin son run'ı olan column break boş altıncı sayfa üretmedi; boş devam hedefi için otomatik sayfa eklememe ayrıca sınanır. Kesme silmek tek editör konumudur; undo geri getirir. İçe aktarılan sütun sonu generic satır sonuna dönüşüp anlamını kaybetmez. İlk ekleme komutu gövde paragrafı/başlıkta güvenle çalışır; tablo hücresi ve metin kutusunda destek kanıtlanana kadar açıkça reddedilir. Liste içi davranış prototip kabulünden sonra açılır.
+Solver bu konumda sonraki sütuna, son sütundaysa sonraki fiziksel sayfaya ilerler. Gerçek Word kontrolünde tek sütundaki column break yeni fiziksel sayfaya geçti; iki sütundaki column break sağ sütuna, page break sonraki sayfanın ilk sütununa geçti. Önceki referansta iki sütunun ilkindeki son column break boş altıncı sayfa üretmedi. Ayrı terminal problarında tek sütundaki ve iki sütunun sonuncusundaki column break, Word PDF'sinde görsel olarak boş ikinci sayfa üretti ([ölçüm](../fixtures/columns/terminal-controls/MEASUREMENT.md)). Bu ayrım solver'da gözetilir; ayrı tek sütunlu terminal page-break kontrolünde ise PDF yalnız bir sayfaydı. Kesme silmek tek editör konumudur; undo geri getirir. İçe aktarılan sütun sonu generic satır sonuna dönüşüp anlamını kaybetmez. İlk ekleme komutu gövde paragrafı/başlıkta güvenle çalışır; tablo hücresi ve metin kutusunda destek kanıtlanana kadar açıkça reddedilir. Liste içi ekleme, üretim davranışı ayrıca kanıtlanana kadar reddedilir.
 
 ## Akış, bölme ve dengeleme politikası
 
@@ -129,4 +131,4 @@ Asgari fixture seti: 1/2/3 sütun, uzun tek paragraf, değişken font/mark + tab
 
 Her örnekte kayıp/çoğalma sıfır, native/source ilişkileri korunmuş, aynı PM pozisyonundan seçim doğru, undo tek işlem ve tekrar açma aynı model olmalıdır. Referanslı örneklerde fiziksel sayfa sayısı ve seçili sütun/metin ankrajları karşılaştırılır; font/Word profilinin bilinmeyenleri kaydedilir. Prototipin birkaç ankrajı geçmesi bütün karma belgelerin Word ile aynı olduğu iddiasına dönüştürülmez.
 
-Kök ajan: mimari/koordinat kanıtı, şema ve ortak Editor entegrasyonu; Sol: model/sürüm/komutlar ve bölüm UI veri sözleşmesi; Terra: ölçüm/bölge solver'ı, native cols/break taşınması, PM geometri/Word/PDF testleri; UI ajanı: kanıtlanmış API üzerinden diyalog ve durum göstergesi. Paylaşılan pagination/PM dosyaları tek sahipte kalır. Referans DOCX kaynakları yakalanmış PDF/hash ilişkisiyle donduruldu; generator artık gerçek referans mevcutken yeniden üretmeyi reddeder. Yeni varyant yeni corpus/sürüm gerektirir. Native caret kapısı geçmeden ürün modeli/UI genişletilmez.
+Kök ajan: mimari/koordinat kanıtı, şema ve ortak Editor entegrasyonu; Sol: model/sürüm/komutlar ve bölüm UI veri sözleşmesi; Terra: ölçüm/bölge solver'ı, native cols/break taşınması, PM geometri/Word/PDF testleri; UI ajanı: kanıtlanmış API üzerinden diyalog ve durum göstergesi. Paylaşılan pagination/PM dosyaları tek sahipte kalır. Referans DOCX kaynakları yakalanmış PDF/hash ilişkisiyle donduruldu; generator artık gerçek referans mevcutken yeniden üretmeyi reddeder. Yeni varyant yeni corpus/sürüm gerektirir. Native caret prototip kapısı geçildi; üretim geometrisi, düzenleme ve çıktı davranışları ayrıca doğrulanır.

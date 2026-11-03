@@ -10,6 +10,7 @@ import { schema as basicSchema } from "prosemirror-schema-basic";
 import { addListNodes } from "prosemirror-schema-list";
 import { tableNodes } from "prosemirror-tables";
 import { readDocxProperties } from "@/lib/document-layout";
+import { columnBreakNodeSpec } from "@/lib/column-break";
 import { tabNodeSpec } from "@/lib/tab-node";
 import { textBoxNodeSpec } from "@/lib/text-box";
 
@@ -242,6 +243,7 @@ export const mySchema = new Schema({
   ))
     .append(importedTables)
     .addToEnd("tab", tabNodeSpec)
+    .addToEnd("column_break", columnBreakNodeSpec)
     .addToEnd("text_box", textBoxNodeSpec)
     .addToEnd("page_break", pageBreakNodeSpec)
     .addToEnd("doc_field", {

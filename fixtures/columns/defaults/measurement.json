@@ -1,0 +1,40 @@
+{
+  "status": "WORD_REFERENCE_MEASURED",
+  "source_sha256": "3d5771c585ade25c4f859bfc432c98a7972cb5a3f134652ba3ce6ad880ad4627",
+  "pdf_sha256": "3985cf76e6a0e2c0f8d3744962230a59fda15ef2afc1a4c56e2547761695da80",
+  "page_count": 3,
+  "anchors": {
+    "OMITTED_LEFT": {
+      "page": 1,
+      "x0_pt": 72.025,
+      "top_pt": 74.59
+    },
+    "OMITTED_RIGHT": {
+      "page": 1,
+      "x0_pt": 324.13,
+      "top_pt": 74.59
+    },
+    "ZERO_LEFT": {
+      "page": 2,
+      "x0_pt": 72.025,
+      "top_pt": 74.59
+    },
+    "ZERO_RIGHT": {
+      "page": 2,
+      "x0_pt": 306.13,
+      "top_pt": 74.59
+    },
+    "EXPLICIT720_LEFT": {
+      "page": 3,
+      "x0_pt": 72.025,
+      "top_pt": 74.59
+    },
+    "EXPLICIT720_RIGHT": {
+      "page": 3,
+      "x0_pt": 324.13,
+      "top_pt": 74.59
+    }
+  },
+  "omitted_minus_zero_right_pt": 18,
+  "omitted_minus_explicit720_right_pt": 0
+}

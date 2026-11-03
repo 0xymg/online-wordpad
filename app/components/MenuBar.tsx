@@ -1,6 +1,6 @@
 "use client";
 
-import { memo, useRef } from "react";
+import { memo, useRef, useSyncExternalStore } from "react";
 import {
   Menubar,
   MenubarContent,
@@ -38,6 +38,10 @@ import { tabLabels } from "@/lib/tab-i18n";
 import { sectionLabels } from "@/lib/section-i18n";
 import { textBoxLabels } from "@/lib/text-box-i18n";
 
+const subscribePlatform = () => () => {};
+const macPlatform = () => /Mac|iP(hone|[oa]d)/.test(navigator.platform);
+const serverPlatform = () => false;
+
 interface MenuBarProps {
   headerCollapsed?: boolean;
   viewRef: React.MutableRefObject<EditorView | null>;
@@ -48,6 +52,7 @@ interface MenuBarProps {
   onSectionLayout: () => void;
   onTabStops: () => void;
   onInsertTab: () => void;
+  onInsertColumnBreak: () => void;
   pageOrientation: "portrait" | "landscape";
   onPageOrientationChange: (o: "portrait" | "landscape") => void;
   onPrint?: () => void;
@@ -170,7 +175,7 @@ function MenuBar({
   headerCollapsed = false,
   viewRef, schema, onPrint,
   marginPreset, onMarginPreset, onCustomMargins,
-  pageOrientation, onPageOrientationChange, onSectionLayout, onTabStops, onInsertTab,
+  pageOrientation, onPageOrientationChange, onSectionLayout, onTabStops, onInsertTab, onInsertColumnBreak,
   docTitle, onTitleChange, onNewDoc, onShowHome, onNewFromTemplate, onOpenFile, onExport,
   onSave, onCopyLink, onRenameDoc, onDeleteDoc, onReplace,
   onShowVersions, onShowShortcuts, onShowAbout, onFind,
@@ -191,6 +196,7 @@ function MenuBar({
   user, onLogin, onLogout, onOpenProfile,
 }: MenuBarProps) {
   const t = useT();
+  const isMac = useSyncExternalStore(subscribePlatform, macPlatform, serverPlatform);
   const { locale, setLocale } = useLocale();
   const cmd = (command: (state: EditorState, dispatch?: (tr: Transaction) => void) => boolean) => {
     const v = viewRef.current;
@@ -629,8 +635,9 @@ function MenuBar({
           <MenubarItem onClick={onInsertTOC}>{t.insert.tableOfContents}</MenubarItem>
           <MenubarSeparator />
           <MenubarItem onClick={onInsertDivider}>{t.insert.horizontalLine}</MenubarItem>
-          <MenubarItem onClick={onInsertTab}>{tabLabels(locale).insertTab}<MenubarShortcut>Ctrl+Alt+T</MenubarShortcut></MenubarItem>
+          <MenubarItem onClick={onInsertTab}>{tabLabels(locale).insertTab}<MenubarShortcut>{isMac ? "⌘⌥T" : "Ctrl+Alt+T"}</MenubarShortcut></MenubarItem>
           <MenubarItem onClick={onPageBreakAdd}>{t.insert.pageBreak}</MenubarItem>
+          <MenubarItem onClick={onInsertColumnBreak}>{sectionLabels(locale).insertColumnBreak}<MenubarShortcut>{isMac ? "⌘⇧↵" : "Ctrl+Shift+Enter"}</MenubarShortcut></MenubarItem>
           <MenubarItem onClick={onSectionLayout}>{sectionLabels(locale).title}…</MenubarItem>
           <MenubarSeparator />
           <MenubarSub>

@@ -1,0 +1,13 @@
+{
+  "reference_application": "Microsoft Word Online",
+  "source_sha256": "fecb602c44ceb6b1c6201c09bc0c332b278f1e99f222c8de9004558b8a838d3e",
+  "pdf_sha256": "79c27c38fc47a797c8e46bd35ca05a72eec75218bc042c916b96083b4dac7b3b",
+  "captured_at_utc": "2026-11-03T04:29:21.575905+00:00",
+  "capture_timestamp_basis": "downloaded file mtime in UTC; exact export event time unavailable",
+  "method": "Root opened the exact source and used Word Online File > Export > Download as PDF",
+  "browser": "Codex in-app browser; exact engine version unavailable",
+  "word_build": "not exposed",
+  "paper": "Source Letter portrait 12240x15840 twips, four 1440-twip margins",
+  "font_specification": "Arial 11pt declared; actual substitution not independently verified",
+  "original_download_filename": "terminal-two-column-break.pdf"
+}

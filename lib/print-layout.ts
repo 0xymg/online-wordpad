@@ -1,22 +1,16 @@
 /** Print the measured editor sheets, including rich running content. */
 import type { EditorView } from "prosemirror-view";
-import { paginationKey, remeasurePagination } from "@/app/components/paginationPlugin";
-import { flushTabLayout } from "./tab-layout";
-
-const frame = () => new Promise<void>(resolve => requestAnimationFrame(() => resolve()));
+import { paginationKey, flushDocumentLayout } from "@/app/components/paginationPlugin";
 
 export async function preparePrintLayout(view: EditorView, host: HTMLElement, credit?: { title: string; date: string }) {
   const doc = view.state.doc;
   const { readRunningSource } = await import("./header-footer-source");
   await Promise.all([readRunningSource(doc), document.fonts.ready]);
-  await flushTabLayout(view);
-  remeasurePagination(view);
-  await frame(); await frame(); await frame();
+  await flushDocumentLayout(view);
   const source = view.dom.parentElement;
   if (view.isDestroyed || view.state.doc !== doc || !source) throw new Error("Document changed while preparing print");
   await Promise.all(Array.from(source.querySelectorAll("img")).map(img => img.decode().catch(() => {})));
-  await flushTabLayout(view);
-  remeasurePagination(view); await frame(); await frame();
+  await flushDocumentLayout(view);
   const pages = paginationKey.getState(view.state)?.pages;
   if (!pages?.length || view.state.doc !== doc) throw new Error("Page layout is not ready");
   const maximumWidth = Math.max(...pages.map(page => page.geometry.width)) / 15;
@@ -40,7 +34,8 @@ export async function preparePrintLayout(view: EditorView, host: HTMLElement, cr
   // It is editor chrome; rasterizers otherwise fetch the page URL as an image.
   template.querySelectorAll(".pm-table-drag-handle,.pm-image-handle,.column-resize-handle,.search-match-overlay,.ProseMirror-separator,.pm-image-selection-frame,.pm-textbox-ui,.pm-section-marker").forEach(el => el.remove());
   template.querySelectorAll("[contenteditable]").forEach(el => el.removeAttribute("contenteditable"));
-  template.querySelectorAll(".selectedCell,.ProseMirror-selectednode,.is-selected").forEach(el => el.classList.remove("selectedCell", "ProseMirror-selectednode", "is-selected"));
+  template.querySelectorAll(".selectedCell,.ProseMirror-selectednode,.ProseMirror-focused,.is-selected,.pm-column-table-selected").forEach(el => el.classList.remove("selectedCell", "ProseMirror-selectednode", "ProseMirror-focused", "is-selected", "pm-column-table-selected"));
+  template.querySelectorAll("[data-column-cell-selected]").forEach(el => el.removeAttribute("data-column-cell-selected"));
   const output = document.createDocumentFragment(), style = document.createElement("style");
   style.textContent = pages.map(({ geometry: g }, index) => `@page edtr${index} { size:${g.width / 20}pt ${g.height / 20}pt; margin:0; }`).join("\n");
   output.appendChild(style);
