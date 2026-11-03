@@ -1,0 +1,31 @@
+# A4 referans kabulü — yerel kanıt ve açık işler
+
+Durum: A4 geliştirme aşamasında ve **yayımlanmadı**. Aşağıdaki sonuçlar yerel/sentetik denemelerdir; A4 canlı kabulü veya genel Word görsel eşleşmesi değildir. A3 `2e1f550` canlı kabulü ayrı olarak `columns-acceptance.md` dosyasındadır.
+
+## Ölçülen yerel sonuçlar
+
+| Alan | Kanıt ve kapsam |
+| --- | --- |
+| Kimlik ve düzenleme | `check-reference-core.cjs` ve `check-reference-browser.cjs`: hedef/alan kimlikleri, v3→v4 geçişi, yinelenen veya eksik hedef, clipboard ve başlık bölme davranışı için odaklı kontroller. Üretilen TOC paragrafları salt okunur; işaretçi silindiğinde girişler kaldırılır ve undo sonrası yeniden üretilir. |
+| Alan ve TOC hesaplama | `check-reference-layout.cjs`: metin ve sayfa önbelleği, seviye filtresi, eksik hedef, giriş alanı kimliğinin korunması, idempotans, başlık düzenleme/undo ve TOC işaretçisi silme/undo. Numarasız başlık için sayı uydurulmaz. |
+| Eşzamanlılık | `check-reference-concurrency.cjs`: eski otomatik güncellemeye katılan manuel yenileme yeniden denenir; açık çağrı sırasında kullanıcı değişikliği eski anlık görüntüyü reddeder. Beklenen eski hesap hata bandı üretmez. Sentetik kompozisyon sırasında görünüm yok edilmesi beklemeyi temizleyip hata döndürür. Gerçek işletim sistemi IME denemesi değildir. |
+| Fiziksel sayfa ve TOC | Sabit yerel `3115` görünümünde `check-reference-pagination.cjs`: 9→10 ve 99→100 değişimleri ve başlık başında sayfa sonu eklenmesi sonrası hedef kimliği. `check-reference-toc-many.cjs`: 120 girişli çok sayfalı TOC ve beklenen kararlı durum. `check-reference-mixed-sections.cjs`: dikeyden yataya bölüm ve `vii` sayfa numarası başlangıcı. Sayfa sınırı/50% yakınlaştırma için ayrıca odaklı geometri kontrolü vardır. |
+| Sütun, tablo ve yön | `check-reference-toc-indent.cjs`: tek ve iki sütunda LTR/RTL seviye girintisi ve ortak sayfa numarası kenarı; iki sütunlu tablo hücresindeki bookmark hedefi ve sayfa alanı. Bunlar seçili sentetik geometri kontrolleridir. |
+| PDF ve arayüz | Yerel `check-references-ui.cjs` akışında referans arayüzü ve PDF GoTo hedefi denendi. PDF hedefi çoğaltılmış DOM kimliğine değil yerleşmiş kaynak konumuna dayanır. Yerel üretim derlemesinde (`3116`) aynı akış geçti; iki sayfalı PDF gerçek iç hedefler taşıdı. Mobil Arapça ve salt okunur kontrolleri de geçti. |
+| A3 regresyonu | Değişen sütun ölçümü ve koordinatör için odaklı kontroller, düzenleme/undo/PDF ve 100%/50% karma kâğıt klavye denemeleri geçti. Word sütun referanslarının dört örneğinde sayfa sayıları yine 6/1/5/3 oldu; bu, tam görsel eşleşme sonucu değildir. |
+
+## Native Word ve kalan kapılar
+
+Native DOCX yerel paketi: TOC başlığı/kimliği, bookmark/REF/PAGEREF, Unicode açıklama etiketi ve gerçek SEQ numarası, aç/kaydet/aç, yinelenen/eksik hedef ve desteklenmeyen REF/DATE koruması geçti. Temsil edilemeyen TOC biçimleri kaynak ve açık belge değiştirilmeden açık mesajla reddedilir. Aktif olmayan iki eski önbellekli belgenin toplu dışa aktarımı, ayrı bir aktif dosya varken aynı indirme callback'i üzerinden doğrulandı; bu toplu akış kullanıcı tıklama testi değildir.
+
+**Gerçek Word Online, 3 Kasım 2026:** iki hata kontrollü örneklerle ayrıştırıldı. Yinelenen stil adları başlıkların Word tarafından yanlış stile alınmasına yol açıyordu; korunmuş kaynak stillerinin çakışan görünen adları ayrıldı. İçindekiler alanının ayrı boş paragrafta başlaması Word yenilemesinde kaydetme hatası üretiyordu; begin/separate artık ilk girişte, end son girişte, başlık ayrı paragraftadır. Orijinal kontrol dosyası ve tek paragraf varyantı bu ayrımı doğruladı.
+
+Düzeltilmiş çok girişli `[1,3]` örneğinde Word'ün **Update Table of Contents** işlemi başarıyla kaydoldu. Word'de 3. seviye başlık `WORD_LEVEL_THREE_RENAMED` olarak değiştirildi; ikinci yenileme yeni metni gerçek `_Toc…` bağlantısına taşıdı ve kaydoldu. 1. ve 3. seviye içeri alındı, 2. seviye yalnız gövdede kaldı, TOC başlığı korundu. Ekran kanıtı: `/tmp/edtr-reference-word-proof/word-updated-toc.jpg`. Bu gözlem genel Word görsel eşleşmesi veya bütün REF/SEQ türlerinin Word Online'da elle yenilenmesi iddiası değildir.
+
+Üretim `3116`: TypeScript/derleme, arayüz/PDF, 9→10 ve 99→100, karma yön+Roman başlangıç, 120 girişli TOC ve tek/çift sütun LTR/RTL kontrolleri geçti. Yerel native paketin tüm işlev iddiaları geçti; son konsol kontrolünde yalnız yerel auth-secret eksikliğine bağlı `/api/auth/get-session` 500 ve Vercel analytics/speed-insights betiklerinin yerelde 404 yanıtı kaydedildi. Bunlar sessizce filtrelenmedi. Son native güvenlik düzeltmeleri bu derlemeden sonra olduğundan nihai derleme/yeniden kontrol gerekir.
+
+Son native kapanış: yabancı EDL/EDM/EDN yer imleri, adreslenen EDF/EDT taşıyıcı benzerleri ve yabancı EDN'ye metin REF korunur. Yönetilen TOC alanından önceki karışık önek kaynak değişmeden reddedilir. Word'ün sıfır genişlikli sınırları iç içe yeniden sıralaması desteklenir. Aynı etiketli açıklamalar benzersiz, sahip kimliğiyle doğrulanan EDM adları kullanır. `fixtures/references` altındaki iki arındırılmış gerçek Word dönüş dosyası son üretim `3119` üzerinde aç → DOCX → yeniden aç kontrolünü geçti. İkinci dosyada eski TOC önbelleği Word'de klavye düzenlemesi olmadan iki kez güncellendi; başlık, `[1,3]`, yeni başlık metni ve iki EDM adı korundu.
+
+Ölçülmüş sınırlar: Word kendi TOC bağlantılarını yeniden kurarken bazı EDH başlık takma adlarını kaldırdı; bu başlıklar importta yeni kimlik alır, metinle eski kimliğe tahmini bağlanmaz. Ayrı bir Word klavye düzenleme denemesinde başlık paragrafı kayboldu; neden doğrulanamadı, kontrollü iki yenilemede tekrarlanmadı. Adreslenmeyen, tam özel EDF protokolüne uyan bitişik sıfır genişlikli yer imi, uygulama taşıyıcısı sayılır; üçüncü tarafın aynı özel ad sözleşmesini kullanması ayırt edilemez. Genel Word düzenleme veya tipografi birebirliği iddia edilmez.
+
+Son üretim `3119` derlemesi, boş TOC ve aktif olmayan toplu dışa aktarma geçti. Native paketin bütün işlev kontrolleri geçti; yerel konsol kapısı yalnız iki Vercel ölçüm betiğinin 404 yanıtını bildirdi. Auth için yalnız yerel test ortamı değişkeni verildi; ürün ayarları değişmedi. Kalan kapı coauthor olmadan commit/yayın ve canlı kabul. A4 henüz yayımlanmadı. Gerçek işletim sistemi IME ve genel görsel birebirlik doğrulanmış değildir. A5 dipnot/sonnot ve A6 kaynakça bu paketin kabulü değildir.

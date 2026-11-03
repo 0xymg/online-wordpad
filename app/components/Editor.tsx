@@ -7,6 +7,11 @@ import { resolveColumnTabGeometry } from "@/lib/column-flow";
 import "@/lib/tab-layout.css";
 import { insertTabCharacter, tabCharactersPlugin } from "@/lib/tab-node";
 import { insertColumnBreak } from "@/lib/column-break";
+import { referenceIdentityPlugin } from "@/lib/document-references";
+import { REFERENCE_LAYOUT_STATUS_EVENT, flushReferenceLayout } from "@/lib/reference-layout";
+import "./references.css";
+import { referenceLabels } from "@/lib/reference-i18n";
+import type { ReferenceDialogMode } from "./ReferencesDialog";
 import { parseDocumentHtml, documentModelPlugin } from "@/lib/document-model";
 import { sectionMarkersPlugin, sectionMarkersKey } from "@/lib/section-markers";
 import "./section-markers.css";
@@ -82,6 +87,7 @@ const AuthModal = lazy(() => import("./AuthModal"));
 const HeaderFooterDialog = lazy(() => import("./HeaderFooterDialog"));
 const TabsDialog = lazy(() => import("./TabsDialog"));
 const TabRuler = lazy(() => import("./TabRuler"));
+const ReferencesDialog = lazy(() => import("./ReferencesDialog"));
 const SectionLayoutDialog = lazy(() => import("./SectionLayoutDialog"));
 const PageMarginsDialog = lazy(() => import("./PageMarginsDialog"));
 const ImageLayersPanel = lazy(() => import("./ImageLayersPanel"));
@@ -202,6 +208,7 @@ function buildPlugins() {
       const lang = document.documentElement.lang;
       toast.warning(sectionLabels(isLocale(lang) ? lang : "en").boundaryNesting);
     }),
+    referenceIdentityPlugin(),
     sectionMarkersPlugin(),
     tabCharactersPlugin(),
     paragraphStylePlugin(),
@@ -1223,7 +1230,16 @@ export default function Editor({
   const [tabsOpen, setTabsOpen] = useState(false);
   const showTabs = useCallback(() => setTabsOpen(true), []);
   const [sectionLayoutOpen, setSectionLayoutOpen] = useState(false);
+  const [referenceDialog, setReferenceDialog] = useState<ReferenceDialogMode | null>(null);
   const [documentLoadError, setDocumentLoadError] = useState(false);
+  const [referenceLayoutError, setReferenceLayoutError] = useState(false);
+  useEffect(() => {
+    const onStatus = (event: Event) => {
+      if (event.target === viewRef.current?.dom) setReferenceLayoutError(Boolean((event as CustomEvent<{ error: string | null }>).detail.error));
+    };
+    window.addEventListener(REFERENCE_LAYOUT_STATUS_EVENT, onStatus);
+    return () => window.removeEventListener(REFERENCE_LAYOUT_STATUS_EVENT, onStatus);
+  }, []);
   const [columnLayoutError, setColumnLayoutError] = useState(false);
   useEffect(() => {
     const onStatus = (event: Event) => {
@@ -2185,6 +2201,7 @@ export default function Editor({
     const isActiveDoc = file.id === loadedIdRef.current && !!v;
     let html: string;
     if (isActiveDoc) {
+      await flushReferenceLayout(v!);
       html = serializeDoc(v!.state.doc);
     } else if (file.html !== undefined) {
       html = file.html;
@@ -2260,10 +2277,11 @@ export default function Editor({
       // The start screen stays up while the picker is open; the imported
       // document is what closes it.
       closeHome();
-    } catch {
-      toast.error(t.toast.openFailed);
+    } catch (error) {
+      const unsupported = error && typeof error === "object" && "code" in error && error.code === "unsupported-reference";
+      toast.error(unsupported ? referenceLabels(locale).importUnsupported : t.toast.openFailed);
     }
-  }, [addNewDocument, closeHome]);
+  }, [addNewDocument, closeHome, locale, t.toast.openFailed]);
 
   // ── Image insert (file picker, paste, drag-drop share this path) ─────────
   const insertImageFromFile = useCallback(async (imageFile: File) => {
@@ -3014,35 +3032,16 @@ export default function Editor({
     v.focus();
   }, []);
 
-  // ── Table of contents ────────────────────────────────────────────────────
-  const insertTOC = useCallback(() => {
-    const v = viewRef.current;
-    if (!v) return;
-    const entries: Array<{ level: number; text: string }> = [];
-    v.state.doc.forEach((node) => {
-      if (node.type === mySchema.nodes.heading && Number(node.attrs.level) <= 3) {
-        const text = node.textContent.trim();
-        if (text && text !== t.insert.tableOfContents && text !== "Contents") entries.push({ level: Number(node.attrs.level), text });
-      }
-    });
-    if (!entries.length) {
-      toast.warning(t.toast.needHeadings);
-      return;
-    }
-    const nodes: PMNode[] = [
-      mySchema.nodes.heading.create({ level: 2 }, mySchema.text(t.insert.tableOfContents)),
-      ...entries.map((e) =>
-        mySchema.nodes.paragraph.create({ indent: Math.max(0, e.level - 1) }, mySchema.text(e.text))
-      ),
-      mySchema.nodes.horizontal_rule.create(),
-    ];
-    const tr = v.state.tr;
-    let insertPos: number;
-    try { insertPos = tr.selection.$from.after(1); } catch { insertPos = tr.selection.from; }
-    tr.insert(insertPos, nodes);
-    v.dispatch(tr.scrollIntoView());
-    v.focus();
-  }, [t.insert.tableOfContents, t.toast.needHeadings]);
+  // ── References and live table of contents ─────────────────────────────────
+  const insertTOC = useCallback(() => setReferenceDialog("toc"), []);
+  const updateReferences = useCallback(async () => {
+    const view = viewRef.current;
+    if (!view) return;
+    try {
+      await flushReferenceLayout(view);
+      toast.success(referenceLabels(locale).updated);
+    } catch { toast.error(referenceLabels(locale).layoutError); }
+  }, [locale]);
 
   // ── Read aloud (speechSynthesis) ─────────────────────────────────────────
   const toggleReadAloud = useCallback(() => {
@@ -3427,6 +3426,8 @@ export default function Editor({
         onSpellLangChange={changeSpellLang}
         onChangeCase={changeCase}
         onInsertTOC={insertTOC}
+        onReference={setReferenceDialog}
+        onUpdateReferences={updateReferences}
         readingAloud={readingAloud}
         onToggleReadAloud={toggleReadAloud}
         focusMode={focusMode}
@@ -3470,6 +3471,7 @@ export default function Editor({
         />
       )}
       {showRuler && !focusMode && <Suspense fallback={null}><TabRuler view={viewRef.current} tick={tick} onOpenDialog={showTabs} /></Suspense>}
+      {referenceLayoutError && <div role="alert" data-reference-layout-alert className="flex items-center gap-2 border-b border-amber-300/60 bg-amber-50 px-3 py-2 text-xs text-amber-900 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-200"><Warning size={16} className="shrink-0" /><span>{referenceLabels(locale).layoutError}</span></div>}
       {columnLayoutError && <div role="alert" data-column-layout-alert className="flex items-center gap-2 border-b border-amber-300/60 bg-amber-50 px-3 py-2 text-xs text-amber-900 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-200">
         <Warning size={16} weight="fill" className="shrink-0" />
         <span className="min-w-0 flex-1">{sectionLabels(locale).columnLayoutError}</span>
@@ -4106,6 +4108,7 @@ export default function Editor({
       }} /></Suspense>}
       {documentLoadError && <div role="alert" className="fixed bottom-4 inset-x-4 z-50 rounded border bg-background p-3 text-sm text-destructive">{sectionLabels(locale).unsupportedModel}</div>}
       {tabsOpen && viewRef.current && <Suspense fallback={null}><TabsDialog view={viewRef.current} onClose={() => setTabsOpen(false)} /></Suspense>}
+      {referenceDialog && viewRef.current && <Suspense fallback={null}><ReferencesDialog view={viewRef.current} mode={referenceDialog} onClose={() => setReferenceDialog(null)} /></Suspense>}
       {sectionLayoutOpen && viewRef.current && <Suspense fallback={null}><SectionLayoutDialog view={viewRef.current} onClose={() => setSectionLayoutOpen(false)} /></Suspense>}
       {marginsOpen && viewRef.current && <Suspense fallback={null}><PageMarginsDialog view={viewRef.current} onClose={()=>setMarginsOpen(false)}/></Suspense>}
       {textBoxDialogOpen && viewRef.current && <Suspense fallback={null}><TextBoxDialog view={viewRef.current} onClose={() => setTextBoxDialogOpen(false)} /></Suspense>}

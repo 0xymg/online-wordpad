@@ -1,0 +1,10 @@
+.ProseMirror .edtr-reference-field { cursor: pointer; border-radius: 2px; }
+.ProseMirror .edtr-reference-field:hover { background: color-mix(in srgb, currentColor 9%, transparent); }
+.ProseMirror .edtr-reference-missing-target,
+.ProseMirror .edtr-reference-ambiguous { text-decoration: underline wavy #dc2626; text-underline-offset: 3px; }
+.ProseMirror .edtr-reference-unsupported { text-decoration: underline dotted; text-underline-offset: 3px; }
+.ProseMirror .edtr-bookmark-boundary { display: inline; font-size: 0; }
+.ProseMirror [data-edtr-toc] { font-weight: 700; }
+@media print {
+ .ProseMirror .edtr-reference-field { background: transparent; }
+}

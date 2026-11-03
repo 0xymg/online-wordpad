@@ -13,6 +13,7 @@ import { readDocxProperties } from "@/lib/document-layout";
 import { columnBreakNodeSpec } from "@/lib/column-break";
 import { tabNodeSpec } from "@/lib/tab-node";
 import { textBoxNodeSpec } from "@/lib/text-box";
+import { referenceParagraphAttrs, referenceHeadingAttrs, parseReferenceParagraphAttrs, referenceParagraphDOM, bookmarkStartNodeSpec, bookmarkEndNodeSpec, referenceFieldNodeSpec } from "@/lib/document-references";
 
 function layoutStyles(el: HTMLElement): string {
   return ["height", "margin-top", "margin-bottom", "margin-left", "margin-right", "text-indent", "line-height", "background-color", "vertical-align", "border-top", "border-right", "border-bottom", "border-left", "padding-top", "padding-right", "padding-bottom", "padding-left"].map(p => el.style.getPropertyValue(p) ? `${p}:${el.style.getPropertyValue(p)}` : "").filter(Boolean).join(";");
@@ -54,7 +55,7 @@ const normalizeLineHeight = (value: unknown): string | null => {
 const paragraphNodeSpec: NodeSpec = {
   ...basicSchema.spec.nodes.get("paragraph"),
   attrs: {
-    ...rawAttrs,
+    ...rawAttrs, ...referenceParagraphAttrs,
     styleId: { default: null }, styleText: { default: null }, styleParagraph: { default: null }, paragraphFormat: { default: null },
     textAlign: { default: null },
     indent: { default: 0 },
@@ -67,7 +68,7 @@ const paragraphNodeSpec: NodeSpec = {
       if (typeof dom === "string") return { textAlign: null, indent: 0, lineHeight: null };
       const el = dom as HTMLElement;
       return {
-        ...parseRaw(el), ...paragraphAttrs(el),
+        ...parseRaw(el), ...paragraphAttrs(el), ...parseReferenceParagraphAttrs(el),
         textAlign: el.hasAttribute("data-edtr-style") ? null : normalizeTextAlign(el.style.textAlign),
         indent: el.hasAttribute("data-docx-properties") ? 0 : parseIndentFromDom(el),
         lineHeight: el.hasAttribute("data-edtr-style") || /[a-z%]/i.test(el.style.lineHeight) ? null : normalizeLineHeight(el.style.lineHeight),
@@ -83,7 +84,7 @@ const paragraphNodeSpec: NodeSpec = {
     if (indent > 0) style.push(`margin-left:${indent * 24}px`);
     if (lineHeight) style.push(`line-height:${lineHeight}`);
     style.push(paragraphCSS(node));
-    const attrs: Record<string, string> = { dir: "auto", ...rawDOM(node), ...paragraphDOM(node) };
+    const attrs: Record<string, string> = { dir: "auto", ...rawDOM(node), ...paragraphDOM(node), ...referenceParagraphDOM(node) };
     if (style.length) attrs.style = style.join(";");
     if (indent > 0) attrs["data-indent"] = String(indent);
     return ["p", attrs, 0];
@@ -94,7 +95,7 @@ const headingNodeSpec: NodeSpec = {
   ...basicSchema.spec.nodes.get("heading"),
   attrs: {
     level: { default: 1 },
-    ...rawAttrs,
+    ...rawAttrs, ...referenceHeadingAttrs,
     styleId: { default: null }, styleText: { default: null }, styleParagraph: { default: null }, paragraphFormat: { default: null },
     textAlign: { default: null },
     indent: { default: 0 },
@@ -108,7 +109,7 @@ const headingNodeSpec: NodeSpec = {
       const el = dom as HTMLElement;
       return {
         level,
-        ...parseRaw(el), ...paragraphAttrs(el),
+        ...parseRaw(el), ...paragraphAttrs(el), ...parseReferenceParagraphAttrs(el),
         textAlign: el.hasAttribute("data-edtr-style") ? null : normalizeTextAlign(el.style.textAlign),
         indent: el.hasAttribute("data-docx-properties") ? 0 : parseIndentFromDom(el),
         lineHeight: el.hasAttribute("data-edtr-style") || /[a-z%]/i.test(el.style.lineHeight) ? null : normalizeLineHeight(el.style.lineHeight),
@@ -125,7 +126,7 @@ const headingNodeSpec: NodeSpec = {
     if (indent > 0) style.push(`margin-left:${indent * 24}px`);
     if (lineHeight) style.push(`line-height:${lineHeight}`);
     style.push(paragraphCSS(node));
-    const attrs: Record<string, string> = { dir: "auto", ...rawDOM(node), ...paragraphDOM(node) };
+    const attrs: Record<string, string> = { dir: "auto", ...rawDOM(node), ...paragraphDOM(node), ...referenceParagraphDOM(node) };
     if (style.length) attrs.style = style.join(";");
     if (indent > 0) attrs["data-indent"] = String(indent);
     return [`h${level}`, attrs, 0];
@@ -242,6 +243,9 @@ export const mySchema = new Schema({
     "block"
   ))
     .append(importedTables)
+    .addToEnd("bookmark_start", bookmarkStartNodeSpec)
+    .addToEnd("bookmark_end", bookmarkEndNodeSpec)
+    .addToEnd("reference_field", referenceFieldNodeSpec)
     .addToEnd("tab", tabNodeSpec)
     .addToEnd("column_break", columnBreakNodeSpec)
     .addToEnd("text_box", textBoxNodeSpec)

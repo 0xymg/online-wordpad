@@ -16,6 +16,7 @@ import { buildColumnDecorations, type ColumnDecorations } from "@/lib/column-flo
 import { updateTableOverlaySelection } from "@/lib/column-flow-table-decorations";
 import { guardColumnTableTextDrag } from "@/lib/column-table-drag";
 import { setColumnArtworkStacking } from "@/lib/column-artwork-stacking";
+import { flushReferenceLayout, noteReferenceDocumentChange } from "@/lib/reference-layout";
 import type { ColumnMeasurement } from "@/lib/column-flow-measure";
 import type { DocumentLayout } from "@/lib/document-layout";
 import { Plugin, PluginKey, TextSelection } from "prosemirror-state";
@@ -857,6 +858,17 @@ export function paginationPlugin(getConfig: () => PageLayoutConfig): Plugin {
     view(view) {
       measurements.set(view, measure);
       measure(view);
+      let referenceTimer = 0, referenceDestroyed = false;
+      const scheduleReferences = () => {
+        if (referenceTimer) window.clearTimeout(referenceTimer);
+        referenceTimer = window.setTimeout(() => {
+          referenceTimer = 0;
+          if (!referenceDestroyed && !view.isDestroyed) void flushReferenceLayout(view).catch(error => {
+            if (!referenceDestroyed && !view.isDestroyed && error instanceof Error && error.message === 'Document changed while refreshing references') scheduleReferences();
+          });
+        }, 50);
+      };
+      scheduleReferences();
       // The first page's top band and the last page's bottom band are .pm-page's
       // own padding — no spacer reaches them, so those two numbers are absolutely
       // positioned against the page element instead of riding in the flow.
@@ -992,7 +1004,7 @@ export function paginationPlugin(getConfig: () => PageLayoutConfig): Plugin {
       syncEdges(view);
       // Catches async height changes (image loads, fonts) and layout-affecting
       // config changes (orientation/margins change the editor's width).
-      const observer = new ResizeObserver(() => measure(view));
+      const observer = new ResizeObserver(() => { measure(view); scheduleReferences(); });
       observer.observe(view.dom);
       // CSS zoom changes the painted scale without necessarily changing the
       // observed CSS content box, so ResizeObserver alone can miss it.
@@ -1002,17 +1014,21 @@ export function paginationPlugin(getConfig: () => PageLayoutConfig): Plugin {
         if (next !== lastZoom) { lastZoom = next; measure(view); }
       });
       if (page) zoomObserver.observe(page, { attributes: true, attributeFilter: ['style'] });
-      const onLoad = () => measure(view);
+      const onLoad = () => { measure(view); scheduleReferences(); };
+      const onReferenceCompositionEnd = () => scheduleReferences();
       view.dom.addEventListener("load", onLoad, true);
       view.dom.addEventListener("compositionend", onLoad);
+      view.dom.addEventListener("compositionend", onReferenceCompositionEnd);
       document.fonts?.addEventListener("loadingdone", onLoad);
       return {
         update(v, previous) {
-          if (v.state.doc !== previous.doc) { stopColumnTableDrag?.(); stopColumnTableDrag = undefined; clearColumnOverlays(); failedColumnDocument = undefined; loadRunning(v); measure(v); }
+          if (v.state.doc !== previous.doc) { noteReferenceDocumentChange(v); stopColumnTableDrag?.(); stopColumnTableDrag = undefined; clearColumnOverlays(); failedColumnDocument = undefined; loadRunning(v); measure(v); scheduleReferences(); }
           else if (!v.state.selection.eq(previous.selection)) for (const overlay of columnTableOverlays) updateTableOverlaySelection(overlay, v.state);
           syncEdges(v);
         },
         destroy() {
+          referenceDestroyed = true; if (referenceTimer) window.clearTimeout(referenceTimer);
+          view.dom.removeEventListener("compositionend", onReferenceCompositionEnd);
           stopColumnTableDrag?.(); stopColumnTableDrag = undefined;
           // A replacement plugin registers its own measure callback; stale
           // views must not write geometry into its document.

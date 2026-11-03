@@ -1,5 +1,8 @@
 "use client";
 
+import { referenceLabels } from "@/lib/reference-i18n";
+import type { ReferenceDialogMode } from "./ReferencesDialog";
+
 import { memo, useRef, useSyncExternalStore } from "react";
 import {
   Menubar,
@@ -105,6 +108,8 @@ interface MenuBarProps {
   onSpellLangChange: (lang: string) => void;
   onChangeCase: (kind: "upper" | "lower" | "title" | "sentence") => void;
   onInsertTOC: () => void;
+  onReference: (mode: ReferenceDialogMode) => void;
+  onUpdateReferences: () => void;
   readingAloud: boolean;
   onToggleReadAloud: () => void;
   focusMode: boolean;
@@ -187,7 +192,7 @@ function MenuBar({
   showImageLayers, onToggleImageLayers,
   spellcheckOn, onToggleSpellcheck,
   spellLang, onSpellLangChange,
-  onChangeCase, onInsertTOC,
+  onChangeCase, onInsertTOC, onReference, onUpdateReferences,
   readingAloud, onToggleReadAloud,
   focusMode, onToggleFocusMode,
   printHeaderFooter, onTogglePrintHeaderFooter,
@@ -632,7 +637,11 @@ function MenuBar({
           <MenubarItem onClick={onInsertTextBox}>{textBoxLabels(locale).insert}</MenubarItem>
           <MenubarItem onClick={() => onInsertTable(3, 3)}>{`${t.insert.table} (${t.tableMenu.rowsByCols(3, 3)})`}</MenubarItem>
           <MenubarItem onClick={onHeaderFooter}>{t.running.title}…</MenubarItem>
-          <MenubarItem onClick={onInsertTOC}>{t.insert.tableOfContents}</MenubarItem>
+          <MenubarItem onClick={onInsertTOC}>{t.insert.tableOfContents}…</MenubarItem>
+          <MenubarItem onClick={() => onReference("bookmark")}>{referenceLabels(locale).bookmark}…</MenubarItem>
+          <MenubarItem onClick={() => onReference("caption")}>{referenceLabels(locale).caption}…</MenubarItem>
+          <MenubarItem onClick={() => onReference("reference")}>{referenceLabels(locale).reference}…</MenubarItem>
+          <MenubarItem onClick={onUpdateReferences}>{referenceLabels(locale).update}</MenubarItem>
           <MenubarSeparator />
           <MenubarItem onClick={onInsertDivider}>{t.insert.horizontalLine}</MenubarItem>
           <MenubarItem onClick={onInsertTab}>{tabLabels(locale).insertTab}<MenubarShortcut>{isMac ? "⌘⌥T" : "Ctrl+Alt+T"}</MenubarShortcut></MenubarItem>

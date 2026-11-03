@@ -64,6 +64,11 @@ export async function measureColumnDocument(source: EditorView): Promise<ColumnM
     for (const property of ['font-family', 'font-size', 'line-height', 'letter-spacing', 'word-spacing', 'font-feature-settings', 'font-kerning', 'direction']) {
       measurement.dom.style.setProperty(property, sourceStyle.getPropertyValue(property));
     }
+    // A computed pixel line-height loses the source root's inherited unitless
+    // ratio: headings then measure at body line height instead of scaling.
+    const fontSize = Number.parseFloat(sourceStyle.fontSize), lineHeight = Number.parseFloat(sourceStyle.lineHeight);
+    if (source.dom.style.lineHeight) measurement.dom.style.lineHeight = source.dom.style.lineHeight;
+    else if (fontSize > 0 && lineHeight > 0) measurement.dom.style.lineHeight = String(lineHeight / fontSize);
     await owner.fonts.ready;
     await Promise.all(Array.from(measurement.dom.querySelectorAll('img')).map(image => image.decode().catch(() => {})));
     await flushTabLayout(measurement);

@@ -1,7 +1,7 @@
 /** Bounded, stale-safe coordination for the measured column renderer. */
 import type { EditorView } from 'prosemirror-view';
 import type { Node as PMNode } from 'prosemirror-model';
-import { setColumnFlowPreview, setColumnFlowSnapshot, type FlowLayout } from './column-flow';
+import { retainColumnFlowPreview, setColumnFlowPreview, setColumnFlowSnapshot, type FlowLayout } from './column-flow';
 
 export type ColumnFlowAdapter = {
   /** Measure settled natural lines and tabs without mutating the source document. */
@@ -54,14 +54,15 @@ export function createColumnFlowCoordinator(view: EditorView, adapter: ColumnFlo
   const coordinator: ColumnFlowCoordinator = {
     invalidate() {
       if (destroyed) return;
-      generation++; clearSnapshot();
+      generation++;
+      if (instances.get(view) === coordinator) { retainColumnFlowPreview(view); setColumnFlowSnapshot(view, view.state.doc, null); }
       if (scheduled && win) win.cancelAnimationFrame(scheduled);
       if (win) scheduled = win.requestAnimationFrame(() => { scheduled = 0; void coordinator.flush().catch(() => {}); });
     },
     flush() {
       if (destroyed) return Promise.reject(new Error('Column layout view was destroyed'));
       if (scheduled && win) { win.cancelAnimationFrame(scheduled); scheduled = 0; }
-      if (!pending) { runningGeneration = generation; pending = run().catch(error => { clearSnapshot(); throw error; }).finally(() => { pending = null; }); }
+      if (!pending) { runningGeneration = generation; const started = generation; pending = run().catch(error => { if (generation === started) clearSnapshot(); throw error; }).finally(() => { pending = null; }); }
       const version = runningGeneration;
       return pending.catch(error => {
         if (!destroyed && version !== generation) return coordinator.flush();

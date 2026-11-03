@@ -9,6 +9,8 @@ import type { EditorView } from "prosemirror-view";
 import type { Node as PMNode } from "prosemirror-model";
 import { defaultDocumentLayout } from "./document-layout";
 import { getDocumentModel } from "./document-model";
+import { collectReferenceIndex } from "./document-references";
+import { referencePageAtPos, type ReferencePage } from "./reference-layout";
 import { preparePrintLayout } from "./print-layout";
 import { printPageStyle } from "./print-style";
 import type { PdfExportOptions } from "./pdf-export";
@@ -55,7 +57,40 @@ async function hiddenText(page:PDFPage,sheet:HTMLElement,fonts:Map<string,Promis
   }
   await flush();
  }
- for(const link of Array.from(sheet.querySelectorAll<HTMLAnchorElement>('a[href]'))){const url=new URL(link.href,location.href);if(!['http:','https:','mailto:'].includes(url.protocol))continue;for(const r of Array.from(link.getClientRects())){if(!inside(r))continue;const annotation=page.doc.context.obj({Type:PDFName.of('Annot'),Subtype:PDFName.of('Link'),Rect:[(r.left-box.left)*.75,page.getHeight()-(r.bottom-box.top)*.75,(r.right-box.left)*.75,page.getHeight()-(r.top-box.top)*.75],Border:[0,0,0],A:{S:PDFName.of('URI'),URI:PDFString.of(url.href)}});page.node.addAnnot(page.doc.context.register(annotation));}}
+
+}
+/** Internal reference links are PDF GoTo actions, never website fragment URLs. */
+function addPdfLinks(pdf: PDFDocument, sheets: HTMLElement[], targets: Map<string, ReferencePage>) {
+ const pages = pdf.getPages();
+ sheets.forEach((sheet, index) => {
+  const page = pages[index], box = sheet.getBoundingClientRect();
+  for (const element of sheet.querySelectorAll<HTMLElement>('a[href], [data-edtr-reference]')) {
+   if (element.hasAttribute('data-edtr-reference') && element.closest('a[href]')) continue;
+   let target: ReferencePage | undefined, uri: string | undefined;
+   if (element.hasAttribute('data-edtr-reference')) {
+    if (element.dataset.status !== 'ok') continue;
+    target = targets.get(element.getAttribute('data-reference-target') || '');
+    if (!target) continue;
+   } else {
+    const href = element.getAttribute('href') || '';
+    if (href.startsWith('#')) {
+     target = targets.get(href.slice('#edtr-target-'.length));
+     if (!href.startsWith('#edtr-target-') || !target) continue;
+    } else {
+     try { const url = new URL(href, location.href); if (['http:', 'https:', 'mailto:'].includes(url.protocol)) uri = url.href; } catch { /* Ignore invalid links. */ }
+     if (!uri) continue;
+    }
+   }
+   for (const rect of element.getClientRects()) {
+    const left = Math.max(rect.left, box.left), right = Math.min(rect.right, box.right);
+    const top = Math.max(rect.top, box.top), bottom = Math.min(rect.bottom, box.bottom);
+    if (right - left < .1 || bottom - top < .1) continue;
+    const action = target ? { S: PDFName.of('GoTo'), D: [pages[target.pageIndex].ref, PDFName.of('XYZ'), target.x * .75, pages[target.pageIndex].getHeight() - target.y * .75, null] } : { S: PDFName.of('URI'), URI: PDFString.of(uri!) };
+    const annotation = pdf.context.obj({ Type: PDFName.of('Annot'), Subtype: PDFName.of('Link'), Rect: [(left-box.left)*.75, page.getHeight()-(bottom-box.top)*.75, (right-box.left)*.75, page.getHeight()-(top-box.top)*.75], Border: [0,0,0], A: action });
+    page.node.addAnnot(pdf.context.register(annotation));
+   }
+  }
+ });
 }
 async function snapshotFrame(host:HTMLElement){
  const iframe=document.createElement('iframe');iframe.title='PDF document';iframe.setAttribute('aria-hidden','true');iframe.style.cssText='position:fixed;left:-100000px;top:0;width:1800px;height:2000px;visibility:hidden;pointer-events:none';document.body.appendChild(iframe);
@@ -75,6 +110,8 @@ export async function viewToPdfBlob(view:EditorView,opts:PdfExportOptions):Promi
  getDocumentModel(view.state.doc);
  const host=document.createElement('div');host.className='edtr-print-root';
  await preparePrintLayout(view,host,opts.headerFooter?{title:opts.title,date:new Date().toLocaleDateString()}:undefined);
+ const index = collectReferenceIndex(view.state.doc), targets = new Map<string, ReferencePage>();
+ for (const target of index.targets) if (index.byId.get(target.id)?.length === 1) targets.set(target.id, referencePageAtPos(view, target.pos));
  // html-to-image discovers fonts using instanceof HTMLElement. Its font scan
  // cannot descend into another window's elements, so collect from a main-window
  // clone before capturing the isolated, light-mode page artwork.
@@ -99,6 +136,7 @@ export async function viewToPdfBlob(view:EditorView,opts:PdfExportOptions):Promi
    const image=await pdf.embedPng(canvas.toDataURL('image/png'));page.drawImage(image,{x:0,y:0,width,height});canvas.width=0;canvas.height=0;
    await hiddenText(page,sheet,fonts);
   }
+  addPdfLinks(pdf, sheets, targets);
   const bytes=await pdf.save();return new Blob([new Uint8Array(bytes).buffer],{type:'application/pdf'});
  }finally{frame.remove();}
 }

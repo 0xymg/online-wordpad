@@ -114,7 +114,7 @@ export function measureColumnTable(view: EditorView, node: PMNode, pos: number, 
         }
         for (let p = blockPos + 1; p < blockPos + block.nodeSize - 1; p++) {
           const inline = view.state.doc.nodeAt(p);
-          if (inline?.isAtom && !inline.isText && !['tab', 'hard_break'].includes(inline.type.name)) { fail('unsupported-table-cell-object', p, p + inline.nodeSize); continue; }
+          if (inline?.isAtom && !inline.isText && !['tab', 'hard_break', 'reference_field', 'bookmark_start', 'bookmark_end'].includes(inline.type.name)) { fail('unsupported-table-cell-object', p, p + inline.nodeSize); continue; }
           const at = view.coordsAtPos(p), after = view.coordsAtPos(p + 1), previous = p > blockPos + 1 ? view.coordsAtPos(p - 1) : null;
           const distance = (candidate: { top: number; bottom: number } | null) => !candidate ? Infinity : Math.max(candidate.top - at.top, 0, at.top - candidate.bottom);
           const beforeWrap = previous && after.top > previous.bottom && at.top <= after.top;

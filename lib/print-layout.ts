@@ -3,14 +3,19 @@ import type { EditorView } from "prosemirror-view";
 import { paginationKey, flushDocumentLayout } from "@/app/components/paginationPlugin";
 
 export async function preparePrintLayout(view: EditorView, host: HTMLElement, credit?: { title: string; date: string }) {
-  const doc = view.state.doc;
   const { readRunningSource } = await import("./header-footer-source");
-  await Promise.all([readRunningSource(doc), document.fonts.ready]);
+  await document.fonts.ready;
+  const original = view.dom.parentElement;
+  if (!original) throw new Error("Document view is detached");
+  await Promise.all(Array.from(original.querySelectorAll("img")).map(img => img.decode().catch(() => {})));
+  const { flushReferenceLayout } = await import('./reference-layout');
+  await flushReferenceLayout(view);
+  const doc = view.state.doc;
+  await readRunningSource(doc);
   await flushDocumentLayout(view);
   const source = view.dom.parentElement;
   if (view.isDestroyed || view.state.doc !== doc || !source) throw new Error("Document changed while preparing print");
-  await Promise.all(Array.from(source.querySelectorAll("img")).map(img => img.decode().catch(() => {})));
-  await flushDocumentLayout(view);
+  await flushReferenceLayout(view);
   const pages = paginationKey.getState(view.state)?.pages;
   if (!pages?.length || view.state.doc !== doc) throw new Error("Page layout is not ready");
   const maximumWidth = Math.max(...pages.map(page => page.geometry.width)) / 15;

@@ -1,6 +1,6 @@
 # Belge kimliği, geçiş ve referans sözleşmeleri
 
-Durum: A0 sözleşmesi kök ajan incelemesinden geçti; A1 `2f6e8bd` ile canlıda doğrulandı. A2 sekme modeli yerel doğrulamadadır; güncel yazıcı model sürümü 2'dir. Bu dosyanın başlangıç denetimi A0 öncesi durumu kaydeder; sonraki sözleşmeler uygulanan modeli ve ilerideki paketlerin sınırlarını ayırır. Ürün kapsamı ve sıra için `advanced-document-plan.md`, A2'nin ölçülmüş destek sınırı için `tab-stops-support.md` esas alınır.
+Durum: A1 ve A2 yayımlandı; A3 `2e1f550` ile canlıda doğrulandı. A4 uygulanıyor ve henüz yayımlanmadı; güncel geliştirme model sürümü 4'tür. Başlangıç denetimi A0 öncesi tarihsel durumu kaydeder. A5 dipnot/sonnot ve A6 kaynakça sözleşmeleri geleceğe yöneliktir. Ürün sırası için `advanced-document-plan.md`, sekme sınırları için `tab-stops-support.md`, A4 ölçümleri için `references-acceptance.md` esas alınır.
 
 ## A0 başlangıç denetimi — tarihsel durum
 
@@ -33,18 +33,21 @@ Denetim yerel kaynak koduna dayanır; Word Online ile görsel eşleşme veya hen
 
 ## Sürümlü taşıma ve geçiş
 
-Kanonik ek veri `doc.attrs.documentModel` içindedir. HTML üst sarmalayıcısı bunu `data-edtr-model` JSON'u ile taşır; `data-edtr-layout` geometrisi ve ham OOXML koruması ayrı kalır. `documentModel.version` pozitif tamsayıdır; bulunmaması eski sürüm 0 anlamına gelir. A1 sürüm 1'i yazdı; A2 sürüm 1'i okuyup kimlikleri koruyarak sürüm 2'ye geçirir. Yeni kayıtlar sürüm 2'dir; 2'den büyük veya bilinmeyen bir sürüm ayrıştırma/otomatik kaydetme başlamadan reddedilir.
+Kanonik ek veri `doc.attrs.documentModel` içindedir. HTML üst sarmalayıcısı bunu `data-edtr-model` JSON'u ile taşır; `data-edtr-layout` geometrisi ve ham OOXML koruması ayrı kalır. `documentModel.version` pozitif tamsayıdır; bulunmaması eski sürüm 0 anlamına gelir. A1 sürüm 1'i, A2 sürüm 2'yi, A3 sürüm 3'ü yazdı. A4 geliştirme yazıcısı sürüm 4'tür; bilinmeyen veya 4'ten büyük bir sürüm ayrıştırma/otomatik kaydetme başlamadan reddedilir.
 
 Güncel şekil ve geriye dönük okuma tipi:
 
 ```ts
 type DocumentModel = {
-  version: 2;
+  version: 4;
   id: DocumentIdentity<"document">;
   finalSectionId: DocumentIdentity<"section">;
-  sections: Record<string, SectionRecordV1>;
+  sections: Record<string, SectionRecord>;
 };
-type DocumentModelV1 = Omit<DocumentModel, "version"> & { version: 1 };
+type DocumentModelV1 = Omit<DocumentModel, "version" | "sections"> & {
+  version: 1 | 2 | 3;
+  sections: Record<string, SectionRecordV1 | SectionRecord>;
+};
 
 type SectionRecordV1 = {
   // Record anahtarı sec_… kimliğidir; bu alanlarda ayrıca indeks tutulmaz.
@@ -54,11 +57,16 @@ type SectionRecordV1 = {
   running: Record<string, RunningSlotV1>; // default:header, first:footer vb.
   rawProperties?: string; // tanınmayan sectPr özelliklerinin koruma kaynağı
 };
+type SectionRecord = SectionRecordV1 & {
+  columns: { kind: "equal"; count: 1 | 2 | 3; space: number; separator: boolean }
+    | { kind: "preserved"; reason: "unequal" | "unsupported-count" | "invalid-native" };
+  flowDirection: "ltr" | "rtl" | "preserved";
+};
 ```
 
-Gerçek tipler ve doğrulama `document-model.ts` içindedir; bu belge ikinci bir çalışma zamanı şeması değildir. Not/kaynak/alan havuzları ilgili paketler gelince sürümlü göçle eklenir. Bilinen bölüm ayarını kimlikli kayıt yönetir; export bilinmeyen ham özelliklerle birleştirir. `layout.sectionMargins` ve `layout.running` eski diyaloglar için mevcut kimlik sırasından üretilen uyumluluk görünümleridir. Eski bir diyalog bunları değiştirdiğinde eklenti değişikliği aynı kimlik sırasıyla kayda alır; bölüm ekleme/silme eski indeksleri başka bölüme taşımaz.
+Gerçek tipler ve doğrulama `document-model.ts` içindedir; bu belge ikinci bir çalışma zamanı şeması değildir. A4 referans alanları şema düğümlerindedir; A5/A6 not ve kaynak havuzları henüz yoktur. Bilinen bölüm ayarını kimlikli kayıt yönetir; export bilinmeyen ham özelliklerle birleştirir. `layout.sectionMargins` ve `layout.running` eski diyaloglar için mevcut kimlik sırasından üretilen uyumluluk görünümleridir. Eski bir diyalog bunları değiştirdiğinde eklenti değişikliği aynı kimlik sırasıyla kayda alır; bölüm ekleme/silme eski indeksleri başka bölüme taşımaz.
 
-Sürüm 2 artışı yalnız JSON şekli için değildir. A2'nin gerçek `tab` atomu ve paragraf/stil sekme attr'ları sürüm 1 ayrıştırıcısında bilinmez; eski okuyucunun bunları sessizce düşürüp belgeyi yeniden kaydetmesi engellenmelidir. A1 okuyucusu 2'yi desteklenmeyen sürüm olarak reddeder. 1 → 2 geçişi `doc_…`, bütün `sec_…`, sınırlar, kayıtlar ve üst/altbilgi bağlantılarını korur; yeni kimlik tahsisi yapmaz. Sürüm 0 ise mevcut sınırlarını bir kez kimliklendirir.
+Sürüm 2 artışı yalnız JSON şekli için değildir. A2'nin gerçek `tab` atomu ve paragraf/stil sekme attr'ları sürüm 1 ayrıştırıcısında bilinmez; eski okuyucunun bunları sessizce düşürüp belgeyi yeniden kaydetmesi engellenmelidir. A1 okuyucusu 2'yi desteklenmeyen sürüm olarak reddeder. 1 → 2 geçişi `doc_…`, bütün `sec_…`, sınırlar, kayıtlar ve üst/altbilgi bağlantılarını korur; yeni kimlik tahsisi yapmaz. Sürüm 0 ise mevcut sınırlarını bir kez kimliklendirir. A3 sürüm 3'te eşit sütun, bölüm akış yönü ve gerçek `column_break` atomunu ekledi. 1/2 → 4 geçişi sütun verisini korunmuş native bölüm özelliklerinden çıkarır. 3 → 4 geçişi mevcut `doc_…`, `sec_…`, son bölüm kimliğini ve A3 bölüm kayıtlarını alan alan aynen korur; sütunları yeniden çıkarıp değiştirmez. A4 şeması başlık/yer imi/açıklama hedefleri ile alan kimliklerini normalleştirir; geçerli benzersiz kimlikler korunur, eksikler bir kez üretilir ve yinelenen hedefler tahmin edilmez.
 
 Geçiş sırası ve atomiklik:
 
@@ -67,11 +75,11 @@ Geçiş sırası ve atomiklik:
 3. Aynı özgün sıradan `index → sectionId` eşlemesi üretilir. `sectionMargins` ve `running` yuvaları bu eşleme ile yeni kayıtlara taşınır. İndeks, sonradan kimlik gibi kullanılmaz. Kayıp/aralık dışı indeksli veri sessizce başka bölüme atanmaz; geçiş tanısında korunur ve kaydedilebilir geçiş tamamlanmadan çözülür.
 4. Yerel düzenlemeler, özgün `sectPr`, başlangıç türü, numaralama ve üst/altbilgi ilişkileri birleştirilir. Eski `linked:true`, aynı varyant/tür için önceki bölümden dinamik miras alma anlamını korur. Geçiş, mirası görünür HTML'yi kopyalayarak bağımsızlaştırmaz.
 5. Sonuç yeni şema ve çapraz kayıt kurallarıyla doğrulanır. Tam belge ve model tek yükleme işlemiyle yerleştirilir; migration işlemi undo'ya eklenmez. İlk kullanıcı düzenlemesi tek başına geri alınabilir. Bölüm veya not kayıtları ayrı bir asenkron kayıtla yazılmaz.
-6. Başarılı geçiş doğrulanmış kanonik HTML olarak kaydedilir; kullanıcı yazmasa da sonraki açılış aynı kimlikleri kullanır. Sürüm 1, kimlikleri değişmeden 2 olur. Desteklenen bir sürüm bozuksa tanı üretilir; bağlantı tahminle düzeltilmez. Geçiş başarısızsa kaynak HTML korunur ve düzenleme/otomatik kayıt açılmaz.
+6. Başarılı geçiş doğrulanmış kanonik HTML olarak kaydedilir; kullanıcı yazmasa da sonraki açılış aynı kimlikleri kullanır. Sürüm 1–3, mevcut belge ve bölüm kimlikleri korunarak 4 olur; sürüm 3 bölüm kayıtları aynen korunur. Desteklenen bir sürüm bozuksa tanı üretilir; bağlantı tahminle düzeltilmez. Geçiş başarısızsa kaynak HTML korunur ve düzenleme/otomatik kayıt açılmaz.
 
 `parseDocumentHtml` aktif yükleme, başlangıç yüklemesi, üye dosya getirme, sürüm geri yükleme ve tam belge içe aktarma yollarının ortak geçiş girişidir. Üst/altbilgi alt belgeleri ana belgenin modelini yanlışlıkla yeni belge olarak göç ettirmemelidir. Belge yüklemede geçmiş eklentisi sıfırlanır; sayfalama eklentisi korunur. Başarısız yükleme, önceki editör içeriğini reddedilen dosyanın yerine kaydetmez.
 
-Sürüm geçmişi tam içerik grafını saklar. Geri yükleme, kaydın kimliklerini ve iç başvurularını birlikte geri getirir; eski 0/1 kayıtları güncel sürüme geçer. Bir önceki yedeğin HTML'si yerinde değiştirilmez. Desteklenmeyen bir belge açıkken kullanıcı yeni belgeyle açıkça değiştirmeyi seçerse güvenlik yedeği boş editörden değil, özgün HTML'den alınır. Misafir kota/karakter sınırı nedeniyle yedek alınamıyorsa bu tam güvence olarak raporlanmaz.
+Sürüm geçmişi tam içerik grafını saklar. Geri yükleme, kaydın kimliklerini ve iç başvurularını birlikte geri getirir; eski 0–3 kayıtları güncel sürüme geçer. Bir önceki yedeğin HTML'si yerinde değiştirilmez. Desteklenmeyen bir belge açıkken kullanıcı yeni belgeyle açıkça değiştirmeyi seçerse güvenlik yedeği boş editörden değil, özgün HTML'den alınır. Misafir kota/karakter sınırı nedeniyle yedek alınamıyorsa bu tam güvence olarak raporlanmaz.
 
 ## A2 sekme verisi ve düzenleme sözleşmesi
 
@@ -96,21 +104,27 @@ EDTRDocs ondalık ayıracı DOCX'te standart özel özellik taşıyıcısındaki
 - Bölüm içine ekleme, sınırda ekleme ve son bölümden sonra ekleme ayrı test edilir. Nesnenin sayfası mevcut paragraf bağlantısından türemeye devam eder; bölüm kimliği görüntünün mutlak sayfa numarası değildir.
 - Modelde başlangıç türünün bulunması, her türün UI/pagination desteğinin hazır olduğu anlamına gelmez. İlk A1 arayüzü planın sonraki sayfa/sürekli kapsamını izler; tek/çift sayfanın korunması, oluşturulması ve görünümü ayrı raporlanır.
 
-## A4–A6 referans ve not sözleşmesi
+## A3 sütun sözleşmesi
+
+Sürüm 3 bölüm kaydında eşit 1/2/3 sütun sayısı, twip cinsinden aralık ve ayraç ile paragraf yönünden bağımsız bölüm akış yönü bulunur. Eşit olmayan, desteklenmeyen sayıda veya bozuk native sütunlar `preserved` olarak ham özelliklerinde tutulur; desteklenmiş gibi yeniden yorumlanmaz. Gerçek `column_break` satır içi atomdur. A3'ün ölçülmüş kapsamı ve açık sınırlamaları `columns-acceptance.md` içindedir. A4'e geçiş A3 kayıtlarını aynen korur.
+
+## A4 referans ve A5–A6 gelecek not sözleşmeleri
 
 | Nesne | Kalıcı kimlik / kanonik içerik | Değişiklik ve silinme davranışı |
 | --- | --- | --- |
 | Başlık, yer imi, şekil/tablo açıklaması | Hedef düğümde `targetId: tgt_…`; görünen metin ve numara ayrı. | Yeniden adlandırma/taşıma kimliği korur. Silinen hedefe başvuru `missing-target` olur; aynı adlı başka başlığa yönlenmez. |
 | Alan/çapraz referans/TOC nesnesi | Her alanın `fieldId: fld_…` kimliği; talimat, hedef kimliği, gösterim türü ve önbellek ayrı. TOC girişleri hedef listesinden türetilir. | Önbellek sonuç kimliği değildir. Düzeltilebilir `missing/ambiguous/unsupported` durumu vardır. Güncelleme metin aramasıyla değil hedef bağıyla yapılır. |
-| Not | Havuzda `noteId: nte_…`, tür (`footnote/endnote`) ve şema içeriği; ana metinde kimlikli işaret. | İlk pakette her notun tek sahip işareti vardır. İşaret/gövde birlikte eklenir/silinir/klonlanır/geri alınır; numara sırasına göre yeni not bulunmaz. |
-| Kaynak | Havuzda `sourceId: src_…`; yapısal kaynak alanları. Atıf alanı kaynağa başvurur. | Başlık/DOI düzenlemek kimliği değiştirmez. Aynı DOI/başlık benzerliği otomatik birleştirme yetkisi değildir. Kaynak silme, kullanan atıfları açıkça ele alır. |
-| Yüzen nesne | Görsel/metin kutusunda `objectId: obj_…`; ilgili açıklama ayrı hedef olabilir. | Taşıma/katman/boyut kimliği korur. Çoğaltma yeni kimlik üretir. |
+| Not (A5, gelecek) | Havuzda `noteId: nte_…`, tür (`footnote/endnote`) ve şema içeriği; ana metinde kimlikli işaret. | İlk pakette her notun tek sahip işareti vardır. İşaret/gövde birlikte eklenir/silinir/klonlanır/geri alınır; numara sırasına göre yeni not bulunmaz. |
+| Kaynak (A6, gelecek) | Havuzda `sourceId: src_…`; yapısal kaynak alanları. Atıf alanı kaynağa başvurur. | Başlık/DOI düzenlemek kimliği değiştirmez. Aynı DOI/başlık benzerliği otomatik birleştirme yetkisi değildir. Kaynak silme, kullanan atıfları açıkça ele alır. |
+| Yüzen nesne kimliği (gelecek) | Planlanan `objectId: obj_…`; ilgili açıklama ayrı hedef olabilir. | Henüz uygulanmış kimlik desteği veya taşıma garantisi olarak kabul edilmez. |
 
-Başvuru içeriği, not gövdesi ve kaynak havuzu düz HTML'ye veya geçici sayfalama dekorasyonuna saklanmaz. Havuzdaki şema içeriği aynı parser ve güvenli attr doğrulamasından geçer; keyfi çalıştırılabilir HTML kabul edilmez. Registry güncellemesi ve işaret değişikliği aynı ProseMirror transaction'ında olmalıdır.
+A4'te başlık/açıklama `targetId`, eşlenmiş `bookmark_start`/`bookmark_end`, `reference_field` ve TOC işaretçisi kanonik şema düğümü/attr'larıdır; alan sonucu türetilmiş önbellektir. TOC işaretçisini izleyen `tocOwnerId`/`tocTargetId` paragrafları üretilir ve düzenlenebilir kullanıcı metni sayılmaz. Eksik, belirsiz ve desteklenmeyen hedef durumları açıktır. A5/A6 için önerilen not ve kaynak havuzları henüz uygulanmadı; gelecekteki kayıt ve işaret değişikliklerinin atomik olması planlanır.
 
 Numara ve sayfa sonuçları düzenlemeden sonra kontrollü yeniden hesaplanır. Baskı/DOCX/PDF öncesi bekleyen alan güncellemeleri tamamlanır. Alan metninin genişliği sayfalamayı değiştirirse sınırlı yeniden ölçümle sabit noktaya ulaşılır; döngü sınırına ulaşmak başarı sayılmaz. Üretilmiş sayfa dekorasyonları, not devam kopyaları ve TOC ölçüm kopyaları yeni kimlik tanımları değildir.
 
 ## Kopyalama, yapıştırma ve taşıma matrisi
+
+Aşağıdaki matris referans kimliklerinin hedef politikasını gösterir. A4 için seçili referans ve clipboard kontrolleri yerelde yapılmıştır; not/kaynak havuzları, nesne kimlikleri ve şablon çoğaltma satırları gelecek tasarımdır, uygulanmış kabul değildir.
 
 | İşlem | Kimlik davranışı | Başvurular |
 | --- | --- | --- |
@@ -123,12 +137,12 @@ Numara ve sayfa sonuçları düzenlemeden sonra kontrollü yeniden hesaplanır. 
 
 Normal içerik yapıştırması bütün belge zarfını veya bölüm havuzunu hedef belgenin üstüne yazamaz. Bölüm sınırı içermeyen bir fragman, hedef bölümde kalır. Bölüm ayarlarını da yapıştırmak A1'de açık ayrı politika gerektirir. Aynı belge içindeki bir kaynak kaydına başvuran atıf kopyası mevcut kaynağı kullanabilir; dış belgeden gelen kaynak açıkça eşleştirilmedikçe yeni kaynak kaydı olur.
 
-Gelecek uygulama akışı: fragmanın tanımlarını ve gereken bağlı kayıtlarını topla → `planDocumentIdentities` ile planla → yalnız gelen fragman/kayıtlardaki iç kenarları yeniden yaz → dış kenarları kanıtlı politika ile çöz → tek transaction ile ekle. Hedef belgedeki mevcut alanlar gelen kimlik eşlemesine göre topluca yeniden yazılmaz. Belirsiz kaynak kimliği olan fragman, yanlış hedefe bağlanmak yerine açık tanı taşır.
+A4 referans fragmanlarında tanımlar `planDocumentIdentities` ile planlanır; gelen fragmanın iç kenarları yeniden yazılır ve dış kenarlar kanıtlı clipboard politikasına göre çözülür. A5/A6 bağlı kayıtlarının taşınması gelecek çalışmadır. Hedef belgedeki mevcut alanlar gelen kimlik eşlemesine göre topluca yeniden yazılmaz. Belirsiz kaynak kimliği olan fragman, yanlış hedefe bağlanmak yerine açık tanı taşır.
 
 ## DOCX kimlik sınırı
 
 - Native not numarası, bookmark adı, ilişki kimliği ve parça adı kaynak-format takma adlarıdır. İçe aktarma eşleme anahtarı en az `(importSession, partUri, entityKind, nativeId)` içerir. `footnotes.xml` içindeki `4` ile `endnotes.xml` içindeki `4` aynı nesne sayılmaz.
-- Geçerli EDTR model verisi varsa doğrudan export/import kimlikleri koruyabilir. OOXML alan talimatları ve native bookmark/not ilişkileri yine gerçek düzenlenebilir Word nesneleri olarak yazılır; yalnız özel JSON'a bağlı görünür işlev oluşturulmaz.
+- A4, desteklenen hedef ve alanlar için native bookmark ve OOXML alan talimatları yazmayı hedefler. Doğrudan uygulama roundtrip testleri ile Word Online'da alan yenileme ayrı kanıtlardır; gerçek Word TOC yenilemesi yinelenen stil adları sorunu nedeniyle henüz geçmedi. A5 native not ilişkileri henüz uygulanmadı.
 - A1'de native `_edtrsec…` yer imlerinin doğru bölüm terminallerinde Word Online düzenleme/indirme sonrasında kaldığı ölçüldü. İçe aktarma ancak bütün sınırlar ve son bölüm için eksiksiz, geçerli, benzersiz bir küme varsa bu bölüm kimliklerini kullanır; kısmi/bozuk kümede tamamını yeniler. Bu, bütün nesne türlerinin veya özel model parçalarının Word tarafından korunduğu iddiası değildir.
 - Özel metadata yoksa native ilişkiler aynı import oturumunda yeni iç kimliklere eşlenir. Kimlik yenilenmesi raporlanır; görünür metin benzerliğiyle eski kimlikler tahmin edilmez. Görünür içerik/bağlantı eşdeğerliği ile birebir iç kimlik korunması ayrı kabul sonuçlarıdır.
 - Geçici biçimlendirme/export bookmarkları kullanıcı hedef havuzuna alınmaz ve son pakette bırakılmaz. Kaynağın başka parçalarındaki kimlikler yalnız o parçanın kapsamıyla yorumlanır.

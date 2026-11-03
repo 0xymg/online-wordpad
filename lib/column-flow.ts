@@ -52,6 +52,13 @@ export function setColumnFlowPreview(view: EditorView, doc: PMNode, layout: Flow
   if (!layout.complete || view.isDestroyed || view.state.doc !== doc) return false;
   previewFlows.set(view, { doc, layout }); return true;
 }
+/** Keep same-document tab geometry while an invalidated layout is recomputed. */
+export function retainColumnFlowPreview(view: EditorView): void {
+  const preview = previewFlows.get(view), active = activeFlows.get(view);
+  if (preview?.doc === view.state.doc) return;
+  if (active?.doc === view.state.doc) previewFlows.set(view, active);
+  else previewFlows.delete(view);
+}
 function geometryAtPos(view: EditorView, pos: number, active: ActiveFlow | undefined, fallback?: TabContentGeometry, exactElement?: HTMLElement): TabContentGeometry | null {
   if (!active || view.isDestroyed || active.doc !== view.state.doc) return null;
   const fragment = active.layout.fragments.find(item => item.from === item.to && pos === item.from)

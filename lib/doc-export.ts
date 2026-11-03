@@ -1,7 +1,7 @@
 // Client-side document exporters: ProseMirror doc → .docx (formatted) and .rtf.
 // Loaded on demand via dynamic import so the docx library stays out of the main bundle.
 import { resolvedAlignment, textDirection } from "./text-direction";
-import { restoreDocxPackage, parseXml, xmlString, W } from "./docx-preservation";
+import { restoreDocxPackage } from "./docx-preservation";
 import { paragraphXml, effectiveParagraph } from "./paragraph-format";
 import { textFormat } from "./document-styles";
 import type { DocumentStyles } from "./paragraph-format";
@@ -11,13 +11,15 @@ import { DEFAULT_DOCUMENT_FONT } from "./document-font";
 import { imageWrap, imageDistance } from "./image-layout";
 import { documentSections } from "./document-sections";
 import { getDocumentModel, sectionIdentityOrder } from "./document-model";
+import { collectReferenceIndex } from "./document-references";
 import { fixedImageWidth } from "./page-image-position";
 import { exportTextBoxes, textBoxBookmark } from "./text-box-docx";
+import { captionMetadataNames, captionSequenceAlias, nativeReferenceAlias, nativeTocAlias, replaceReferenceBookmarks, type ReferenceReplacement } from "./reference-docx";
 import { DOMParser as PMParser, type Node as PMNode, type Mark } from "prosemirror-model";
 import { mySchema } from "@/app/components/editor-schema";
 import {
   Document, Packer, Paragraph, TextRun, Tab, HeadingLevel, AlignmentType,
-  Table, TableRow, TableCell, WidthType, ImageRun, ExternalHyperlink, Bookmark, Header, Footer, PageNumber, SimpleField,
+  Table, TableRow, TableCell, WidthType, ImageRun, ExternalHyperlink, InternalHyperlink, Bookmark, Header, Footer, PageNumber, SimpleField,
   LevelFormat, ShadingType, BorderStyle, PageBreak, BuilderElement, PageOrientation,
   TextWrappingType, TextWrappingSide, HorizontalPositionRelativeFrom, VerticalPositionRelativeFrom,
   type FileChild, type ParagraphChild, type INumberingOptions,
@@ -146,6 +148,47 @@ class DocxBuilder {
   textBoxes: Record<string, unknown>[] = [];
   private imageQueue: Array<LoadedImage | null>;
   numbering: INumberingOptions["config"][number][] = [];
+  referenceReplacements: ReferenceReplacement[] = [];
+  closeTocAfter = false;
+  openTocHere: { fieldId: string; levels: number[]; status?: string } | null = null;
+  private referenceNumbers = new Map<string, number>();
+  private referenceMarkerToken = crypto.randomUUID().replace(/-/g, "");
+  private referenceKinds = new Map<string, "bookmark" | "heading" | "caption">();
+  private referenceNames = new Map<string, string>();
+  private sequenceLabels = new Map<string, string>();
+  private captionMetadataOwners = new Map<string, string>();
+  registerReferences(doc: PMNode) {
+    doc.descendants(node => {
+      const id = node.attrs.targetId;
+      if (id && (node.type.name === "heading" || node.type.name === "bookmark_start" || node.attrs.targetKind === "caption")) {
+        if (this.referenceKinds.has(id)) throw new Error("Cannot export duplicate reference target identities");
+        this.referenceKinds.set(id, node.type.name === "heading" ? "heading" : node.attrs.targetKind === "caption" ? "caption" : "bookmark");
+        if (node.type.name === "bookmark_start" && node.attrs.nativeName) {
+          if (typeof node.attrs.nativeName !== "string" || !/^[A-Za-z_][A-Za-z0-9_]{0,39}$/.test(node.attrs.nativeName)) throw new Error("Cannot safely export this native bookmark name");
+          this.referenceNames.set(id, node.attrs.nativeName);
+        }
+      }
+    });
+  }
+  private referenceAlias(id: string) { return this.referenceNames.get(id) || nativeReferenceAlias(id, this.referenceKinds.get(id)); }
+  private marker(kind: ReferenceReplacement["kind"], targetId: string, xml?: string, nameOverride?: string, keyOverride?: string, headingLevel?: number): TextRun {
+    const name = nameOverride || this.referenceAlias(targetId);
+    if (kind !== "xml" && !name) throw new Error("Cannot export an invalid reference target identity");
+    const key = keyOverride || targetId;
+    let id = this.referenceNumbers.get(key);
+    if (!id) { id = this.referenceNumbers.size + 1; this.referenceNumbers.set(key, id); }
+    const marker = `EDTRRefAnchor${this.referenceMarkerToken}${this.referenceReplacements.length}`;
+    this.referenceReplacements.push({ marker, kind, id, name: name || undefined, xml, headingLevel });
+    return new TextRun({ text: marker });
+  }
+  private hyperlink(run: TextRun, link: string): ParagraphChild {
+    if (link.startsWith("#")) {
+      const id = link.slice(1).replace(/^edtr-target-/, "");
+      const anchor = this.referenceAlias(id);
+      if (anchor) return new InternalHyperlink({ children: [run], anchor });
+    }
+    return new ExternalHyperlink({ children: [run], link });
+  }
 
   constructor(images: Array<LoadedImage | null>, private styles: DocumentStyles = {}, private imageWidths = new Map<PMNode, number>()) {
     this.imageQueue = [...images];
@@ -157,6 +200,25 @@ class DocxBuilder {
       const id = `EDTRLayout${this.paragraphProperties.length}`;
       this.paragraphProperties.push({ id, properties: paragraphXml(node,!!this.styles[node.attrs.styleId]) });
       out.push(new Bookmark({ id, children: [] }));
+    }
+    const target = (node.type.name === "heading" || node.attrs.targetKind === "caption") && node.attrs.targetId;
+    if (target) out.push(this.marker("start", String(target), undefined, undefined, undefined, node.type.name === "heading" ? Math.max(1, Math.min(6, Number(node.attrs.level) || 1)) : undefined));
+    if (node.attrs.toc) {
+      const id = String(node.attrs.toc.fieldId || ""), alias = nativeTocAlias(id);
+      if (!alias) throw new Error("Invalid table of contents identity");
+      out.push(this.marker("start", id, undefined, alias, `toc-title:${id}`));
+      out.push(this.marker("end", id, undefined, alias, `toc-title:${id}`));
+    }
+    if (this.openTocHere && !node.attrs.toc) out.push(this.tocStart(this.openTocHere));
+    if (node.attrs.targetKind === "caption" && target) {
+      for (const name of captionMetadataNames(String(node.attrs.captionLabel || ""), String(target))) {
+        const prior = this.captionMetadataOwners.get(name);
+        if (prior && prior !== target) throw new Error("Caption metadata alias collision");
+        this.captionMetadataOwners.set(name, String(target));
+        const key = `metadata:${name}:${target}`;
+        out.push(this.marker("start", String(target), undefined, name, key));
+        out.push(this.marker("end", String(target), undefined, name, key));
+      }
     }
     node.forEach((child) => {
       if (child.isText) {
@@ -188,7 +250,7 @@ class DocxBuilder {
           style: p.link ? "Hyperlink" : undefined,
         });
         if (p.link) {
-          out.push(new ExternalHyperlink({ children: [run], link: p.link }));
+          out.push(this.hyperlink(run, p.link));
         } else {
           out.push(run);
         }
@@ -199,7 +261,46 @@ class DocxBuilder {
           superScript: p.superScript, subScript: p.subScript,
           shading: p.highlight ? { type: ShadingType.CLEAR, fill: p.highlight } : undefined,
           style: p.link ? "Hyperlink" : undefined });
-        if (p.link) out.push(new ExternalHyperlink({ children: [run], link: p.link })); else out.push(run);
+        if (p.link) out.push(this.hyperlink(run, p.link)); else out.push(run);
+      } else if (child.type.name === "bookmark_start" || child.type.name === "bookmark_end") {
+        const id = String(child.attrs.targetId || "");
+        if (child.type.name === "bookmark_start" && this.referenceNames.has(id)) {
+          const transport = nativeReferenceAlias(id, "transport");
+          if (!transport) throw new Error("Cannot export an invalid bookmark identity");
+          out.push(this.marker("start", id, undefined, transport, `transport:${id}`));
+          out.push(this.marker("end", id, undefined, transport, `transport:${id}`));
+        }
+        out.push(this.marker(child.type.name === "bookmark_start" ? "start" : "end", id));
+      } else if (child.type.name === "reference_field") {
+        const attrs = child.attrs;
+        if (attrs.status === "unsupported") {
+          if (!attrs.nativeXml) throw new Error("Cannot safely export an unsupported field without its native source");
+          out.push(this.marker("xml", `field:${attrs.fieldId}`, String(attrs.nativeXml)));
+        } else {
+          if (node.attrs.targetKind === "caption" && attrs.targetId === node.attrs.targetId && attrs.display === "number" && /^SEQ\s/i.test(String(attrs.instruction || ""))) {
+            const label = String(node.attrs.captionLabel || "");
+            if (attrs.instruction !== `SEQ ${label}`) throw new Error("Cannot safely export this native caption sequence");
+            const sequence = captionSequenceAlias(label), previous = this.sequenceLabels.get(sequence);
+            if (previous !== undefined && previous !== label) throw new Error("Caption sequence alias collision");
+            this.sequenceLabels.set(sequence, label);
+            const number = nativeReferenceAlias(String(attrs.targetId), "number");
+            if (!number) throw new Error("Invalid caption target identity");
+            out.push(this.marker("start", String(attrs.targetId), undefined, number, `number:${attrs.targetId}`));
+            out.push(new SimpleField(`SEQ ${sequence}`, String(attrs.cached || "")));
+            out.push(this.marker("end", String(attrs.targetId), undefined, number, `number:${attrs.targetId}`));
+            return;
+          }
+          const target = attrs.targetId ? this.referenceAlias(String(attrs.targetId)) : attrs.nativeName;
+          if (!target || !/^[A-Za-z_][A-Za-z0-9_]{0,39}$/.test(target)) throw new Error("Cannot safely export an unresolved reference");
+          if (attrs.status === "ambiguous") {
+            if (!attrs.instruction || !attrs.nativeName) throw new Error("Cannot safely export an ambiguous reference without its native instruction");
+            out.push(new SimpleField(String(attrs.instruction), String(attrs.cached || ""))); return;
+          }
+          if (attrs.display === "number" && this.referenceKinds.get(String(attrs.targetId)) !== "caption") throw new Error("Cannot export an unavailable paragraph number");
+          const fieldTarget = attrs.display === "number" ? nativeReferenceAlias(String(attrs.targetId), "number") : target;
+          const instruction = attrs.display === "page" ? `PAGEREF ${fieldTarget} \\h` : `REF ${fieldTarget} \\h`;
+          out.push(new SimpleField(instruction, String(attrs.cached || "")));
+        }
       } else if (child.type.name === "doc_field") {
         const marks = readMarks(child.marks);
         if (child.attrs.kind === "OTHER" && child.attrs.instruction) { out.push(new SimpleField(child.attrs.instruction, child.attrs.cached || "")); return; }
@@ -244,12 +345,24 @@ class DocxBuilder {
           shading: p.highlight ? { type: ShadingType.CLEAR, fill: p.highlight } : undefined,
           style: p.link ? "Hyperlink" : undefined });
         run.addChildElement(new BuilderElement({ name: "w:br", attributes: { type: { key: "w:type", value: "column" } } }));
-        if (p.link) out.push(new ExternalHyperlink({ children: [run], link: p.link })); else out.push(run);
+        if (p.link) out.push(this.hyperlink(run, p.link)); else out.push(run);
       } else if (child.type.name === "hard_break") {
         out.push(new TextRun({ break: 1 }));
       }
     });
+    if (target) out.push(this.marker("end", String(target)));
+    if (this.openTocHere && node.attrs.toc) out.push(this.tocStart(this.openTocHere));
+    if (this.closeTocAfter) out.push(this.marker("xml", `toc-end:${node.attrs.toc?.fieldId || node.attrs.tocOwnerId}`, `<w:r><w:fldChar w:fldCharType="end"/></w:r>`));
     return out;
+  }
+
+  private tocStart(toc: { fieldId: string; levels: number[]; status?: string }): TextRun {
+    const levels = toc.levels;
+    if (toc.status === "unsupported" || !Array.isArray(levels) || !levels.length || levels.some((n, i) => !Number.isInteger(n) || n < 1 || n > 6 || (i > 0 && n <= levels[i - 1]))) throw new Error("Cannot safely export this table of contents configuration");
+    const contiguous = levels.every((n, i) => !i || n === levels[i - 1] + 1);
+    const option = contiguous ? `\\o &quot;${levels[0]}-${levels[levels.length - 1]}&quot;` : `\\t &quot;${levels.map(n => `heading ${n},${n}`).join(",")}&quot;`;
+    const instruction = ` TOC ${option} \\h `;
+    return this.marker("xml", `toc-start:${toc.fieldId}`, `<w:r><w:fldChar w:fldCharType="begin"/></w:r><w:r><w:instrText xml:space="preserve">${instruction}</w:instrText></w:r><w:r><w:fldChar w:fldCharType="separate"/></w:r>`);
   }
 
   private paragraphOpts(node: PMNode) {
@@ -414,10 +527,26 @@ class DocxBuilder {
   }
 }
 
-export async function docToDocxBlob(
+type DocxExportOptions = { orientation?: "portrait" | "landscape"; marginCm?: number; pageNumbers?: "off" | "top" | "bottom"; pageNumberFormat?: "plain" | "of" } | "portrait" | "landscape";
+
+/** Every entry point exports settled reference caches from one measured snapshot. */
+export async function docToDocxBlob(doc: PMNode, title: string, options: DocxExportOptions = {}): Promise<Blob> {
+  const references = collectReferenceIndex(doc);
+  if (!references.fields.length && !references.tocs.length) return docToDocxBlobReady(doc, title, options);
+  const [{ readonlyDocumentView }, { flushReferenceLayout }] = await Promise.all([import("./readonly-document-view"), import("./reference-layout")]);
+  const renderer = readonlyDocumentView(doc);
+  try {
+    await document.fonts.ready;
+    await Promise.all(Array.from(renderer.view.dom.querySelectorAll("img")).map(img => img.decode().catch(() => {})));
+    await flushReferenceLayout(renderer.view);
+    return await docToDocxBlobReady(renderer.view.state.doc, title, options);
+  } finally { renderer.destroy(); }
+}
+
+async function docToDocxBlobReady(
   doc: PMNode,
   title: string,
-  options: { orientation?: "portrait" | "landscape"; marginCm?: number; pageNumbers?: "off" | "top" | "bottom"; pageNumberFormat?: "plain" | "of" } | "portrait" | "landscape" = {}
+  options: DocxExportOptions
 ): Promise<Blob> {
   // Reject unsupported or inconsistent future models before any export can
   // silently flatten their sections to legacy layout metadata.
@@ -450,8 +579,25 @@ export async function docToDocxBlob(
     imageWidths.set(node, node.attrs.position === "page" ? fixedImageWidth(node.attrs, geometry) : Math.max(1, width));
   });
   const builder = new DocxBuilder(images,layout?.styles,imageWidths);
+  builder.registerReferences(doc);
   const children: FileChild[] = [];
-  doc.forEach((block) => children.push(...builder.blockToDocx(block)));
+  let activeToc: { fieldId: string; levels: number[]; status?: string } | null = null;
+  let pendingTocStart = false;
+  doc.forEach((block, _offset, index) => {
+    if (block.attrs.toc) {
+      if (activeToc) throw new Error("Cannot export overlapping tables of contents");
+      activeToc = block.attrs.toc;
+      pendingTocStart = true;
+    } else if (block.attrs.tocOwnerId && block.attrs.tocOwnerId !== activeToc?.fieldId) throw new Error("Cannot export an orphaned table of contents entry");
+    const next = index + 1 < doc.childCount ? doc.child(index + 1) : null;
+    builder.closeTocAfter = !!activeToc && next?.attrs.tocOwnerId !== activeToc.fieldId;
+    const isFirstEntry = !!activeToc && block.attrs.tocOwnerId === activeToc.fieldId && pendingTocStart;
+    builder.openTocHere = isFirstEntry || (pendingTocStart && builder.closeTocAfter) ? activeToc : null;
+    if (builder.openTocHere) pendingTocStart = false;
+    children.push(...builder.blockToDocx(block));
+    if (builder.closeTocAfter) activeToc = null;
+  });
+  builder.closeTocAfter = false; builder.openTocHere = null;
   // A4 portrait in twips (11906×16838) — docx.js swaps the two itself when
   // orientation is LANDSCAPE, so always pass the portrait dimensions.
   const file = new Document({
@@ -480,6 +626,7 @@ export async function docToDocxBlob(
   });
   let result = await restoreDocxPackage(await Packer.toBlob(file), doc, builder.paragraphProperties);
   result = await exportTextBoxes(result, builder.textBoxes);
+  result = await replaceReferenceBookmarks(result, builder.referenceReplacements);
   if (layout?.styles) { const { exportDocumentStyles } = await import("./style-docx"); result = await exportDocumentStyles(result,doc); }
   if (!layout?.running || !Object.keys(layout.running).length) return result;
   const { exportRunning } = await import("./header-footer-export");

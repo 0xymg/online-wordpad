@@ -21,13 +21,15 @@ export async function fileToHtml(
   const ext = (file.name.split(".").pop() || "").toLowerCase();
 
   if (ext === "docx") {
-    const [mammoth, { prepareDocxFormatting }, { prepareTextBoxImport }] = await Promise.all([
+    const [mammoth, { prepareDocxFormatting }, { prepareTextBoxImport }, { prepareReferenceImport }] = await Promise.all([
       import("mammoth"),
       import("./docx-formatting"),
       import("./text-box-docx"),
+      import("./reference-docx"),
     ]);
     const boxes = await prepareTextBoxImport(await file.arrayBuffer());
-    const prepared = await prepareDocxFormatting(boxes.arrayBuffer);
+    const references = await prepareReferenceImport(boxes.arrayBuffer);
+    const prepared = await prepareDocxFormatting(references.arrayBuffer);
     const result = await mammoth.convertToHtml(
       { arrayBuffer: prepared.arrayBuffer },
       {
@@ -36,7 +38,7 @@ export async function fileToHtml(
         ignoreEmptyParagraphs: false,
       },
     );
-    return { html: boxes.restore(prepared.restore(result.value || "<p></p>")), name };
+    return { html: boxes.restore(references.restore(prepared.restore(result.value || "<p></p>"))), name };
   }
 
   if (ext === "html" || ext === "htm") {
