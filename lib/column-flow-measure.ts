@@ -85,9 +85,9 @@ export function measureNaturalColumnSections(view: EditorView, sections: readonl
         fail(index, code, floats[a].pos, floats[b].pos - floats[a].pos + 1); return;
       }
     }
-    if (!lines.length && !breaks.length) { mutable[index].push({ from: pos + 1, to: pos + 1, height: lineHeight + marginTop + marginBottom + topInset + bottomInset, kind: 'line', sourceTop: (elementRect.top - root.top) / scale, sourceBlock: pos, sourceLeft, sourceWidth, sourceMarginLeft, sourceMarginRight, offsetY: marginTop + topInset, trailingMargin: marginBottom }); return; }
+    if (!lines.length && !breaks.length) { mutable[index].push({ from: pos + 1, to: pos + 1, height: lineHeight + marginTop + marginBottom + topInset + bottomInset, kind: 'line', sourceTop: (elementRect.top - root.top) / scale, sourceBlock: pos, sourceLeft, sourceWidth, sourceMarginLeft, sourceMarginRight, offsetY: marginTop + topInset, leadingMargin: marginTop, trailingMargin: marginBottom }); return; }
     let units: FlowUnit[] = lines.map((item, i) => ({ from: item.from, to: item.to, kind: 'line', sourceTop: item.keyTop, sourceBlock: pos, sourceLeft, sourceWidth, sourceMarginLeft, sourceMarginRight, offsetY: item.keyTop - item.top, height: Math.max(item.bottom - item.top, i + 1 < lines.length && lines[i + 1].top > item.top ? lines[i + 1].top - item.top : lineHeight) }));
-    if (units.length) { units[0].height += marginTop + topInset; units[0].offsetY = (units[0].offsetY || 0) + marginTop + topInset; units[units.length - 1].height += marginBottom + bottomInset; units[units.length - 1].trailingMargin = marginBottom; }
+    if (units.length) { units[0].height += marginTop + topInset; units[0].leadingMargin = marginTop; units[0].offsetY = (units[0].offsetY || 0) + marginTop + topInset; units[units.length - 1].height += marginBottom + bottomInset; units[units.length - 1].trailingMargin = marginBottom; }
     if (floats.length) {
       const grouped: FlowUnit[] = [];
       for (let start = 0; start < lines.length;) {
@@ -103,7 +103,7 @@ export function measureNaturalColumnSections(view: EditorView, sections: readonl
         const height = Math.max(group.reduce((sum, item) => sum + item.height, 0), bottom - base + lead);
         const subLines = group.map((item, offset) => ({ from: item.from, to: item.to, sourceTop: item.sourceTop!, offsetY: item.sourceTop! - base + lead,
           height: offset === group.length - 1 ? height - (item.sourceTop! - base + lead) : Math.max(0, item.height - (item.offsetY || 0)) }));
-        grouped.push({ from: group[0].from, to: group[group.length - 1].to, height, kind: 'line', sourceBlock: pos, sourceLeft, sourceWidth, sourceMarginLeft, sourceMarginRight, trailingMargin: group.at(-1)?.trailingMargin, subLines });
+        grouped.push({ from: group[0].from, to: group[group.length - 1].to, height, kind: 'line', sourceBlock: pos, sourceLeft, sourceWidth, sourceMarginLeft, sourceMarginRight, leadingMargin: group[0].leadingMargin, trailingMargin: group.at(-1)?.trailingMargin, subLines });
         start = end + 1;
       }
       units = grouped;

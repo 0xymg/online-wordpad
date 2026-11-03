@@ -8,11 +8,11 @@ import { paragraphFlowDecision, trimParagraphAfter, type ParagraphFlowPolicy } f
 export type ColumnGeometry = { width: number; height: number; margins: { top: number; right: number; bottom: number; left: number } };
 export type FlowTableUnit = { tablePos: number; groupIndex: number; band: TableGroupBand; headerHeight: number; headerGroup?: boolean };
 export type FlowSubLine = { from: number; to: number; sourceTop: number; offsetY: number; height: number };
-export type FlowUnit = { from: number; to: number; height: number; kind: 'line' | 'block' | 'table' | 'column_break' | 'page_break'; sourceTop?: number; sourceBlock?: number; sourceLeft?: number; sourceWidth?: number; sourceMarginLeft?: number; sourceMarginRight?: number; offsetY?: number; trailingMargin?: number; table?: FlowTableUnit; paragraph?: ParagraphFlowPolicy; subLines?: FlowSubLine[] };
+export type FlowUnit = { from: number; to: number; height: number; kind: 'line' | 'block' | 'table' | 'column_break' | 'page_break'; sourceTop?: number; sourceBlock?: number; sourceLeft?: number; sourceWidth?: number; sourceMarginLeft?: number; sourceMarginRight?: number; offsetY?: number; leadingMargin?: number; trailingMargin?: number; table?: FlowTableUnit; paragraph?: ParagraphFlowPolicy; subLines?: FlowSubLine[] };
 export type FlowSection = { id: string; geometry: ColumnGeometry; start: 'nextPage' | 'continuous'; columns: SectionColumns; flowDirection: SectionFlowDirection; units: readonly FlowUnit[] };
 export type FlowRect = { x: number; y: number; width: number; height: number };
 export type FlowPage = { top: number; geometry: ColumnGeometry; section: number; sectionPage: number };
-export type FlowRegion = { pageIndex: number; sectionId: string; bandTop: number; bandHeight: number; direction: 'ltr' | 'rtl'; columns: FlowRect[]; separator: boolean; activeColumns: number };
+export type FlowRegion = { pageIndex: number; sectionId: string; bandTop: number; bandHeight: number; paintHeight: number; direction: 'ltr' | 'rtl'; columns: FlowRect[]; separator: boolean; activeColumns: number };
 export type FlowFragment = { from: number; to: number; pageIndex: number; regionIndex: number; columnIndex: number; rect: FlowRect; kind: 'line' | 'block' | 'table'; sourceTop?: number; sourceBlock?: number; sourceLeft?: number; sourceWidth?: number; sourceMarginLeft?: number; sourceMarginRight?: number; trailingMargin?: number; table?: FlowTableUnit & { repeatedHeaderHeight: number } };
 export type FlowDiagnostic = { code: string; sectionId: string; from?: number; to?: number };
 export type FlowLayout = { pages: FlowPage[]; regions: FlowRegion[]; fragments: FlowFragment[]; complete: boolean; diagnostics: FlowDiagnostic[] };
@@ -144,9 +144,14 @@ function fit(units: readonly FlowUnit[], start: number, count: number, capacity:
       y = 0; continue;
     }
     const policy = unit.paragraph;
+    const prior = placements.at(-1);
+    const overlap = prior?.column === column && prior.unit.kind === 'line' && unit.kind === 'line'
+      && prior.unit.paragraph && prior.unit.paragraph.index === prior.unit.paragraph.count - 1
+      && policy?.index === 0 && prior.unit.paragraph.block !== policy.block
+      ? Math.min(prior.unit.trailingMargin || 0, unit.leadingMargin || 0) : 0;
     if (policy) {
       const placedLines = placements.filter(item => item.column === column && item.unit.paragraph?.block === policy.block).length;
-      const decision = paragraphFlowDecision(units, index, { y, capacity, atPageStart: physicalStart && column === 0 && y <= epsilon, placedLines,
+      const decision = paragraphFlowDecision(units, index, { y: y - overlap, capacity, atPageStart: physicalStart && column === 0 && y <= epsilon, placedLines,
         fullCapacity, availableBand, partialBand: availableBand < fullCapacity - epsilon, trimAfter: capacity >= availableBand - epsilon });
       if (decision === 'page') { pageBreak = true; break; }
       if (decision === 'column') { if (++column >= count) break; y = 0; continue; }
@@ -160,18 +165,22 @@ function fit(units: readonly FlowUnit[], start: number, count: number, capacity:
       if (needed <= capacity + epsilon && y + needed > capacity + epsilon) { if (++column >= count) break; y = 0; continue; }
     }
     const header = () => unit.table && y <= epsilon && units.slice(0, index).some(prior => prior.table?.tablePos === unit.table?.tablePos) ? unit.table.headerHeight : 0;
-    let repeatedHeaderHeight = header(), required = unit.height + repeatedHeaderHeight;
+    let appliedOverlap = overlap;
+    let repeatedHeaderHeight = header(), required = unit.height - appliedOverlap + repeatedHeaderHeight;
     if (capacity >= availableBand - epsilon) required = trimParagraphAfter(unit, y, required, capacity);
     if (!Number.isFinite(required) || required < 0 || required > capacity + epsilon && y <= epsilon) return { end: index, placements, used, pageBreak, columnsUsed: Math.min(count, column + 1), overflow: unit, requiredHeight: required };
     if (y + required > capacity + epsilon) {
       if (++column >= count) break;
       y = 0;
-      repeatedHeaderHeight = header(); required = unit.height + repeatedHeaderHeight;
+      appliedOverlap = 0; repeatedHeaderHeight = header(); required = unit.height + repeatedHeaderHeight;
       if (capacity >= availableBand - epsilon) required = trimParagraphAfter(unit, y, required, capacity);
       if (required > capacity + epsilon) return { end: index, placements, used, pageBreak, columnsUsed: Math.min(count, column + 1), overflow: unit, requiredHeight: required };
     }
-    const trimmed = unit.height + repeatedHeaderHeight - required;
-    const placedUnit = trimmed > 0 ? { ...unit, height: unit.height - trimmed, trailingMargin: Math.max(0, (unit.trailingMargin || 0) - trimmed), ...(unit.subLines ? { subLines: unit.subLines.map((line, i) => i === unit.subLines!.length - 1 ? { ...line, height: Math.max(0, line.height - trimmed) } : line) } : {}) } : unit;
+    const trimmed = unit.height - appliedOverlap + repeatedHeaderHeight - required;
+    const placedUnit = trimmed > 0 || appliedOverlap > 0 ? { ...unit, height: unit.height - appliedOverlap - trimmed,
+      offsetY: (unit.offsetY || 0) - appliedOverlap, trailingMargin: Math.max(0, (unit.trailingMargin || 0) - trimmed),
+      ...(unit.subLines ? { subLines: unit.subLines.map((line, i) => ({ ...line, offsetY: line.offsetY - appliedOverlap,
+        height: i === unit.subLines!.length - 1 ? Math.max(0, line.height - trimmed) : line.height })) } : {}) } : unit;
     placements.push({ unit: placedUnit, column, y, repeatedHeaderHeight }); y += required; used = Math.max(used, y); index++;
   }
   return { end: index, placements, used, pageBreak, columnsUsed: Math.min(count, column + 1) };
@@ -250,7 +259,7 @@ export function solveColumnFlow(sections: readonly FlowSection[], pageGap = 26, 
         const physical = section.flowDirection === 'rtl' ? count - 1 - logical : logical;
         return { x: px(section.geometry.margins.left) + physical * (columnWidth + gap), y: page.top + bandTop, width: columnWidth, height: bandHeight };
       });
-      result.regions.push({ pageIndex, sectionId: section.id, bandTop: page.top + bandTop, bandHeight, direction: section.flowDirection, columns, separator, activeColumns: placed.columnsUsed });
+      result.regions.push({ pageIndex, sectionId: section.id, bandTop: page.top + bandTop, bandHeight, paintHeight: Math.min(bandHeight, placed.used), direction: section.flowDirection, columns, separator, activeColumns: placed.columnsUsed });
       for (const item of placed.placements) {
         const col = columns[item.column];
         if (item.unit.subLines?.length) {

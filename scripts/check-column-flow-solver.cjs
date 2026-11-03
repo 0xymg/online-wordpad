@@ -17,6 +17,22 @@ flow=solveColumnFlow([sec('a',[unit(0)],{columns:{kind:'preserved',reason:'unequ
 flow=solveColumnFlow([sec('a',[unit(0)]),sec('b',[unit(1)],{geometry:{...geometry,width:9000}})]);assert.equal(columnRelativeXDelta(flow,flow.fragments[0],flow.fragments[1]),-100,'mixed-paper caret x includes sheet centering');
 const band=(groupIndex,height)=>({from:100+groupIndex,to:101+groupIndex,height,kind:'table',table:{tablePos:100,groupIndex,headerHeight:30,band:{top:groupIndex*100,bottom:groupIndex*100+height,continuation:false,headerHeight:0,cells:[]}}});flow=solveColumnFlow([sec('table',[band(0,30),band(1,100),band(2,100)])]);assert.equal(flow.complete,true);assert.equal(flow.fragments[2].columnIndex,1);assert.equal(flow.fragments[2].table.repeatedHeaderHeight,30);assert.equal(flow.fragments[2].rect.y,flow.regions[0].columns[1].y+30,'header space reserved before continuation');
 const headerBand={...band(0,30),table:{...band(0,30).table,headerGroup:true}},bodyBand=n=>band(n,20);flow=solveColumnFlow([sec('table',[unit(0,90),headerBand,bodyBand(1),bodyBand(2),bodyBand(3)])]);assert.equal(flow.complete,true);assert.deepEqual(flow.fragments.slice(1).map(f=>f.columnIndex),[0,0,0,1],'fine bands use residual column space before continuing');assert.equal(flow.fragments.at(-1).table.repeatedHeaderHeight,30);flow=solveColumnFlow([sec('table',[unit(0,120),headerBand,bodyBand(1)])]);assert.deepEqual(flow.fragments.slice(1).map(f=>f.columnIndex),[1,1],'initial header stays with its first body band');
+// Adjacent paragraphs share their larger margin within a column. Keep/ widow
+// policies inspect the same effective space; a region break restores before.
+const para=(block,index=0,count=1,keepLines=false)=>({block,index,count,keepNext:false,keepLines,widowControl:true,pageBreakBefore:false});
+const before=[{...unit(0,30),trailingMargin:10,paragraph:para(0)},{...unit(1,44),offsetY:24,leadingMargin:24,paragraph:para(1,0,1,true)}];
+flow=solveColumnFlow([sec('collapse',before)]);
+assert.equal(flow.fragments[1].rect.y,64,'24px before and 10px after overlap by 10px');
+assert.equal(flow.fragments[1].rect.height,20);
+assert.equal(before[1].offsetY,24,'natural units stay unchanged');
+assert.equal(flow.regions[0].paintHeight,64,'separator stops at maximum occupied extent');
+assert.equal(flow.regions[0].bandHeight,160,'flow capacity stays unchanged');
+flow=solveColumnFlow([sec('collapse',[{...unit(0,135),trailingMargin:10,paragraph:para(0)},before[1]])]);
+assert.equal(flow.fragments[1].columnIndex,1);
+assert.equal(flow.fragments[1].rect.y,44,'before spacing is not collapsed across columns');
+const widowLines=[{...unit(1,39),offsetY:24,leadingMargin:24,paragraph:para(1,0,2)},{...unit(2,15),paragraph:para(1,1,2)}];
+flow=solveColumnFlow([sec('collapse',[{...unit(0,110),trailingMargin:10,paragraph:para(0)},...widowLines])]);
+assert.deepEqual(flow.fragments.map(f=>f.columnIndex),[0,0,0],'widow logic accounts for collapsed spacing');
 // A paragraph's last line can fit even if only its after-spacing crosses the
 // physical column edge. Widow/keep decisions and emitted geometry must agree.
 const policy=(i,keepLines=false)=>({block:10,index:i,count:2,keepNext:false,keepLines,widowControl:true,pageBreakBefore:false});
@@ -46,6 +62,14 @@ global.document={createElement:makeElement};
 const rendered=buildColumnDecorations(paragraphDoc,{complete:true,diagnostics:[],sections:[borderSection],tables:[],blocks:[{pos:0,from:1,to:2,top:0,left:0,width:100,height:150,paddingLeft:0,paddingRight:0,marginBottom:20,borderBottom:'1px solid black',borderBottomWidth:1,textblock:true}]},borderFlow);
 assert.equal(rendered.complete,true);
 assert.match(rendered.overlays[0].children[0].style.cssText,/top:169px;/,'border remains at the content edge when after-spacing is clipped');
+const twoDoc=schema.nodes.doc.create(null,[schema.nodes.paragraph.create(null,schema.text('x')),schema.nodes.paragraph.create(null,schema.text('y'))]);
+const borderedBefore={...before[0],from:1,to:2,sourceBlock:0,sourceTop:0}, nextBefore={...before[1],from:4,to:5,sourceBlock:3,sourceTop:30};
+const twoSection=sec('two',[borderedBefore,nextBefore]), twoFlow=solveColumnFlow([twoSection]);
+const measuredBlock={pos:0,from:1,to:2,top:0,left:0,width:100,height:20,paddingLeft:0,paddingRight:0,marginBottom:10,borderBottom:'1px solid black',borderBottomWidth:1,textblock:true};
+const twoRender=buildColumnDecorations(twoDoc,{complete:true,diagnostics:[],sections:[twoSection],tables:[],blocks:[measuredBlock,{...measuredBlock,pos:3,from:4,to:5,top:30,marginBottom:0,borderBottomWidth:0}]},twoFlow);
+assert.equal(twoRender.complete,true);
+assert.match(twoRender.overlays[0].children[0].style.cssText,/top:39px;/,'collapsing the following margin does not move the previous border');
+
 flow=solveColumnFlow([sec('a',[unit(0,200)])]);assert.equal(flow.complete,false);assert.equal(flow.diagnostics[0].code,'unit-exceeds-region');
 const keep=(i)=>({...unit(i,40),paragraph:{block:10,index:i-1,count:2,keepNext:false,keepLines:true,widowControl:true,pageBreakBefore:false}});flow=solveColumnFlow([sec('a',[unit(0,100)],{columns:cols(1)}),sec('b',[keep(1),keep(2)],{start:'continuous',columns:cols(1)})]);assert.equal(flow.pages.length,2,'kept paragraph advances from partial continuous band to full page');assert.ok(flow.fragments.slice(1).every(f=>f.pageIndex===1));
 flow=solveColumnFlow([sec('a',[unit(0,100)]),sec('b',[unit(1,140)],{start:'continuous'})]);assert.equal(flow.complete,true);assert.equal(flow.pages.length,2,'unit moves to fresh full-height region when residual band is too short');

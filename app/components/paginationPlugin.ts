@@ -956,7 +956,7 @@ export function paginationPlugin(getConfig: () => PageLayoutConfig): Plugin {
             if (!a || !b) continue;
             const left = Math.max(a.x, b.x) - (Math.max(a.x, b.x) - Math.min(a.x, b.x) - a.width) / 2;
             const line = document.createElement('div'); line.className = 'pm-column-separator';
-            line.style.cssText = `position:absolute;left:${(maximum - sheet.geometry.width) / 30 + left}px;top:${region.bandTop}px;height:${region.bandHeight}px;width:1px;background:currentColor`;
+            line.style.cssText = `position:absolute;left:${(maximum - sheet.geometry.width) / 30 + left}px;top:${region.bandTop}px;height:${region.paintHeight}px;width:1px;background:currentColor`;
             separatorLayer.appendChild(line);
           }
         }
