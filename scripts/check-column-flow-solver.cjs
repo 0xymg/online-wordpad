@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-require-imports */
 /* Pure region-flow checks: no app state or browser. */
 const assert=require('node:assert/strict'),fs=require('node:fs'),Module=require('node:module'),ts=require('typescript'),path=require('node:path');
 require.extensions['.ts']=(module,file)=>module._compile(ts.transpileModule(fs.readFileSync(file,'utf8'),{compilerOptions:{target:ts.ScriptTarget.ES2022,module:ts.ModuleKind.CommonJS}}).outputText,file);const file=path.resolve('lib/column-flow.ts'),source=ts.transpileModule(fs.readFileSync(file,'utf8'),{compilerOptions:{target:ts.ScriptTarget.ES2022,module:ts.ModuleKind.CommonJS}}).outputText,mod=new Module(file,module);mod.filename=file;mod.paths=module.paths;mod._compile(source,file);const {solveColumnFlow,columnPageBreakPositions,columnRelativeXDelta,setColumnFlowSnapshot,columnContentGeometryAtPos,resolveColumnTabGeometry}=mod.exports;

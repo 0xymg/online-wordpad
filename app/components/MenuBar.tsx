@@ -288,6 +288,8 @@ function MenuBar({
   // Signed-in users get the start screen; guests have no document library, so
   // Home simply takes them to the landing page.
   const titleInputRef = useRef<HTMLInputElement>(null);
+  const restoreEditorAfterReferenceUpdate = useRef(false);
+  const insertTriggerRef = useRef<HTMLButtonElement>(null);
 
   const goHome = () => {
     if (user) onShowHome();
@@ -634,8 +636,14 @@ function MenuBar({
 
       {/* Insert */}
       <MenubarMenu>
-        <MenubarTrigger className={TRIGGER}>{t.menu.insert}</MenubarTrigger>
-        <MenubarContent>
+        <MenubarTrigger ref={insertTriggerRef} className={TRIGGER}>{t.menu.insert}</MenubarTrigger>
+        <MenubarContent onCloseAutoFocus={event => {
+          if (!restoreEditorAfterReferenceUpdate.current) return;
+          restoreEditorAfterReferenceUpdate.current = false;
+          event.preventDefault();
+          const view = viewRef.current, active = document.activeElement;
+          if (view && !view.isDestroyed && active !== view.dom && (active === document.body || active === insertTriggerRef.current || (event.currentTarget instanceof HTMLElement && event.currentTarget.contains(active)))) view.focus();
+        }}>
           <MenubarItem onClick={onLinkAdd}>
             {t.insert.link} <MenubarShortcut>Ctrl+K</MenubarShortcut>
           </MenubarItem>
@@ -648,7 +656,7 @@ function MenuBar({
           <MenubarItem onClick={() => onReference("bookmark")}>{referenceLabels(locale).bookmark}…</MenubarItem>
           <MenubarItem onClick={() => onReference("caption")}>{referenceLabels(locale).caption}…</MenubarItem>
           <MenubarItem onClick={() => onReference("reference")}>{referenceLabels(locale).reference}…</MenubarItem>
-          <MenubarItem onClick={onUpdateReferences}>{referenceLabels(locale).update}</MenubarItem>
+          <MenubarItem onClick={() => { restoreEditorAfterReferenceUpdate.current = true; onUpdateReferences(); }}>{referenceLabels(locale).update}</MenubarItem>
           <MenubarSeparator />
           <MenubarItem onClick={onBibliography}>{bibliographyLabel(locale, "Sources and bibliography") + "…"}</MenubarItem>
           <MenubarItem onClick={() => onNote("insert")}>{noteLabels(locale).insert}…</MenubarItem>
