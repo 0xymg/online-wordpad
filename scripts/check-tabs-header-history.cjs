@@ -7,7 +7,7 @@ const { chromium } = require(process.env.PLAYWRIGHT_MODULE || 'playwright');
  try {
   const page = await browser.newPage({ viewport: { width: 1450, height: 1050 } }), errors = [], mod = process.platform === 'darwin' ? 'Meta' : 'Control';
   page.on('pageerror', error => errors.push(error.message)); page.setDefaultTimeout(15000);
-  await page.goto((process.env.BASE_URL || 'http://localhost:3107') + '/pad'); await page.locator('.editor-shell .ProseMirror').fill('HEADER HISTORY BODY');
+  await page.goto((process.env.BASE_URL || 'http://localhost:3107') + '/pad'); await page.locator('.editor-shell .ProseMirror').waitFor(); await page.locator('.editor-shell > div[aria-hidden="true"]').waitFor({ state: 'hidden' }); await page.locator('.editor-shell .ProseMirror').fill('HEADER HISTORY BODY');
   await page.getByRole('menuitem', { name: 'Insert', exact: true }).click(); await page.getByRole('menuitem', { name: 'Header & footer…', exact: true }).click();
   const dialog = page.getByRole('dialog', { name: 'Header & footer', exact: true }), header = dialog.getByRole('textbox', { name: 'Header', exact: true }); await header.fill('A'); await page.keyboard.press('End');
   await dialog.getByRole('button', { name: 'Tab stops', exact: true }).first().click(); const tabs = page.getByRole('dialog', { name: 'Tab stops', exact: true });

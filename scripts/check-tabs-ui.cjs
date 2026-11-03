@@ -8,7 +8,7 @@ const { chromium } = require(process.env.PLAYWRIGHT_MODULE || 'playwright');
  try {
   const context = await browser.newContext({ viewport: { width: 1450, height: 1050 } }), page = await context.newPage(), errors = [];
   page.on('pageerror', error => errors.push(error.message)); page.setDefaultTimeout(15000);
-  await page.goto(base + '/pad'); const editor = page.locator('.ProseMirror'); await editor.fill('Alpha'); await editor.press('End'); await editor.press('Enter'); await editor.pressSequentially('Beta');
+  await page.goto(base + '/pad'); const editor = page.locator('.ProseMirror'); await editor.waitFor(); await page.locator('.editor-shell > div[aria-hidden="true"]').waitFor({ state: 'hidden' }); await editor.fill('Alpha'); await editor.press('End'); await editor.press('Enter'); await editor.pressSequentially('Beta');
   const paragraphs = editor.locator('p');
   const tabs = async index => JSON.parse(await paragraphs.nth(index).getAttribute('data-edtr-paragraph') || '{}').tabs || [];
   async function openTabs() { await page.getByRole('menuitem', { name: 'Format', exact: true }).click(); await page.getByRole('menuitem', { name: 'Tab stops…', exact: true }).click(); return page.getByRole('dialog', { name: 'Tab stops', exact: true }); }
@@ -65,7 +65,7 @@ const { chromium } = require(process.env.PLAYWRIGHT_MODULE || 'playwright');
   // Dark, narrow and RTL dialog layout remains inside the viewport.
   for (const locale of ['en', 'ar']) {
    const mobile = await browser.newContext({ viewport: { width: 390, height: 844 } }); await mobile.addCookies([{ name: 'wordpad-locale', value: locale, url: base }]); const p = await mobile.newPage();
-   await p.goto(base + '/pad'); await p.locator('.ProseMirror').waitFor(); await p.evaluate(() => document.documentElement.classList.add('dark'));
+   await p.goto(base + '/pad'); await p.locator('.ProseMirror').waitFor(); await p.locator('.editor-shell > div[aria-hidden="true"]').waitFor({ state: 'hidden' }); await p.evaluate(() => document.documentElement.classList.add('dark'));
    await p.getByRole('menuitem', { name: locale === 'ar' ? 'تنسيق' : 'Format', exact: true }).click(); await p.getByRole('menuitem', { name: locale === 'ar' ? 'علامات الجدولة…' : 'Tab stops…', exact: true }).click();
    const d = p.getByRole('dialog'), m = await d.evaluate(el => ({ left: el.getBoundingClientRect().left, right: el.getBoundingClientRect().right, height: el.getBoundingClientRect().height, scroll: el.scrollWidth, width: el.clientWidth, direction: getComputedStyle(el).direction }));
    assert.ok(m.left >= 0 && m.right <= 390 && m.height <= 844 * .91 && m.scroll <= m.width + 1, JSON.stringify(m)); assert.equal(m.direction, locale === 'ar' ? 'rtl' : 'ltr'); await mobile.close();

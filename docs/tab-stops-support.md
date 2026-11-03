@@ -1,6 +1,6 @@
 # A2 — Sekme durakları destek ve kanıt matrisi
 
-Durum: A2 yerel kabulü tamamlandı; son renderer/native/UI regresyonları ve production build geçti. A2 yayın/canlı kabulü henüz tamamlanmadı. A1'in `2f6e8bd` canlı doğrulaması A2 sonucu değildir. Bu tablo, uygulamadaki düzenlenebilir veri, native DOCX koruması ve ölçülmüş Word görünümünü ayrı değerlendirir. Doğrulanmamış genel kombinasyonlar başarılı örneklere dahil edilmez.
+Durum: A2 `3a65144` ile yayımlandı; Vercel dağıtımı başarılı. `https://wordpad.info` üzerinde izole belgelerle tam sekme/cetvel/stil/mobil-RTL arayüzü, klavye, ondalık metadata DOCX döngüsü, üstbilgi undo ve dar hücre PDF testleri geçti. Yerel renderer/native regresyonları ve production build de başarılı. Bu tablo, uygulamadaki düzenlenebilir veri, native DOCX koruması ve ölçülmüş Word görünümünü ayrı değerlendirir. Doğrulanmamış genel kombinasyonlar başarılı örneklere dahil edilmez.
 
 ## Referans profili
 

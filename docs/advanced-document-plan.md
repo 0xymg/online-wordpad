@@ -124,7 +124,7 @@ Tarayıcı ve Word'ün metin biçimleme/yerleşim farkları nedeniyle tüm karma
 2. İlk kapsam: eşit sütunlar; sonnot ardından dipnot; APA 7 + IEEE; destek matrisiyle ölçülen Word uyumluluğu.
 3. Önce mevcut görsel/metin kutusu işi kapanır; bu planın uygulaması ardından başlar.
 
-Kullanıcı 2 Kasım 2026 tarihinde bu kapsamı ve sırayı onayladı. Görsel/metin kutusu paketi `a4b214f` ile canlıda doğrulanarak kapandı. A0 tamamlandı: sekiz sentetik belge için gerçek Word Online PDF referansları, SHA doğrulaması, uygulama çıktıları ve ölçüm raporu hazır. Sekiz örneğin tamamında en az bir uyumsuzluk ölçüldü; görsel birebirlik henüz değerlendirilmiş sayılmıyor. Ayrıntılar `docs/compatibility-baseline.md` dosyasında. A1 `2f6e8bd` ile yayımlandı; canlı bölüm arayüzü ve veri koruma testleri geçti. A2 sekme duraklarının uygulaması ve Word karşılaştırmaları sürüyor.
+Kullanıcı 2 Kasım 2026 tarihinde bu kapsamı ve sırayı onayladı. Görsel/metin kutusu paketi `a4b214f` ile canlıda doğrulanarak kapandı. A0 tamamlandı: sekiz sentetik belge için gerçek Word Online PDF referansları, SHA doğrulaması, uygulama çıktıları ve ölçüm raporu hazır. Sekiz örneğin tamamında en az bir uyumsuzluk ölçüldü; görsel birebirlik henüz değerlendirilmiş sayılmıyor. Ayrıntılar `docs/compatibility-baseline.md` dosyasında. A1 `2f6e8bd` ile yayımlandı; canlı bölüm arayüzü ve veri koruma testleri geçti. A2 `3a65144` ile canlıda doğrulandı. A3 sütun akışının tek-editör koordinat prototipi başladı.
 
 ## Kaynak notları
 
@@ -152,7 +152,7 @@ A1 yerel kapanış: 37 model/komut kontrolü, kaynak veriyi koruyan gerçek aç�
 
 ## Uygulama kaydı — A2
 
-Yerel uygulama ve kabul kontrolleri tamamlandı; yayın/canlı doğrulaması bekliyor. Gerçek sekme karakteri/node, paragraf ve stil durakları, sayısal diyalog, sürüklenebilir cetvel, varsayılan aralık/ondalık ayraç ve ortak canlı/PDF/üstbilgi ölçümü eklendi. Model v2, eski uygulamanın yeni sekme bilgilerini sessizce düşürmesini engeller; v1 bölüm kimlikleri dönüşümde korunur. Ayrıntılı destek ve test durumu `docs/tab-stops-support.md` dosyasındadır.
+A2 `3a65144` ile yayımlandı ve canlı kabulü tamamlandı. Gerçek sekme karakteri/node, paragraf ve stil durakları, sayısal diyalog, sürüklenebilir cetvel, varsayılan aralık/ondalık ayraç ve ortak canlı/PDF/üstbilgi ölçümü eklendi. Model v2, eski uygulamanın yeni sekme bilgilerini sessizce düşürmesini engeller; v1 bölüm kimlikleri dönüşümde korunur. Ayrıntılı destek ve test durumu `docs/tab-stops-support.md` dosyasındadır. Canlıda tam arayüz/cetvel/mobil-RTL, klavye, DOCX metadata, üstbilgi undo ve dar hücre PDF kontrolleri geçti. İlk otomatik test yükleme bitmeden başlamıştı; test artık görünür yükleme katmanının kapanmasını bekler.
 
 Gerçek Word referanslarıyla seçili LTR/RTL yatay ankrajlar, dar hücre satır grupları ve sekmesiz ondalık hücre hizası doğrulandı. Word'de düzenlenen DOCX özel ondalık ayraç bilgisini ve ilişkisiz özel özelliği korudu; bu metadata Word'ün bölge ayarı değildir. İçe alınmış tablo stili hücre boşlukları, üstbilgi tablo genişliği ve işaretli sekme run'ları düzeltildi. 38 sekme model kontrolü, 13 atom/pano kontrolü, cetvel/diyalog/stil taslağı, salt okunur kaynak koruması, klavye/üstbilgi undo, native koruma ve PDF testleri geçti. TypeScript ve üretim derlemesi başarılı. Bütün sayfa görsel eşitliği iddia edilmez.
 
