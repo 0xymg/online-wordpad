@@ -1,6 +1,6 @@
 # A4 — Canlı referanslar ve içindekiler
 
-Durum: yerel uygulama ve seçili ölçümler mevcut; A4 yayımlanmadı ve kabul kapısı açık. A3 `2e1f550` ile canlıda doğrulandı. Bu paket onaylı `advanced-document-plan.md` sırasını izler. Sol referans modeli/kimlik/clipboard, Terra yerleşim ve native DOCX üzerinde çalışıyor; ana ajan arayüz, PDF bağlantıları ve entegrasyon kabulünü yürütüyor.
+Durum: A4 `c3f8a7e` ile yayımlandı ve kapsamlı canlı kabul tamamlandı; ölçümler ve açık sınırlar `references-acceptance.md` içindedir. A3 `2e1f550` ile canlıda doğrulandı. Bu paket onaylı `advanced-document-plan.md` sırasını izler. Sol referans modeli/kimlik/clipboard, Terra yerleşim ve native DOCX üzerinde çalışıyor; ana ajan arayüz, PDF bağlantıları ve entegrasyon kabulünü yürütüyor.
 
 ## Tek belge modeli
 
@@ -25,4 +25,4 @@ PDF iç bağlantıları gerçek GoTo hedefleridir. Fiziksel sayfa konumu, çoğa
 5. Çıktı: PDF’de doğru sayfa/sayı/metin ve iç hedef; DOCX gerçek alanlar; salt okunur/PDF/yazdırmada aynı güncellenmiş model.
 6. Üretim derlemesi, odaklı regresyonlar, ardından coauthor olmadan commit/yayın ve canlı kabul.
 
-Yerel kimlik, güncelleme/undo, 9→10 ve 99→100 sayfalama, çok sayfalı TOC, seçili sütun/tablo/RTL ve PDF GoTo ölçümleri `references-acceptance.md` içinde kayıtlıdır. Bunlar nihai üretim veya canlı kabul değildir. Yinelenen stil adları ve ilk girişten önce başlayan native alan düzeltildi; gerçek Word'de çok seviyeli TOC yenileme ve başlık değişikliği kaydoldu. Word'ün yeniden sıraladığı yer imi sınırları ve aynı etiketli açıklamaların yardımcı adları, indirilen DOCX ile gidiş-dönüş kontrolünde ayrıca ele alınıyor. İki gerçek Word dönüş dosyası son üretim derlemesinde aç/kaydet/aç kontrolünü geçti; canlı yayın kabulü henüz kapanmadı; A5–A7 tamamlandı sayılmaz.
+Yerel kimlik, güncelleme/undo, 9→10 ve 99→100 sayfalama, çok sayfalı TOC, seçili sütun/tablo/RTL ve PDF GoTo ölçümleri `references-acceptance.md` içinde kayıtlıdır. Bunlar nihai üretim veya canlı kabul değildir. Yinelenen stil adları ve ilk girişten önce başlayan native alan düzeltildi; gerçek Word'de çok seviyeli TOC yenileme ve başlık değişikliği kaydoldu. Word'ün yeniden sıraladığı yer imi sınırları ve aynı etiketli açıklamaların yardımcı adları, indirilen DOCX ile gidiş-dönüş kontrolünde ayrıca ele alınıyor. İki gerçek Word dönüş dosyası son üretim derlemesinde aç/kaydet/aç kontrolünü geçti; canlı yayın kabulü de `c3f8a7e` üzerinde tamamlandı; A5–A7 tamamlandı sayılmaz.

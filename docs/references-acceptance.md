@@ -1,6 +1,6 @@
 # A4 referans kabulü — yerel kanıt ve açık işler
 
-Durum: A4 geliştirme aşamasında ve **yayımlanmadı**. Aşağıdaki sonuçlar yerel/sentetik denemelerdir; A4 canlı kabulü veya genel Word görsel eşleşmesi değildir. A3 `2e1f550` canlı kabulü ayrı olarak `columns-acceptance.md` dosyasındadır.
+Durum: A4 `c3f8a7e` ile **canlıda**. Vercel yayını ve aşağıdaki kapsamla canlı kabul 3 Kasım 2026 tarihinde tamamlandı. Yerel/sentetik ölçümler ile canlı ve gerçek Word sonuçları ayrıdır; genel Word görsel eşleşmesi iddia edilmez. A3 `2e1f550` canlı kabulü ayrı olarak `columns-acceptance.md` dosyasındadır.
 
 ## Ölçülen yerel sonuçlar
 
@@ -28,4 +28,16 @@ Son native kapanış: yabancı EDL/EDM/EDN yer imleri, adreslenen EDF/EDT taşı
 
 Ölçülmüş sınırlar: Word kendi TOC bağlantılarını yeniden kurarken bazı EDH başlık takma adlarını kaldırdı; bu başlıklar importta yeni kimlik alır, metinle eski kimliğe tahmini bağlanmaz. Ayrı bir Word klavye düzenleme denemesinde başlık paragrafı kayboldu; neden doğrulanamadı, kontrollü iki yenilemede tekrarlanmadı. Adreslenmeyen, tam özel EDF protokolüne uyan bitişik sıfır genişlikli yer imi, uygulama taşıyıcısı sayılır; üçüncü tarafın aynı özel ad sözleşmesini kullanması ayırt edilemez. Genel Word düzenleme veya tipografi birebirliği iddia edilmez.
 
-Son üretim `3119` derlemesi, boş TOC ve aktif olmayan toplu dışa aktarma geçti. Native paketin bütün işlev kontrolleri geçti; yerel konsol kapısı yalnız iki Vercel ölçüm betiğinin 404 yanıtını bildirdi. Auth için yalnız yerel test ortamı değişkeni verildi; ürün ayarları değişmedi. Kalan kapı coauthor olmadan commit/yayın ve canlı kabul. A4 henüz yayımlanmadı. Gerçek işletim sistemi IME ve genel görsel birebirlik doğrulanmış değildir. A5 dipnot/sonnot ve A6 kaynakça bu paketin kabulü değildir.
+Son üretim `3119` derlemesi, boş TOC ve aktif olmayan toplu dışa aktarma geçti. Native paketin bütün işlev kontrolleri geçti; yerel konsol kapısı yalnız iki Vercel ölçüm betiğinin 404 yanıtını bildirdi. Auth için yalnız yerel test ortamı değişkeni verildi; ürün ayarları değişmedi. Kalan kapı coauthor olmadan commit/yayın ve canlı kabul. A4 yayınlandı; aşağıdaki canlı sonuçlar bu yerel kapının devamıdır. Gerçek işletim sistemi IME ve genel görsel birebirlik doğrulanmış değildir. A5 dipnot/sonnot ve A6 kaynakça bu paketin kabulü değildir.
+
+
+## Canlı kabul — c3f8a7e
+
+Vercel durumu `success`; [wordpad.info](https://wordpad.info) üzerinde yalıtılmış misafir oturumlarıyla doğrulandı. Commit'te coauthor yoktur.
+
+- Arayüz: bookmark, caption, çapraz referans ekleme/düzenleme, canlı TOC, başlık değişimi/undo, aynı adla değiştirilen hedefe yanlış bağlanmama, caption numarasından numarasız başlığa geçişte geçerli gösterim seçimi, salt okunur koruma ve mobil Arapça geçti. PDF iki fiziksel sayfada gerçek GoTo hedeflerini taşıdı.
+- Native: varsayılan ve `[1,3]` TOC, iki gerçek Word-normalized fixture, boş TOC ve aktif olmayan iki belgenin eski önbellekle toplu DOCX dışa aktarımı geçti. Canlı native harness'te sayfa/konsol/istek/HTTP hatası yoktu.
+- Yerleşim: 9→10, 99→100, karma yön+Roman numara başlangıcı, 120 girişli TOC, tek/çift sütun LTR/RTL ve tablo içindeki yer imi/sayfa alanı geçti.
+- Yükleme: desteklenmeyen gelecek sürümde kaynak koruma, açık değiştirmede yedek, geri yükleme/geçmiş yalıtımı, model v4 kimlik kalıcılığı ve yazı yazılmadan eski sürüm geçişi geçti.
+
+Yük altında test notu: çok sayıda eşzamanlı headless tarayıcıda bir arayüz menüsü zaman aşımı ve çift sütun TOC kenarında 16 px fark görüldü. Tekil canlı arayüz yinelemesi geçti. Üç ardışık geometri denemesinde başarı olayından hemen sonra, 1 saniye sonra ve gerçek manuel yenilemeden sonra aynı kenarlar ölçüldü: LTR 700.984/700.984 px; RTL 421.125/421.109 px, fontlar hazır ve yerleşim hata attr'ları boştu. İlk 16 px durumu yeniden yakalanmadı; test hazır olma yarışı veya gerçek geçici yerleşim ihtimali kesin ayrıştırılamadı. Eşikler gevşetilmedi. Referans başarı olayı yalnız `{error}` taşıyor; gelecekteki yüksek yük ölçümünde belge/revizyon eşlemesiyle kanıt toplanmalı. Bu açık tanı, kalıcı hizalama bozukluğu çözüldü diye raporlanmaz.
