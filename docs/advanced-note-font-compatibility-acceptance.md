@@ -1,6 +1,6 @@
 # A7.3 note appearance and font preservation
 
-Implemented under the approved [A7 plan](advanced-compatibility-plan.md) with Sol/Terra delegation. Production build and the local acceptance below passed at final code revision `d91e327`. This increment preserves note presentation and paragraph fonts; broader Word visual equivalence remains open. Release/live acceptance is recorded below when complete.
+Implemented under the approved [A7 plan](advanced-compatibility-plan.md) with Sol/Terra delegation. Production build, local and live acceptance passed at code revision `5ed905e`, including the import-warning correction below. This increment preserves note presentation and paragraph fonts; broader Word visual equivalence remains open. Release/live acceptance is recorded below.
 
 ## Canonical notes and native transport
 
@@ -28,7 +28,7 @@ The new [multi-font DOCX probe](../fixtures/compatibility/a7-3-fonts/metrics-pro
 
 ## Integration acceptance
 
-## Frozen-corpus production capture
+## Initial A7.3 frozen-corpus production capture
 
 The complete eight-file capture finished at `2026-11-03T20:19:02.654Z`, using Chromium `156.0.8078.4` against local production `http://localhost:3119` at `d91e3278af918b1306c6a8b712565c554eac425d`. [Export provenance](../fixtures/compatibility/a7-3-app-pdfs/exports.json), [full report](../fixtures/compatibility/a7-3-report.json), [expanded column report](../fixtures/compatibility/a7-3-column-geometry.json) and [rendered note comparison](../fixtures/compatibility/a7-3-note-visible-comparison.png) are separate A7.3 artifacts. The original manifest, sources, genuine references and A0/A7.1/A7.2 evidence remain unchanged.
 
@@ -61,3 +61,17 @@ These are search-text bounds, independently of visible glyphs. Both complete not
 Production TypeScript/compilation passed. Focused changed-module lint has no errors (the existing unused `state` warning in document-bibliography remains). Core checks passed: reference27, section69, note41, bibliography14, pagination18, report3 and expanded-geometry5. Startup/library refusal preserves exact unsupported sources; v6 notes/sources/policies/identities migrate to v7. Native note codecs, clipboard v2 and repeated authored-prefix roundtrips pass.
 
 Actual production browser checks passed source baseline/sup14 owner presentation across all views/HTML/DOCX (artifact `0OuDv3`), ten separator/layout combinations including lists/sections (artifact `IXnpXQ`), real Word footnote native import/export/reopen and PDF with all 600 words once/four GoTo links (artifact `7LGGTA`), and the real Word-normalized separator/body/policy roundtrip (artifact `kCR5uv`). The final guarded build additionally passed the complete font-profile/Word-downloaded DOCX and inline-atom negative cases, authored HTML/Enter/DOCX roundtrip (artifact `v5BSmp`), and real Word footnote UI roundtrip (artifact `pB8fHt`). All eleven frozen-corpus pages render pixel-identically at 144 dpi to the inspected pre-guard capture. Bibliography source/citation/native reopen/six exports and reference-menu focus passed on the preceding production build with the same v7/owner implementation. Live release checks are recorded below. A7 overall remains open.
+
+## Import-warning correction and final production capture
+
+Initial release `125e359` passed the live owner, ten separator cases, real Word footnote, five-font/native-DOCX and bibliography checks. A separate final screenshot exposed an unnecessary unsupported-note toast on importing the frozen notes document. Event tracing identified a cache-only paragraph transaction: the independent paragraph-style plugin changed generated `ENDNOTE_BODY`'s `lineMetricFamily` from null to Arial. The note read-only guard correctly rejected that independent cache write.
+
+`5ed905e` derives this metric recursively during canonical endnote projection and excludes generated note subtrees from the independent paragraph refresh. A canonical body font edit therefore regenerates the appropriate metric and paragraph CSS, including nested lists, inside the existing authorized projection. Read-only guards were not relaxed and the warning was not hidden. `check-note-metric-projection.cjs` passes actual import → PDF → Escape → saved-HTML reload/idle with zero note errors and exact source pools/IDs, plus sixteen font-only edit/undo and real text/identity/cache-refusal checks. Production artifact: `K1gbSa`. The final production real Word footnote/native DOCX/PDF check also passes (`zp0gJ9`). TypeScript, compilation and scoped lint pass.
+
+The final eight-file capture finished at `2026-11-03T20:39:13.768Z`, code `5ed905e01ffb83f4f45dd3ee07ccc88356dcac12`: [export provenance](../fixtures/compatibility/a7-3-final-app-pdfs/exports.json), [report](../fixtures/compatibility/a7-3-final-report.json), [expanded geometry](../fixtures/compatibility/a7-3-final-column-geometry.json), [note crops](../fixtures/compatibility/a7-3-final-note-visible-comparison.png). All eleven pages are pixel-identical at 144 dpi to the inspected initial A7.3 capture. All listed numeric results, text differences, page/column placement and five/three report counts above remain unchanged. The initial A7.3 PDFs/reports and every older source/reference/capture remain retained; this final capture replaces none of them.
+
+## Final live acceptance
+
+Release [`5ed905e`](https://github.com/0xymg/online-wordpad/commit/5ed905e01ffb83f4f45dd3ee07ccc88356dcac12) completed its [Vercel deployment](https://vercel.com/312sh/online-wordpad/CYvkCTuXMbkRKtGEnE8461TDXhUr). Actual browser tests against `https://wordpad.info` passed the corrected native import/PDF/Escape/reload with zero note errors and sixteen metric/font-edit/undo/cache guard checks (`VbCHnX`), the real Word footnote/native DOCX/PDF workflow with 600 words exactly once and four GoTo links (`pieATk`), all five font profiles/native auto values/both Word-downloaded DOCX reopens/negative guards, and bibliography source/identity retention, six exports and source-preserving edited-DOCX refusal. The saved live note screenshot was captured after a settled PDF export and saved state, with zero note-error events.
+
+[Live evidence](../fixtures/compatibility/a7-3-live-acceptance.json) retains deployment, screenshot/PDF hashes, actual renderer faces and all fifteen live Word/app pitch comparisons. Their maximum mean-pitch difference is 0.07698 pt. Live-only font artifacts remain separate from the frozen local application capture. Earlier live validation of the same owner/separator implementation covered baseline/sup14 ownership and all ten separator/layout cases, including first lists and section scopes. Every implementation/evidence commit omits coauthor trailers. This closes the A7.3 increment; the documented expanded 1 CSS px, link/field, separator and broader font/layout gates remain open under A7.

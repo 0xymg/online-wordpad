@@ -1,0 +1,297 @@
+{
+  "schema_version": 1,
+  "tested_release": "5ed905e01ffb83f4f45dd3ee07ccc88356dcac12",
+  "base_url": "https://wordpad.info",
+  "deployment": "https://vercel.com/312sh/online-wordpad/CYvkCTuXMbkRKtGEnE8461TDXhUr",
+  "recorded_at": "2026-11-03T20:46:32.106644+00:00",
+  "browser_version": "156.0.8078.4",
+  "checks": {
+    "native_import_pdf_escape_reload_zero_note_errors": true,
+    "font_change_undo_and_protected_cache_checks_16": true,
+    "real_word_footnote_native_docx_reopen_and_600_words_once": true,
+    "real_word_footnote_four_goto_links": true,
+    "word_font_profiles_and_downloaded_docx_reopen": true,
+    "bibliography_sources_ids_six_exports_and_edited_docx_refusal": true,
+    "saved_screenshot_zero_note_errors": true
+  },
+  "artifacts": {
+    "note_metrics": "VbCHnX",
+    "word_footnote": "pieATk",
+    "font_outputs_local": "/tmp/edtr-a73-live-final-fonts",
+    "screenshot": "a7-3-live-notes.png",
+    "screenshot_sha256": "e67f4ec5487cd346224cdc194cd48716e5955627a8994b949d30cc4c28e6f9c9"
+  },
+  "font_app_pdf_sha256": "e799222f362f8e7d9a0accd353ed06542ba34e1d466d15b0ad42049f9a088995",
+  "font_checks": {
+    "word_expected_page_count": true,
+    "word_all_explicit_markers_once": true,
+    "word_mean_pitch_within_0_1_pt_captured_metric": true,
+    "visual_fidelity": "NOT_ASSESSED_BY_TEXT_LAYER",
+    "app_expected_page_count": true,
+    "app_all_explicit_markers_once": true,
+    "app_mean_pitch_within_0_1_pt_word": true
+  },
+  "font_actual_faces": [
+    {
+      "profile": 1,
+      "requested_font": "Arial",
+      "fonts": [
+        {
+          "familyName": "Arial",
+          "postScriptName": "ArialMT",
+          "isCustomFont": false,
+          "glyphCount": 176
+        }
+      ]
+    },
+    {
+      "profile": 2,
+      "requested_font": "Calibri",
+      "fonts": [
+        {
+          "familyName": "Carlito",
+          "postScriptName": "Carlito-Regular",
+          "isCustomFont": true,
+          "glyphCount": 176
+        }
+      ]
+    },
+    {
+      "profile": 3,
+      "requested_font": "Times New Roman",
+      "fonts": [
+        {
+          "familyName": "Times New Roman",
+          "postScriptName": "TimesNewRomanPSMT",
+          "isCustomFont": false,
+          "glyphCount": 176
+        }
+      ]
+    },
+    {
+      "profile": 4,
+      "requested_font": "Courier New",
+      "fonts": [
+        {
+          "familyName": "Courier New",
+          "postScriptName": "CourierNewPSMT",
+          "isCustomFont": false,
+          "glyphCount": 176
+        }
+      ]
+    },
+    {
+      "profile": 5,
+      "requested_font": "Roboto",
+      "fonts": [
+        {
+          "familyName": "Roboto",
+          "postScriptName": "Roboto-Regular",
+          "isCustomFont": true,
+          "glyphCount": 176
+        }
+      ]
+    }
+  ],
+  "font_pitch_comparisons": [
+    {
+      "id": "F1_AUTO_1",
+      "requested_family": "Arial",
+      "actual_word_face": "/BCDEEE+ArialMT",
+      "word_single_metric": 1.14990234375,
+      "expected_mean_pitch_pt": 12.64892578125,
+      "word_mean_pitch_pt": 12.673333333333327,
+      "word_mean_minus_metric_pt": 0.024407552083326678,
+      "word_mean_within_0_1_pt_metric": true,
+      "app_mean_pitch_pt": 12.64453125,
+      "app_mean_minus_word_pt": -0.028802083333326678,
+      "app_mean_within_0_1_pt_word": true
+    },
+    {
+      "id": "F1_AUTO_1_15",
+      "requested_family": "Arial",
+      "actual_word_face": "/BCDEEE+ArialMT",
+      "word_single_metric": 1.14990234375,
+      "expected_mean_pitch_pt": 14.546264648437498,
+      "word_mean_pitch_pt": 14.593333333333362,
+      "word_mean_minus_metric_pt": 0.04706868489586391,
+      "word_mean_within_0_1_pt_metric": true,
+      "app_mean_pitch_pt": 14.54296875,
+      "app_mean_minus_word_pt": -0.050364583333362134,
+      "app_mean_within_0_1_pt_word": true
+    },
+    {
+      "id": "F1_AUTO_1_5",
+      "requested_family": "Arial",
+      "actual_word_face": "/BCDEEE+ArialMT",
+      "word_single_metric": 1.14990234375,
+      "expected_mean_pitch_pt": 18.973388671875,
+      "word_mean_pitch_pt": 18.92333333333333,
+      "word_mean_minus_metric_pt": -0.050055338541671546,
+      "word_mean_within_0_1_pt_metric": true,
+      "app_mean_pitch_pt": 18.97265625,
+      "app_mean_minus_word_pt": 0.049322916666671546,
+      "app_mean_within_0_1_pt_word": true
+    },
+    {
+      "id": "F2_AUTO_1",
+      "requested_family": "Calibri",
+      "actual_word_face": "/BCDHEE+Calibri",
+      "word_single_metric": 1.220703125,
+      "expected_mean_pitch_pt": 13.427734375,
+      "word_mean_pitch_pt": 13.50666666666666,
+      "word_mean_minus_metric_pt": 0.0789322916666606,
+      "word_mean_within_0_1_pt_metric": true,
+      "app_mean_pitch_pt": 13.4296875,
+      "app_mean_minus_word_pt": -0.0769791666666606,
+      "app_mean_within_0_1_pt_word": true
+    },
+    {
+      "id": "F2_AUTO_1_15",
+      "requested_family": "Calibri",
+      "actual_word_face": "/BCDHEE+Calibri",
+      "word_single_metric": 1.220703125,
+      "expected_mean_pitch_pt": 15.441894531249998,
+      "word_mean_pitch_pt": 15.426666666666696,
+      "word_mean_minus_metric_pt": -0.015227864583302164,
+      "word_mean_within_0_1_pt_metric": true,
+      "app_mean_pitch_pt": 15.4453125,
+      "app_mean_minus_word_pt": 0.01864583333330394,
+      "app_mean_within_0_1_pt_word": true
+    },
+    {
+      "id": "F2_AUTO_1_5",
+      "requested_family": "Calibri",
+      "actual_word_face": "/BCDHEE+Calibri",
+      "word_single_metric": 1.220703125,
+      "expected_mean_pitch_pt": 20.1416015625,
+      "word_mean_pitch_pt": 20.089999999999993,
+      "word_mean_minus_metric_pt": -0.05160156250000725,
+      "word_mean_within_0_1_pt_metric": true,
+      "app_mean_pitch_pt": 20.14453125,
+      "app_mean_minus_word_pt": 0.05453125000000725,
+      "app_mean_within_0_1_pt_word": true
+    },
+    {
+      "id": "F3_AUTO_1",
+      "requested_family": "Times New Roman",
+      "actual_word_face": "/BCDKEE+TimesNewRomanPSMT",
+      "word_single_metric": 1.14990234375,
+      "expected_mean_pitch_pt": 12.64892578125,
+      "word_mean_pitch_pt": 12.673333333333327,
+      "word_mean_minus_metric_pt": 0.024407552083326678,
+      "word_mean_within_0_1_pt_metric": true,
+      "app_mean_pitch_pt": 12.64453125,
+      "app_mean_minus_word_pt": -0.028802083333326678,
+      "app_mean_within_0_1_pt_word": true
+    },
+    {
+      "id": "F3_AUTO_1_15",
+      "requested_family": "Times New Roman",
+      "actual_word_face": "/BCDKEE+TimesNewRomanPSMT",
+      "word_single_metric": 1.14990234375,
+      "expected_mean_pitch_pt": 14.546264648437498,
+      "word_mean_pitch_pt": 14.593333333333362,
+      "word_mean_minus_metric_pt": 0.04706868489586391,
+      "word_mean_within_0_1_pt_metric": true,
+      "app_mean_pitch_pt": 14.54296875,
+      "app_mean_minus_word_pt": -0.050364583333362134,
+      "app_mean_within_0_1_pt_word": true
+    },
+    {
+      "id": "F3_AUTO_1_5",
+      "requested_family": "Times New Roman",
+      "actual_word_face": "/BCDKEE+TimesNewRomanPSMT",
+      "word_single_metric": 1.14990234375,
+      "expected_mean_pitch_pt": 18.973388671875,
+      "word_mean_pitch_pt": 18.92333333333333,
+      "word_mean_minus_metric_pt": -0.050055338541671546,
+      "word_mean_within_0_1_pt_metric": true,
+      "app_mean_pitch_pt": 18.97265625,
+      "app_mean_minus_word_pt": 0.049322916666671546,
+      "app_mean_within_0_1_pt_word": true
+    },
+    {
+      "id": "F4_AUTO_1",
+      "requested_family": "Courier New",
+      "actual_word_face": "/BCDNEE+CourierNewPSMT",
+      "word_single_metric": 1.1328125,
+      "expected_mean_pitch_pt": 12.4609375,
+      "word_mean_pitch_pt": 12.423333333333327,
+      "word_mean_minus_metric_pt": -0.03760416666667332,
+      "word_mean_within_0_1_pt_metric": true,
+      "app_mean_pitch_pt": 12.45703125,
+      "app_mean_minus_word_pt": 0.03369791666667332,
+      "app_mean_within_0_1_pt_word": true
+    },
+    {
+      "id": "F4_AUTO_1_15",
+      "requested_family": "Courier New",
+      "actual_word_face": "/BCDNEE+CourierNewPSMT",
+      "word_single_metric": 1.1328125,
+      "expected_mean_pitch_pt": 14.330078124999998,
+      "word_mean_pitch_pt": 14.343333333333362,
+      "word_mean_minus_metric_pt": 0.01325520833336391,
+      "word_mean_within_0_1_pt_metric": true,
+      "app_mean_pitch_pt": 14.33203125,
+      "app_mean_minus_word_pt": -0.011302083333362134,
+      "app_mean_within_0_1_pt_word": true
+    },
+    {
+      "id": "F4_AUTO_1_5",
+      "requested_family": "Courier New",
+      "actual_word_face": "/BCDNEE+CourierNewPSMT",
+      "word_single_metric": 1.1328125,
+      "expected_mean_pitch_pt": 18.69140625,
+      "word_mean_pitch_pt": 18.67333333333333,
+      "word_mean_minus_metric_pt": -0.018072916666671546,
+      "word_mean_within_0_1_pt_metric": true,
+      "app_mean_pitch_pt": 18.69140625,
+      "app_mean_minus_word_pt": 0.018072916666671546,
+      "app_mean_within_0_1_pt_word": true
+    },
+    {
+      "id": "F5_AUTO_1",
+      "requested_family": "Roboto",
+      "actual_word_face": "/BCEAEE+Roboto-Regular",
+      "word_single_metric": 1.2001953125,
+      "expected_mean_pitch_pt": 13.2021484375,
+      "word_mean_pitch_pt": 13.173333333333327,
+      "word_mean_minus_metric_pt": -0.028815104166673322,
+      "word_mean_within_0_1_pt_metric": true,
+      "app_mean_pitch_pt": 13.1953125,
+      "app_mean_minus_word_pt": 0.021979166666673322,
+      "app_mean_within_0_1_pt_word": true
+    },
+    {
+      "id": "F5_AUTO_1_15",
+      "requested_family": "Roboto",
+      "actual_word_face": "/BCEAEE+Roboto-Regular",
+      "word_single_metric": 1.2001953125,
+      "expected_mean_pitch_pt": 15.182470703124999,
+      "word_mean_pitch_pt": 15.176666666666696,
+      "word_mean_minus_metric_pt": -0.0058040364583025195,
+      "word_mean_within_0_1_pt_metric": true,
+      "app_mean_pitch_pt": 15.1875,
+      "app_mean_minus_word_pt": 0.01083333333330394,
+      "app_mean_within_0_1_pt_word": true
+    },
+    {
+      "id": "F5_AUTO_1_5",
+      "requested_family": "Roboto",
+      "actual_word_face": "/BCEAEE+Roboto-Regular",
+      "word_single_metric": 1.2001953125,
+      "expected_mean_pitch_pt": 19.80322265625,
+      "word_mean_pitch_pt": 19.839999999999993,
+      "word_mean_minus_metric_pt": 0.03677734374999275,
+      "word_mean_within_0_1_pt_metric": true,
+      "app_mean_pitch_pt": 19.8046875,
+      "app_mean_minus_word_pt": -0.03531249999999275,
+      "app_mean_within_0_1_pt_word": true
+    }
+  ],
+  "limits": [
+    "Live font proof measures these 15 uniform Latin pitches; it is not universal Word glyph/layout equivalence.",
+    "The full frozen-corpus mismatches and separator/default-style/continuation limits remain open in the acceptance document."
+  ]
+}
