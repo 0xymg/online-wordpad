@@ -1,3 +1,4 @@
+import { projectEndnotes, unprojectEndnotes, refreshNoteLabels } from "./document-notes";
 import { Selection, TextSelection, type EditorState, type Transaction } from "prosemirror-state";
 import { closeHistory } from "prosemirror-history";
 import { documentSections, type DocumentSection } from "./document-sections";
@@ -25,7 +26,15 @@ function command(state: EditorState): { tr: Transaction; model: DocumentModel } 
     tr.setDocAttribute("documentModel", model);
     tr.setSelection(Selection.fromJSON(tr.doc, state.selection.toJSON()));
   }
+  unprojectEndnotes(tr);
   return { tr, model };
+}
+/** Generated note terminals must move in the same undoable transaction as the
+ * section edit; appended cache-only moves otherwise destroy inverse mappings. */
+function finishSectionCommand(tr: Transaction, model: DocumentModel): Transaction {
+  projectDocumentModel(tr, model);
+  refreshNoteLabels(projectEndnotes(tr));
+  return projectDocumentModel(tr, getDocumentModel(tr.doc)!);
 }
 function newFollowingSection(previous: SectionRecord, start: "nextPage" | "continuous"): SectionRecord {
   const raw = new DOMParser().parseFromString(sectionRecordXml(previous), "application/xml");
@@ -41,21 +50,21 @@ function newFollowingSection(previous: SectionRecord, start: "nextPage" | "conti
 /** Split a top-level paragraph/heading. A nonempty/nested selection is rejected intact. */
 export function insertDocumentSection(state: EditorState, start: "nextPage" | "continuous"): Transaction {
   if (!state.selection.empty) throw new SectionCommandError("invalid-selection", "Place the cursor without selecting text");
-  const $pos = state.selection.$from;
-  if ($pos.depth !== 1 || !["paragraph", "heading"].includes($pos.parent.type.name)) throw new SectionCommandError("unsupported-cursor", "Section breaks currently require a top-level paragraph or heading");
+  const originalPos = state.selection.$from;
+  if (originalPos.depth !== 1 || originalPos.parent.attrs.noteOwnerId || !["paragraph", "heading"].includes(originalPos.parent.type.name)) throw new SectionCommandError("unsupported-cursor", "Section breaks currently require a top-level paragraph or heading");
   if (start !== "nextPage" && start !== "continuous") throw new SectionCommandError("unsupported-cursor", "Unsupported section start");
   const { tr, model } = command(state);
   const sections = documentSections(tr.doc), index = activeDocumentSection({ doc: tr.doc, selection: tr.selection } as EditorState).index;
   const currentId = sections[index].id, newId = allocateDocumentIdentity("section", new Set(Object.keys(model.sections)), () => crypto.randomUUID());
-  const leftPos = $pos.before(1); tr.split(state.selection.from);
+  const $pos = tr.selection.$from;
+  const leftPos = $pos.before(1); tr.split(tr.selection.from);
   // The old section's endpoint becomes the new right section's endpoint.
   tr.doc.forEach((node, pos) => { if (node.attrs.sectionEndId === currentId) tr.setNodeMarkup(pos, undefined, { ...node.attrs, sectionEndId: newId }); });
   const left = tr.doc.nodeAt(leftPos)!; tr.setNodeMarkup(leftPos, undefined, { ...left.attrs, sectionEndId: currentId });
   const next: DocumentModel = { ...model, sections: { ...model.sections, [newId]: newFollowingSection(model.sections[currentId], start) },
     finalSectionId: model.finalSectionId === currentId ? newId : model.finalSectionId };
-  projectDocumentModel(tr, next);
   tr.setSelection(TextSelection.create(tr.doc, leftPos + tr.doc.nodeAt(leftPos)!.nodeSize + 1));
-  return tr.scrollIntoView();
+  return finishSectionCommand(tr, next).scrollIntoView();
 }
 /** sectionId identifies the section whose END boundary is removed. */
 export function removeDocumentSectionBoundary(state: EditorState, sectionId: string, policy: "keepBefore" | "keepAfter"): Transaction {
@@ -76,7 +85,7 @@ export function removeDocumentSectionBoundary(state: EditorState, sectionId: str
     else if (node.attrs.sectionEndId === followingId && keepId === sectionId) tr.setNodeMarkup(pos, undefined, { ...node.attrs, sectionEndId: keepId });
   });
   const next: DocumentModel = { ...model, sections: records, finalSectionId: model.finalSectionId === followingId ? keepId as DocumentModel["finalSectionId"] : model.finalSectionId };
-  return projectDocumentModel(tr, next).scrollIntoView();
+  return finishSectionCommand(tr, next).scrollIntoView();
 }
 export function setSectionGeometry(state: EditorState, patch: Partial<SectionPage>, scope: "section" | "all", sectionId?: string): Transaction {
   return setSectionLayout(state, { page: patch }, scope, sectionId);
@@ -99,7 +108,7 @@ export function setSectionLayout(state: EditorState, patch: { page?: Partial<Sec
     updates.push([id, { ...record, page, columns, flowDirection }]);
   }
   const sections = { ...model.sections, ...Object.fromEntries(updates) };
-  return projectDocumentModel(tr, { ...model, sections });
+  return finishSectionCommand(tr, { ...model, sections });
 }
 export function setSectionColumns(state: EditorState, settings: Extract<SectionColumns, { kind: "equal" }>, scope: "section" | "all", sectionId?: string, convertPreserved = false): Transaction {
   return setSectionLayout(state, { columns: settings }, scope, sectionId, convertPreserved);

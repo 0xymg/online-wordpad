@@ -89,7 +89,7 @@ const script=`window.__tabTests=(()=>{const modules=${JSON.stringify(modules)},c
    let restoredDeletion;H.undo(deletionState,tr=>{restoredDeletion=deletionState.apply(tr);});check(same(restoredDeletion.doc.toJSON(),beforeDeletion),'one undo restores deleted style and all original raw properties');
    const bad=[{defaultTabStop:0},{defaultTabStop:1.5},{decimalSeparator:';'}];check(bad.every(settings=>{try{C.setDocumentTabSettings(state,settings);return false;}catch{return true;}}),'invalid interval/decimal settings rejected intact');
    // A real tab survives normalization and model v2 protects it from v1 loaders.
-   const tabbed=M.parseDocumentHtml('<p>A\tB</p>',schema);check(tabbed.attrs.documentModel.version===4&&tabbed.firstChild.child(1).type.name==='tab'&&tabbed.textContent==='A\tB','model v4 normalizes and retains a literal tab position');
+   const tabbed=M.parseDocumentHtml('<p>A\tB</p>',schema);check(tabbed.attrs.documentModel.version===5&&tabbed.firstChild.child(1).type.name==='tab'&&tabbed.textContent==='A\tB','model v5 normalizes and retains a literal tab position');
    return{checks};
   });
   assert.ok(result.checks>=28);console.log(`PASS ${result.checks} tab model/command checks: inheritance, clear/reset, mixed paragraphs, style drafts, native preservation/enums, document settings and atomic undo.`);

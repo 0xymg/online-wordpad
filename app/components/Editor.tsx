@@ -8,11 +8,18 @@ import "@/lib/tab-layout.css";
 import { insertTabCharacter, tabCharactersPlugin } from "@/lib/tab-node";
 import { insertColumnBreak } from "@/lib/column-break";
 import { referenceIdentityPlugin } from "@/lib/document-references";
-import { REFERENCE_LAYOUT_STATUS_EVENT, flushReferenceLayout } from "@/lib/reference-layout";
+import { REFERENCE_LAYOUT_STATUS_EVENT } from "@/lib/reference-layout";
+import { flushDocumentOutputLayout } from "@/lib/document-output-layout";
+import { notePlugin } from "@/lib/document-notes";
 import "./references.css";
 import { referenceLabels } from "@/lib/reference-i18n";
 import type { ReferenceDialogMode } from "./ReferencesDialog";
-import { parseDocumentHtml, documentModelPlugin } from "@/lib/document-model";
+import type { NoteDialogMode, NoteDialogRequest } from "./NotesDialog";
+import { insertNote, navigateNoteOwner, type NoteKind } from "@/lib/document-notes";
+import { noteKindEditingEnabled } from "@/lib/note-features";
+import { noteLabels } from "@/lib/note-labels";
+import "./notes.css";
+import { parseDocumentHtml, documentModelPlugin, getDocumentModel, projectDocumentModel } from "@/lib/document-model";
 import { sectionMarkersPlugin, sectionMarkersKey } from "@/lib/section-markers";
 import "./section-markers.css";
 import { sectionLabels } from "@/lib/section-i18n";
@@ -88,6 +95,7 @@ const HeaderFooterDialog = lazy(() => import("./HeaderFooterDialog"));
 const TabsDialog = lazy(() => import("./TabsDialog"));
 const TabRuler = lazy(() => import("./TabRuler"));
 const ReferencesDialog = lazy(() => import("./ReferencesDialog"));
+const NotesDialog = lazy(() => import("./NotesDialog"));
 const SectionLayoutDialog = lazy(() => import("./SectionLayoutDialog"));
 const PageMarginsDialog = lazy(() => import("./PageMarginsDialog"));
 const ImageLayersPanel = lazy(() => import("./ImageLayersPanel"));
@@ -209,6 +217,7 @@ function buildPlugins() {
       toast.warning(sectionLabels(isLocale(lang) ? lang : "en").boundaryNesting);
     }),
     referenceIdentityPlugin(),
+    notePlugin({ finalize: tr => projectDocumentModel(tr, getDocumentModel(tr.doc)!), onBlocked: error => document.dispatchEvent(new CustomEvent("edtr-note-error", { bubbles: true, detail: { error } })) }),
     sectionMarkersPlugin(),
     tabCharactersPlugin(),
     paragraphStylePlugin(),
@@ -1231,6 +1240,31 @@ export default function Editor({
   const showTabs = useCallback(() => setTabsOpen(true), []);
   const [sectionLayoutOpen, setSectionLayoutOpen] = useState(false);
   const [referenceDialog, setReferenceDialog] = useState<ReferenceDialogMode | null>(null);
+  const [noteDialog, setNoteDialog] = useState<NoteDialogRequest | null>(null);
+  const showNote = useCallback((mode: NoteDialogMode, kind: NoteKind = "endnote") => {
+    const view = viewRef.current;
+    if (!view || view.isDestroyed) return;
+    if (mode === "insert") {
+      if (!view.editable || !noteKindEditingEnabled(kind)) return;
+      const before = new Set(Object.keys(view.state.doc.attrs.documentModel?.notes || {}));
+      try {
+        if (!insertNote(kind)(view.state, view.dispatch, view)) { toast.error(noteLabels(locale).failed); return; }
+        const noteId = Object.keys(view.state.doc.attrs.documentModel?.notes || {}).find(id => !before.has(id));
+        if (noteId) setNoteDialog({ mode: "edit", noteId, kind });
+      } catch { toast.error(noteLabels(locale).failed); }
+      return;
+    }
+    const selection = view.state.selection;
+    let noteId = selection instanceof NodeSelection && selection.node.type.name === "note_reference" ? String(selection.node.attrs.noteId) : undefined;
+    for (let depth = selection.$from.depth; !noteId && depth > 0; depth--) noteId = selection.$from.node(depth).attrs.noteOwnerId || undefined;
+    if (noteId && view.state.doc.attrs.documentModel?.notes[noteId]?.kind !== kind) noteId = undefined;
+    setNoteDialog({ mode, noteId, kind });
+  }, [locale]);
+  useEffect(() => {
+    const onError = (event: Event) => { if (event.target === document || event.target === viewRef.current?.dom) toast.error(noteLabels(locale).unsupported); };
+    window.addEventListener("edtr-note-error", onError);
+    return () => window.removeEventListener("edtr-note-error", onError);
+  }, [locale]);
   const [documentLoadError, setDocumentLoadError] = useState(false);
   const [referenceLayoutError, setReferenceLayoutError] = useState(false);
   useEffect(() => {
@@ -1239,6 +1273,18 @@ export default function Editor({
     };
     window.addEventListener(REFERENCE_LAYOUT_STATUS_EVENT, onStatus);
     return () => window.removeEventListener(REFERENCE_LAYOUT_STATUS_EVENT, onStatus);
+  }, []);
+  const [noteLayoutError, setNoteLayoutError] = useState(false);
+  useEffect(() => {
+    const onStatus = (event: Event) => {
+      if (event.target === viewRef.current?.dom) setNoteLayoutError(Boolean((event as CustomEvent<{ error: string | null }>).detail.error));
+    };
+    const clearAbsent = (event: Event) => {
+      if (event.target === viewRef.current?.dom && !Object.values(viewRef.current?.state.doc.attrs.documentModel?.notes || {}).some(record => (record as { kind?: string }).kind === "footnote")) setNoteLayoutError(false);
+    };
+    window.addEventListener("edtr-note-layout-status", onStatus);
+    window.addEventListener("edtr-note-update", clearAbsent);
+    return () => { window.removeEventListener("edtr-note-layout-status", onStatus); window.removeEventListener("edtr-note-update", clearAbsent); };
   }, []);
   const [columnLayoutError, setColumnLayoutError] = useState(false);
   useEffect(() => {
@@ -2200,9 +2246,12 @@ export default function Editor({
     // id) so a doc whose html is still being fetched exports from the DB.
     const isActiveDoc = file.id === loadedIdRef.current && !!v;
     let html: string;
+    let activeSnapshot: PMNode | null = null;
     if (isActiveDoc) {
-      await flushReferenceLayout(v!);
-      html = serializeDoc(v!.state.doc);
+      await flushDocumentOutputLayout(v!);
+      if (v!.isDestroyed || viewRef.current !== v || loadedIdRef.current !== file.id) throw new Error("Document changed while preparing output");
+      activeSnapshot = v!.state.doc;
+      html = serializeDoc(activeSnapshot);
     } else if (file.html !== undefined) {
       html = file.html;
     } else {
@@ -2227,7 +2276,9 @@ export default function Editor({
       tmp.innerHTML = html;
       downloadBlob(new Blob([tmp.innerText || tmp.textContent || ""], { type: "text/plain" }), `${safe}.txt`);
     } else {
-      const doc = isActiveDoc ? v!.state.doc : parseHtmlToDoc(html);
+      // Lazy exporter loading may span a document switch. Export the settled
+      // immutable snapshot associated with this filename, never the new view.
+      const doc = activeSnapshot || parseHtmlToDoc(html);
       if (fmt === "docx") {
         downloadBlob(await docToDocxBlob(doc, file.name || "Document", { orientation: pageOrientation, marginCm: pageMarginCm, pageNumbers, pageNumberFormat }), `${safe}.docx`);
       } else if (fmt === "pdf") {
@@ -2240,7 +2291,7 @@ export default function Editor({
           headerFooter: printHeaderFooter,
           pageNumbers,
           pageNumberFormat,
-        },isActiveDoc?v!:undefined), `${safe}.pdf`);
+        },activeSnapshot && v && !v.isDestroyed && v.state.doc === activeSnapshot ? v : undefined), `${safe}.pdf`);
       } else if (fmt === "md") {
         downloadBlob(new Blob([docToMarkdown(doc)], { type: "text/markdown" }), `${safe}.md`);
       } else {
@@ -2279,7 +2330,8 @@ export default function Editor({
       closeHome();
     } catch (error) {
       const unsupported = error && typeof error === "object" && "code" in error && error.code === "unsupported-reference";
-      toast.error(unsupported ? referenceLabels(locale).importUnsupported : t.toast.openFailed);
+      const unsupportedNote = error && typeof error === "object" && "code" in error && error.code === "unsupported-note";
+      toast.error(unsupportedNote ? noteLabels(locale).importUnsupported : unsupported ? referenceLabels(locale).importUnsupported : t.toast.openFailed);
     }
   }, [addNewDocument, closeHome, locale, t.toast.openFailed]);
 
@@ -2420,14 +2472,30 @@ export default function Editor({
         image: (node, v, getPos) => new ImageNodeView(node, v, getPos as () => number | undefined),
         text_box: (node, v, getPos) => createTextBoxNodeView(node, v, getPos, { onEdit: () => setTextBoxDialogOpen(true) }),
       },
+      handleDOMEvents: {
+        click(_view, event) {
+          const marker = event.target instanceof Element ? event.target.closest("[data-edtr-note-reference],[data-note-owner-id]") : null;
+          const noteId = marker?.getAttribute("data-note-id") || marker?.getAttribute("data-note-owner-id");
+          if (!noteId) return false;
+          event.preventDefault(); setNoteDialog({ mode: "edit", noteId }); return true;
+        },
+      },
       handleClickOn(view, _pos, node, nodePos, event, direct) {
+        if (direct && node.type.name === "note_reference") {
+          event.preventDefault();
+          view.dispatch(view.state.tr.setSelection(NodeSelection.create(view.state.doc, nodePos)));
+          setNoteDialog({ mode: "edit", noteId: String(node.attrs.noteId) });
+          return true;
+        }
         if (!direct || node.type !== mySchema.nodes.image) return false;
         event.preventDefault();
         view.dispatch(view.state.tr.setSelection(NodeSelection.create(view.state.doc, nodePos)));
         view.focus();
         return true;
       },
-      handleClick(v, pos) {
+      handleClick(v, pos, event) {
+        const generated = event.target instanceof Element ? event.target.closest("[data-note-owner-id]") : null;
+        if (generated) { event.preventDefault(); setNoteDialog({ mode: "edit", noteId: generated.getAttribute("data-note-owner-id") || undefined }); return true; }
         const range = linkRangeAt(v.state.doc, pos);
         if (!range || !range.href) { setLinkCard(null); return false; }
         const coords = v.coordsAtPos(range.from);
@@ -2510,6 +2578,11 @@ export default function Editor({
         return true;
       },
       handleKeyDown(v, event) {
+        if ((event.key === "Enter" || event.key === " ") && !event.isComposing) {
+          const selected = v.state.selection instanceof NodeSelection && v.state.selection.node.type.name === "note_reference" ? v.state.selection.node.attrs.noteId : null;
+          const focused = event.target instanceof Element ? event.target.closest("[data-edtr-note-reference]")?.getAttribute("data-note-id") : null;
+          if (selected || focused) { event.preventDefault(); setNoteDialog({ mode: "edit", noteId: String(selected || focused) }); return true; }
+        }
         if (backspaceDocumentId !== activeIdRef.current) {
           resetEmptyBackspaces();
           backspaceDocumentId = activeIdRef.current;
@@ -2594,12 +2667,31 @@ export default function Editor({
         }
       },
     });
+    const noteHost = view.dom.parentElement;
+    const handlePageNote = (event: Event) => {
+      if (view.isDestroyed || !(event.target instanceof Element)) return;
+      if (event instanceof KeyboardEvent && !["Enter", " "].includes(event.key)) return;
+      const layer = event.target.closest(".pm-footnote-layer");
+      if (!layer || layer.parentElement !== noteHost) return;
+      const backlink = event.target.closest("[data-note-backlink]");
+      const line = event.target.closest(".pm-footnote-line[data-note-id]");
+      const noteId = backlink?.getAttribute("data-note-backlink") || line?.getAttribute("data-note-id");
+      if (!noteId || view.state.doc.attrs.documentModel?.notes[noteId]?.kind !== "footnote") return;
+      if (!backlink && event.target.closest("a[href]")) return;
+      event.preventDefault();
+      if (backlink) { navigateNoteOwner(noteId)(view.state, view.dispatch, view); view.focus(); }
+      else setNoteDialog({ mode: "edit", noteId, kind: "footnote" });
+    };
+    noteHost?.addEventListener("click", handlePageNote);
+    noteHost?.addEventListener("keydown", handlePageNote);
     viewRef.current = view;
     refreshImagePopover(view);
     refreshDocInfo(view.state);
     view.focus();
     return () => {
       window.removeEventListener("pointerdown", resetEmptyBackspaces);
+      noteHost?.removeEventListener("click", handlePageNote);
+      noteHost?.removeEventListener("keydown", handlePageNote);
       view.destroy();
       // Clear the ref too: other effects dispatch through it, and dispatching
       // into a destroyed view throws inside updateState.
@@ -3038,7 +3130,7 @@ export default function Editor({
     const view = viewRef.current;
     if (!view) return;
     try {
-      await flushReferenceLayout(view);
+      await flushDocumentOutputLayout(view);
       toast.success(referenceLabels(locale).updated);
     } catch { toast.error(referenceLabels(locale).layoutError); }
   }, [locale]);
@@ -3427,6 +3519,7 @@ export default function Editor({
         onChangeCase={changeCase}
         onInsertTOC={insertTOC}
         onReference={setReferenceDialog}
+        onNote={showNote}
         onUpdateReferences={updateReferences}
         readingAloud={readingAloud}
         onToggleReadAloud={toggleReadAloud}
@@ -3471,6 +3564,7 @@ export default function Editor({
         />
       )}
       {showRuler && !focusMode && <Suspense fallback={null}><TabRuler view={viewRef.current} tick={tick} onOpenDialog={showTabs} /></Suspense>}
+      {noteLayoutError && <div role="alert" data-note-layout-alert className="flex items-center gap-2 border-b border-amber-300/60 bg-amber-50 px-3 py-2 text-xs text-amber-900 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-200"><Warning size={16} className="shrink-0" /><span>{noteLabels(locale).layoutError}</span></div>}
       {referenceLayoutError && <div role="alert" data-reference-layout-alert className="flex items-center gap-2 border-b border-amber-300/60 bg-amber-50 px-3 py-2 text-xs text-amber-900 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-200"><Warning size={16} className="shrink-0" /><span>{referenceLabels(locale).layoutError}</span></div>}
       {columnLayoutError && <div role="alert" data-column-layout-alert className="flex items-center gap-2 border-b border-amber-300/60 bg-amber-50 px-3 py-2 text-xs text-amber-900 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-200">
         <Warning size={16} weight="fill" className="shrink-0" />
@@ -4108,6 +4202,7 @@ export default function Editor({
       }} /></Suspense>}
       {documentLoadError && <div role="alert" className="fixed bottom-4 inset-x-4 z-50 rounded border bg-background p-3 text-sm text-destructive">{sectionLabels(locale).unsupportedModel}</div>}
       {tabsOpen && viewRef.current && <Suspense fallback={null}><TabsDialog view={viewRef.current} onClose={() => setTabsOpen(false)} /></Suspense>}
+      {noteDialog && viewRef.current && <Suspense fallback={null}><NotesDialog view={viewRef.current} request={noteDialog} onClose={() => setNoteDialog(null)} /></Suspense>}
       {referenceDialog && viewRef.current && <Suspense fallback={null}><ReferencesDialog view={viewRef.current} mode={referenceDialog} onClose={() => setReferenceDialog(null)} /></Suspense>}
       {sectionLayoutOpen && viewRef.current && <Suspense fallback={null}><SectionLayoutDialog view={viewRef.current} onClose={() => setSectionLayoutOpen(false)} /></Suspense>}
       {marginsOpen && viewRef.current && <Suspense fallback={null}><PageMarginsDialog view={viewRef.current} onClose={()=>setMarginsOpen(false)}/></Suspense>}

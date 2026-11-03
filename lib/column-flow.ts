@@ -120,11 +120,16 @@ function validGeometry(g: ColumnGeometry): boolean {
     && g.width > g.margins.left + g.margins.right && g.height > g.margins.top + g.margins.bottom;
 }
 /** Place units within one band. Hard breaks do not open an otherwise empty trailing region. */
-function fit(units: readonly FlowUnit[], start: number, count: number, capacity: number, physicalStart: boolean, fullCapacity: number, availableBand: number): { end: number; placements: Array<{ unit: FlowUnit; column: number; y: number; repeatedHeaderHeight: number }>; used: number; pageBreak: boolean; columnsUsed: number; overflow?: FlowUnit; requiredHeight?: number; unverifiedTrailingBreak?: FlowUnit; terminalBlankPage?: boolean } {
+function fit(units: readonly FlowUnit[], start: number, count: number, capacity: number, physicalStart: boolean, fullCapacity: number, availableBand: number, blockedPositions: readonly number[] = []): { end: number; placements: Array<{ unit: FlowUnit; column: number; y: number; repeatedHeaderHeight: number }>; used: number; pageBreak: boolean; columnsUsed: number; overflow?: FlowUnit; requiredHeight?: number; unverifiedTrailingBreak?: FlowUnit; terminalBlankPage?: boolean } {
   let index = start, column = 0, y = 0, used = 0, pageBreak = false;
   const placements: Array<{ unit: FlowUnit; column: number; y: number; repeatedHeaderHeight: number }> = [];
   while (index < units.length) {
     const unit = units[index];
+    // The owner line and its first note line must occupy the same page. A
+    // table band is indivisible here; moving the whole band preserves cells.
+    if (blockedPositions.some(pos => unit.table
+      ? unit.table.band.cells.some(cell => cell.lines.some(line => pos >= line.from && pos < line.to))
+      : pos >= unit.from && pos < unit.to)) { pageBreak = true; break; }
     if (unit.kind === 'column_break' || unit.kind === 'page_break') {
       index++;
       if (!units.slice(index).some(candidate => candidate.kind === 'line' || candidate.kind === 'block' || candidate.kind === 'table')) {
@@ -168,7 +173,7 @@ function fit(units: readonly FlowUnit[], start: number, count: number, capacity:
   return { end: index, placements, used, pageBreak, columnsUsed: Math.min(count, column + 1) };
 }
 /** Deterministic region flow. Explicit diagnostics mean callers must not publish a complete layout. */
-export function solveColumnFlow(sections: readonly FlowSection[], pageGap = 26): FlowLayout {
+export function solveColumnFlow(sections: readonly FlowSection[], pageGap = 26, notes?: { reserveByPage: readonly number[]; advance?: readonly { pos: number; toPage: number }[]; continuationSections?: readonly string[] }): FlowLayout {
   const result: FlowLayout = { pages: [], regions: [], fragments: [], diagnostics: [], complete: true };
   const fail = (sectionId: string, code: string, unit?: FlowUnit) => { result.complete = false; result.diagnostics.push({ sectionId, code, ...(unit ? { from: unit.from, to: unit.to } : {}) }); };
   let pageIndex = -1, bandTop = 0;
@@ -194,17 +199,33 @@ export function solveColumnFlow(sections: readonly FlowSection[], pageGap = 26):
     else bandTop = Math.max(bandTop, px(section.geometry.margins.top));
     let index = 0;
     while (index < section.units.length) {
-      const bottom = px(section.geometry.height - section.geometry.margins.bottom);
+      const reserve = notes?.reserveByPage[pageIndex] ?? 0;
+      if (!Number.isFinite(reserve) || reserve < 0) { fail(section.id, 'invalid-note-reservation'); break; }
+      // A shared physical page may contain continuous sections with different
+      // margins. Its footnote band cannot extend past either bottom boundary.
+      const physical = result.pages[pageIndex].geometry;
+      const sectionBottom = px(section.geometry.height - section.geometry.margins.bottom);
+      const bottom = (notes ? Math.min(sectionBottom, px(physical.height - physical.margins.bottom)) : sectionBottom) - reserve;
       const available = bottom - bandTop;
-      const fullCapacity = px(section.geometry.height - section.geometry.margins.top - section.geometry.margins.bottom);
+      const fullCapacity = bottom - px(section.geometry.margins.top);
+      if (fullCapacity <= epsilon) { fail(section.id, 'note-reservation-exceeds-region'); break; }
       if (available <= epsilon) { newPage(section, sectionIndex, ++sectionPage); continue; }
       const physicalStart = bandTop <= px(result.pages[pageIndex].geometry.margins.top) + epsilon;
-      let placed = fit(section.units, index, count, available, physicalStart, fullCapacity, available);
+      const blocked = (notes?.advance || []).filter(item => item.toPage > pageIndex).map(item => {
+        const owner = section.units.find(unit => item.pos >= unit.from && item.pos < unit.to);
+        const policy = owner?.paragraph;
+        // Conservatively advance the entire paragraph when a forced owner
+        // move could violate keep-lines or widow control.
+        if (policy && (policy.keepLines || policy.widowControl)) return section.units.find(unit => unit.paragraph?.block === policy.block)?.from ?? item.pos;
+        return item.pos;
+      });
+      let placed = fit(section.units, index, count, available, physicalStart, fullCapacity, available, blocked);
       if (placed.pageBreak && placed.end === index && !placed.placements.length) { newPage(section, sectionIndex, ++sectionPage); continue; }
       if (placed.unverifiedTrailingBreak) { fail(section.id, 'unverified-trailing-break', placed.unverifiedTrailingBreak); break; }
       if (placed.terminalBlankPage && next) { fail(section.id, 'unverified-section-ending-break'); break; }
       if (placed.overflow) {
-        if ((placed.requiredHeight ?? placed.overflow.height) > fullCapacity + epsilon || !Number.isFinite(placed.overflow.height) || placed.overflow.height < 0) { fail(section.id, 'unit-exceeds-region', placed.overflow); break; }
+        const naturalCapacity = px(section.geometry.height - section.geometry.margins.top - section.geometry.margins.bottom);
+        if ((placed.requiredHeight ?? placed.overflow.height) > naturalCapacity + epsilon || !Number.isFinite(placed.overflow.height) || placed.overflow.height < 0) { fail(section.id, 'unit-exceeds-region', placed.overflow); break; }
         if (!placed.placements.length) { newPage(section, sectionIndex, ++sectionPage); continue; }
       }
       const closesContinuous = placed.end === section.units.length && !placed.pageBreak && next?.start === 'continuous' && paperEqual(section.geometry, next.geometry);
@@ -213,10 +234,10 @@ export function solveColumnFlow(sections: readonly FlowSection[], pageGap = 26):
         // Search a common band height; retain explicit break constraints.
         let low = Math.max(...placed.placements.map(item => item.unit.height)), high = available;
         for (let pass = 0; pass < 24 && high - low > 0.01; pass++) {
-          const middle = (low + high) / 2, candidate = fit(section.units, index, count, middle, physicalStart, fullCapacity, available);
+          const middle = (low + high) / 2, candidate = fit(section.units, index, count, middle, physicalStart, fullCapacity, available, blocked);
           if (!candidate.overflow && !candidate.unverifiedTrailingBreak && candidate.end === section.units.length && !candidate.pageBreak) high = middle; else low = middle;
         }
-        bandHeight = high; placed = fit(section.units, index, count, bandHeight, physicalStart, fullCapacity, available);
+        bandHeight = high; placed = fit(section.units, index, count, bandHeight, physicalStart, fullCapacity, available, blocked);
       }
       const regionIndex = result.regions.length, page = result.pages[pageIndex];
       const columns = Array.from({ length: count }, (_, logical) => {
@@ -246,6 +267,14 @@ export function solveColumnFlow(sections: readonly FlowSection[], pageGap = 26):
       else bandTop += closesContinuous ? bandHeight : placed.used;
     }
     if (!result.complete) break;
+  }
+  // Continuation-only sheets are real physical pages. An adapter may request
+  // them after the body end; arbitrary insertion among sections is not inferred.
+  if (result.complete) for (const sectionId of notes?.continuationSections || []) {
+    const sectionIndex = sections.findIndex(section => section.id === sectionId), section = sections[sectionIndex];
+    if (!section || sectionIndex !== sections.length - 1) { fail(sectionId, 'unsupported-note-continuation-section'); break; }
+    const previous = result.pages.at(-1);
+    newPage(section, sectionIndex, previous?.section === sectionIndex ? previous.sectionPage + 1 : 0);
   }
   return result;
 }

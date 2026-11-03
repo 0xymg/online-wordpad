@@ -9,6 +9,7 @@ import type { EditorView } from "prosemirror-view";
 import type { Node as PMNode } from "prosemirror-model";
 import { defaultDocumentLayout } from "./document-layout";
 import { getDocumentModel } from "./document-model";
+import { collectNoteIndex } from "./document-notes";
 import { collectReferenceIndex } from "./document-references";
 import { referencePageAtPos, type ReferencePage } from "./reference-layout";
 import { preparePrintLayout } from "./print-layout";
@@ -64,10 +65,21 @@ function addPdfLinks(pdf: PDFDocument, sheets: HTMLElement[], targets: Map<strin
  const pages = pdf.getPages();
  sheets.forEach((sheet, index) => {
   const page = pages[index], box = sheet.getBoundingClientRect();
-  for (const element of sheet.querySelectorAll<HTMLElement>('a[href], [data-edtr-reference]')) {
+  for (const element of sheet.querySelectorAll<HTMLElement>('a[href], [data-edtr-reference], [data-edtr-note-reference], [data-note-owner-id][data-note-block="0"] sup')) {
    if (element.hasAttribute('data-edtr-reference') && element.closest('a[href]')) continue;
    let target: ReferencePage | undefined, uri: string | undefined;
-   if (element.hasAttribute('data-edtr-reference')) {
+   if (element.hasAttribute('data-edtr-note-reference')) {
+    target = targets.get(`note-body:${element.getAttribute('data-note-id')}`);
+    if (!target) continue;
+   } else if (element.hasAttribute('data-note-backlink')) {
+    target = targets.get(`note-owner:${element.getAttribute('data-note-backlink')}`);
+    if (!target) continue;
+   } else if (element.tagName === 'SUP' && element.closest('[data-note-owner-id]')) {
+    const block = element.closest('[data-note-owner-id]')!;
+    if (block.querySelector('sup') !== element) continue;
+    target = targets.get(`note-owner:${block.getAttribute('data-note-owner-id')}`);
+    if (!target) continue;
+   } else if (element.hasAttribute('data-edtr-reference')) {
     if (element.dataset.status !== 'ok') continue;
     target = targets.get(element.getAttribute('data-reference-target') || '');
     if (!target) continue;
@@ -112,6 +124,12 @@ export async function viewToPdfBlob(view:EditorView,opts:PdfExportOptions):Promi
  await preparePrintLayout(view,host,opts.headerFooter?{title:opts.title,date:new Date().toLocaleDateString()}:undefined);
  const index = collectReferenceIndex(view.state.doc), targets = new Map<string, ReferencePage>();
  for (const target of index.targets) if (index.byId.get(target.id)?.length === 1) targets.set(target.id, referencePageAtPos(view, target.pos));
+ for (const note of collectNoteIndex(view.state.doc).notes) targets.set(`note-owner:${note.noteId}`, referencePageAtPos(view, note.pos));
+ view.state.doc.forEach((node, pos) => {
+  if (node.attrs.noteOwnerId && node.attrs.noteBlock === 0) targets.set(`note-body:${node.attrs.noteOwnerId}`, referencePageAtPos(view, pos));
+ });
+ const { getFootnoteTargets } = await import("./note-single-layout");
+ for (const note of getFootnoteTargets(view) || []) targets.set(`note-body:${note.noteId}`, { ...note.note, label: "" });
  // html-to-image discovers fonts using instanceof HTMLElement. Its font scan
  // cannot descend into another window's elements, so collect from a main-window
  // clone before capturing the isolated, light-mode page artwork.
@@ -142,7 +160,7 @@ export async function viewToPdfBlob(view:EditorView,opts:PdfExportOptions):Promi
 }
 export async function docToScreenPdfBlob(doc:PMNode,opts:PdfExportOptions,active?:EditorView){
  getDocumentModel(doc);
- if(active&&active.state.doc===doc)return viewToPdfBlob(active,opts);
+ if(active&&!active.isDestroyed&&active.state.doc===doc)return viewToPdfBlob(active,opts);
  if(!doc.attrs.layout){const layout=defaultDocumentLayout();const margin=Math.round(opts.marginCm/2.54*1440);layout.margins={top:margin,bottom:margin,left:margin,right:margin};if(opts.orientation==='landscape')[layout.width,layout.height]=[layout.height,layout.width];layout.pageNumbers=opts.pageNumbers||'off';layout.pageNumberFormat=opts.pageNumberFormat||'plain';layout.overrides={pageNumbers:true};doc=doc.type.create({...doc.attrs,layout},doc.content);}
  const {readonlyDocumentView}=await import('./readonly-document-view');const renderer=readonlyDocumentView(doc);
  try{return await viewToPdfBlob(renderer.view,opts);}finally{renderer.destroy();}

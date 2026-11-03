@@ -10,7 +10,10 @@ import { TableMap } from "prosemirror-tables";
 import { DEFAULT_DOCUMENT_FONT } from "./document-font";
 import { imageWrap, imageDistance } from "./image-layout";
 import { documentSections } from "./document-sections";
-import { getDocumentModel, sectionIdentityOrder } from "./document-model";
+import { getDocumentModel, sectionIdentityOrder, projectDocumentModel } from "./document-model";
+import { EditorState } from "prosemirror-state";
+import { unprojectEndnotes } from "./document-notes";
+import { createNoteExport } from "./note-docx";
 import { collectReferenceIndex } from "./document-references";
 import { fixedImageWidth } from "./page-image-position";
 import { exportTextBoxes, textBoxBookmark } from "./text-box-docx";
@@ -149,6 +152,7 @@ class DocxBuilder {
   private imageQueue: Array<LoadedImage | null>;
   numbering: INumberingOptions["config"][number][] = [];
   referenceReplacements: ReferenceReplacement[] = [];
+  noteOwnerMarkers = new Map<string, string>();
   closeTocAfter = false;
   openTocHere: { fieldId: string; levels: number[]; status?: string } | null = null;
   private referenceNumbers = new Map<string, number>();
@@ -271,6 +275,10 @@ class DocxBuilder {
           out.push(this.marker("end", id, undefined, transport, `transport:${id}`));
         }
         out.push(this.marker(child.type.name === "bookmark_start" ? "start" : "end", id));
+      } else if (child.type.name === "note_reference") {
+        const marker = this.noteOwnerMarkers.get(String(child.attrs.noteId));
+        if (!marker) throw new Error("Cannot export a note without its canonical body");
+        out.push(new TextRun(marker));
       } else if (child.type.name === "reference_field") {
         const attrs = child.attrs;
         if (attrs.status === "unsupported") {
@@ -532,13 +540,13 @@ type DocxExportOptions = { orientation?: "portrait" | "landscape"; marginCm?: nu
 /** Every entry point exports settled reference caches from one measured snapshot. */
 export async function docToDocxBlob(doc: PMNode, title: string, options: DocxExportOptions = {}): Promise<Blob> {
   const references = collectReferenceIndex(doc);
-  if (!references.fields.length && !references.tocs.length) return docToDocxBlobReady(doc, title, options);
-  const [{ readonlyDocumentView }, { flushReferenceLayout }] = await Promise.all([import("./readonly-document-view"), import("./reference-layout")]);
+  if (!references.fields.length && !references.tocs.length && !Object.keys(getDocumentModel(doc)?.notes || {}).length) return docToDocxBlobReady(doc, title, options);
+  const [{ readonlyDocumentView }, { flushDocumentOutputLayout }] = await Promise.all([import("./readonly-document-view"), import("./document-output-layout")]);
   const renderer = readonlyDocumentView(doc);
   try {
     await document.fonts.ready;
     await Promise.all(Array.from(renderer.view.dom.querySelectorAll("img")).map(img => img.decode().catch(() => {})));
-    await flushReferenceLayout(renderer.view);
+    await flushDocumentOutputLayout(renderer.view);
     return await docToDocxBlobReady(renderer.view.state.doc, title, options);
   } finally { renderer.destroy(); }
 }
@@ -552,6 +560,7 @@ async function docToDocxBlobReady(
   // silently flatten their sections to legacy layout metadata.
   const model = getDocumentModel(doc);
   if (model) {
+    doc = projectDocumentModel(unprojectEndnotes(EditorState.create({ doc }).tr), model).doc;
     const ids = sectionIdentityOrder(doc, model);
     if (new Set(ids).size !== ids.length || ids.some(id => !Object.hasOwn(model.sections, id)) || ids.length !== Object.keys(model.sections).length)
       throw new Error("Cannot export inconsistent document section boundaries");
@@ -578,7 +587,9 @@ async function docToDocxBlobReady(
     }
     imageWidths.set(node, node.attrs.position === "page" ? fixedImageWidth(node.attrs, geometry) : Math.max(1, width));
   });
+  const noteExport = createNoteExport(doc);
   const builder = new DocxBuilder(images,layout?.styles,imageWidths);
+  builder.noteOwnerMarkers = noteExport.ownerMarkers;
   builder.registerReferences(doc);
   const children: FileChild[] = [];
   let activeToc: { fieldId: string; levels: number[]; status?: string } | null = null;
@@ -598,6 +609,11 @@ async function docToDocxBlobReady(
     if (builder.closeTocAfter) activeToc = null;
   });
   builder.closeTocAfter = false; builder.openTocHere = null;
+  for (const body of noteExport.bodies) {
+    children.push(new Paragraph(body.startMarker));
+    body.body.forEach(block => children.push(...builder.blockToDocx(block)));
+    children.push(new Paragraph(body.endMarker));
+  }
   // A4 portrait in twips (11906×16838) — docx.js swaps the two itself when
   // orientation is LANDSCAPE, so always pass the portrait dimensions.
   const file = new Document({
@@ -628,13 +644,14 @@ async function docToDocxBlobReady(
   result = await exportTextBoxes(result, builder.textBoxes);
   result = await replaceReferenceBookmarks(result, builder.referenceReplacements);
   if (layout?.styles) { const { exportDocumentStyles } = await import("./style-docx"); result = await exportDocumentStyles(result,doc); }
-  if (!layout?.running || !Object.keys(layout.running).length) return result;
+  if (!layout?.running || !Object.keys(layout.running).length) return noteExport.finish(result);
   const { exportRunning } = await import("./header-footer-export");
-  return exportRunning(result, doc, html => {
+  result = await exportRunning(result, doc, html => {
     const body = new DOMParser().parseFromString(html, "text/html");
     const header = PMParser.fromSchema(mySchema).parse(body.body);
     return docToDocxBlob(header, title);
   });
+  return noteExport.finish(result);
 }
 
 /* ── RTF conversion ─────────────────────────────────────────────────────── */

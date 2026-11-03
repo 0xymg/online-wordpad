@@ -6,12 +6,13 @@ import { allocateDocumentIdentity, isDocumentIdentity, type DocumentIdentity } f
 import { defaultDocumentLayout, readLayout, type DocumentLayout } from "./document-layout";
 import { sectionGeometry } from "./document-sections";
 import { normalizeReferenceIdentities } from "./document-references";
+import { defaultNotePolicy, validateNoteBody, validateNoteModel, validateNoteGraph, validateNoteProjection, projectEndnotes, refreshNoteLabels, type NoteRecord, type NotePolicy, type NoteSectionPolicy } from "./document-notes";
 import { normalizeTabCharacters } from "./tab-node";
 import { documentTabSettings } from "./tab-stops";
 import { parseSectionColumns, validSectionColumns, writeSectionColumns, type SectionColumns, type SectionFlowDirection } from "./section-columns";
 
 export const DOCUMENT_MODEL_ATTRIBUTE = "data-edtr-model";
-export const DOCUMENT_MODEL_VERSION = 4;
+export const DOCUMENT_MODEL_VERSION = 5;
 export type SectionStart = "nextPage" | "continuous" | "oddPage" | "evenPage";
 export type SectionPage = Pick<DocumentLayout, "width" | "height" | "margins">;
 export type RunningSlotV1 = NonNullable<DocumentLayout["running"]>[string];
@@ -19,9 +20,9 @@ export type SectionRecordV1 = {
   page: SectionPage; start: SectionStart; numbering: { start?: number; format?: string };
   rawProperties?: string; running: Record<string, RunningSlotV1>;
 };
-export type SectionRecord = SectionRecordV1 & { columns: SectionColumns; flowDirection: SectionFlowDirection };
-export type DocumentModel = { version: 4; id: DocumentIdentity<"document">; finalSectionId: DocumentIdentity<"section">; sections: Record<string, SectionRecord> };
-export type DocumentModelV1 = Omit<DocumentModel, "version" | "sections"> & { version: 1 | 2 | 3; sections: Record<string, SectionRecordV1 | SectionRecord> };
+export type SectionRecord = SectionRecordV1 & { columns: SectionColumns; flowDirection: SectionFlowDirection; notePolicy?: NoteSectionPolicy };
+export type DocumentModel = { version: 5; id: DocumentIdentity<"document">; finalSectionId: DocumentIdentity<"section">; sections: Record<string, SectionRecord>; notes: Record<string, NoteRecord>; notePolicy: NotePolicy };
+export type DocumentModelV1 = Omit<DocumentModel, "version" | "sections" | "notes" | "notePolicy"> & { version: 1 | 2 | 3 | 4; sections: Record<string, SectionRecordV1 | SectionRecord> };
 export class DocumentModelError extends Error {
   constructor(public code: "unsupported-version" | "invalid-model", message: string) { super(message); this.name = "DocumentModelError"; }
 }
@@ -44,7 +45,7 @@ export function validSectionPage(page: SectionPage): boolean {
 function assertModel(value: unknown): asserts value is DocumentModel | DocumentModelV1 {
   const model = value as DocumentModel | DocumentModelV1;
   if (!model || typeof model !== "object" || !Number.isInteger(model.version)) throw new DocumentModelError("invalid-model", "Invalid document model version");
-  if (![1, 2, 3, 4].includes(model.version)) throw new DocumentModelError("unsupported-version", "This document model version is not supported");
+  if (![1, 2, 3, 4, 5].includes(model.version)) throw new DocumentModelError("unsupported-version", "This document model version is not supported");
   if (!isDocumentIdentity(model.id, "document") || !isDocumentIdentity(model.finalSectionId, "section") || !model.sections || typeof model.sections !== "object" || Array.isArray(model.sections))
     throw new DocumentModelError("invalid-model", "Invalid document identity or section registry");
   for (const [id, section] of Object.entries(model.sections)) {
@@ -59,11 +60,17 @@ function assertModel(value: unknown): asserts value is DocumentModel | DocumentM
       throw new DocumentModelError("invalid-model", "Invalid section header or footer");
   }
   if (!Object.hasOwn(model.sections, model.finalSectionId)) throw new DocumentModelError("invalid-model", "The final section is missing");
+  if (model.version === 5) {
+    try { validateNoteModel(model); }
+    catch (error) { throw new DocumentModelError("invalid-model", error instanceof Error ? error.message : "Invalid note model"); }
+  }
 }
 export function getDocumentModel(doc: PMNode): DocumentModel | null {
   const value = doc.attrs.documentModel;
   if (value == null) return null;
-  assertModel(value); return value.version === 4 ? value : value.version === 3 ? { ...value, version: 4, sections: value.sections as Record<string, SectionRecord> } : { ...value, version: 4, sections: Object.fromEntries(Object.entries(value.sections).map(([id, record]) => [id, { ...record, ...parseSectionColumns(record.rawProperties, record.page) }])) };
+  assertModel(value);
+  if (value.version === 5) return value;
+  return { ...value, version: 5, notes: {}, notePolicy: defaultNotePolicy(), sections: value.version >= 3 ? value.sections as Record<string, SectionRecord> : Object.fromEntries(Object.entries(value.sections).map(([id, record]) => [id, { ...record, ...parseSectionColumns(record.rawProperties, record.page) }])) };
 }
 /** Read this envelope before parsing HTML so a future version cannot be silently dropped. */
 export function readDocumentModel(root: HTMLElement): DocumentModel | DocumentModelV1 | null {
@@ -178,10 +185,32 @@ export function projectDocumentModel(tr: Transaction, model: DocumentModel): Tra
   if (JSON.stringify(layout) !== JSON.stringify(projected)) tr.setDocAttribute("layout", projected);
   return tr;
 }
-/** v0–v3 -> v4 migration. Existing section IDs never regenerate on open/restore. */
-export function migrateDocumentNode(doc: PMNode, createToken: () => string = () => crypto.randomUUID(), importedFinalSectionId?: unknown): PMNode {
+type NoteImportData = { notes: Record<string, NoteRecord>; notePolicy?: NotePolicy; sectionNotePolicies?: (NoteSectionPolicy | null | undefined)[] };
+function finishNoteMigration(doc: PMNode, importedNotes?: unknown): PMNode {
+  let model = getDocumentModel(doc)!;
+  if (importedNotes !== undefined) {
+    if (!importedNotes || typeof importedNotes !== "object" || Array.isArray(importedNotes) || Object.keys(model.notes).length) throw new DocumentModelError("invalid-model", "Conflicting note import metadata");
+    const data = importedNotes as NoteImportData, order = sectionIdentityOrder(doc, model);
+    if (data.sectionNotePolicies !== undefined && (!Array.isArray(data.sectionNotePolicies) || (data.sectionNotePolicies.length !== 0 && data.sectionNotePolicies.length !== order.length))) throw new DocumentModelError("invalid-model", "Native note policies do not match the document sections");
+    if (data.sectionNotePolicies?.some(policy => policy != null && (typeof policy !== "object" || Array.isArray(policy)))) throw new DocumentModelError("invalid-model", "Invalid native section note policy");
+    model = { ...model, notes: data.notes, notePolicy: data.notePolicy || defaultNotePolicy(), sections: Object.fromEntries(order.map((id, index) => [id, data.sectionNotePolicies?.[index] ? { ...model.sections[id], notePolicy: data.sectionNotePolicies[index]! } : model.sections[id]])) };
+  }
+  try {
+    validateNoteModel(model, doc.type.schema);
+    const notes = Object.fromEntries(Object.entries(model.notes).map(([id, record]) => [id, { ...record, body: validateNoteBody(record.body, doc.type.schema) }]));
+    if (JSON.stringify(notes) !== JSON.stringify(model.notes)) model = { ...model, notes };
+    const result = doc.type.create({ ...doc.attrs, documentModel: model }, doc.content, doc.marks);
+    const diagnostics = validateNoteGraph(result);
+    if (diagnostics.length) throw new Error(diagnostics[0].message);
+    const projectionErrors = validateNoteProjection(result);
+    if (projectionErrors.length) throw new Error(projectionErrors[0].message);
+    return projectDocumentModel(refreshNoteLabels(projectEndnotes(EditorState.create({ doc: result }).tr)), model).doc;
+  } catch (error) { throw new DocumentModelError("invalid-model", error instanceof Error ? error.message : "Invalid note graph"); }
+}
+/** v0–v4 -> v5 migration. Existing section/reference IDs never regenerate on open/restore. */
+export function migrateDocumentNode(doc: PMNode, createToken: () => string = () => crypto.randomUUID(), importedFinalSectionId?: unknown, importedNotes?: unknown): PMNode {
   const existing = getDocumentModel(doc);
-  if (existing) { validateBoundaries(doc, existing); return normalizeReferenceIdentities(projectDocumentModel(EditorState.create({ doc }).tr, existing).doc, createToken); }
+  if (existing) { validateBoundaries(doc, existing); return finishNoteMigration(normalizeReferenceIdentities(projectDocumentModel(EditorState.create({ doc }).tr, existing).doc, createToken), importedNotes); }
   const layout: DocumentLayout = doc.attrs.layout || defaultDocumentLayout(), reserved = new Set<string>();
   doc.descendants((node, _pos, parent) => {
     if (String(node.attrs.docxProperties || "").includes("sectPr") && parent?.type.name !== "doc") throw new DocumentModelError("invalid-model", "A nested source section boundary cannot be migrated safely");
@@ -212,18 +241,25 @@ export function migrateDocumentNode(doc: PMNode, createToken: () => string = () 
     if (!Object.hasOwn(node.type.spec.attrs || {}, "sectionEndId")) throw new DocumentModelError("invalid-model", "This section boundary cannot be represented safely");
     const id = make(node.attrs.docxProperties, index++); children.push(node.type.create({ ...node.attrs, sectionEndId: id }, node.content, node.marks));
   } else children.push(node.attrs.sectionEndId ? node.type.create({ ...node.attrs, sectionEndId: null }, node.content, node.marks) : node); });
-  const finalSectionId = make(layout.section, index), model: DocumentModel = { version: 4, id: fresh("document"), finalSectionId, sections };
+  const finalSectionId = make(layout.section, index), model: DocumentModel = { version: 5, id: fresh("document"), finalSectionId, sections, notes: {}, notePolicy: defaultNotePolicy() };
   for (const key of Object.keys(layout.sectionMargins || {})) if (!/^\d+$/.test(key) || Number(key) > index) throw new DocumentModelError("invalid-model", "A legacy section margin has no matching section");
   for (const key of Object.keys(layout.running || {})) if (!/^\d+:(default|first|even):(header|footer)$/.test(key) || Number(key.split(":")[0]) > index) throw new DocumentModelError("invalid-model", "A legacy header or footer has no matching section");
   assertModel(model);
   const migrated = doc.type.create({ ...doc.attrs, documentModel: model }, children, doc.marks);
-  return normalizeReferenceIdentities(projectDocumentModel(EditorState.create({ doc: migrated }).tr, model).doc, createToken);
+  return finishNoteMigration(normalizeReferenceIdentities(projectDocumentModel(EditorState.create({ doc: migrated }).tr, model).doc, createToken), importedNotes);
 }
 export function parseDocumentHtml(html: string, schema: Schema): PMNode {
   const dom = new DOMParser().parseFromString(html || "<p></p>", "text/html"), model = readDocumentModel(dom.body);
   const importedFinalSectionId = dom.body.querySelector("[data-edtr-docx-final-section-id]")?.getAttribute("data-edtr-docx-final-section-id");
+  const noteCarrier = dom.body.querySelector("[data-edtr-notes-import]");
+  let importedNotes: unknown;
+  if (noteCarrier) {
+    if (dom.body.querySelectorAll("[data-edtr-notes-import]").length !== 1) throw new DocumentModelError("invalid-model", "Conflicting note import metadata");
+    try { importedNotes = JSON.parse(noteCarrier.getAttribute("data-edtr-notes-import") || ""); }
+    catch { throw new DocumentModelError("invalid-model", "Invalid note import metadata"); }
+  }
   const doc = PMParser.fromSchema(schema).parse(dom.body, { topNode: schema.nodes.doc.create({ layout: readLayout(dom.body) || defaultDocumentLayout(), documentModel: model }) });
-  return migrateDocumentNode(normalizeTabCharacters(doc), undefined, importedFinalSectionId);
+  return migrateDocumentNode(normalizeTabCharacters(doc), undefined, importedFinalSectionId, importedNotes);
 }
 function captureLegacyProjection(doc: PMNode, model: DocumentModel): DocumentModel {
   const layout: DocumentLayout = doc.attrs.layout || defaultDocumentLayout(), sections = { ...model.sections };

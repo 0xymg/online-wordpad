@@ -72,11 +72,11 @@ test('TOC config allocates a stable field and edits levels as one transaction', 
  let state=stateFor([p('Before')]); state=run(state,R.insertTableOfContents([3,1,1,9],'Contents')); let toc=R.collectReferenceIndex(state.doc).tocs[0]; assert.deepEqual(toc.levels,[1,3]); const fieldId=toc.fieldId;
  state=run(state,R.updateTableOfContents(toc.pos,[2])); toc=R.collectReferenceIndex(state.doc).tocs[0]; assert.equal(toc.fieldId,fieldId); assert.deepEqual(toc.levels,[2]);
 });
-test('v3 to v4 migration preserves document and section identities, future guard runs before DOM parsing', () => {
+test('v3 to v5 migration preserves document and section identities, future guard runs before DOM parsing', () => {
  const sec=id('sec',1), model={version:3,id:id('doc',1),finalSectionId:sec,sections:{[sec]:{page:{width:11906,height:16838,margins:{top:1440,right:1440,bottom:1440,left:1440}},start:'nextPage',numbering:{},running:{},columns:{kind:"equal",count:2,space:720,separator:false},flowDirection:'ltr'}}};
  // getDocumentModel is pure and upgrades without mutating an old snapshot.
- const migrated=M.getDocumentModel(schema.nodes.doc.create({documentModel:model},[p('Legacy')])); assert.equal(migrated.version,4); assert.equal(migrated.id,model.id); assert.equal(migrated.finalSectionId,sec); assert.equal(model.version,3); assert.equal(migrated.sections[sec].columns.count,2);
- const future={...model,version:5}; assert.throws(()=>M.readDocumentModel({hasAttribute:()=>true,getAttribute:()=>JSON.stringify(future)}),error=>error.code==='unsupported-version');
+ const migrated=M.getDocumentModel(schema.nodes.doc.create({documentModel:model},[p('Legacy')])); assert.equal(migrated.version,5); assert.equal(migrated.id,model.id); assert.equal(migrated.finalSectionId,sec); assert.equal(model.version,3); assert.equal(migrated.sections[sec].columns.count,2);
+ const future={...model,version:6}; assert.throws(()=>M.readDocumentModel({hasAttribute:()=>true,getAttribute:()=>JSON.stringify(future)}),error=>error.code==='unsupported-version');
 });
 
 test('live non-split duplicate insertion marks existing fields ambiguous', () => {

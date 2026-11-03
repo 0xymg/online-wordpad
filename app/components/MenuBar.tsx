@@ -2,6 +2,10 @@
 
 import { referenceLabels } from "@/lib/reference-i18n";
 import type { ReferenceDialogMode } from "./ReferencesDialog";
+import type { NoteDialogMode } from "./NotesDialog";
+import type { NoteKind } from "@/lib/document-notes";
+import { FOOTNOTE_EDITING_ENABLED } from "@/lib/note-features";
+import { noteLabels } from "@/lib/note-labels";
 
 import { memo, useRef, useSyncExternalStore } from "react";
 import {
@@ -109,6 +113,7 @@ interface MenuBarProps {
   onChangeCase: (kind: "upper" | "lower" | "title" | "sentence") => void;
   onInsertTOC: () => void;
   onReference: (mode: ReferenceDialogMode) => void;
+  onNote: (mode: NoteDialogMode, kind?: NoteKind) => void;
   onUpdateReferences: () => void;
   readingAloud: boolean;
   onToggleReadAloud: () => void;
@@ -192,7 +197,7 @@ function MenuBar({
   showImageLayers, onToggleImageLayers,
   spellcheckOn, onToggleSpellcheck,
   spellLang, onSpellLangChange,
-  onChangeCase, onInsertTOC, onReference, onUpdateReferences,
+  onChangeCase, onInsertTOC, onReference, onNote, onUpdateReferences,
   readingAloud, onToggleReadAloud,
   focusMode, onToggleFocusMode,
   printHeaderFooter, onTogglePrintHeaderFooter,
@@ -642,6 +647,15 @@ function MenuBar({
           <MenubarItem onClick={() => onReference("caption")}>{referenceLabels(locale).caption}…</MenubarItem>
           <MenubarItem onClick={() => onReference("reference")}>{referenceLabels(locale).reference}…</MenubarItem>
           <MenubarItem onClick={onUpdateReferences}>{referenceLabels(locale).update}</MenubarItem>
+          <MenubarSeparator />
+          <MenubarItem onClick={() => onNote("insert")}>{noteLabels(locale).insert}…</MenubarItem>
+          <MenubarItem onClick={() => onNote("edit")}>{noteLabels(locale).edit}…</MenubarItem>
+          <MenubarItem onClick={() => onNote("settings")}>{noteLabels(locale).settings}…</MenubarItem>
+          {FOOTNOTE_EDITING_ENABLED && <>
+            <MenubarItem onClick={() => onNote("insert", "footnote")}>{noteLabels(locale).footnoteInsert}…</MenubarItem>
+            <MenubarItem onClick={() => onNote("edit", "footnote")}>{noteLabels(locale).footnoteEdit}…</MenubarItem>
+            <MenubarItem onClick={() => onNote("settings", "footnote")}>{noteLabels(locale).footnoteSettings}…</MenubarItem>
+          </>}
           <MenubarSeparator />
           <MenubarItem onClick={onInsertDivider}>{t.insert.horizontalLine}</MenubarItem>
           <MenubarItem onClick={onInsertTab}>{tabLabels(locale).insertTab}<MenubarShortcut>{isMac ? "⌘⌥T" : "Ctrl+Alt+T"}</MenubarShortcut></MenubarItem>

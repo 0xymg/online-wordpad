@@ -1,0 +1,12 @@
+.ProseMirror .edtr-note-reference { cursor: pointer; border-radius: 2px; white-space: nowrap; }
+.ProseMirror .edtr-note-reference:hover, .ProseMirror .edtr-note-reference:focus-visible { background: color-mix(in srgb, currentColor 10%, transparent); outline: 1px solid currentColor; }
+.ProseMirror [data-note-owner-id] { cursor: pointer; }
+.edtr-note-editor { min-width: 0; border: 1px solid var(--input); border-radius: 6px; overflow: auto; max-height: 40dvh; }
+.edtr-note-editor > .ProseMirror { min-height: 160px; padding: 12px; outline: none; background: #fff; color: #000; color-scheme: light; white-space: pre-wrap; overflow-wrap: anywhere; font-family: Calibri, Carlito, Arial, sans-serif; font-size: 16px; line-height: 1.4; }
+.edtr-note-editor .ProseMirror p { margin: 0 0 8px; }
+.edtr-note-editor .ProseMirror ul, .edtr-note-editor .ProseMirror ol { padding-inline-start: 28px; margin: 8px 0; }
+.edtr-note-editor .ProseMirror ul { list-style-type: disc; }
+.edtr-note-editor .ProseMirror ol { list-style-type: decimal; }
+.edtr-note-editor .ProseMirror a { color: #2563eb; text-decoration: underline; }
+.edtr-note-toolbar { display: flex; flex-wrap: wrap; gap: 4px; }
+@media print { .ProseMirror .edtr-note-reference { background: transparent; outline: none; } }

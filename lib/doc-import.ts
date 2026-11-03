@@ -1,5 +1,6 @@
 // Client-side file import: .txt / .md / .html / .docx → HTML for the editor.
 // Loaded on demand via dynamic import (mammoth is heavy).
+import { FOOTNOTE_EDITING_ENABLED } from "./note-features";
 
 function escapeHtml(text: string): string {
   return text
@@ -21,13 +22,16 @@ export async function fileToHtml(
   const ext = (file.name.split(".").pop() || "").toLowerCase();
 
   if (ext === "docx") {
-    const [mammoth, { prepareDocxFormatting }, { prepareTextBoxImport }, { prepareReferenceImport }] = await Promise.all([
+    const [mammoth, { prepareDocxFormatting }, { prepareTextBoxImport }, { prepareReferenceImport }, { prepareNoteImport }, { mySchema }] = await Promise.all([
       import("mammoth"),
       import("./docx-formatting"),
       import("./text-box-docx"),
       import("./reference-docx"),
+      import("./note-docx"),
+      import("@/app/components/editor-schema"),
     ]);
-    const boxes = await prepareTextBoxImport(await file.arrayBuffer());
+    const notes = await prepareNoteImport(await file.arrayBuffer(), { allowFootnotes: FOOTNOTE_EDITING_ENABLED });
+    const boxes = await prepareTextBoxImport(notes.arrayBuffer);
     const references = await prepareReferenceImport(boxes.arrayBuffer);
     const prepared = await prepareDocxFormatting(references.arrayBuffer);
     const result = await mammoth.convertToHtml(
@@ -38,7 +42,12 @@ export async function fileToHtml(
         ignoreEmptyParagraphs: false,
       },
     );
-    return { html: boxes.restore(references.restore(prepared.restore(result.value || "<p></p>"))), name };
+    const restored = notes.restore(boxes.restore(references.restore(prepared.restore(result.value || "<p></p>"))), mySchema);
+    if (!Object.keys(restored.notes).length && !restored.hasSettings) return { html: restored.html, name };
+    const carrier = document.createElement("div");
+    carrier.setAttribute("data-edtr-notes-import", JSON.stringify({ notes: restored.notes, notePolicy: restored.notePolicy, sectionNotePolicies: restored.sectionNotePolicies }));
+    carrier.innerHTML = restored.html;
+    return { html: carrier.outerHTML, name };
   }
 
   if (ext === "html" || ext === "htm") {

@@ -1,0 +1,28 @@
+/* eslint-disable @typescript-eslint/no-require-imports */
+/** Actual product HTML load → shared physical footnote layout → PDF/native DOCX. */
+const assert=require('node:assert/strict'),fs=require('node:fs/promises'),os=require('node:os'),path=require('node:path'),JSZip=require('jszip'),{execFileSync}=require('node:child_process');
+const {chromium}=require(process.env.PLAYWRIGHT_MODULE||'playwright');
+(async()=>{
+ const dir=await fs.mkdtemp(path.join(os.tmpdir(),'edtr-footnote-output-')),sec='sec_'+'1'.repeat(32),ids=['nte_'+'a'.repeat(32),'nte_'+'b'.repeat(32)];
+ const number={restart:'continuous',start:1,format:'decimal'},model={version:5,id:'doc_'+'0'.repeat(31)+'1',finalSectionId:sec,sections:{[sec]:{page:{width:12240,height:15840,margins:{top:1440,right:1440,bottom:1440,left:1440}},start:'nextPage',numbering:{start:1,format:'decimal'},running:{},columns:{kind:'equal',count:Number(process.env.FOOTNOTE_COLUMNS||1),space:720,separator:false},flowDirection:'ltr'}},notePolicy:{footnote:{...number,placement:'pageBottom'},endnote:{...number,placement:'documentEnd'}},notes:{}};
+ const expected=Array.from({length:600},(_,i)=>'TAIL'+i).join(' ');
+ model.notes[ids[0]]={kind:'footnote',body:{type:'doc',content:[{type:'paragraph',content:[{type:'text',text:'FOOTNOTE_LONG '+expected}]}]}};
+ model.notes[ids[1]]={kind:'footnote',body:{type:'doc',content:[{type:'paragraph',content:[{type:'text',text:'FOOTNOTE_SECOND'}]}]}};
+ const enc=s=>s.replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;'),source=path.join(dir,'footnotes.html');
+ await fs.writeFile(source,`<div data-edtr-model="${enc(JSON.stringify(model))}"><p>BODY_OWNER_ONE <span data-edtr-note-reference="true" data-note-id="${ids[0]}">1</span> BODY_OWNER_TWO <span data-edtr-note-reference="true" data-note-id="${ids[1]}">2</span></p>${Array.from({length:8},(_,i)=>`<p>MAIN_PARAGRAPH_${i}</p>`).join('')}</div>`);
+ const browser=await chromium.launch({headless:true,...(process.env.CHROMIUM_PATH?{executablePath:process.env.CHROMIUM_PATH}:{})});
+ try{
+  const page=await browser.newPage({viewport:{width:1350,height:1050}}),errors=[];page.setDefaultTimeout(30000);page.on('pageerror',e=>errors.push(e.message));
+  await page.goto((process.env.BASE_URL||'http://localhost:3120')+'/pad');const editor=page.locator('.editor-shell .ProseMirror[contenteditable=true]');await editor.waitFor();await page.locator('.editor-shell > div[aria-hidden=true]').waitFor({state:'hidden'});
+  await page.locator('input[type=file][accept*=".docx"]').setInputFiles(source);await editor.getByText('BODY_OWNER_ONE',{exact:false}).waitFor();
+  await page.waitForFunction(()=>document.querySelectorAll('.pm-footnote-layer').length>=2&&!document.querySelector('.ProseMirror[data-note-layout-error]')).catch(async error=>{await page.screenshot({path:path.join(dir,'failure.png'),fullPage:true});await fs.writeFile(path.join(dir,'failure.json'),JSON.stringify(await editor.evaluate(root=>({doc:root.pmViewDesc.node.toJSON(),attributes:[...root.attributes].map(a=>[a.name,a.value]),layers:document.querySelectorAll('.pm-footnote-layer').length,alerts:[...document.querySelectorAll('[role=alert]')].map(n=>n.textContent)})),null,2));throw error});
+  await page.screenshot({path:path.join(dir,'footnotes.png'),fullPage:true});
+  async function download(label,name){await page.getByRole('menuitem',{name:'File',exact:true}).click();await page.getByRole('menuitem',{name:'Export',exact:true}).hover();const[d]=await Promise.all([page.waitForEvent('download',{timeout:60000}),page.getByRole('menuitem',{name:label,exact:true}).click()]);const out=path.join(dir,name);await d.saveAs(out);return out;}
+  const pdfPath=await download('PDF (.pdf)','footnotes.pdf');
+  const report=JSON.parse(execFileSync(process.env.PDF_PYTHON||'python3',['-c',"from pypdf import PdfReader; import json,sys; r=PdfReader(sys.argv[1]); print(json.dumps({'pages':[p.extract_text() for p in r.pages],'links':[str(a.get_object().get('/A',{}).get('/S')) for p in r.pages for a in p.get('/Annots',[])]}))",pdfPath],{encoding:'utf8'}));
+  const text=report.pages.join(' ');assert.ok(report.pages.length>=2); assert.ok(report.pages.every(text=>text.trim()),'no phantom blank physical page');for(let i=0;i<600;i++)assert.equal((text.match(new RegExp('\\bTAIL'+i+'\\b','g'))||[]).length,1,'TAIL'+i+' exactly once');assert.equal((text.match(/FOOTNOTE_SECOND/g)||[]).length,1);assert.ok(report.links.filter(x=>x==='/GoTo').length>=4,'bidirectional links for both notes');
+  for(const text of report.pages){const body=[...text.matchAll(/(?:MAIN_PARAGRAPH_\d+|BODY_OWNER_\w+)/g)].map(m=>m.index),notes=[...text.matchAll(/(?:FOOTNOTE_\w+|TAIL\d+)/g)].map(m=>m.index);if(body.length&&notes.length)assert.ok(Math.max(...body)<Math.min(...notes),'PDF reading order body before notes');}
+  const docx=await download('Word (.docx)','footnotes.docx'),zip=await JSZip.loadAsync(await fs.readFile(docx));const xml=await zip.file('word/document.xml').async('string'),note=await zip.file('word/footnotes.xml').async('string');assert.equal((xml.match(/<w:footnoteReference\b/g)||[]).length,2);assert.ok(!xml.includes('FOOTNOTE_LONG'));assert.match(note,/TAIL599/);assert.match(note,/FOOTNOTE_SECOND/);assert.deepEqual(errors,[]);
+  console.log('PASS actual product footnote PDF/native DOCX: '+report.pages.length+' pages,600 words once,two notes,body-first reading order,4 bidirectional links; '+dir);
+ }catch(error){console.error('Artifacts:',dir);throw error;}finally{await browser.close();}
+})().catch(error=>{console.error(error);process.exitCode=1});

@@ -14,6 +14,7 @@ import { columnBreakNodeSpec } from "@/lib/column-break";
 import { tabNodeSpec } from "@/lib/tab-node";
 import { textBoxNodeSpec } from "@/lib/text-box";
 import { referenceParagraphAttrs, referenceHeadingAttrs, parseReferenceParagraphAttrs, referenceParagraphDOM, bookmarkStartNodeSpec, bookmarkEndNodeSpec, referenceFieldNodeSpec } from "@/lib/document-references";
+import { noteProjectionAttrs, parseNoteProjectionAttrs, noteProjectionDOM } from "@/lib/document-notes";
 
 function layoutStyles(el: HTMLElement): string {
   return ["height", "margin-top", "margin-bottom", "margin-left", "margin-right", "text-indent", "line-height", "background-color", "vertical-align", "border-top", "border-right", "border-bottom", "border-left", "padding-top", "padding-right", "padding-bottom", "padding-left"].map(p => el.style.getPropertyValue(p) ? `${p}:${el.style.getPropertyValue(p)}` : "").filter(Boolean).join(";");
@@ -55,7 +56,7 @@ const normalizeLineHeight = (value: unknown): string | null => {
 const paragraphNodeSpec: NodeSpec = {
   ...basicSchema.spec.nodes.get("paragraph"),
   attrs: {
-    ...rawAttrs, ...referenceParagraphAttrs,
+    ...rawAttrs, ...referenceParagraphAttrs, ...noteProjectionAttrs,
     styleId: { default: null }, styleText: { default: null }, styleParagraph: { default: null }, paragraphFormat: { default: null },
     textAlign: { default: null },
     indent: { default: 0 },
@@ -68,7 +69,7 @@ const paragraphNodeSpec: NodeSpec = {
       if (typeof dom === "string") return { textAlign: null, indent: 0, lineHeight: null };
       const el = dom as HTMLElement;
       return {
-        ...parseRaw(el), ...paragraphAttrs(el), ...parseReferenceParagraphAttrs(el),
+        ...parseRaw(el), ...paragraphAttrs(el), ...parseReferenceParagraphAttrs(el), ...parseNoteProjectionAttrs(el),
         textAlign: el.hasAttribute("data-edtr-style") ? null : normalizeTextAlign(el.style.textAlign),
         indent: el.hasAttribute("data-docx-properties") ? 0 : parseIndentFromDom(el),
         lineHeight: el.hasAttribute("data-edtr-style") || /[a-z%]/i.test(el.style.lineHeight) ? null : normalizeLineHeight(el.style.lineHeight),
@@ -84,7 +85,7 @@ const paragraphNodeSpec: NodeSpec = {
     if (indent > 0) style.push(`margin-left:${indent * 24}px`);
     if (lineHeight) style.push(`line-height:${lineHeight}`);
     style.push(paragraphCSS(node));
-    const attrs: Record<string, string> = { dir: "auto", ...rawDOM(node), ...paragraphDOM(node), ...referenceParagraphDOM(node) };
+    const attrs: Record<string, string> = { dir: "auto", ...rawDOM(node), ...paragraphDOM(node), ...referenceParagraphDOM(node), ...noteProjectionDOM(node) };
     if (style.length) attrs.style = style.join(";");
     if (indent > 0) attrs["data-indent"] = String(indent);
     return ["p", attrs, 0];
@@ -232,8 +233,7 @@ for (const name of ["table", "table_row"] as const) {
   };
 }
 
-export const mySchema = new Schema({
-  nodes: (addListNodes(
+const documentNodes = addListNodes(
     basicSchema.spec.nodes
       .update("doc", { ...basicSchema.spec.nodes.get("doc"), attrs: { layout: { default: null }, documentModel: { default: null } } })
       .update("paragraph", paragraphNodeSpec)
@@ -241,11 +241,30 @@ export const mySchema = new Schema({
       .update("image", imageNodeSpec),
     "paragraph block*",
     "block"
-  ))
+  );
+function noteAwareList(name: "bullet_list" | "ordered_list"): NodeSpec {
+  const original = documentNodes.get(name)!;
+  return {
+    ...original, attrs: { ...original.attrs, ...rawAttrs, ...noteProjectionAttrs },
+    parseDOM: [{ tag: name === "ordered_list" ? "ol" : "ul", getAttrs: dom => {
+      const el = dom as HTMLElement;
+      return { ...parseRaw(el), ...parseNoteProjectionAttrs(el), ...(name === "ordered_list" ? { order: el.hasAttribute("start") ? Number(el.getAttribute("start")) : 1 } : {}) };
+    } }],
+    toDOM: node => [name === "ordered_list" ? "ol" : "ul", { ...rawDOM(node), ...noteProjectionDOM(node), ...(name === "ordered_list" && node.attrs.order !== 1 ? { start: node.attrs.order } : {}) }, 0],
+  };
+}
+export const mySchema = new Schema({
+  nodes: documentNodes.update("bullet_list", noteAwareList("bullet_list")).update("ordered_list", noteAwareList("ordered_list"))
     .append(importedTables)
     .addToEnd("bookmark_start", bookmarkStartNodeSpec)
     .addToEnd("bookmark_end", bookmarkEndNodeSpec)
     .addToEnd("reference_field", referenceFieldNodeSpec)
+    .addToEnd("note_reference", {
+      inline: true, group: "inline", atom: true, selectable: true,
+      attrs: { noteId: { default: null }, cachedLabel: { default: "…" } },
+      parseDOM: [{ tag: "span[data-edtr-note-reference]", getAttrs: dom => { const el = dom as HTMLElement; return { noteId: el.getAttribute("data-note-id"), cachedLabel: el.textContent || "…" }; } }],
+      toDOM: node => ["span", { "data-edtr-note-reference": "true", id: `edtr-note-owner-${node.attrs.noteId}`, "data-note-id": node.attrs.noteId, "data-note-label": node.attrs.cachedLabel, class: "edtr-note-reference", contenteditable: "false", role: "link", tabindex: "0" }, ["sup", {}, String(node.attrs.cachedLabel || "…")]],
+    })
     .addToEnd("tab", tabNodeSpec)
     .addToEnd("column_break", columnBreakNodeSpec)
     .addToEnd("text_box", textBoxNodeSpec)

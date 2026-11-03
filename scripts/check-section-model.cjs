@@ -48,7 +48,7 @@ const script = `window.__sections = (() => { const modules=${JSON.stringify(modu
       check(encoded.includes('data-edtr-model'), 'model envelope serializes');
       const oldVersion=JSON.parse(JSON.stringify(M.getDocumentModel(reopened)));oldVersion.version=1;
       const upgraded=M.parseDocumentHtml(L.wrapDocumentHtml(output.innerHTML,reopened.attrs.layout,oldVersion),schema);
-      check(upgraded.attrs.documentModel.version===3 && upgraded.attrs.documentModel.id===oldVersion.id && same(D.documentSections(upgraded).map(s=>s.id),D.documentSections(reopened).map(s=>s.id)),'v1 upgrades to v3 without changing document or section identities');
+      check(upgraded.attrs.documentModel.version===5 && upgraded.attrs.documentModel.id===oldVersion.id && same(D.documentSections(upgraded).map(s=>s.id),D.documentSections(reopened).map(s=>s.id)),'v1 upgrades to v5 without changing document or section identities');
       const columnRaw = `<w:sectPr xmlns:w="${W}" xmlns:x="urn:test"><w:cols w:num="2" w:equalWidth="1" x:custom="retain"/><w:bidi/><w:docGrid w:linePitch="360"/></w:sectPr>`;
       const baseline = JSON.parse(JSON.stringify(M.getDocumentModel(reopened)));
       const columnId = baseline.finalSectionId;

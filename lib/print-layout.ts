@@ -8,14 +8,14 @@ export async function preparePrintLayout(view: EditorView, host: HTMLElement, cr
   const original = view.dom.parentElement;
   if (!original) throw new Error("Document view is detached");
   await Promise.all(Array.from(original.querySelectorAll("img")).map(img => img.decode().catch(() => {})));
-  const { flushReferenceLayout } = await import('./reference-layout');
-  await flushReferenceLayout(view);
+  const { flushDocumentOutputLayout } = await import('./document-output-layout');
+  await flushDocumentOutputLayout(view);
   const doc = view.state.doc;
   await readRunningSource(doc);
   await flushDocumentLayout(view);
   const source = view.dom.parentElement;
   if (view.isDestroyed || view.state.doc !== doc || !source) throw new Error("Document changed while preparing print");
-  await flushReferenceLayout(view);
+  await flushDocumentOutputLayout(view);
   const pages = paginationKey.getState(view.state)?.pages;
   if (!pages?.length || view.state.doc !== doc) throw new Error("Page layout is not ready");
   const maximumWidth = Math.max(...pages.map(page => page.geometry.width)) / 15;

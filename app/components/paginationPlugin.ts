@@ -17,6 +17,7 @@ import { updateTableOverlaySelection } from "@/lib/column-flow-table-decorations
 import { guardColumnTableTextDrag } from "@/lib/column-table-drag";
 import { setColumnArtworkStacking } from "@/lib/column-artwork-stacking";
 import { flushReferenceLayout, noteReferenceDocumentChange } from "@/lib/reference-layout";
+import { collectNoteIndex } from "@/lib/document-notes";
 import type { ColumnMeasurement } from "@/lib/column-flow-measure";
 import type { DocumentLayout } from "@/lib/document-layout";
 import { Plugin, PluginKey, TextSelection } from "prosemirror-state";
@@ -217,13 +218,15 @@ interface FlowUnit {
   rows?: Array<RenderedRow & { top: number; bottom: number }>;
   cells?: Array<{ pos: number; node: PMNode; dom: HTMLElement; blocks: Array<{ node: PMNode; pos: number; dom: HTMLElement }> }>;
 }
-function computeLayout(view: EditorView, cfg: PageLayoutConfig): { breaks: PageBreakPoint[]; pages?: RenderedPage[]; tallCells?: number[]; rowHeights?: RenderedRow[]; lastPagePadPx: number; complete: boolean } {
+function computeLayout(view: EditorView, cfg: PageLayoutConfig, notes?: { reserveByPage: readonly number[]; extraPages?: number; advance?: readonly { pos: number; toPage: number }[] }): { breaks: PageBreakPoint[]; pages?: RenderedPage[]; tallCells?: number[]; rowHeights?: RenderedRow[]; lastPagePadPx: number; complete: boolean } {
   const dom = view.dom as HTMLElement;
   const sections = documentSections(view.state.doc);
   const mixed = sections.length > 1;
   let currentSection = 0;
   let geometry = sections[0].geometry;
-  let pageContentH = (geometry.height - geometry.margins.top - geometry.margins.bottom) / 15;
+  let pageReserve = notes?.reserveByPage[0] ?? 0;
+  if (!Number.isFinite(pageReserve) || pageReserve < 0) return { breaks: [], lastPagePadPx: 0, complete: false };
+  let pageContentH = (geometry.height - geometry.margins.top - geometry.margins.bottom) / 15 - pageReserve;
   const pages: RenderedPage[] = [{ top: 0, geometry, section: 0, sectionPage: 0 }];
   if (pageContentH <= 60 || !dom.offsetWidth) return { breaks: [], lastPagePadPx: 0, complete: false };
   const scroller = dom.closest(".editor-shell") as HTMLElement | null;
@@ -279,7 +282,7 @@ function computeLayout(view: EditorView, cfg: PageLayoutConfig): { breaks: PageB
           let end = r + 1;
           for (let row = r; row < end; row++) for (let c = 0; c < map.width; c++) end = Math.max(end, map.findCell(map.map[row * map.width + c]).bottom);
           const cells: NonNullable<FlowUnit["cells"]> = [];
-          const available = (sections[section].geometry.height - sections[section].geometry.margins.top - sections[section].geometry.margins.bottom) / 15;
+          const available = (sections[section].geometry.height - sections[section].geometry.margins.top - sections[section].geometry.margins.bottom) / 15 - Math.max(0, ...(notes?.reserveByPage || []));
           if ((rows[end - 1].dom.getBoundingClientRect().bottom - rows[r].dom.getBoundingClientRect().top) / scale > available) {
             for (let rowIndex = r; rowIndex < end; rowIndex++) rows[rowIndex].node.forEach((cell, offset) => {
               const cellPos = rows[rowIndex].pos + 1 + offset, cellDom = view.nodeDOM(cellPos);
@@ -322,12 +325,15 @@ function computeLayout(view: EditorView, cfg: PageLayoutConfig): { breaks: PageB
         const maxBorder = (row: Element | null, side: "borderTopWidth" | "borderBottomWidth") => Math.max(0, ...Array.from(row?.children || []).map(cell => Number.parseFloat(getComputedStyle(cell)[side]) || 0));
         border = (maxBorder(previous, "borderBottomWidth") + maxBorder(unit.dom, "borderTopWidth")) / 2;
       }
-      breaks.push({ pos, fillPx: Math.max(0, pageContentH - repeatedHeight - (top - pageStart) - border), leftOffset: mixed ? (rect.left - root.left) / scale : Math.max(0, (rect.left - root.left) / scale), rightOffset: mixed ? (root.right - rect.right) / scale : Math.max(0, (root.right - rect.right) / scale), closingMargin: pages[pages.length - 1].geometry.margins.bottom / 15, openingMargin: sections[nextSection].geometry.margins.top / 15, table: inline ? undefined : unit.table });
+      breaks.push({ pos, fillPx: Math.max(0, pageContentH - repeatedHeight - (top - pageStart) - border) + pageReserve, leftOffset: mixed ? (rect.left - root.left) / scale : Math.max(0, (rect.left - root.left) / scale), rightOffset: mixed ? (root.right - rect.right) / scale : Math.max(0, (root.right - rect.right) / scale), closingMargin: pages[pages.length - 1].geometry.margins.bottom / 15, openingMargin: sections[nextSection].geometry.margins.top / 15, table: inline ? undefined : unit.table });
       const previousPage = pages[pages.length - 1];
       const nextGeometry = sections[nextSection].geometry;
       pages.push({ top: previousPage.top + previousPage.geometry.height / 15 + PAGE_GAP_PX, geometry: nextGeometry, section: nextSection, sectionPage: nextSection === previousPage.section ? previousPage.sectionPage + 1 : 0 });
       currentSection = nextSection; geometry = nextGeometry;
-      pageContentH = (geometry.height - geometry.margins.top - geometry.margins.bottom) / 15;
+      pageReserve = notes?.reserveByPage[pages.length - 1] ?? 0;
+      if (!Number.isFinite(pageReserve) || pageReserve < 0) { complete = false; return; }
+      pageContentH = (geometry.height - geometry.margins.top - geometry.margins.bottom) / 15 - pageReserve;
+      if (pageContentH <= 0) complete = false;
       pageStart = top;
       repeatedHeight = inline ? 0 : unit.table?.headerHeight || 0;
     }
@@ -397,6 +403,15 @@ function computeLayout(view: EditorView, cfg: PageLayoutConfig): { breaks: PageB
       }
       if (forced || policy.before && top > pageStart + MEASURE_EPS) addBreak(unit, top);
       forced = false;
+      const ownerAdvance = unit.node.isTextblock ? notes?.advance?.find(item => item.toPage > pages.length - 1 && item.pos >= unit.pos + 1 && item.pos < unit.pos + unit.node.nodeSize - 1) : undefined;
+      if (ownerAdvance) {
+        const caret = view.coordsAtPos(ownerAdvance.pos), ownerTop = caret.top / scale - baseTop;
+        // Advancing the whole block preserves keep/widow policy where possible.
+        const keepWhole = policy.together || effectiveParagraph(unit.node).widowControl !== false;
+        const split = !keepWhole || top <= pageStart + MEASURE_EPS ? findLineSplit(view, unit.pos, unit.node, ownerTop - MEASURE_EPS, scale, baseTop) : null;
+        if (split && split.lineTop > top + MEASURE_EPS) addBreak(unit, split.lineTop, split.pos, true);
+        else addBreak(unit, top);
+      }
       const next = units[i + 1];
       if (policy.keep && next && top > pageStart + MEASURE_EPS) {
         const nextBottom = Math.min(bottomOf(next.endDom || next.dom), topOf(next.dom) + Math.max(24, Number.parseFloat(getComputedStyle(next.dom).lineHeight) * 2 || 32));
@@ -422,7 +437,7 @@ function computeLayout(view: EditorView, cfg: PageLayoutConfig): { breaks: PageB
     // Include trailing block margins; otherwise every page gains a few pixels.
     const last = Array.from(dom.children).filter(e => !e.classList.contains("pm-page-spacer")).at(-1) as HTMLElement | undefined;
     if (last) contentBottom = Math.max(contentBottom, bottomOf(last) + (Number.parseFloat(getComputedStyle(last).marginBottom) || 0));
-    let lastPagePadPx = Math.max(0, pageContentH - repeatedHeight - (contentBottom - pageStart));
+    let lastPagePadPx = Math.max(0, pageContentH - repeatedHeight - (contentBottom - pageStart)) + pageReserve;
     if (forced && units.length) {
       const lastPos = view.state.doc.content.size;
       const nextSection = Math.min(currentSection + (sections[currentSection].to === lastPos ? 1 : 0), sections.length - 1);
@@ -430,6 +445,12 @@ function computeLayout(view: EditorView, cfg: PageLayoutConfig): { breaks: PageB
       breaks.push({ pos: lastPos, fillPx: lastPagePadPx, closingMargin: previousPage.geometry.margins.bottom / 15, openingMargin: nextGeometry.margins.top / 15 });
       pages.push({ top: previousPage.top + previousPage.geometry.height / 15 + PAGE_GAP_PX, geometry: nextGeometry, section: nextSection, sectionPage: nextSection === previousPage.section ? previousPage.sectionPage + 1 : 0 });
       lastPagePadPx = pageContentH;
+    }
+    for (let extra = 0; extra < (notes?.extraPages || 0); extra++) {
+      const previousPage = pages[pages.length - 1], nextGeometry = sections[currentSection].geometry;
+      breaks.push({ pos: view.state.doc.content.size, fillPx: lastPagePadPx, closingMargin: previousPage.geometry.margins.bottom / 15, openingMargin: nextGeometry.margins.top / 15 });
+      pages.push({ top: previousPage.top + previousPage.geometry.height / 15 + PAGE_GAP_PX, geometry: nextGeometry, section: currentSection, sectionPage: previousPage.sectionPage + 1 });
+      lastPagePadPx = (nextGeometry.height - nextGeometry.margins.top - nextGeometry.margins.bottom) / 15;
     }
     return { breaks, pages, tallCells, rowHeights: Array.from(rowHeights.values()), lastPagePadPx, complete: true };
   } finally {
@@ -495,13 +516,24 @@ function breakDom(point: PageBreakPoint, top: number, bottom: number, numbers: P
  * in that does not depend on that lifecycle.
  */
 const measurements = new WeakMap<EditorView, (view: EditorView) => void>();
+const noteReservations = new WeakMap<EditorView, { doc: PMNode; reserveByPage: readonly number[]; extraPages: number; advance: readonly { pos: number; toPage: number }[] }>();
+
+/** A derived reservation is valid only for the document it measured. */
+export function setNoteReservations(view: EditorView, doc: PMNode, reserveByPage: readonly number[] | null, extraPages = 0, advance: readonly { pos: number; toPage: number }[] = []): boolean {
+  if (view.isDestroyed || view.state.doc !== doc) return false;
+  if (!Number.isInteger(extraPages) || extraPages < 0 || extraPages > 1000) return false;
+  if (advance.some(item => !Number.isInteger(item.pos) || item.pos < 0 || !Number.isInteger(item.toPage) || item.toPage < 0 || item.toPage > 1000)) return false;
+  if (reserveByPage) noteReservations.set(view, { doc, reserveByPage: [...reserveByPage], extraPages, advance: [...advance] });
+  else noteReservations.delete(view);
+  remeasurePagination(view); return true;
+}
 
 export function remeasurePagination(view: EditorView | null | undefined): void {
   if (view && !view.isDestroyed) measurements.get(view)?.(view);
 }
 
 /** Settle the active column coordinator or the existing single-column path. */
-export async function flushDocumentLayout(view: EditorView): Promise<void> {
+export async function flushBodyDocumentLayout(view: EditorView): Promise<void> {
   if (view.isDestroyed || !view.dom.isConnected) throw new Error("Cannot flush a detached document view");
   if (view.dom.dataset.columnFlowError) throw new Error(view.dom.dataset.columnFlowError);
   if (await flushColumnFlow(view)) return;
@@ -510,6 +542,15 @@ export async function flushDocumentLayout(view: EditorView): Promise<void> {
   remeasurePagination(view);
   await new Promise<void>(resolve => requestAnimationFrame(() => requestAnimationFrame(() => resolve())));
   if (view.isDestroyed || !view.dom.isConnected) throw new Error("Document view was detached during layout");
+}
+
+/** Physical body and note band must share one document revision. */
+export async function flushDocumentLayout(view: EditorView): Promise<void> {
+  await flushBodyDocumentLayout(view);
+  if (collectNoteIndex(view.state.doc).notes.some(note => note.kind === 'footnote')) {
+    const { flushSimpleFootnoteLayout } = await import('@/lib/note-single-layout');
+    await flushSimpleFootnoteLayout(view);
+  }
 }
 
 export function paginationPlugin(getConfig: () => PageLayoutConfig): Plugin {
@@ -569,7 +610,10 @@ export function paginationPlugin(getConfig: () => PageLayoutConfig): Plugin {
       async measure(v, doc) {
         measured = await measureColumnDocument(v);
         if (!measured.complete) return { pages: [], regions: [], fragments: [], complete: false, diagnostics: measured.diagnostics };
-        const layout = solveColumnFlow(measured.sections);
+        const reserved = noteReservations.get(v);
+        const noteOptions = reserved?.doc === doc ? { reserveByPage: reserved.reserveByPage, advance: reserved.advance,
+          continuationSections: Array.from({ length: reserved.extraPages }, () => measured!.sections.at(-1)!.id) } : undefined;
+        const layout = solveColumnFlow(measured.sections, 26, noteOptions);
         built = buildColumnDecorations(doc, measured, layout, v);
         if (!built.complete) return { ...layout, complete: false, diagnostics: built.diagnostics };
         return layout;
@@ -675,7 +719,8 @@ export function paginationPlugin(getConfig: () => PageLayoutConfig): Plugin {
         });
         return;
       }
-      const { breaks, pages = [], tallCells = [], rowHeights = [], complete } = computeLayout(view, cfg);
+      const reserved = noteReservations.get(view);
+      const { breaks, pages = [], tallCells = [], rowHeights = [], complete } = computeLayout(view, cfg, reserved?.doc === view.state.doc ? reserved : undefined);
       // Replacing a whole document (loading a template, switching files) can
       // leave the rendered blocks a frame behind the state. Measuring then sees
       // only the outgoing document — one empty paragraph, say — and pads the
@@ -718,7 +763,12 @@ export function paginationPlugin(getConfig: () => PageLayoutConfig): Plugin {
       const root = view.dom.getBoundingClientRect();
       const scale = root.width / Number.parseFloat(getComputedStyle(view.dom).width);
       const last = Array.from(view.dom.children).filter(e => !e.classList.contains("pm-page-spacer")).at(-1) as HTMLElement | undefined;
-      const used = last ? (last.getBoundingClientRect().bottom - root.top) / scale + (Number.parseFloat(getComputedStyle(last).marginBottom) || 0) : 0;
+      let used = last ? (last.getBoundingClientRect().bottom - root.top) / scale + (Number.parseFloat(getComputedStyle(last).marginBottom) || 0) : 0;
+      // A note-only page has an end-of-document spacer after the final body
+      // block. Counting only the block would add that page a second time.
+      if (reserved?.doc === view.state.doc && reserved.extraPages) {
+        for (const element of Array.from(view.dom.children)) if (element.classList.contains('pm-page-spacer')) used = Math.max(used, (element.getBoundingClientRect().bottom - root.top) / scale);
+      }
       const lastGeometry = pages[pages.length - 1]?.geometry || first;
       if (page) page.style.setProperty("--page-margin-bottom", `${lastGeometry.margins.bottom / 15}px`);
       const target = pages.reduce((sum, p) => sum + p.geometry.height / 15, 0) + breaks.length * PAGE_GAP_PX - first.margins.top / 15 - lastGeometry.margins.bottom / 15;
@@ -863,8 +913,8 @@ export function paginationPlugin(getConfig: () => PageLayoutConfig): Plugin {
         if (referenceTimer) window.clearTimeout(referenceTimer);
         referenceTimer = window.setTimeout(() => {
           referenceTimer = 0;
-          if (!referenceDestroyed && !view.isDestroyed) void flushReferenceLayout(view).catch(error => {
-            if (!referenceDestroyed && !view.isDestroyed && error instanceof Error && error.message === 'Document changed while refreshing references') scheduleReferences();
+          if (!referenceDestroyed && !view.isDestroyed) void flushReferenceLayout(view).then(() => collectNoteIndex(view.state.doc).notes.some(note => note.kind === 'footnote') ? flushDocumentLayout(view) : undefined).catch(error => {
+            if (!referenceDestroyed && !view.isDestroyed && error instanceof Error && (error.message === 'Document changed while refreshing references' || error.message === 'note-layout-stale')) scheduleReferences();
           });
         }, 50);
       };
@@ -1011,22 +1061,32 @@ export function paginationPlugin(getConfig: () => PageLayoutConfig): Plugin {
       let lastZoom = page?.style.zoom || '';
       const zoomObserver = new MutationObserver(() => {
         const next = page?.style.zoom || '';
-        if (next !== lastZoom) { lastZoom = next; measure(view); }
+        if (next !== lastZoom) { lastZoom = next; measure(view); scheduleReferences(); }
       });
       if (page) zoomObserver.observe(page, { attributes: true, attributeFilter: ['style'] });
       const onLoad = () => { measure(view); scheduleReferences(); };
+      const onFontsLoaded = () => {
+        if (noteReservations.has(view)) void import('@/lib/note-single-layout').then(module => { module.invalidateFootnoteLayout(view); scheduleReferences(); });
+        onLoad();
+      };
       const onReferenceCompositionEnd = () => scheduleReferences();
       view.dom.addEventListener("load", onLoad, true);
       view.dom.addEventListener("compositionend", onLoad);
       view.dom.addEventListener("compositionend", onReferenceCompositionEnd);
-      document.fonts?.addEventListener("loadingdone", onLoad);
+      document.fonts?.addEventListener("loadingdone", onFontsLoaded);
       return {
         update(v, previous) {
-          if (v.state.doc !== previous.doc) { noteReferenceDocumentChange(v); stopColumnTableDrag?.(); stopColumnTableDrag = undefined; clearColumnOverlays(); failedColumnDocument = undefined; loadRunning(v); measure(v); scheduleReferences(); }
+          if (v.state.doc !== previous.doc) {
+            noteReservations.delete(v);
+            v.dom.parentElement?.querySelectorAll(':scope > .pm-footnote-layer').forEach(layer => layer.remove());
+            noteReferenceDocumentChange(v); stopColumnTableDrag?.(); stopColumnTableDrag = undefined; clearColumnOverlays(); failedColumnDocument = undefined; loadRunning(v); measure(v); scheduleReferences();
+          }
           else if (!v.state.selection.eq(previous.selection)) for (const overlay of columnTableOverlays) updateTableOverlaySelection(overlay, v.state);
           syncEdges(v);
         },
         destroy() {
+          noteReservations.delete(view);
+          view.dom.parentElement?.querySelectorAll(':scope > .pm-footnote-layer').forEach(layer => layer.remove());
           referenceDestroyed = true; if (referenceTimer) window.clearTimeout(referenceTimer);
           view.dom.removeEventListener("compositionend", onReferenceCompositionEnd);
           stopColumnTableDrag?.(); stopColumnTableDrag = undefined;
@@ -1037,7 +1097,7 @@ export function paginationPlugin(getConfig: () => PageLayoutConfig): Plugin {
           if (rafId) cancelAnimationFrame(rafId);
           view.dom.removeEventListener("load", onLoad, true);
           view.dom.removeEventListener("compositionend", onLoad);
-          document.fonts?.removeEventListener("loadingdone", onLoad);
+          document.fonts?.removeEventListener("loadingdone", onFontsLoaded);
           observer.disconnect();
           zoomObserver.disconnect();
           sourceKey = ""; paintRunning = undefined; runningLayer.remove();
