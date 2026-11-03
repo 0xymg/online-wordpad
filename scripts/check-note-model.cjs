@@ -36,15 +36,18 @@ const script = `window.__notes = (() => { const modules=${JSON.stringify(modules
    const htmlOf=doc=>{const host=document.createElement('div');host.appendChild(P.DOMSerializer.fromSchema(schema).serializeFragment(doc.content));return L.wrapDocumentHtml(host.innerHTML,doc.attrs.layout,doc.attrs.documentModel);};
    const clone=value=>JSON.parse(JSON.stringify(value)), p=(text,attrs)=>schema.nodes.paragraph.create(attrs,typeof text==='string'?schema.text(text):text), body=text=>({type:'doc',content:[{type:'paragraph',content:[{type:'text',text}]}]});
    const legacy=M.parseDocumentHtml('<h1>Stable heading</h1><p>Legacy body</p>',schema), legacyModel=M.getDocumentModel(legacy);
-   check(legacyModel.version===5&&Object.keys(legacyModel.notes).length===0,'v0 migrates to v5 empty note pool');
+   check(legacyModel.version===6&&Object.keys(legacyModel.notes).length===0,'v0 migrates to v6 empty note pool');
    for(const version of [1,2,3,4]){
     const old=clone(legacyModel);old.version=version;delete old.notes;delete old.notePolicy;if(version<3)for(const section of Object.values(old.sections)){delete section.columns;delete section.flowDirection;}
     const source=legacy.type.create({...legacy.attrs,documentModel:old},legacy.content), migrated=M.parseDocumentHtml(htmlOf(source),schema), current=M.getDocumentModel(migrated);
-    check(current.version===5&&current.id===old.id&&current.finalSectionId===old.finalSectionId&&same(Object.keys(current.sections),Object.keys(old.sections)),`v${version} migration preserves document/section identities`);
+    check(current.version===6&&current.id===old.id&&current.finalSectionId===old.finalSectionId&&same(Object.keys(current.sections),Object.keys(old.sections)),`v${version} migration preserves document/section identities`);
     check(migrated.firstChild.attrs.targetId===legacy.firstChild.attrs.targetId,`v${version} migration preserves A4 target identity`);
     check(htmlOf(M.parseDocumentHtml(htmlOf(migrated),schema))===htmlOf(migrated),`v${version} migration is HTML idempotent`);
    }
    const record={kind:'endnote',body:body('Canonical note')}, model={...legacyModel,notes:{[noteId]:record}}, owner=schema.nodes.note_reference.create({noteId,cachedLabel:'999'}), noteDoc=legacy.type.create({...legacy.attrs,documentModel:model},[p([schema.text('Owner '),owner]),p('Tail')]);
+   const v5=clone(model);v5.version=5;delete v5.sources;delete v5.bibliography;const migratedV5=M.parseDocumentHtml(htmlOf(legacy.type.create({...legacy.attrs,documentModel:v5},noteDoc.content)),schema);check(migratedV5.attrs.documentModel.version===6&&migratedV5.attrs.documentModel.notes[noteId].body.content[0].content[0].text==='Canonical note'&&Object.keys(migratedV5.attrs.documentModel.sources).length===0,'v5 migration retains note graph and creates empty bibliography');
+   const sourceId=id('src',1),fieldId=id('fld',1), bibModel={...legacyModel,sources:{[sourceId]:{type:'book',title:'Book',authors:[]}}}, cite=schema.nodes.citation_field.create({fieldId,items:[{sourceId}],mode:'normal'}), bibDoc=legacy.type.create({...legacy.attrs,documentModel:bibModel},[p([cite])]);const bibOpen=M.parseDocumentHtml(htmlOf(bibDoc),schema);check(bibOpen.firstChild.firstChild.attrs.fieldId===fieldId&&bibOpen.attrs.documentModel.sources[sourceId].title==='Book','v6 source and citation graph reopens intact');
+   const missingSource=clone(bibModel);missingSource.sources={};reject(htmlOf(legacy.type.create({...legacy.attrs,documentModel:missingSource},[p([cite])])),'missing citation source rejects load');
    const opened=M.parseDocumentHtml(htmlOf(noteDoc),schema);check(N.collectNoteIndex(opened).notes[0].noteId===noteId,'v5 save/open preserves note owner identity');check(opened.attrs.documentModel.notes[noteId].body.content[0].content[0].text==='Canonical note','v5 save/open preserves canonical body');
    check(opened.firstChild.lastChild.attrs.cachedLabel==='1','load refreshes stale note label cache');
    check(opened.lastChild.attrs.noteOwnerId===noteId&&opened.lastChild.textContent==='1 Canonical note','load generates ordinary endnote projection from canonical pool');
@@ -70,7 +73,7 @@ const script = `window.__notes = (() => { const modules=${JSON.stringify(modules
    reject(carrier.outerHTML+carrier.outerHTML,'duplicate native metadata carrier rejects full load');
    const wrongSections=clone(imported);wrongSections.sectionNotePolicies=[{},{}];carrier.setAttribute('data-edtr-notes-import',JSON.stringify(wrongSections));reject(carrier.outerHTML,'native section policy count mismatch rejects full load');
    carrier.setAttribute('data-edtr-notes-import','{broken');reject(carrier.outerHTML,'malformed native JSON rejects full load');
-   const future=clone(legacyModel);future.version=6;let futureError;try{M.parseDocumentHtml(L.wrapDocumentHtml('<p>FUTURE SOURCE</p>',legacy.attrs.layout,future),schema);}catch(e){futureError=e;}check(futureError?.code==='unsupported-version','future version rejects before schema drops model');
+   const future=clone(legacyModel);future.version=7;let futureError;try{M.parseDocumentHtml(L.wrapDocumentHtml('<p>FUTURE SOURCE</p>',legacy.attrs.layout,future),schema);}catch(e){futureError=e;}check(futureError?.code==='unsupported-version','future version rejects before schema drops model');
    let state=S.EditorState.create({doc:opened,plugins:[H.history(),M.documentModelPlugin(),N.notePlugin({finalize:tr=>M.projectDocumentModel(tr,M.getDocumentModel(tr.doc))})]});
    N.updateNoteBody(noteId,body('Edited note'))(state,tr=>state=state.applyTransaction(tr).state);check(state.doc.lastChild.textContent==='1 Edited note','real model+note plugins update canonical pool and generated flow');
    H.undo(state,tr=>state=state.applyTransaction(tr).state);check(state.doc.lastChild.textContent==='1 Canonical note','real model+note undo restores generated content and pool');

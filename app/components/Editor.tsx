@@ -10,6 +10,9 @@ import { insertColumnBreak } from "@/lib/column-break";
 import { referenceIdentityPlugin } from "@/lib/document-references";
 import { REFERENCE_LAYOUT_STATUS_EVENT } from "@/lib/reference-layout";
 import { flushDocumentOutputLayout } from "@/lib/document-output-layout";
+import { cloneBibliographyDocumentGraph } from "@/lib/document-bibliography";
+import { bibliographyPlugin } from "@/lib/document-bibliography";
+import { bibliographyLayoutPlugin } from "@/lib/bibliography-layout";
 import { notePlugin } from "@/lib/document-notes";
 import "./references.css";
 import { referenceLabels } from "@/lib/reference-i18n";
@@ -95,6 +98,7 @@ const HeaderFooterDialog = lazy(() => import("./HeaderFooterDialog"));
 const TabsDialog = lazy(() => import("./TabsDialog"));
 const TabRuler = lazy(() => import("./TabRuler"));
 const ReferencesDialog = lazy(() => import("./ReferencesDialog"));
+const BibliographyDialog = lazy(() => import("./BibliographyDialog"));
 const NotesDialog = lazy(() => import("./NotesDialog"));
 const SectionLayoutDialog = lazy(() => import("./SectionLayoutDialog"));
 const PageMarginsDialog = lazy(() => import("./PageMarginsDialog"));
@@ -217,6 +221,8 @@ function buildPlugins() {
       toast.warning(sectionLabels(isLocale(lang) ? lang : "en").boundaryNesting);
     }),
     referenceIdentityPlugin(),
+    bibliographyPlugin(),
+    bibliographyLayoutPlugin(),
     notePlugin({ finalize: tr => projectDocumentModel(tr, getDocumentModel(tr.doc)!), onBlocked: error => document.dispatchEvent(new CustomEvent("edtr-note-error", { bubbles: true, detail: { error } })) }),
     sectionMarkersPlugin(),
     tabCharactersPlugin(),
@@ -1240,6 +1246,8 @@ export default function Editor({
   const showTabs = useCallback(() => setTabsOpen(true), []);
   const [sectionLayoutOpen, setSectionLayoutOpen] = useState(false);
   const [referenceDialog, setReferenceDialog] = useState<ReferenceDialogMode | null>(null);
+  const [bibliographyDialog, setBibliographyDialog] = useState<{fieldId?: string} | null>(null);
+  useEffect(() => { setBibliographyDialog(null); }, [activeId]);
   const [noteDialog, setNoteDialog] = useState<NoteDialogRequest | null>(null);
   const showNote = useCallback((mode: NoteDialogMode, kind: NoteKind = "endnote") => {
     const view = viewRef.current;
@@ -1273,6 +1281,12 @@ export default function Editor({
     };
     window.addEventListener(REFERENCE_LAYOUT_STATUS_EVENT, onStatus);
     return () => window.removeEventListener(REFERENCE_LAYOUT_STATUS_EVENT, onStatus);
+  }, []);
+  const [bibliographyLayoutError, setBibliographyLayoutError] = useState<string | null>(null);
+  useEffect(() => {
+    const onStatus = (event: Event) => { if (event.target === viewRef.current?.dom) setBibliographyLayoutError((event as CustomEvent<{error:string|null}>).detail.error); };
+    window.addEventListener("edtr-bibliography-layout-status", onStatus);
+    return () => window.removeEventListener("edtr-bibliography-layout-status", onStatus);
   }, []);
   const [noteLayoutError, setNoteLayoutError] = useState(false);
   useEffect(() => {
@@ -1978,7 +1992,7 @@ export default function Editor({
   }, [addNewDocument, t.sidebar.untitled]);
 
   const createFromTemplate = useCallback((t: { name: string; html: string }) => {
-    return addNewDocument(t.name, t.html);
+    try { const doc = cloneBibliographyDocumentGraph(parseHtmlToDoc(t.html)); return addNewDocument(t.name, serializeDoc(doc)); } catch (error) { toast.error(error instanceof Error ? error.message : "Template could not be opened"); }
   }, [addNewDocument]);
 
   // Deleting is permanent and confirmed up front: the document goes from the
@@ -2473,7 +2487,14 @@ export default function Editor({
         text_box: (node, v, getPos) => createTextBoxNodeView(node, v, getPos, { onEdit: () => setTextBoxDialogOpen(true) }),
       },
       handleDOMEvents: {
+        keydown(_view, event) {
+          const citation = event.target instanceof Element ? event.target.closest("[data-edtr-citation]") : null;
+          if (!citation || (event.key !== "Enter" && event.key !== " ")) return false;
+          event.preventDefault(); setBibliographyDialog({ fieldId: citation.getAttribute("data-field-id") || undefined }); return true;
+        },
         click(_view, event) {
+          const citation = event.target instanceof Element ? event.target.closest("[data-edtr-citation]") : null;
+          if (citation) { event.preventDefault(); setBibliographyDialog({fieldId: citation.getAttribute("data-field-id") || undefined}); return true; }
           const marker = event.target instanceof Element ? event.target.closest("[data-edtr-note-reference],[data-note-owner-id]") : null;
           const noteId = marker?.getAttribute("data-note-id") || marker?.getAttribute("data-note-owner-id");
           if (!noteId) return false;
@@ -3519,6 +3540,7 @@ export default function Editor({
         onChangeCase={changeCase}
         onInsertTOC={insertTOC}
         onReference={setReferenceDialog}
+        onBibliography={() => setBibliographyDialog({})}
         onNote={showNote}
         onUpdateReferences={updateReferences}
         readingAloud={readingAloud}
@@ -3564,6 +3586,7 @@ export default function Editor({
         />
       )}
       {showRuler && !focusMode && <Suspense fallback={null}><TabRuler view={viewRef.current} tick={tick} onOpenDialog={showTabs} /></Suspense>}
+      {bibliographyLayoutError && <div role="alert" data-bibliography-layout-alert className="border-b bg-amber-50 p-3 text-sm text-amber-950 dark:bg-amber-950 dark:text-amber-100">{({tr:"Kaynakça güncellenemedi",fr:"Impossible de mettre à jour la bibliographie",zh:"无法更新参考文献",ar:"تعذر تحديث المراجع"} as Record<string,string>)[locale] || "Bibliography could not update"}: {bibliographyLayoutError}</div>}
       {noteLayoutError && <div role="alert" data-note-layout-alert className="flex items-center gap-2 border-b border-amber-300/60 bg-amber-50 px-3 py-2 text-xs text-amber-900 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-200"><Warning size={16} className="shrink-0" /><span>{noteLabels(locale).layoutError}</span></div>}
       {referenceLayoutError && <div role="alert" data-reference-layout-alert className="flex items-center gap-2 border-b border-amber-300/60 bg-amber-50 px-3 py-2 text-xs text-amber-900 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-200"><Warning size={16} className="shrink-0" /><span>{referenceLabels(locale).layoutError}</span></div>}
       {columnLayoutError && <div role="alert" data-column-layout-alert className="flex items-center gap-2 border-b border-amber-300/60 bg-amber-50 px-3 py-2 text-xs text-amber-900 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-200">
@@ -4202,6 +4225,7 @@ export default function Editor({
       }} /></Suspense>}
       {documentLoadError && <div role="alert" className="fixed bottom-4 inset-x-4 z-50 rounded border bg-background p-3 text-sm text-destructive">{sectionLabels(locale).unsupportedModel}</div>}
       {tabsOpen && viewRef.current && <Suspense fallback={null}><TabsDialog view={viewRef.current} onClose={() => setTabsOpen(false)} /></Suspense>}
+      {bibliographyDialog && viewRef.current && <Suspense fallback={null}><BibliographyDialog view={viewRef.current} fieldId={bibliographyDialog.fieldId} onClose={() => setBibliographyDialog(null)} /></Suspense>}
       {noteDialog && viewRef.current && <Suspense fallback={null}><NotesDialog view={viewRef.current} request={noteDialog} onClose={() => setNoteDialog(null)} /></Suspense>}
       {referenceDialog && viewRef.current && <Suspense fallback={null}><ReferencesDialog view={viewRef.current} mode={referenceDialog} onClose={() => setReferenceDialog(null)} /></Suspense>}
       {sectionLayoutOpen && viewRef.current && <Suspense fallback={null}><SectionLayoutDialog view={viewRef.current} onClose={() => setSectionLayoutOpen(false)} /></Suspense>}

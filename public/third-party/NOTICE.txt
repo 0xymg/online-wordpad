@@ -1,0 +1,30 @@
+Bibliography third-party notices
+
+citeproc-js, npm citeproc 2.4.63, processor reports 1.4.61.
+Copyright (c) 2009-2019 Frank Bennett.
+(c) Frank Bennett
+citeproc-js implements the Citation Style Language
+https://citationstyles.org/
+
+This distribution elects the CPAL-1.0 alternative provided by the original
+LICENSE and source header. The npm AGPL-1.0 metadata does not supersede
+the actual LICENSE's CPAL-1.0 / AGPL-3.0-or-later grant. Full CPAL and
+AGPL notices accompany the original, unmodified processor source in
+/third-party/citeproc/citeproc-2.4.63.tgz. No processor modifications.
+The application is a separate Larger Work; no license change to unrelated
+application source is asserted. Source remains available with the release
+at /third-party/citeproc/citeproc-2.4.63.tgz (no charge).
+Upstream: https://github.com/Juris-M/citeproc-js
+Source commit: 73bc1b44bc7d54d0bfec4e070fd27f5efe024ff9
+Tarball sha256: 7f2b7714bfd1f4480aad9c34972eb5d48dc1b85876ba21b5aa9aee74156e2ccf
+
+CSL styles and locales, Citation Style Language project:
+https://citationstyles.org/
+Licensed CC BY-SA 3.0; full license in /third-party/csl/CC-BY-SA-3.0.txt.
+Original author and translator attribution is retained in each XML/CSL file.
+Files are unmodified; their bundled JSON representation only encodes the
+same file contents for offline loading. This share-alike grant applies to
+the CSL assets, not to the separate application.
+Full source URLs, commit pins, SHA-256 and byte lengths:
+/third-party/csl/manifest.json
+Style and locale project READMEs are included alongside original assets.

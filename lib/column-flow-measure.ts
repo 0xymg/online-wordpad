@@ -42,7 +42,7 @@ export function measureNaturalColumnSections(view: EditorView, sections: readonl
       const inlineImage = inline?.type.name === 'image' && inline.attrs.position !== 'page' && inline.attrs.wrap === 'inline';
       const blockImage = inline?.type.name === 'image' && inline.attrs.position !== 'page' && inline.attrs.wrap === 'topBottom';
       const floatingImage = inline?.type.name === 'image' && inline.attrs.position !== 'page' && ['wrapLeft', 'wrapRight'].includes(inline.attrs.wrap);
-      if (inline?.isAtom && !inline.isText && !anchoredObject && !inlineImage && !blockImage && !floatingImage && !['tab', 'hard_break', 'reference_field', 'note_reference', 'bookmark_start', 'bookmark_end'].includes(inline.type.name)) { fail(index, 'unsupported-inline-object', p, inline.nodeSize); return; }
+      if (inline?.isAtom && !inline.isText && !anchoredObject && !inlineImage && !blockImage && !floatingImage && !['tab', 'hard_break', 'reference_field', 'citation_field', 'note_reference', 'bookmark_start', 'bookmark_end'].includes(inline.type.name)) { fail(index, 'unsupported-inline-object', p, inline.nodeSize); return; }
       if (blockImage) {
         const image = view.nodeDOM(p); if (!(image instanceof HTMLElement)) { fail(index, 'missing-image-dom', p, 1); return; }
         const box = image.getBoundingClientRect(), imageStyle = getComputedStyle(image);

@@ -13,13 +13,16 @@ import { documentSections } from "./document-sections";
 import { getDocumentModel, sectionIdentityOrder, projectDocumentModel } from "./document-model";
 import { EditorState } from "prosemirror-state";
 import { unprojectEndnotes } from "./document-notes";
+import { createBibliographyExport, type BibliographyDocxCarrier } from "./bibliography-docx";
+import { collectCitationIndex, unprojectBibliography } from "./document-bibliography";
+import type { BibliographyRun } from "./bibliography-format";
 import { createNoteExport } from "./note-docx";
 import { prepareTextNoteExport, type TextExportNote } from "./note-text-export";
 import { collectReferenceIndex } from "./document-references";
 import { fixedImageWidth } from "./page-image-position";
 import { exportTextBoxes, textBoxBookmark } from "./text-box-docx";
 import { captionMetadataNames, captionSequenceAlias, nativeReferenceAlias, nativeTocAlias, replaceReferenceBookmarks, type ReferenceReplacement } from "./reference-docx";
-import { DOMParser as PMParser, type Node as PMNode, type Mark } from "prosemirror-model";
+import { DOMParser as PMParser, DOMSerializer, type Node as PMNode, type Mark } from "prosemirror-model";
 import { mySchema } from "@/app/components/editor-schema";
 import {
   Document, Packer, Paragraph, TextRun, Tab, HeadingLevel, AlignmentType,
@@ -153,6 +156,7 @@ class DocxBuilder {
   private imageQueue: Array<LoadedImage | null>;
   numbering: INumberingOptions["config"][number][] = [];
   referenceReplacements: ReferenceReplacement[] = [];
+  citationMarkers = new Map<string, { start: string; end: string }>();
   noteOwnerMarkers = new Map<string, string>();
   closeTocAfter = false;
   openTocHere: { fieldId: string; levels: number[]; status?: string } | null = null;
@@ -276,6 +280,15 @@ class DocxBuilder {
           out.push(this.marker("end", id, undefined, transport, `transport:${id}`));
         }
         out.push(this.marker(child.type.name === "bookmark_start" ? "start" : "end", id));
+      } else if (child.type.name === "citation_field") {
+        const marker = this.citationMarkers.get(String(child.attrs.fieldId));
+        if (!marker || !Array.isArray(child.attrs.cachedRuns) || child.attrs.status !== "current") throw new Error("Cannot export an unsettled citation");
+        out.push(new TextRun(marker.start));
+        for (const cached of child.attrs.cachedRuns as BibliographyRun[]) {
+          const run = new TextRun({text:cached.text,bold:cached.bold,italics:cached.italic,underline:cached.underline?{}:undefined,superScript:cached.superscript,subScript:cached.subscript,style:cached.href?"Hyperlink":undefined});
+          if(cached.href) out.push(this.hyperlink(run,cached.href)); else out.push(run);
+        }
+        out.push(new TextRun(marker.end));
       } else if (child.type.name === "note_reference") {
         const marker = this.noteOwnerMarkers.get(String(child.attrs.noteId));
         if (!marker) throw new Error("Cannot export a note without its canonical body");
@@ -544,7 +557,8 @@ type DocxExportOptions = { orientation?: "portrait" | "landscape"; marginCm?: nu
 /** Every entry point exports settled reference caches from one measured snapshot. */
 export async function docToDocxBlob(doc: PMNode, title: string, options: DocxExportOptions = {}): Promise<Blob> {
   const references = collectReferenceIndex(doc);
-  if (!references.fields.length && !references.tocs.length && !Object.keys(getDocumentModel(doc)?.notes || {}).length) return docToDocxBlobReady(doc, title, options);
+  const bibliographyIndex = collectCitationIndex(doc);
+  if (!bibliographyIndex.citations.length && !bibliographyIndex.markers.length && !references.fields.length && !references.tocs.length && !Object.keys(getDocumentModel(doc)?.notes || {}).length) return docToDocxBlobReady(doc, title, options);
   const [{ readonlyDocumentView }, { flushDocumentOutputLayout }] = await Promise.all([import("./readonly-document-view"), import("./document-output-layout")]);
   const renderer = readonlyDocumentView(doc);
   try {
@@ -591,8 +605,18 @@ async function docToDocxBlobReady(
     }
     imageWidths.set(node, node.attrs.position === "page" ? fixedImageWidth(node.attrs, geometry) : Math.max(1, width));
   });
+  const canonical = unprojectBibliography(EditorState.create({doc}).tr).doc;
+  const serializer = DOMSerializer.fromSchema(doc.type.schema);
+  const htmlFor = (node: PMNode) => { const wrap = document.createElement("div"); wrap.append(serializer.serializeNode(node)); return wrap.innerHTML; };
+  const carriers: BibliographyDocxCarrier[] = [];
+  const citationIndex = collectCitationIndex(doc);
+  for (const citation of citationIndex.citations) carriers.push({fieldId:citation.fieldId,kind:"citation",html:htmlFor(doc.nodeAt(citation.pos)!)});
+  canonical.forEach(block => { if(block.attrs.bibliography) carriers.push({fieldId:block.attrs.bibliography.fieldId,kind:"bibliography",html:htmlFor(block)}); });
+  const bibliographyExport = model ? createBibliographyExport({sources:model.sources,bibliography:model.bibliography},carriers) : null;
+  const bibliographyMarkers = new Map(carriers.map((carrier,i)=>[carrier.fieldId,bibliographyExport!.markers[i]]));
   const noteExport = createNoteExport(doc);
   const builder = new DocxBuilder(images,layout?.styles,imageWidths);
+  builder.citationMarkers = bibliographyMarkers;
   builder.noteOwnerMarkers = noteExport.ownerMarkers;
   builder.registerReferences(doc);
   const children: FileChild[] = [];
@@ -609,7 +633,11 @@ async function docToDocxBlobReady(
     const isFirstEntry = !!activeToc && block.attrs.tocOwnerId === activeToc.fieldId && pendingTocStart;
     builder.openTocHere = isFirstEntry || (pendingTocStart && builder.closeTocAfter) ? activeToc : null;
     if (builder.openTocHere) pendingTocStart = false;
+    const bibliographyId = block.attrs.bibliography?.fieldId || block.attrs.bibliographyOwnerId;
+    const bibliographyMarker = bibliographyId && bibliographyMarkers.get(bibliographyId);
+    if(block.attrs.bibliography && bibliographyMarker) children.push(new Paragraph(bibliographyMarker.start));
     children.push(...builder.blockToDocx(block));
+    if(bibliographyMarker && next?.attrs.bibliographyOwnerId !== bibliographyId) children.push(new Paragraph(bibliographyMarker.end));
     if (builder.closeTocAfter) activeToc = null;
   });
   builder.closeTocAfter = false; builder.openTocHere = null;
@@ -648,14 +676,14 @@ async function docToDocxBlobReady(
   result = await exportTextBoxes(result, builder.textBoxes);
   result = await replaceReferenceBookmarks(result, builder.referenceReplacements);
   if (layout?.styles) { const { exportDocumentStyles } = await import("./style-docx"); result = await exportDocumentStyles(result,doc); }
-  if (!layout?.running || !Object.keys(layout.running).length) return noteExport.finish(result);
+  if (!layout?.running || !Object.keys(layout.running).length) return noteExport.finish(bibliographyExport ? await bibliographyExport.finish(result) : result);
   const { exportRunning } = await import("./header-footer-export");
   result = await exportRunning(result, doc, html => {
     const body = new DOMParser().parseFromString(html, "text/html");
     const header = PMParser.fromSchema(mySchema).parse(body.body);
     return docToDocxBlob(header, title);
   });
-  return noteExport.finish(result);
+  return noteExport.finish(bibliographyExport ? await bibliographyExport.finish(result) : result);
 }
 
 /* ── RTF conversion ─────────────────────────────────────────────────────── */
@@ -727,7 +755,11 @@ class RtfBuilder {
           const target = rtfEscape(p.link.replace(/"/g, "%22").replace(/[\r\n]/g, ""));
           out += `{\\field{\\*\\fldinst HYPERLINK "${target}"}{\\fldrslt ${formatted}}}`;
         } else out += formatted;
-      } else if (child.type.name === "note_reference") {
+      } else if (child.type.name === "citation_field") {
+        for(const run of (child.attrs.cachedRuns || []) as BibliographyRun[]) out += `{${run.bold?"\\b ":""}${run.italic?"\\i ":""}${run.underline?"\\ul ":""}${rtfEscape(run.text)}}`;
+      } else if (child.type.name === "citation_field") {
+      for(const run of (child.attrs.cachedRuns || []) as BibliographyRun[]) { let t=mdEscape(run.text);if(run.bold)t=`**${t}**`;if(run.italic)t=`*${t}*`;if(run.href)t=`[${t}](${run.href})`;out+=t; }
+    } else if (child.type.name === "note_reference") {
         const note = this.notes.get(String(child.attrs.noteId));
         if (!note) throw new Error("Cannot export a note reference without its canonical body");
         out += `{\\super [${note.number}]}`;

@@ -23,6 +23,7 @@ function inlineText(node: PMNode, notes: ReadonlyMap<string, TextExportNote>): s
   let out = '';
   node.forEach(child => {
     if (child.isText) out += child.text;
+    else if (child.type.name === 'citation_field') out += (child.attrs.cachedRuns || []).map((r: {text:string})=>r.text).join('') || '…';
     else if (child.type.name === 'note_reference') {
       const note = notes.get(String(child.attrs.noteId));
       if (!note) throw new Error('Cannot export a note reference without its canonical body');

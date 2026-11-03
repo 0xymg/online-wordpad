@@ -1,6 +1,6 @@
 # A6 — APA 7 ve IEEE kaynakça uygulama sözleşmesi
 
-Durum: 3 Kasım 2026 tarihli uygulama planı; kaynakça henüz uygulanmadı. [Onaylı planın A6 kapsamını](advanced-document-plan.md#a6--kaynakça) somutlaştırır. Yeni ürün onayı istemez. Bu çalışma sırasında bağımlılık kurulmadı ve ortak uygulama dosyaları kaynakça için değiştirilmedi. Ön koşul A5 dipnot canlı kabulü `d97ea95` ile tamamlandı.
+Durum: 3 Kasım 2026; ilk APA 7 / IEEE uygulaması ve yerel üretim kabulü tamamlandı, canlı yayın kabulü bekleniyor. Güncel kapsam ve açık sınırlar [bibliography-acceptance.md](bibliography-acceptance.md) içindedir. [Onaylı planın A6 kapsamını](advanced-document-plan.md#a6--kaynakça) somutlaştırır. Yeni ürün onayı istemez. Aşağıdaki başlangıç sözleşmesi uygulanırken exact citeproc bağımlılığı, yerel varlıklar ve sürüm 6 belge modeli eklendi. Ön koşul A5 dipnot canlı kabulü `d97ea95` ile tamamlandı.
 
 ## İlk destek sınırı
 

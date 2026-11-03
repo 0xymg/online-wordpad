@@ -1,3 +1,4 @@
+import { selectedBibliographyRecords, parseBibliographyClipboard, planBibliographyClipboard, applyBibliographyPaste, BIBLIOGRAPHY_CLIPBOARD_ATTRIBUTE, type BibliographyClipboardPayload } from "./document-bibliography";
 /** Persistent reference definitions, identity repair and editing. Layout results
  * are derived separately in reference-layout; positions never identify a target. */
 import { Fragment, Slice, type Node as PMNode, type NodeSpec } from "prosemirror-model";
@@ -68,10 +69,10 @@ export function newReferenceIdentity(kind: "target" | "field", occupied: Readonl
 export function collectReferenceIndex(doc: PMNode): ReferenceIndex {
   const targets: ReferenceTarget[] = [], fields: ReferenceIndex["fields"] = [], tocs: ReferenceIndex["tocs"] = [];
   const captions = new Map<string, number>(), ends = new Map<string, number[]>();
-  doc.descendants((node, pos) => { if (node.attrs.noteOwnerId) return false; if (node.type.name === "bookmark_end") { const id = String(node.attrs.targetId || ""), list = ends.get(id) || []; list.push(pos); ends.set(id, list); } });
+  doc.descendants((node, pos) => { if (node.attrs.noteOwnerId || node.attrs.bibliographyOwnerId) return false; if (node.type.name === "bookmark_end") { const id = String(node.attrs.targetId || ""), list = ends.get(id) || []; list.push(pos); ends.set(id, list); } });
   doc.descendants((node, pos) => {
     const a = node.attrs;
-    if (a.noteOwnerId) return false;
+    if (a.noteOwnerId || a.bibliographyOwnerId) return false;
     if (node.type.name === "reference_field") fields.push({ pos, node });
     if (a.toc) tocs.push({ pos, node, fieldId: a.toc.fieldId, levels: normalizeTocLevels(a.toc.levels), ...(a.toc.status ? { status: a.toc.status } : {}), ...(a.toc.nativeSource ? { nativeSource: a.toc.nativeSource } : {}) });
     if (node.type.name === "heading") {
@@ -98,7 +99,7 @@ export function lookupReferenceTarget(index: ReferenceIndex, id: unknown): { sta
 function definitions(doc: PMNode) {
   const result: { key: string; kind: "target" | "field"; id: unknown }[] = [];
   doc.descendants((node, pos) => {
-    if (node.attrs.noteOwnerId) return false;
+    if (node.attrs.noteOwnerId || node.attrs.bibliographyOwnerId) return false;
     if (node.type.name === "heading" || node.attrs.targetKind === "caption" || node.type.name === "bookmark_start") result.push({ key: `t:${pos}`, kind: "target", id: node.attrs.targetId });
     if (node.type.name === "reference_field") result.push({ key: `f:${pos}`, kind: "field", id: node.attrs.fieldId });
     if (node.attrs.toc) result.push({ key: `c:${pos}`, kind: "field", id: node.attrs.toc.fieldId });
@@ -155,7 +156,7 @@ export function normalizeReferenceIdentities(doc: PMNode, createToken: IdentityT
   });
   return doc.copy(content);
 }
-function occupiedIdentities(doc: PMNode) { return new Set(definitions(doc).map(d => String(d.id || ""))); }
+function occupiedIdentities(doc: PMNode) { const result = new Set(definitions(doc).map(d => String(d.id || ""))); doc.descendants(node => { if (node.type.name === "citation_field" && node.attrs.fieldId) result.add(node.attrs.fieldId); if (node.attrs.bibliography?.fieldId) result.add(node.attrs.bibliography.fieldId); }); return result; }
 /** Clones a pasted subgraph. Existing targets are allowed only with a verified
  * local clipboard token; no HTML attribute can grant that provenance. */
 export function cloneReferenceSlice(slice: Slice, destination: PMNode, options: { sameSession?: boolean; move?: boolean; createToken?: IdentityTokenFactory } = {}): Slice {
@@ -172,7 +173,7 @@ export function cloneReferenceSlice(slice: Slice, destination: PMNode, options: 
   const clean = (fragment: Fragment): Fragment => {
     const nodes: PMNode[] = [];
     fragment.forEach(node => {
-      if (node.attrs.noteOwnerId || (node.type.name === "bookmark_start" || node.type.name === "bookmark_end") && !paired.has(node.attrs.targetId)) return;
+      if (node.attrs.noteOwnerId || node.attrs.bibliographyOwnerId || (node.type.name === "bookmark_start" || node.type.name === "bookmark_end") && !paired.has(node.attrs.targetId)) return;
       nodes.push(node.isLeaf ? node : node.copy(clean(node.content)));
     });
     return Fragment.fromArray(nodes);
@@ -204,7 +205,7 @@ export function cloneReferenceSlice(slice: Slice, destination: PMNode, options: 
 }
 const REFERENCE_COMMAND = "edtr-reference-command", CLIPBOARD_MIME = "application/x-edtr-reference-token";
 function withoutGeneratedNotes(slice: Slice): Slice {
-  const clean = (fragment: Fragment): Fragment => { const nodes: PMNode[] = []; fragment.forEach(node => { if (node.attrs.noteOwnerId) return; nodes.push(node.isLeaf ? node : node.copy(clean(node.content))); }); return Fragment.fromArray(nodes); };
+  const clean = (fragment: Fragment): Fragment => { const nodes: PMNode[] = []; fragment.forEach(node => { if (node.attrs.noteOwnerId || node.attrs.bibliographyOwnerId) return; nodes.push(node.isLeaf ? node : node.copy(clean(node.content))); }); return Fragment.fromArray(nodes); };
   const content = clean(slice.content), maximum = Slice.maxOpen(content);
   return new Slice(content, Math.min(slice.openStart, maximum.openStart), Math.min(slice.openEnd, maximum.openEnd));
 }
@@ -212,7 +213,7 @@ function clipboardFingerprint(slice: Slice): string {
   // Compare content and the complete reference graph. HTML parsers normalize
   // paragraph formatting (null -> {}) and the section plugin strips native
   // boundaries; neither changes provenance of reference identities.
-  const keys = ["targetId", "targetKind", "captionLabel", "toc", "tocOwnerId", "tocTargetId", "fieldId", "display", "cached", "status", "instruction", "nativeName", "nativeXml", "name", "noteId"];
+  const keys = ["targetId", "targetKind", "captionLabel", "toc", "tocOwnerId", "tocTargetId", "fieldId", "display", "cached", "status", "instruction", "nativeName", "nativeXml", "name", "noteId", "items", "mode", "bibliography"];
   const graph = (node: PMNode): unknown => ({ type: node.type.name, ...(node.isText ? { text: node.text } : {}), attrs: Object.fromEntries(keys.filter(key => node.attrs[key] != null).map(key => [key, node.attrs[key]])), children: Array.from({ length: node.childCount }, (_, i) => graph(node.child(i))) });
   return JSON.stringify({ openStart: slice.openStart, openEnd: slice.openEnd, content: Array.from({ length: slice.content.childCount }, (_, i) => graph(slice.content.child(i))) });
 }
@@ -260,7 +261,7 @@ export function navigateReferenceTarget(targetId: string): Command { return (sta
 /** Clipboard provenance belongs to this editor instance and is invalidated on
  * full document loads, including reopening the same saved document identity. */
 export function referenceIdentityPlugin(createToken: IdentityTokenFactory = () => crypto.randomUUID()): Plugin {
-  const transfers = new Map<string, { document: unknown; slice: string; cut: boolean; consumed: boolean; notes: NoteClipboardPayload }>();
+  const transfers = new Map<string, { document: unknown; slice: string; cut: boolean; consumed: boolean; notes: NoteClipboardPayload; bibliography: BibliographyClipboardPayload }>();
   return new Plugin({
     props: {
       handleKeyDown(view, event) {
@@ -288,13 +289,14 @@ export function referenceIdentityPlugin(createToken: IdentityTokenFactory = () =
         const clipboard = (event as ClipboardEvent).clipboardData;
         if (!clipboard || view.state.selection.empty) return false;
         const slice = withoutGeneratedNotes(view.state.selection.content()), serialized = view.serializeForClipboard(slice), token = crypto.randomUUID();
-        const notes = selectedNoteRecords(serialized.slice, view.state.doc);
+        const notes = selectedNoteRecords(serialized.slice, view.state.doc), bibliography = selectedBibliographyRecords(serialized.slice, view.state.doc);
+        if (Object.keys(bibliography.sources).length) { const carrier = serialized.dom.ownerDocument.createElement("div"); carrier.setAttribute(BIBLIOGRAPHY_CLIPBOARD_ATTRIBUTE, JSON.stringify(bibliography)); while (serialized.dom.firstChild) carrier.appendChild(serialized.dom.firstChild); serialized.dom.appendChild(carrier); }
         if (Object.keys(notes.notes).length) {
           const carrier = serialized.dom.ownerDocument.createElement("div"); carrier.setAttribute(NOTE_CLIPBOARD_ATTRIBUTE, JSON.stringify(notes));
           while (serialized.dom.firstChild) carrier.appendChild(serialized.dom.firstChild);
           serialized.dom.appendChild(carrier);
         }
-        transfers.clear(); transfers.set(token, { document: view.state.doc.attrs.documentModel?.id || view.state.doc, slice: clipboardFingerprint(serialized.slice), cut: kind === "cut", consumed: false, notes });
+        transfers.clear(); transfers.set(token, { document: view.state.doc.attrs.documentModel?.id || view.state.doc, slice: clipboardFingerprint(serialized.slice), cut: kind === "cut", consumed: false, notes, bibliography });
         clipboard.clearData(); clipboard.setData("text/html", serialized.dom.innerHTML); clipboard.setData("text/plain", serialized.text); clipboard.setData(CLIPBOARD_MIME, token); event.preventDefault();
         if (kind === "cut" && view.editable) view.dispatch(commandTransaction(view.state.tr.deleteSelection()).setMeta("uiEvent", "cut"));
         return true;
@@ -304,21 +306,22 @@ export function referenceIdentityPlugin(createToken: IdentityTokenFactory = () =
         // Leave moves and non-reference drops to ProseMirror and other plugins.
         if (moved || !view.dragging || clipboardFingerprint(view.dragging.slice) !== clipboardFingerprint(slice)) return false;
         let relevant = false;
-        slice.content.descendants(node => { if (node.type.name === "heading" || node.type.name === "reference_field" || node.type.name.startsWith("bookmark_") || node.attrs.targetKind === "caption" || node.attrs.toc || node.attrs.tocOwnerId || node.type.name === "note_reference" || node.attrs.noteOwnerId) relevant = true; });
+        slice.content.descendants(node => { if (node.type.name === "heading" || node.type.name === "reference_field" || node.type.name.startsWith("bookmark_") || node.attrs.targetKind === "caption" || node.attrs.toc || node.attrs.tocOwnerId || node.type.name === "note_reference" || node.attrs.noteOwnerId || node.type.name === "citation_field" || node.attrs.bibliography || node.attrs.bibliographyOwnerId) relevant = true; });
         if (!relevant) return false;
         const coords = view.posAtCoords({ left: event.clientX, top: event.clientY });
         if (!coords) return false;
         const references = cloneReferenceSlice(slice, view.state.doc, { sameSession: true, createToken });
-        const notePlan = planNoteClipboard(references, selectedNoteRecords(withoutGeneratedNotes(slice), view.state.doc), view.state.doc, { sameSession: true, createToken }), copied = notePlan.slice;
+        const notePlan = planNoteClipboard(references, selectedNoteRecords(withoutGeneratedNotes(slice), view.state.doc), view.state.doc, { sameSession: true, createToken });
+        const bibPlan = planBibliographyClipboard(notePlan.slice, selectedBibliographyRecords(withoutGeneratedNotes(slice), view.state.doc), view.state.doc, { sameSession: true, createToken }), copied = bibPlan.slice;
         if (!copied.size) return true;
         const pos = dropPoint(view.state.doc, coords.pos, copied) ?? coords.pos;
-        const tr = commandTransaction(applyNotePaste(view.state.tr.replaceRange(pos, pos, copied), notePlan.notes)).setMeta("uiEvent", "drop");
+        const tr = commandTransaction(applyBibliographyPaste(applyNotePaste(view.state.tr.replaceRange(pos, pos, copied), notePlan.notes), bibPlan.sources)).setMeta("uiEvent", "drop");
         if (!tr.docChanged) return true;
         view.dispatch(tr.scrollIntoView()); view.focus(); return true;
       },
       handlePaste(view, event, slice) {
         if (Array.from(event.clipboardData?.files || []).some(file => file.type.startsWith("image/"))) return false;
-        let relevant = false; slice.content.descendants(node => { if (node.type.name === "heading" || node.type.name === "reference_field" || node.type.name.startsWith("bookmark_") || node.attrs.targetKind === "caption" || node.attrs.toc || node.attrs.tocOwnerId || node.type.name === "note_reference" || node.attrs.noteOwnerId) relevant = true; });
+        let relevant = false; slice.content.descendants(node => { if (node.type.name === "heading" || node.type.name === "reference_field" || node.type.name.startsWith("bookmark_") || node.attrs.targetKind === "caption" || node.attrs.toc || node.attrs.tocOwnerId || node.type.name === "note_reference" || node.attrs.noteOwnerId || node.type.name === "citation_field" || node.attrs.bibliography || node.attrs.bibliographyOwnerId) relevant = true; });
         if (!relevant) return false;
         try {
           slice = withoutGeneratedNotes(slice);
@@ -326,15 +329,19 @@ export function referenceIdentityPlugin(createToken: IdentityTokenFactory = () =
           const carriers = html.includes(NOTE_CLIPBOARD_ATTRIBUTE) ? new DOMParser().parseFromString(html, "text/html").querySelectorAll(`[${NOTE_CLIPBOARD_ATTRIBUTE}]`) : [];
           if (carriers.length > 1) throw new Error("The copied note payload is ambiguous");
           const notes = parseNoteClipboard(carriers[0]?.getAttribute(NOTE_CLIPBOARD_ATTRIBUTE) || null, view.state.schema);
+          const bibCarriers = html.includes(BIBLIOGRAPHY_CLIPBOARD_ATTRIBUTE) ? new DOMParser().parseFromString(html, "text/html").querySelectorAll(`[${BIBLIOGRAPHY_CLIPBOARD_ATTRIBUTE}]`) : [];
+          if (bibCarriers.length > 1) throw new Error("The copied bibliography payload is ambiguous");
+          const bibliography = parseBibliographyClipboard(bibCarriers[0]?.getAttribute(BIBLIOGRAPHY_CLIPBOARD_ATTRIBUTE) || null);
           if (notes && Object.values(notes.notes).some(record => record.kind === "footnote")) throw new Error("Page footnote layout is not available yet");
           const transfer = transfers.get(event.clipboardData?.getData(CLIPBOARD_MIME) || ""), document = view.state.doc.attrs.documentModel?.id || view.state.doc;
-          const trusted = !!transfer && transfer.document === document && transfer.slice === clipboardFingerprint(slice) && JSON.stringify(transfer.notes) === JSON.stringify(notes || { version: 1, notes: {} });
+          const trusted = !!transfer && transfer.document === document && transfer.slice === clipboardFingerprint(slice) && JSON.stringify(transfer.notes) === JSON.stringify(notes || { version: 1, notes: {} }) && JSON.stringify(transfer.bibliography) === JSON.stringify(bibliography || { version: 1, sources: {} });
           const existingDefinitions = occupiedIdentities(view.state.doc), incomingDefinitions = definitions(view.state.doc.type.create(view.state.doc.attrs, slice.content));
           const move = trusted && transfer!.cut && !transfer!.consumed && incomingDefinitions.every(definition => !existingDefinitions.has(String(definition.id))) && Object.keys(notes?.notes || {}).every(id => !Object.hasOwn(view.state.doc.attrs.documentModel?.notes || {}, id));
           const references = cloneReferenceSlice(slice, view.state.doc, { sameSession: trusted, move, createToken });
-          const notePlan = planNoteClipboard(references, notes, view.state.doc, { sameSession: trusted, move, createToken }), pasted = notePlan.slice;
+          const notePlan = planNoteClipboard(references, notes, view.state.doc, { sameSession: trusted, move, createToken });
+          const bibPlan = planBibliographyClipboard(notePlan.slice, bibliography, view.state.doc, { sameSession: trusted, move, createToken }), pasted = bibPlan.slice;
           if (!pasted.size) return true;
-          const before = view.state.doc, tr = commandTransaction(applyNotePaste(view.state.tr.replaceSelection(pasted).scrollIntoView(), notePlan.notes)).setMeta("paste", true).setMeta("uiEvent", "paste");
+          const before = view.state.doc, tr = commandTransaction(applyBibliographyPaste(applyNotePaste(view.state.tr.replaceSelection(pasted).scrollIntoView(), notePlan.notes), bibPlan.sources)).setMeta("paste", true).setMeta("uiEvent", "paste");
           view.dispatch(tr);
           if (move && view.state.doc !== before) transfer!.consumed = true;
           return true;

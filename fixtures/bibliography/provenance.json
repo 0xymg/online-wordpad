@@ -1,0 +1,19 @@
+{
+  "sourceSha256": "530654c055a214814facf447ada23f8bee150f38c638e2fe16e8e4ee2b1a64b9",
+  "fixtureSha256": "fcb0413adbdede283fb728a9e92e566d8a315ede941c61d83a48a86aa4532ba8",
+  "sanitizedParts": [
+    "docProps/core.xml"
+  ],
+  "otherPartsByteIdentical": true,
+  "wordOnlineEdited": {
+    "sourceSha256": "bf1c5ef064e5f6ca62e3174e1291074d2f36d7e00ce8858672bbe927088fe036",
+    "fixtureSha256": "436922f8bd3bab47ce98353741d413b50e9d69b31a872d1188fc2436a036398a",
+    "sanitizedParts": [
+      "docProps/core.xml"
+    ],
+    "otherPartsByteIdentical": true,
+    "containsWordEdit": true,
+    "graphAndCarrierIdsRetained": true,
+    "strictImport": "rejected-visible-native-properties-changed"
+  }
+}

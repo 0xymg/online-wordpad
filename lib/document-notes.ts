@@ -87,7 +87,7 @@ export function validateNoteModel(value: unknown, schema?: Schema): asserts valu
     if (record.native !== undefined && (!plain(record.native) || typeof record.native.partUri !== "string" || typeof record.native.nativeId !== "string" || (record.native.rawProperties !== undefined && typeof record.native.rawProperties !== "string"))) fail("invalid-note-record", "Invalid native note metadata");
   }
 }
-function modelOf(doc: PMNode): NoteModelShape | null { const model = doc.attrs.documentModel; return model?.version === 5 ? model as NoteModelShape : null; }
+function modelOf(doc: PMNode): NoteModelShape | null { const model = doc.attrs.documentModel; return model?.version >= 5 ? model as NoteModelShape : null; }
 export function noteNumberLabel(number: number, format: NoteNumbering["format"]): string {
   if (!Number.isSafeInteger(number) || number < 1 || number > 2147483647 || !formats.has(format)) fail("note-number-out-of-range", "Invalid note number or format");
   if (format === "decimal") return String(number);

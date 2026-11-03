@@ -1,0 +1,18 @@
+{
+  "upstreamCommit": "6eefc5b07c6969ab8999e48542acbcc131cba864",
+  "runtime": "citeproc@2.4.63",
+  "fixtures": [
+    {
+      "name": "fullstyles_APA",
+      "sha256": "5169ebfbe86988bab1fec3e3db867cf1a8dca49a89b133ede2a4306ed3b0f847",
+      "source": "https://raw.githubusercontent.com/citation-style-language/test-suite/6eefc5b07c6969ab8999e48542acbcc131cba864/processor-tests/machines/fullstyles_APA.json",
+      "passed": true
+    },
+    {
+      "name": "bugreports_IeeePunctuation",
+      "sha256": "1aea6f7590b7e8be8db6d4d71b440258f237ab3146e83affd6dfae9792f2d28a",
+      "source": "https://raw.githubusercontent.com/citation-style-language/test-suite/6eefc5b07c6969ab8999e48542acbcc131cba864/processor-tests/machines/bugreports_IeeePunctuation.json",
+      "passed": true
+    }
+  ]
+}

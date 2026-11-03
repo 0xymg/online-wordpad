@@ -215,7 +215,7 @@ export function createNoteExport(doc: PMNode) {
   const ownerMarkers = new Map<string, string>();
   const bodies: Array<{ noteId: string; startMarker: string; endMarker: string; body: PMNode }> = [];
   const token = crypto.randomUUID().replace(/-/g, "");
-  if (model?.version === 5) {
+  if (model && model.version >= 5) {
     validateNoteModel(model, doc.type.schema);
     const diagnostics = validateNoteGraph(doc); if (diagnostics.length) fail(diagnostics[0].message);
     // Owner order is independent of registry object insertion order.
@@ -226,7 +226,7 @@ export function createNoteExport(doc: PMNode) {
     });
   }
   return { ownerMarkers, bodies, async finish(blob: Blob): Promise<Blob> {
-    if (!model || model.version !== 5) return blob;
+    if (!model || model.version < 5) return blob;
     const zip = await JSZip.loadAsync(await blob.arrayBuffer()), { path, main, rels, body } = await packageMain(zip);
     const types = await readXml(zip, "[Content_Types].xml");
     function findRun(marker: string): Element {

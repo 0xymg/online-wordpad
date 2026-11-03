@@ -1,3 +1,4 @@
+import { bibliographyParagraphAttrs, parseBibliographyParagraphAttrs, bibliographyParagraphDOM, citationFieldNodeSpec } from "@/lib/document-bibliography";
 // ── Schema ────────────────────────────────────────────────────────────────
 // The ProseMirror schema lives in its own module so lightweight consumers
 // (e.g. the landing page's ToolbarPreview) can import it without dragging in
@@ -56,7 +57,7 @@ const normalizeLineHeight = (value: unknown): string | null => {
 const paragraphNodeSpec: NodeSpec = {
   ...basicSchema.spec.nodes.get("paragraph"),
   attrs: {
-    ...rawAttrs, ...referenceParagraphAttrs, ...noteProjectionAttrs,
+    ...rawAttrs, ...referenceParagraphAttrs, ...noteProjectionAttrs, ...bibliographyParagraphAttrs,
     styleId: { default: null }, styleText: { default: null }, styleParagraph: { default: null }, paragraphFormat: { default: null },
     textAlign: { default: null },
     indent: { default: 0 },
@@ -69,7 +70,7 @@ const paragraphNodeSpec: NodeSpec = {
       if (typeof dom === "string") return { textAlign: null, indent: 0, lineHeight: null };
       const el = dom as HTMLElement;
       return {
-        ...parseRaw(el), ...paragraphAttrs(el), ...parseReferenceParagraphAttrs(el), ...parseNoteProjectionAttrs(el),
+        ...parseRaw(el), ...paragraphAttrs(el), ...parseReferenceParagraphAttrs(el), ...parseNoteProjectionAttrs(el), ...parseBibliographyParagraphAttrs(el),
         textAlign: el.hasAttribute("data-edtr-style") ? null : normalizeTextAlign(el.style.textAlign),
         indent: el.hasAttribute("data-docx-properties") ? 0 : parseIndentFromDom(el),
         lineHeight: el.hasAttribute("data-edtr-style") || /[a-z%]/i.test(el.style.lineHeight) ? null : normalizeLineHeight(el.style.lineHeight),
@@ -85,7 +86,7 @@ const paragraphNodeSpec: NodeSpec = {
     if (indent > 0) style.push(`margin-left:${indent * 24}px`);
     if (lineHeight) style.push(`line-height:${lineHeight}`);
     style.push(paragraphCSS(node));
-    const attrs: Record<string, string> = { dir: "auto", ...rawDOM(node), ...paragraphDOM(node), ...referenceParagraphDOM(node), ...noteProjectionDOM(node) };
+    const attrs: Record<string, string> = { dir: "auto", ...rawDOM(node), ...paragraphDOM(node), ...referenceParagraphDOM(node), ...noteProjectionDOM(node), ...bibliographyParagraphDOM(node) };
     if (style.length) attrs.style = style.join(";");
     if (indent > 0) attrs["data-indent"] = String(indent);
     return ["p", attrs, 0];
@@ -259,6 +260,7 @@ export const mySchema = new Schema({
     .addToEnd("bookmark_start", bookmarkStartNodeSpec)
     .addToEnd("bookmark_end", bookmarkEndNodeSpec)
     .addToEnd("reference_field", referenceFieldNodeSpec)
+    .addToEnd("citation_field", citationFieldNodeSpec)
     .addToEnd("note_reference", {
       inline: true, group: "inline", atom: true, selectable: true,
       attrs: { noteId: { default: null }, cachedLabel: { default: "…" } },

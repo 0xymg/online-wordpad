@@ -1,4 +1,5 @@
 "use client";
+import { bibliographyLabel } from "@/lib/bibliography-i18n";
 
 import { referenceLabels } from "@/lib/reference-i18n";
 import type { ReferenceDialogMode } from "./ReferencesDialog";
@@ -113,6 +114,7 @@ interface MenuBarProps {
   onChangeCase: (kind: "upper" | "lower" | "title" | "sentence") => void;
   onInsertTOC: () => void;
   onReference: (mode: ReferenceDialogMode) => void;
+  onBibliography: () => void;
   onNote: (mode: NoteDialogMode, kind?: NoteKind) => void;
   onUpdateReferences: () => void;
   readingAloud: boolean;
@@ -197,7 +199,7 @@ function MenuBar({
   showImageLayers, onToggleImageLayers,
   spellcheckOn, onToggleSpellcheck,
   spellLang, onSpellLangChange,
-  onChangeCase, onInsertTOC, onReference, onNote, onUpdateReferences,
+  onChangeCase, onInsertTOC, onReference, onNote, onBibliography, onUpdateReferences,
   readingAloud, onToggleReadAloud,
   focusMode, onToggleFocusMode,
   printHeaderFooter, onTogglePrintHeaderFooter,
@@ -648,6 +650,7 @@ function MenuBar({
           <MenubarItem onClick={() => onReference("reference")}>{referenceLabels(locale).reference}…</MenubarItem>
           <MenubarItem onClick={onUpdateReferences}>{referenceLabels(locale).update}</MenubarItem>
           <MenubarSeparator />
+          <MenubarItem onClick={onBibliography}>{bibliographyLabel(locale, "Sources and bibliography") + "…"}</MenubarItem>
           <MenubarItem onClick={() => onNote("insert")}>{noteLabels(locale).insert}…</MenubarItem>
           <MenubarItem onClick={() => onNote("edit")}>{noteLabels(locale).edit}…</MenubarItem>
           <MenubarItem onClick={() => onNote("settings")}>{noteLabels(locale).settings}…</MenubarItem>

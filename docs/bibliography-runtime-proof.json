@@ -1,0 +1,60 @@
+{
+  "browser": "156.0.8078.4",
+  "offline": true,
+  "requests": [],
+  "bundleBytes": 629147,
+  "gzipBytes": 134422,
+  "results": {
+    "apa": {
+      "f": [
+        {
+          "text": "(Smith, 2020a)"
+        }
+      ],
+      "g": [
+        {
+          "text": "(Smith, 2020b)"
+        }
+      ]
+    },
+    "ieee": {
+      "f": [
+        {
+          "text": "[1]"
+        }
+      ],
+      "g": [
+        {
+          "text": "[2]"
+        }
+      ]
+    },
+    "entries": [
+      [
+        {
+          "text": "[1]\tJ. Smith, "
+        },
+        {
+          "text": "İstanbul 中文 العربية",
+          "italic": true
+        },
+        {
+          "text": ". Press, 2020."
+        }
+      ],
+      [
+        {
+          "text": "[2]\tJ. Smith, "
+        },
+        {
+          "text": "Other",
+          "italic": true
+        },
+        {
+          "text": ". Press, 2020."
+        }
+      ]
+    ],
+    "equal": true
+  }
+}

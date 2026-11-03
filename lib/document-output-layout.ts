@@ -1,3 +1,4 @@
+import { flushBibliographyLayout } from "./bibliography-layout";
 /** All outputs settle canonical notes, references and physical pages together. */
 import type { EditorView } from "prosemirror-view";
 import { projectEndnotes, refreshNoteLabels, collectNoteIndex } from "./document-notes";
@@ -15,6 +16,7 @@ export async function flushDocumentOutputLayout(view: EditorView): Promise<void>
     projectDocumentModel(tr, getDocumentModel(tr.doc)!);
     if (tr.docChanged && !tr.doc.eq(view.state.doc)) view.dispatch(tr.setMeta("addToHistory", false));
   }
+  await flushBibliographyLayout(view);
   await flushReferenceLayout(view);
   const snapshot = view.state.doc;
   await flushDocumentLayout(view);

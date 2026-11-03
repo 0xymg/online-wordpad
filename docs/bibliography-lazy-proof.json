@@ -1,0 +1,25 @@
+{
+  "passed": true,
+  "baseUrl": "http://localhost:3119",
+  "initialScriptCount": 28,
+  "initialScriptBytes": 1615093,
+  "initialCiteprocChunks": [],
+  "initialCslAssetChunks": [],
+  "citationCiteprocChunks": [
+    {
+      "url": "http://localhost:3119/_next/static/chunks/0euin5jotjcj_.js",
+      "bytes": 372784,
+      "processor": true,
+      "assets": false
+    }
+  ],
+  "citationCslAssetChunks": [
+    {
+      "url": "http://localhost:3119/_next/static/chunks/01c8yqb-g4tb8.js",
+      "bytes": 268810,
+      "processor": false,
+      "assets": true
+    }
+  ],
+  "buildId": "re_KzM1Rowsf-sq60fe6X"
+}

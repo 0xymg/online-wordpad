@@ -1,0 +1,104 @@
+{
+  "checkedAt": "2026-11-03",
+  "assets": [
+    {
+      "repo": "styles",
+      "path": "apa.csl",
+      "commit": "8c15d2757ac6ce93c800682f4b9e53582e27e609",
+      "sha256": "3917def5fc951b104d64216c3373096042368b9704ba269ca83c14ebaba889fc",
+      "bytes": 85817,
+      "url": "https://raw.githubusercontent.com/citation-style-language/styles/8c15d2757ac6ce93c800682f4b9e53582e27e609/apa.csl"
+    },
+    {
+      "repo": "styles",
+      "path": "ieee.csl",
+      "commit": "8c15d2757ac6ce93c800682f4b9e53582e27e609",
+      "sha256": "b4c7619fc16c45a31e4cc3271eab94ffe83192d3b4c7fc729470a3b459448de3",
+      "bytes": 17587,
+      "url": "https://raw.githubusercontent.com/citation-style-language/styles/8c15d2757ac6ce93c800682f4b9e53582e27e609/ieee.csl"
+    },
+    {
+      "repo": "styles",
+      "path": "README.md",
+      "commit": "8c15d2757ac6ce93c800682f4b9e53582e27e609",
+      "sha256": "eeda35e6ab1c71ef74ba98e8d63f3f5c07e1b1c458b92d54cdd7515afcb1b04e",
+      "bytes": 6573,
+      "url": "https://raw.githubusercontent.com/citation-style-language/styles/8c15d2757ac6ce93c800682f4b9e53582e27e609/README.md"
+    },
+    {
+      "repo": "locales",
+      "path": "locales-en-US.xml",
+      "commit": "8bef426f89f38c0789223c50e53ec2197bc50bb3",
+      "sha256": "ac864c7c21166b4390d82c31792cdc509400727fa0060b43d8aa17e07f9cb079",
+      "bytes": 32649,
+      "url": "https://raw.githubusercontent.com/citation-style-language/locales/8bef426f89f38c0789223c50e53ec2197bc50bb3/locales-en-US.xml"
+    },
+    {
+      "repo": "locales",
+      "path": "locales-tr-TR.xml",
+      "commit": "8bef426f89f38c0789223c50e53ec2197bc50bb3",
+      "sha256": "018b01a383c0e619c5366146b339f3a79cff594738f12c3012733c0f97e9680d",
+      "bytes": 25478,
+      "url": "https://raw.githubusercontent.com/citation-style-language/locales/8bef426f89f38c0789223c50e53ec2197bc50bb3/locales-tr-TR.xml"
+    },
+    {
+      "repo": "locales",
+      "path": "locales-fr-FR.xml",
+      "commit": "8bef426f89f38c0789223c50e53ec2197bc50bb3",
+      "sha256": "bd6820660e6a4dab73bfd48df7348320708263b413c06fdd2e5445bcdf788bfb",
+      "bytes": 31110,
+      "url": "https://raw.githubusercontent.com/citation-style-language/locales/8bef426f89f38c0789223c50e53ec2197bc50bb3/locales-fr-FR.xml"
+    },
+    {
+      "repo": "locales",
+      "path": "locales-zh-CN.xml",
+      "commit": "8bef426f89f38c0789223c50e53ec2197bc50bb3",
+      "sha256": "95cebc667f2da8fb5b9864e49941e3f867d59f79feba929bc58e8ed6bfd4d582",
+      "bytes": 18641,
+      "url": "https://raw.githubusercontent.com/citation-style-language/locales/8bef426f89f38c0789223c50e53ec2197bc50bb3/locales-zh-CN.xml"
+    },
+    {
+      "repo": "locales",
+      "path": "locales-ar.xml",
+      "commit": "8bef426f89f38c0789223c50e53ec2197bc50bb3",
+      "sha256": "d25602b8b39497bef229b8aaa75ae92b34a529bed7f55b5367e4a26c99611319",
+      "bytes": 25850,
+      "url": "https://raw.githubusercontent.com/citation-style-language/locales/8bef426f89f38c0789223c50e53ec2197bc50bb3/locales-ar.xml"
+    },
+    {
+      "repo": "locales",
+      "path": "README.md",
+      "commit": "8bef426f89f38c0789223c50e53ec2197bc50bb3",
+      "sha256": "f8e1b34d3e1b66f101b45bc45e5fca0397aa923fe4abeab6f98139c8f731c320",
+      "bytes": 1777,
+      "url": "https://raw.githubusercontent.com/citation-style-language/locales/8bef426f89f38c0789223c50e53ec2197bc50bb3/README.md"
+    }
+  ],
+  "styles": {
+    "commit": "8c15d2757ac6ce93c800682f4b9e53582e27e609",
+    "date": "2026-11-02T10:32:31Z"
+  },
+  "locales": {
+    "commit": "8bef426f89f38c0789223c50e53ec2197bc50bb3",
+    "date": "2026-10-20T06:23:15Z"
+  },
+  "runtimeCandidate": {
+    "package": "citeproc",
+    "npmVersion": "2.4.63",
+    "reportedProcessorVersion": "1.4.61",
+    "tarballSha256": "7f2b7714bfd1f4480aad9c34972eb5d48dc1b85876ba21b5aa9aee74156e2ccf",
+    "licenseMetadata": "AGPL-1.0",
+    "licenseFileChoices": [
+      "CPAL-1.0",
+      "AGPL-3.0-or-later"
+    ],
+    "fullLicenseTextsBundled": true,
+    "browserBundleTested": true,
+    "citationClusterTestsRun": true,
+    "installedInProject": true,
+    "sourceCommit": "73bc1b44bc7d54d0bfec4e070fd27f5efe024ff9",
+    "integrity": "sha512-68F95Bp4UbgZU/DBUGQn0qV3HDZLCdI9+Bb2ByrTaNJDL5VEm9LqaiNaxljsvoaExSLEXe1/r6n2Z06SCzW3/Q==",
+    "selectedLicense": "CPAL-1.0",
+    "sourceArchive": "/third-party/citeproc/citeproc-2.4.63.tgz"
+  }
+}

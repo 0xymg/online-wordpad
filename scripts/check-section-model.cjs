@@ -25,7 +25,7 @@ const script = `window.__sections = (() => { const modules=${JSON.stringify(modu
 (async () => {
   const browser = await chromium.launch({ headless: true, ...(process.env.CHROMIUM_PATH ? { executablePath: process.env.CHROMIUM_PATH } : {}) });
   try {
-    const page = await browser.newPage(); await page.goto('http://localhost:3107'); await page.addScriptTag({ content: script });
+    const page = await browser.newPage(); await page.goto(process.env.BASE_URL || 'http://localhost:3107'); await page.addScriptTag({ content: script });
     const result = await page.evaluate(() => {
       const { columnBreak: B, sectionColumns: SC, model: M, commands: C, sections: D, layout: L, schema: { mySchema: schema }, state: S, history: H, pm: P, list } = window.__sections;
       let checks = 0; const check = (condition, message) => { checks++; if (!condition) throw new Error(message); };
@@ -48,7 +48,7 @@ const script = `window.__sections = (() => { const modules=${JSON.stringify(modu
       check(encoded.includes('data-edtr-model'), 'model envelope serializes');
       const oldVersion=JSON.parse(JSON.stringify(M.getDocumentModel(reopened)));oldVersion.version=1;
       const upgraded=M.parseDocumentHtml(L.wrapDocumentHtml(output.innerHTML,reopened.attrs.layout,oldVersion),schema);
-      check(upgraded.attrs.documentModel.version===5 && upgraded.attrs.documentModel.id===oldVersion.id && same(D.documentSections(upgraded).map(s=>s.id),D.documentSections(reopened).map(s=>s.id)),'v1 upgrades to v5 without changing document or section identities');
+      check(upgraded.attrs.documentModel.version===6 && upgraded.attrs.documentModel.id===oldVersion.id && same(D.documentSections(upgraded).map(s=>s.id),D.documentSections(reopened).map(s=>s.id)),'v1 upgrades to v6 without changing document or section identities');
       const columnRaw = `<w:sectPr xmlns:w="${W}" xmlns:x="urn:test"><w:cols w:num="2" w:equalWidth="1" x:custom="retain"/><w:bidi/><w:docGrid w:linePitch="360"/></w:sectPr>`;
       const baseline = JSON.parse(JSON.stringify(M.getDocumentModel(reopened)));
       const columnId = baseline.finalSectionId;

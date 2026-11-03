@@ -54,6 +54,8 @@ export function refreshReferenceFields(tr: Transaction, pageAt?: (pos: number) =
 
 const active = new WeakMap<EditorView, Promise<void>>();
 const revisions = new WeakMap<EditorView, number>(), derivedDocuments = new WeakSet<PMNode>();
+/** Register cache-only projections before dispatch so export revisions remain canonical. */
+export function markReferenceDerivedDocument(doc: PMNode): void { derivedDocuments.add(doc); }
 /** Called by the pagination view after a document update. Derived cache-only
  * transactions do not count as user changes for an export snapshot. */
 export function noteReferenceDocumentChange(view: EditorView): void {

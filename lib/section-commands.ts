@@ -1,3 +1,4 @@
+import { captureBibliographyProjection, unprojectBibliography, restoreBibliographyProjection } from "./document-bibliography";
 import { projectEndnotes, unprojectEndnotes, refreshNoteLabels } from "./document-notes";
 import { Selection, TextSelection, type EditorState, type Transaction } from "prosemirror-state";
 import { closeHistory } from "prosemirror-history";
@@ -26,6 +27,9 @@ function command(state: EditorState): { tr: Transaction; model: DocumentModel } 
     tr.setDocAttribute("documentModel", model);
     tr.setSelection(Selection.fromJSON(tr.doc, state.selection.toJSON()));
   }
+  const bibliography = captureBibliographyProjection(tr.doc);
+  tr.setMeta("edtr-section-bibliography-cache", bibliography);
+  unprojectBibliography(tr);
   unprojectEndnotes(tr);
   return { tr, model };
 }
@@ -33,6 +37,7 @@ function command(state: EditorState): { tr: Transaction; model: DocumentModel } 
  * section edit; appended cache-only moves otherwise destroy inverse mappings. */
 function finishSectionCommand(tr: Transaction, model: DocumentModel): Transaction {
   projectDocumentModel(tr, model);
+  restoreBibliographyProjection(tr, tr.getMeta("edtr-section-bibliography-cache") || []);
   refreshNoteLabels(projectEndnotes(tr));
   return projectDocumentModel(tr, getDocumentModel(tr.doc)!);
 }
@@ -51,7 +56,7 @@ function newFollowingSection(previous: SectionRecord, start: "nextPage" | "conti
 export function insertDocumentSection(state: EditorState, start: "nextPage" | "continuous"): Transaction {
   if (!state.selection.empty) throw new SectionCommandError("invalid-selection", "Place the cursor without selecting text");
   const originalPos = state.selection.$from;
-  if (originalPos.depth !== 1 || originalPos.parent.attrs.noteOwnerId || !["paragraph", "heading"].includes(originalPos.parent.type.name)) throw new SectionCommandError("unsupported-cursor", "Section breaks currently require a top-level paragraph or heading");
+  if (originalPos.depth !== 1 || originalPos.parent.attrs.noteOwnerId || originalPos.parent.attrs.bibliographyOwnerId || !["paragraph", "heading"].includes(originalPos.parent.type.name)) throw new SectionCommandError("unsupported-cursor", "Section breaks currently require a top-level paragraph or heading");
   if (start !== "nextPage" && start !== "continuous") throw new SectionCommandError("unsupported-cursor", "Unsupported section start");
   const { tr, model } = command(state);
   const sections = documentSections(tr.doc), index = activeDocumentSection({ doc: tr.doc, selection: tr.selection } as EditorState).index;
