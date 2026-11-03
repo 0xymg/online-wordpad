@@ -8,6 +8,7 @@ import { toCanvas,getFontEmbedCSS } from "html-to-image";
 import type { EditorView } from "prosemirror-view";
 import type { Node as PMNode } from "prosemirror-model";
 import { defaultDocumentLayout } from "./document-layout";
+import { getDocumentModel } from "./document-model";
 import { preparePrintLayout } from "./print-layout";
 import { printPageStyle } from "./print-style";
 import type { PdfExportOptions } from "./pdf-export";
@@ -56,6 +57,7 @@ async function snapshotFrame(host:HTMLElement){
  try{await Promise.all(pending);await doc.fonts.ready;await Promise.all(Array.from(doc.images).map(img=>img.decode().catch(()=>{})));return iframe;}catch(error){iframe.remove();throw error;}
 }
 export async function viewToPdfBlob(view:EditorView,opts:PdfExportOptions):Promise<Blob>{
+ getDocumentModel(view.state.doc);
  const host=document.createElement('div');host.className='edtr-print-root';
  await preparePrintLayout(view,host,opts.headerFooter?{title:opts.title,date:new Date().toLocaleDateString()}:undefined);
  // html-to-image discovers fonts using instanceof HTMLElement. Its font scan
@@ -86,6 +88,7 @@ export async function viewToPdfBlob(view:EditorView,opts:PdfExportOptions):Promi
  }finally{frame.remove();}
 }
 export async function docToScreenPdfBlob(doc:PMNode,opts:PdfExportOptions,active?:EditorView){
+ getDocumentModel(doc);
  if(active&&active.state.doc===doc)return viewToPdfBlob(active,opts);
  if(!doc.attrs.layout){const layout=defaultDocumentLayout();const margin=Math.round(opts.marginCm/2.54*1440);layout.margins={top:margin,bottom:margin,left:margin,right:margin};if(opts.orientation==='landscape')[layout.width,layout.height]=[layout.height,layout.width];layout.pageNumbers=opts.pageNumbers||'off';layout.pageNumberFormat=opts.pageNumberFormat||'plain';layout.overrides={pageNumbers:true};doc=doc.type.create({...doc.attrs,layout},doc.content);}
  const {readonlyDocumentView}=await import('./readonly-document-view');const renderer=readonlyDocumentView(doc);

@@ -1,4 +1,5 @@
 import type { DocumentStyles } from "./paragraph-format";
+import type { DocumentModelV1 } from "./document-model";
 /** Small, shared document metadata. Kept in the document, never in user preferences. */
 export type DocumentLayout = {
   width: number; height: number;
@@ -24,10 +25,11 @@ export function readLayout(root: HTMLElement): DocumentLayout | null {
     return data;
   } catch { return null; }
 }
-export function wrapDocumentHtml(html: string, layout: DocumentLayout | null): string {
-  if (!layout) return html;
+export function wrapDocumentHtml(html: string, layout: DocumentLayout | null, model?: DocumentModelV1 | null): string {
+  if (!layout && !model) return html;
   const wrapper = document.createElement("div");
-  wrapper.setAttribute(LAYOUT_ATTRIBUTE, JSON.stringify(layout));
+  if (layout) wrapper.setAttribute(LAYOUT_ATTRIBUTE, JSON.stringify(layout));
+  if (model) wrapper.setAttribute("data-edtr-model", JSON.stringify(model));
   wrapper.innerHTML = html;
   return wrapper.outerHTML;
 }

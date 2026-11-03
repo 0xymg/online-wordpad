@@ -34,6 +34,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { getTemplates } from "@/lib/templates";
 import { DATE_FORMATS, formatDate } from "@/lib/doc-variables";
+import { sectionLabels } from "@/lib/section-i18n";
 import { textBoxLabels } from "@/lib/text-box-i18n";
 
 interface MenuBarProps {
@@ -43,6 +44,7 @@ interface MenuBarProps {
   marginPreset?: string;
   onMarginPreset: (id:string) => void;
   onCustomMargins: () => void;
+  onSectionLayout: () => void;
   pageOrientation: "portrait" | "landscape";
   onPageOrientationChange: (o: "portrait" | "landscape") => void;
   onPrint?: () => void;
@@ -85,6 +87,8 @@ interface MenuBarProps {
   onToggleToolbar: () => void;
   showImageLayers: boolean;
   onToggleImageLayers: () => void;
+  showSectionMarkers: boolean;
+  onToggleSectionMarkers: () => void;
   showRuler: boolean;
   onToggleRuler: () => void;
   spellcheckOn: boolean;
@@ -163,7 +167,7 @@ function MenuBar({
   headerCollapsed = false,
   viewRef, schema, onPrint,
   marginPreset, onMarginPreset, onCustomMargins,
-  pageOrientation, onPageOrientationChange,
+  pageOrientation, onPageOrientationChange, onSectionLayout,
   docTitle, onTitleChange, onNewDoc, onShowHome, onNewFromTemplate, onOpenFile, onExport,
   onSave, onCopyLink, onRenameDoc, onDeleteDoc, onReplace,
   onShowVersions, onShowShortcuts, onShowAbout, onFind,
@@ -171,7 +175,7 @@ function MenuBar({
   onInsertDivider, onInsertSymbol, onInsertDate, onInsertVariable,
   onLineSpacing, onClearFormatting,
   zoomPercent, onZoomChange,
-  showToolbar, onToggleToolbar, showRuler, onToggleRuler,
+  showToolbar, onToggleToolbar, showRuler, onToggleRuler, showSectionMarkers, onToggleSectionMarkers,
   showImageLayers, onToggleImageLayers,
   spellcheckOn, onToggleSpellcheck,
   spellLang, onSpellLangChange,
@@ -440,6 +444,7 @@ function MenuBar({
                 <div><div>{t.margins[p.id]}</div><div className="text-[10px] text-muted-foreground">{t.margins.top}: {(p.margins.top*2.54/1440).toFixed(2)} · {t.margins.left}: {(p.margins.left*2.54/1440).toFixed(2)}</div></div>
               </MenubarCheckboxItem>)}
               <MenubarSeparator/>
+              <MenubarItem onClick={onSectionLayout}>{sectionLabels(locale).title}…</MenubarItem>
               <MenubarItem onClick={onCustomMargins}>{t.margins.custom}</MenubarItem>
             </MenubarSubContent>
           </MenubarSub>
@@ -549,6 +554,7 @@ function MenuBar({
           <MenubarCheckboxItem checked={showImageLayers} onClick={onToggleImageLayers}>
             {t.image.layersTitle}
           </MenubarCheckboxItem>
+          <MenubarCheckboxItem checked={showSectionMarkers} onClick={onToggleSectionMarkers}>{sectionLabels(locale).showBoundaries}</MenubarCheckboxItem>
           <MenubarCheckboxItem checked={showRuler} onClick={onToggleRuler}>
             {t.view.ruler}
           </MenubarCheckboxItem>
@@ -621,6 +627,7 @@ function MenuBar({
           <MenubarSeparator />
           <MenubarItem onClick={onInsertDivider}>{t.insert.horizontalLine}</MenubarItem>
           <MenubarItem onClick={onPageBreakAdd}>{t.insert.pageBreak}</MenubarItem>
+          <MenubarItem onClick={onSectionLayout}>{sectionLabels(locale).title}…</MenubarItem>
           <MenubarSeparator />
           <MenubarSub>
             <MenubarSubTrigger>{t.insert.symbol}</MenubarSubTrigger>

@@ -10,6 +10,7 @@ import { TableMap } from "prosemirror-tables";
 import { DEFAULT_DOCUMENT_FONT } from "./document-font";
 import { imageWrap, imageDistance } from "./image-layout";
 import { documentSections } from "./document-sections";
+import { getDocumentModel, sectionIdentityOrder } from "./document-model";
 import { fixedImageWidth } from "./page-image-position";
 import { exportTextBoxes, textBoxBookmark } from "./text-box-docx";
 import { DOMParser as PMParser, type Node as PMNode, type Mark } from "prosemirror-model";
@@ -401,6 +402,14 @@ export async function docToDocxBlob(
   title: string,
   options: { orientation?: "portrait" | "landscape"; marginCm?: number; pageNumbers?: "off" | "top" | "bottom"; pageNumberFormat?: "plain" | "of" } | "portrait" | "landscape" = {}
 ): Promise<Blob> {
+  // Reject unsupported or inconsistent future models before any export can
+  // silently flatten their sections to legacy layout metadata.
+  const model = getDocumentModel(doc);
+  if (model) {
+    const ids = sectionIdentityOrder(doc, model);
+    if (new Set(ids).size !== ids.length || ids.some(id => !Object.hasOwn(model.sections, id)) || ids.length !== Object.keys(model.sections).length)
+      throw new Error("Cannot export inconsistent document section boundaries");
+  }
   const defaults = typeof options === "string" ? { orientation: options } : options;
   const layout = doc.attrs.layout as DocumentLayout | null;
   const orientation = layout ? layout.width > layout.height ? "landscape" : "portrait" : defaults.orientation || "portrait";
@@ -625,6 +634,7 @@ class RtfBuilder {
 }
 
 export function docToRtf(doc: PMNode): string {
+  getDocumentModel(doc);
   const builder = new RtfBuilder();
   doc.forEach((block) => builder.block(block));
   return builder.toString();
@@ -737,6 +747,7 @@ function blockToMd(node: PMNode): string {
 }
 
 export function docToMarkdown(doc: PMNode): string {
+  getDocumentModel(doc);
   let out = "";
   doc.forEach((block) => { out += blockToMd(block); });
   return out.replace(/\n{3,}/g, "\n\n").trimEnd() + "\n";

@@ -1,0 +1,27 @@
+.pm-section-marker {
+  position: absolute;
+  inset-inline-end: 0;
+  bottom: 0;
+  display: block;
+  width: 0;
+  height: 0;
+  font-size: 0;
+  line-height: 0;
+  pointer-events: none;
+  user-select: none;
+}
+.pm-section-marker > span {
+  position: absolute;
+  inset-inline-end: 0;
+  bottom: 2px;
+  width: max-content;
+  max-width: 220px;
+  padding: 1px 4px;
+  font: 10px/1.25 system-ui, sans-serif;
+  color: #64748b;
+  background: var(--background, white);
+  border-bottom: 1px dashed currentColor;
+  opacity: 0.85;
+}
+.dark .pm-section-marker > span { color: #cbd5e1; }
+@media print { .pm-section-marker { display: none !important; } }

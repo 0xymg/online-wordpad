@@ -1,10 +1,11 @@
 import { effectiveParagraph } from "./paragraph-format";
 import type { Node as PMNode } from "prosemirror-model";
 import { defaultDocumentLayout, type DocumentLayout } from "./document-layout";
+import { getDocumentModel, sectionRecordXml } from "./document-model";
 export type PageGeometry = Pick<DocumentLayout, "width" | "height" | "margins"> & {
   headerDistance?: number; footerDistance?: number; startType?: string; numberStart?: number; numberFormat?: string; differentFirst?: boolean;
 };
-export type DocumentSection = { from: number; to: number; geometry: PageGeometry };
+export type DocumentSection = { id: string; from: number; to: number; geometry: PageGeometry };
 const W = "http://schemas.openxmlformats.org/wordprocessingml/2006/main";
 const cache = new WeakMap<PMNode, DocumentSection[]>();
 export function sectionGeometry(raw: string | undefined, fallback: PageGeometry): PageGeometry {
@@ -29,6 +30,7 @@ export function sameGeometry(a: PageGeometry, b: PageGeometry): boolean {
 export function documentSections(doc: PMNode): DocumentSection[] {
   const cached = cache.get(doc); if (cached) return cached;
   const layout = doc.attrs.layout as DocumentLayout | null;
+  const model = getDocumentModel(doc);
   const fallback = layout || defaultDocumentLayout();
   const applyOverrides = (geometry: PageGeometry): PageGeometry => ({ ...geometry,
     ...(layout?.overrides?.orientation ? { width: layout.width, height: layout.height } : {}),
@@ -38,18 +40,21 @@ export function documentSections(doc: PMNode): DocumentSection[] {
   const rawSections: string[] = [];
   let from = 0;
   doc.forEach((node, pos) => {
-    const raw = String(node.attrs.docxProperties || "");
-    if (!raw.includes("sectPr")) return;
+    const id = model ? node.attrs.sectionEndId : null;
+    const raw = model ? id && model.sections[id] ? sectionRecordXml(model.sections[id]) : "" : String(node.attrs.docxProperties || "");
+    if (model ? !id : !raw.includes("sectPr")) return;
     const end = pos + node.nodeSize;
-    rawSections.push(node.attrs.docxProperties);
-    sections.push({ from, to: end, geometry: applyOverrides(sectionGeometry(raw, fallback)) });
+    rawSections.push(raw);
+    sections.push({ id: id || `legacy:${sections.length}`, from, to: end, geometry: model ? sectionGeometry(raw, model.sections[id].page) : applyOverrides(sectionGeometry(raw, fallback)) });
     from = end;
   });
-  sections.push({ from, to: doc.content.size, geometry: applyOverrides(sectionGeometry(layout?.section, fallback)) });
-  rawSections.push(layout?.section || "");
+  const finalRaw = model ? sectionRecordXml(model.sections[model.finalSectionId]) : layout?.section || "";
+  sections.push({ id: model?.finalSectionId || `legacy:${sections.length}`, from, to: doc.content.size,
+    geometry: model ? sectionGeometry(finalRaw, model.sections[model.finalSectionId].page) : applyOverrides(sectionGeometry(finalRaw, fallback)) });
+  rawSections.push(finalRaw);
   for (let index = 0; index < sections.length; index++) {
     const g = sections[index].geometry;
-    if (layout?.sectionMargins?.[index]) g.margins = { ...layout.sectionMargins[index] };
+    if (!model && layout?.sectionMargins?.[index]) g.margins = { ...layout.sectionMargins[index] };
     const own = Object.entries(layout?.running || {}).filter(([key]) => key.startsWith(`${index}:`));
     if (own.some(([key]) => key.includes(":first:"))) g.differentFirst = true;
     for (const kind of ["header", "footer"] as const) {

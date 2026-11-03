@@ -15,9 +15,9 @@ import { textBoxNodeSpec } from "@/lib/text-box";
 function layoutStyles(el: HTMLElement): string {
   return ["height", "margin-top", "margin-bottom", "margin-left", "margin-right", "text-indent", "line-height", "background-color", "vertical-align", "border-top", "border-right", "border-bottom", "border-left", "padding-top", "padding-right", "padding-bottom", "padding-left"].map(p => el.style.getPropertyValue(p) ? `${p}:${el.style.getPropertyValue(p)}` : "").filter(Boolean).join(";");
 }
-const rawAttrs = { docxProperties: { default: null }, layoutStyle: { default: null } };
-const parseRaw = (el: HTMLElement) => ({ docxProperties: readDocxProperties(el), layoutStyle: el.hasAttribute("data-docx-properties") ? layoutStyles(el) : null });
-const rawDOM = (node: PMNode): Record<string, string> => node.attrs.docxProperties ? { "data-docx-properties": node.attrs.docxProperties } : {};
+const rawAttrs = { docxProperties: { default: null }, layoutStyle: { default: null }, sectionEndId: { default: null } };
+const parseRaw = (el: HTMLElement) => ({ docxProperties: readDocxProperties(el), layoutStyle: el.hasAttribute("data-docx-properties") ? layoutStyles(el) : null, sectionEndId: el.getAttribute("data-edtr-section-end") });
+const rawDOM = (node: PMNode): Record<string, string> => ({ ...(node.attrs.docxProperties ? { "data-docx-properties": node.attrs.docxProperties } : {}), ...(node.attrs.sectionEndId ? { "data-edtr-section-end": node.attrs.sectionEndId } : {}) });
 
 const normalizeTextAlign = (value: string | null | undefined) => {
   if (!value) return null;
@@ -60,6 +60,7 @@ const paragraphNodeSpec: NodeSpec = {
   },
   parseDOM: [{
     tag: "p",
+    preserveWhitespace: true,
     getAttrs(dom: Node | string) {
       if (typeof dom === "string") return { textAlign: null, indent: 0, lineHeight: null };
       const el = dom as HTMLElement;
@@ -99,6 +100,7 @@ const headingNodeSpec: NodeSpec = {
   },
   parseDOM: [1, 2, 3, 4, 5, 6].map((level) => ({
     tag: `h${level}`,
+    preserveWhitespace: true as const,
     getAttrs(dom: Node | string) {
       if (typeof dom === "string") return { level, textAlign: null, indent: 0, lineHeight: null };
       const el = dom as HTMLElement;
@@ -230,7 +232,7 @@ for (const name of ["table", "table_row"] as const) {
 export const mySchema = new Schema({
   nodes: (addListNodes(
     basicSchema.spec.nodes
-      .update("doc", { ...basicSchema.spec.nodes.get("doc"), attrs: { layout: { default: null } } })
+      .update("doc", { ...basicSchema.spec.nodes.get("doc"), attrs: { layout: { default: null }, documentModel: { default: null } } })
       .update("paragraph", paragraphNodeSpec)
       .update("heading", headingNodeSpec)
       .update("image", imageNodeSpec),

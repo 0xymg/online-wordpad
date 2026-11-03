@@ -240,6 +240,66 @@ function replaceProperties(parent: Element, raw: string, preserve: string[] = []
   for (const name of preserve) { for (const el of kids(copy, name)) el.remove(); for (const el of old ? kids(old, name) : []) copy.appendChild(el.cloneNode(true)); }
   if (old) old.replaceWith(copy); else parent.insertBefore(copy, parent.firstChild);
 }
+/** Apply the canonical section model to native Word section properties.
+ * Raw section XML remains the authority for unsupported children, relationship
+ * references and attributes; only model-owned values are changed here.
+ */
+function applyModeledSections(main: Document, doc: PMNode) {
+  const model = doc.attrs.documentModel as {
+    finalSectionId: string;
+    sections: Record<string, { page: { width: number; height: number; margins: Record<string, number> }; start: string; numbering?: { start?: number; format?: string } }>;
+  } | null | undefined;
+  if (!model) return;
+  const ids: string[] = [];
+  doc.forEach(node => { if (node.attrs.sectionEndId) ids.push(String(node.attrs.sectionEndId)); });
+  ids.push(model.finalSectionId);
+  // Historical sectPr inside sectPrChange is not a live section boundary.
+  const sections = all(main, "sectPr").filter(section => ["pPr", "body"].includes(section.parentElement?.localName || ""));
+  if (ids.length !== sections.length || new Set(ids).size !== ids.length || ids.some(id => !model.sections[id]))
+    throw new Error("Cannot export inconsistent document section boundaries");
+  for (const [index, section] of sections.entries()) {
+    const record = model.sections[ids[index]], { page, numbering } = record;
+    const values = [page.width, page.height, ...["top", "right", "bottom", "left"].map(side => page.margins[side])];
+    if (values.some(value => !Number.isFinite(value) || value < 0) || page.width < 720 || page.height < 720)
+      throw new Error("Cannot export invalid section page geometry");
+    const ensure = (name: string) => first(section, name) || section.appendChild(main.createElementNS(W, `w:${name}`));
+    const type = ensure("type"); type.setAttributeNS(W, "w:val", record.start || "nextPage");
+    const size = ensure("pgSz");
+    size.setAttributeNS(W, "w:w", String(Math.round(page.width))); size.setAttributeNS(W, "w:h", String(Math.round(page.height)));
+    size.setAttributeNS(W, "w:orient", page.width > page.height ? "landscape" : "portrait");
+    const margins = ensure("pgMar");
+    for (const side of ["top", "right", "bottom", "left"]) margins.setAttributeNS(W, `w:${side}`, String(Math.round(page.margins[side])));
+    const number = first(section, "pgNumType");
+    if (numbering?.start !== undefined || numbering?.format !== undefined || number) {
+      const pg = number || ensure("pgNumType");
+      if (numbering?.start === undefined) pg.removeAttributeNS(W, "start"); else pg.setAttributeNS(W, "w:start", String(numbering.start));
+      if (numbering?.format === undefined) pg.removeAttributeNS(W, "fmt"); else pg.setAttributeNS(W, "w:fmt", numbering.format);
+      if (!pg.attributes.length && !pg.children.length) pg.remove();
+    }
+  }
+  // Native hidden bookmarks survived an actual Word Online edit/download.
+  // Stamp only when every terminal is a top-level paragraph; an unsafe or
+  // colliding layout receives no partial identity set and will import fresh IDs.
+  const body = all(main, "body")[0];
+  const content = body && Array.from(body.children).filter(el => el.namespaceURI === W && el.localName !== "sectPr");
+  const last = content?.at(-1);
+  const terminals: Array<Element | null | undefined> = sections.slice(0, -1).map(section => section.parentElement?.parentElement);
+  terminals.push(last);
+  const names = ids.map(id => `_edtrsec${id.slice(4)}`);
+  const existingNames = new Set(all(main, "bookmarkStart").map(el => val(el, "name")));
+  if (body && last?.localName === "p" && new Set(terminals).size === terminals.length && terminals.every(p => p?.localName === "p" && p.parentElement === body)
+      && ids.every(id => /^sec_[a-f0-9]{32}$/.test(id)) && names.every(name => !existingNames.has(name))) {
+    const used = new Set([...all(main, "bookmarkStart"), ...all(main, "bookmarkEnd")].map(el => val(el, "id")));
+    let counter = 0;
+    terminals.forEach((paragraph, index) => {
+      while (used.has(String(counter))) counter++;
+      const id = String(counter++); used.add(id);
+      const start = main.createElementNS(W, "w:bookmarkStart"), end = main.createElementNS(W, "w:bookmarkEnd");
+      start.setAttributeNS(W, "w:id", id); start.setAttributeNS(W, "w:name", names[index]);
+      end.setAttributeNS(W, "w:id", id); paragraph!.append(start, end);
+    });
+  }
+}
 export async function restoreDocxPackage(blob: Blob, doc: PMNode, paragraphs: Array<{ id: string; properties: string }>) {
   const zip = await JSZip.loadAsync(await blob.arrayBuffer());
   const main = parseXml(await zip.file("word/document.xml")!.async("string"));
@@ -303,6 +363,7 @@ export async function restoreDocxPackage(blob: Blob, doc: PMNode, paragraphs: Ar
       size.setAttributeNS(W, "w:w", String(layout.width)); size.setAttributeNS(W, "w:h", String(layout.height)); size.setAttributeNS(W, "w:orient", layout.width > layout.height ? "landscape" : "portrait");
     }
   }
+  applyModeledSections(main, doc);
   if (layout?.overrides?.pageNumbers && generatedSection) {
     const rels = parseXml(await zip.file("word/_rels/document.xml.rels")!.async("string"));
     const target = (ref: Element) => {

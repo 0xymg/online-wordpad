@@ -1,0 +1,20 @@
+{
+  "reference_application": "Microsoft Word Online",
+  "captured_date": "2026-11-03 UTC",
+  "source_sha256": "8bd9c16e339025f3abb8ffc5e06150644048ed5e768056e22a5eb92fa82c41b0",
+  "word_edited_sha256": "faa954204c8478a1a5cacb0b7b9165ce2a639cd93d712ca8b1ee87bdb2c18d36",
+  "method": "Opened source in Word Online, inserted WORD_ROUNDTRIP_EDIT before first section text, then created and downloaded a DOCX copy",
+  "browser": "Codex in-app browser; engine version unavailable",
+  "verified": [
+    "WORD_ROUNDTRIP_EDIT exists",
+    "both named zero-length bookmark pairs survived",
+    "section-one pair remains on terminating paragraph carrying sectPr",
+    "final-section pair remains on last body paragraph"
+  ],
+  "bookmark_names": [
+    "_edtrsec11111111111111111111111111111111",
+    "_edtrsec22222222222222222222222222222222"
+  ],
+  "original_word_download_sha256": "9fc0d17d6fcb3d0daf7ce50d6c72f4c4bbc04147049b058a903c95601b76a19d",
+  "repository_sanitization": "Only docProps/core.xml lastModifiedBy replaced with EDTRDocs compatibility fixtures; word/document.xml and all bookmark evidence remain byte-identical to the Word download."
+}

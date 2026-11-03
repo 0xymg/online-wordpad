@@ -8,7 +8,12 @@ import { paginationPlugin } from "@/app/components/paginationPlugin";
 import { documentSections } from "./document-sections";
 import { ensureEditorFont } from "./editor-fonts";
 import { createReadonlyTextBoxView } from "./text-box";
+import { getDocumentModel, migrateDocumentNode, projectDocumentModel } from "./document-model";
 export function readonlyDocumentView(doc:PMNode){
+ // Validate before creating DOM. A future model must not fall back to legacy
+ // layout; valid canonical sections also project their headers/footers here.
+ doc=migrateDocumentNode(doc);
+ doc=projectDocumentModel(EditorState.create({doc}).tr,getDocumentModel(doc)!).doc;
  const sections=documentSections(doc),first=sections[0].geometry,width=Math.max(...sections.map(s=>s.geometry.width))/15;
  const host=document.createElement("div");host.className="editor-shell";host.style.cssText=`position:fixed;left:-100000px;top:0;width:${width+100}px;height:2000px;visibility:hidden;overflow:hidden;pointer-events:none`;
  const page=document.createElement("div");page.className="pm-page";

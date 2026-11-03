@@ -1,0 +1,10 @@
+{
+  "reference_application": "Microsoft Word Online",
+  "captured_date": "2026-11-03 UTC",
+  "source_sha256": "ec3a3eba6180834f1ae5af3b06b2dae23bd220c3a710e83d6fbe549ee05c2487",
+  "pdf_sha256": "082202543496b94465c9a6bf393cc1c6f94e7fe90d7b237c7aebd5470acc0edf",
+  "method": "Word Online File > Export > Download as PDF",
+  "browser": "Codex in-app browser; engine version unavailable",
+  "paper": "Native Word section geometry; no browser print override",
+  "result": "First Letter page contains PROBE_BEFORE only; landscape A4 begins on page 2 with PROBE_AFTER_00."
+}

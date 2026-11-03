@@ -124,7 +124,7 @@ Tarayıcı ve Word'ün metin biçimleme/yerleşim farkları nedeniyle tüm karma
 2. İlk kapsam: eşit sütunlar; sonnot ardından dipnot; APA 7 + IEEE; destek matrisiyle ölçülen Word uyumluluğu.
 3. Önce mevcut görsel/metin kutusu işi kapanır; bu planın uygulaması ardından başlar.
 
-Kullanıcı 2 Kasım 2026 tarihinde bu kapsamı ve sırayı onayladı. Görsel/metin kutusu paketi `a4b214f` ile canlıda doğrulanarak kapandı. A0 tamamlandı: sekiz sentetik belge için gerçek Word Online PDF referansları, SHA doğrulaması, uygulama çıktıları ve ölçüm raporu hazır. Sekiz örneğin tamamında en az bir uyumsuzluk ölçüldü; görsel birebirlik henüz değerlendirilmiş sayılmıyor. Ayrıntılar `docs/compatibility-baseline.md` dosyasında. A1 bölüm modeli ve düzenleyicisinin uygulaması başladı; henüz yayımlanmadı.
+Kullanıcı 2 Kasım 2026 tarihinde bu kapsamı ve sırayı onayladı. Görsel/metin kutusu paketi `a4b214f` ile canlıda doğrulanarak kapandı. A0 tamamlandı: sekiz sentetik belge için gerçek Word Online PDF referansları, SHA doğrulaması, uygulama çıktıları ve ölçüm raporu hazır. Sekiz örneğin tamamında en az bir uyumsuzluk ölçüldü; görsel birebirlik henüz değerlendirilmiş sayılmıyor. Ayrıntılar `docs/compatibility-baseline.md` dosyasında. A1 bölüm modeli ve düzenleyicisinin uygulaması ve yerel/gerçek Word kontrolleri tamamlandı; canlı yayın doğrulaması sıradaki kapıdır.
 
 ## Kaynak notları
 
@@ -133,3 +133,18 @@ Yerel kod incelemesi yukarıda belirtilen mevcut yeteneklerin temelidir. Word do
 - [Microsoft — WordprocessingML belge yapısı](https://learn.microsoft.com/en-us/office/open-xml/word/structure-of-a-wordprocessingml-document): ana belge ve dipnot/sonnot gibi paket parçaları.
 - [Microsoft — Alanları güncelleme](https://support.microsoft.com/en-us/word/update-fields): Word içinde alan güncelleme işlemleri.
 - [Microsoft — İçindekileri güncelleme](https://support.microsoft.com/en-us/word/update-a-table-of-contents): sayfa numaraları ile başlık/metin değişikliklerinin güncellenmesi.
+
+
+## Uygulama kaydı — A1
+
+Bölüm düzenleyicisi uygulandı; yerel doğrulama ve gerçek Word örnek kontrolleri tamamlandı, canlı doğrulama bekleniyor. Menü: **Insert → Section layout** veya **File → Page setup → Section layout**. Durum çubuğu geçerli bölümü gösterir; View menüsü bölüm sınırı işaretlerini açıp kapatır. İşaretler kaydedilen metne ve baskıya girmez.
+
+- Sürüm 1 belge modeli, kararlı bölüm kimlikleri ve eski HTML verilerinin doğrulanmış dönüşümü eklendi. Bilinmeyen sürüm kaynak HTML'yi korur ve otomatik kaydı engeller; açıkça yeni belgeyle değiştirilirse özgün kaynak sürüm geçmişine alınır.
+- Sonraki sayfa/sürekli bölüm, bölüm veya bütün belge kapsamında A4/Letter/Legal/özel ölçü/yön/marjin, önceki/sonraki biçimi seçerek sınır kaldırma ve tek işlemle undo/redo eklendi.
+- Bölüme bağlı üst/altbilgi ve numaralama ayarları kararlı kimliklerle tutulur; mevcut indeks kullanan araçlara kontrollü izdüşüm sağlanır.
+- Gerçek Word Online referansları `fixtures/section-editor/README.md` içinde. Uygulama çıktısı A4 dikey → Legal yatay örneğinde Word ile aynı sayfa sayısı ve 0,1 pt içinde sayfa ölçüleri verdi. Genel tipografik eşleşme iddia edilmez.
+- İlk sürümde bölüm sınırı yalnız gövde paragrafı/başlık sonunda düzenlenir. Sınırı liste/tablo içine taşıyan işlem açık mesajla reddedilir. Tek/çift sayfa başlangıcı düzenleme, karmaşık yer imleri/alanlar ve tipografik uyumluluk sonraki ilgili aşamalardadır.
+- Doğrulama: bölüm modeli/komutları, gerçek arayüz akışları, bilinmeyen sürüm veri koruması, native DOCX kimliği/geometrisi, mevcut bölüm/üstbilgi testleri ve görsel sürükleme/metin kutusu regresyonları. Mobil koyu tema ve Arapça RTL kontrol edildi.
+
+
+A1 yerel kapanış: 37 model/komut kontrolü, kaynak veriyi koruyan gerçek açılış testi, bölüm arayüzü ve native kimlik/geometri testleri geçti. Üstbilgi ve mevcut bölüm testleri; görsel sayfalar arası sürükleme/metin kutusu regresyonları geçti. Sınır işareti satır yüksekliği ve kesintisiz bölüm zemin önbelleği sorunları regresyon testleriyle düzeltildi. TypeScript ve üretim derlemesi başarılı; mevcut Editor/MenuBar `any` ve eski hook lint bulguları bu değişiklikten bağımsızdır. Yeni modüllerin odaklı lint kontrolü temiz.

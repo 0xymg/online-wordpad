@@ -2,15 +2,19 @@
 
 import { alignSelection, imageAlignment, setTextAlign as applyTextAlign } from "@/lib/editor-commands";
 
+import { parseDocumentHtml, documentModelPlugin } from "@/lib/document-model";
+import { sectionMarkersPlugin, sectionMarkersKey } from "@/lib/section-markers";
+import "./section-markers.css";
+import { sectionLabels } from "@/lib/section-i18n";
 import { documentSections } from "@/lib/document-sections";
 import { MARGIN_PRESETS, marginPreset, setPageMargins, activeSection, requestedMargins, type PageMargins } from "@/lib/page-margins";
 import { paragraphStylePlugin, splitStyledParagraph } from "@/lib/paragraph-style-plugin";
 import { printPageStyle } from "@/lib/print-style";
 import { updateRunningNumbering } from "@/lib/running-content";
-import { readLayout, defaultDocumentLayout, wrapDocumentHtml, type DocumentLayout } from "@/lib/document-layout";
+import { wrapDocumentHtml, type DocumentLayout } from "@/lib/document-layout";
 import { useEffect, useRef, useCallback, useMemo, useState, lazy, Suspense } from "react";
 import { useReactToPrint } from "react-to-print";
-import { DOMParser as PMParser, DOMSerializer, Node as PMNode } from "prosemirror-model";
+import { DOMSerializer, Node as PMNode } from "prosemirror-model";
 import { EditorState, Transaction, AllSelection, TextSelection, NodeSelection } from "prosemirror-state";
 import { EditorView } from "prosemirror-view";
 import type { CropperRef } from "react-advanced-cropper";
@@ -71,6 +75,7 @@ import WelcomeScreen from "./WelcomeScreen";
 const AboutDialog = lazy(() => import("./AboutDialog"));
 const AuthModal = lazy(() => import("./AuthModal"));
 const HeaderFooterDialog = lazy(() => import("./HeaderFooterDialog"));
+const SectionLayoutDialog = lazy(() => import("./SectionLayoutDialog"));
 const PageMarginsDialog = lazy(() => import("./PageMarginsDialog"));
 const ImageLayersPanel = lazy(() => import("./ImageLayersPanel"));
 const ImageLayoutDialog = lazy(() => import("./ImageLayoutDialog"));
@@ -179,13 +184,18 @@ function setTextAlignCmd(align: "left" | "center" | "right" | "justify") {
 }
 
 function parseHtmlToDoc(html: string): PMNode {
-  const dom = new DOMParser().parseFromString(html || "<p></p>", "text/html");
-  return PMParser.fromSchema(mySchema).parse(dom.body, { topNode: mySchema.nodes.doc.create({ layout: readLayout(dom.body) ?? defaultDocumentLayout() }) });
+  return parseDocumentHtml(html, mySchema);
 }
+const editorHistory = history();
 
 function buildPlugins() {
   return [
-    history(),
+    editorHistory,
+    documentModelPlugin(() => {
+      const lang = document.documentElement.lang;
+      toast.warning(sectionLabels(isLocale(lang) ? lang : "en").boundaryNesting);
+    }),
+    sectionMarkersPlugin(),
     paragraphStylePlugin(),
     columnResizing(),
     tableEditing(),
@@ -812,7 +822,7 @@ function serializeDoc(doc: PMNode): string {
   const frag = s.serializeFragment(doc.content);
   const tmp = document.createElement("div");
   tmp.appendChild(frag);
-  return wrapDocumentHtml(tmp.innerHTML, doc.attrs.layout);
+  return wrapDocumentHtml(tmp.innerHTML, doc.attrs.layout, doc.attrs.documentModel);
 }
 
 function loadFiles(): { list: FileItem[]; active: string } {
@@ -1086,6 +1096,7 @@ export default function Editor({
   const [docTitle, setDocTitle] = useState("Untitled document");
   const [showToolbar, setShowToolbar] = useState(true);
   const [showRuler, setShowRuler] = useState(false);
+  const [showSectionMarkers, setShowSectionMarkers] = useState(true);
   const [isDark, setIsDark] = useState(false);
   const [files, setFiles] = useState<FileItem[]>([]);
   const [activeId, setActiveId] = useState<string>("");
@@ -1182,6 +1193,9 @@ export default function Editor({
     view.state.doc.forEach((node, pos) => { if (pos + node.nodeSize <= position && String(node.attrs.docxProperties || "").includes("sectPr")) section++; });
     setRunningEditor({ id: loadedIdRef.current, section });
   }, []);
+  const [sectionLayoutOpen, setSectionLayoutOpen] = useState(false);
+  const [documentLoadError, setDocumentLoadError] = useState(false);
+  const showSectionLayout = useCallback(() => setSectionLayoutOpen(true), []);
   const [marginsOpen,setMarginsOpen] = useState(false);
   const showMargins = useCallback(()=>setMarginsOpen(true),[]);
   const [paragraphOpen,setParagraphOpen] = useState(false);
@@ -1658,8 +1672,21 @@ export default function Editor({
     if (!v) return;
     // Google fonts load on demand — fetch the ones this document uses.
     ensureFontsInHtml(html);
-    const dom = new DOMParser().parseFromString(html || "<p></p>", "text/html");
-    const doc = PMParser.fromSchema(mySchema).parse(dom.body, { topNode: mySchema.nodes.doc.create({ layout: readLayout(dom.body) ?? defaultDocumentLayout() }) });
+    let doc: PMNode;
+    try { doc = parseHtmlToDoc(html); }
+    catch {
+      // Preserve the original HTML and never save the previously open document
+      // into an unsupported document's slot.
+      loadedIdRef.current = "";
+      if (saveTimer.current) { clearTimeout(saveTimer.current); saveTimer.current = null; }
+      pendingSaveRef.current = null;
+      setDocumentLoadError(true);
+      v.setProps({ editable: () => false });
+      toast.error(sectionLabels(locale).unsupportedModel);
+      return false;
+    }
+    setDocumentLoadError(false);
+    v.setProps({ editable: () => true });
     // Replace the content through a transaction rather than swapping in a fresh
     // EditorState. A new state means a new plugin set, which tears down and
     // rebuilds every plugin view — pagination then loses the measurement it had
@@ -1670,10 +1697,14 @@ export default function Editor({
     const tr = v.state.tr
       .replaceWith(0, v.state.doc.content.size, doc.content)
       .setDocAttribute("layout", doc.attrs.layout)
+      .setDocAttribute("documentModel", doc.attrs.documentModel)
+      .setMeta("documentLoad", true)
       .setMeta("addToHistory", false);
     // Land the cursor inside the first text block, not on the doc node itself.
     tr.setSelection(TextSelection.near(tr.doc.resolve(0)));
     v.dispatch(tr);
+    const plugins = v.state.plugins;
+    v.updateState(v.state.reconfigure({ plugins: plugins.filter(plugin => plugin !== editorHistory) }).reconfigure({ plugins }));
     const layout = doc.attrs.layout as DocumentLayout | null;
     setDocumentLayout(layout);
     if (layout) {
@@ -1688,7 +1719,11 @@ export default function Editor({
     // its plugin view may have been rebuilt and miss this change, which would
     // leave the page padded out to the previous document's height.
     remeasurePagination(v);
-  }, [refreshDocInfo]);
+    // Persist successful v0 migrations so opening again retains the allocated
+    // identities even if the user does not type into the document.
+    if (loadedIdRef.current && serializeDoc(v.state.doc) !== html) save(v.state);
+    return true;
+  }, [refreshDocInfo, locale, save]);
 
   // Snapshot the current editor html into the file list, persisting the previous doc if signed in.
   // Cancels any pending debounced save first — this snapshot supersedes it.
@@ -1697,6 +1732,7 @@ export default function Editor({
     if (!v) return list;
     if (saveTimer.current) { clearTimeout(saveTimer.current); saveTimer.current = null; }
     pendingSaveRef.current = null;
+    if (!loadedIdRef.current) return list;
     const html = serializeDoc(v.state.doc);
     // The editor may briefly hold a different doc than the active one (while a
     // switch fetches html) — commit to the doc the content belongs to.
@@ -1784,6 +1820,8 @@ export default function Editor({
   // Members get a new document in their list; guests have exactly ONE document,
   // so this replaces it (confirm + a safety snapshot into version history first).
   const addNewDocument = useCallback(async (name: string, html: string) => {
+    try { parseHtmlToDoc(html); }
+    catch { toast.error(sectionLabels(locale).unsupportedModel); return; }
     if (isAuthedRef.current) {
       const list = commitCurrent(filesRef.current);
       lastAutoNameRef.current = null;
@@ -1808,8 +1846,10 @@ export default function Editor({
     } else {
       const v = viewRef.current;
       const active = filesRef.current.find((f) => f.id === activeIdRef.current);
-      const hasContent =
-        !!v && active?.html !== DEFAULT_REF_CONTENT && v.state.doc.textContent.trim().length > 0;
+      const sourceHtml = active && loadedIdRef.current !== active.id
+        ? active.html || "" : v ? serializeDoc(v.state.doc) : active?.html || "";
+      const hasContent = active?.html !== DEFAULT_REF_CONTENT
+        && (loadedIdRef.current !== active?.id ? !!sourceHtml.trim() : !!v?.state.doc.textContent.trim());
       if (hasContent && !(await confirmDialog({
         title: t.dialog.replaceDocTitle,
         description: t.dialog.replaceDocBody,
@@ -1820,8 +1860,8 @@ export default function Editor({
       pendingSaveRef.current = null;
       lastAutoNameRef.current = null;
       const id = activeIdRef.current || newId();
-      if (v && hasContent) {
-        saveGuestVersion(id, serializeDoc(v.state.doc));
+      if (hasContent) {
+        saveGuestVersion(id, sourceHtml);
         lastSnapAtRef.current[id] = Date.now();
       }
       applyFiles([{ id, name, html }], id);
@@ -1831,7 +1871,7 @@ export default function Editor({
       syncUrlToDoc(id);
       try { localStorage.setItem(ACTIVE_KEY, id); } catch {}
     }
-  }, [applyFiles, commitCurrent, confirmDialog, setDocFromHtml, syncUrlToDoc]);
+  }, [applyFiles, commitCurrent, confirmDialog, setDocFromHtml, syncUrlToDoc, locale, t.dialog.replaceDocBody, t.dialog.replaceDocConfirm, t.dialog.replaceDocTitle, t.toast.createFailed]);
 
   const createFile = useCallback(() => {
     return addNewDocument(t.sidebar.untitled, "<p></p>");
@@ -2083,6 +2123,8 @@ export default function Editor({
     const id = activeIdRef.current;
     const html: string | null = await loadVersionHtml(versionId);
     if (!html) { toast.error(tRef.current.toast.versionLoadFailed); return; }
+    try { parseHtmlToDoc(html); }
+    catch { toast.error(sectionLabels(locale).unsupportedModel); return; }
     // Safety snapshot of the current state before overwriting it.
     const currentHtml = serializeDoc(v.state.doc);
     if (isAuthedRef.current) saveVersion(id, currentHtml).catch(() => {});
@@ -2096,7 +2138,7 @@ export default function Editor({
     if (viewRef.current) persistDoc(id, viewRef.current.state);
     setVersionsOpen(false);
     toast.success(t.toast.versionRestored);
-  }, [loadVersionHtml, persistDoc, setDocFromHtml]);
+  }, [loadVersionHtml, persistDoc, setDocFromHtml, locale, t.toast.versionRestored]);
 
   const exportFile = useCallback(async (file: FileItem, fmt: "html" | "txt" | "docx" | "rtf" | "md" | "pdf") => {
     const v = viewRef.current;
@@ -2488,7 +2530,7 @@ export default function Editor({
         refreshSlashMenu(view);
         refreshImagePopover(view);
         refreshDocInfo(next);
-        if (tr.docChanged) {
+        if (tr.docChanged && !tr.getMeta("documentLoad")) {
           save(next);
           maybeAutoName(next);
           setLinkCard(null); // positions may have shifted
@@ -2508,6 +2550,11 @@ export default function Editor({
     };
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [refreshDocInfo, refreshImagePopover, refreshSlashMenu, save, insertImageFromFile, maybeAutoName]);
+
+  useEffect(() => {
+    const view = viewRef.current;
+    if (view) view.dispatch(view.state.tr.setMeta(sectionMarkersKey, { visible: showSectionMarkers, locale }));
+  }, [showSectionMarkers, locale]);
 
   const applyPreferences = useCallback((p: Record<string, unknown>) => {
     if (p.theme === "dark" || p.theme === "light") {
@@ -3273,6 +3320,7 @@ export default function Editor({
         schema={mySchema}
         marginPreset={presetMargin}
         onMarginPreset={changeMarginPreset}
+        onSectionLayout={showSectionLayout}
         onCustomMargins={showMargins}
         pageOrientation={pageOrientation}
         onPageOrientationChange={changePageOrientation}
@@ -3315,6 +3363,8 @@ export default function Editor({
         onToggleToolbar={toggleToolbar}
         showImageLayers={imageLayersState !== null}
         onToggleImageLayers={toggleImageLayers}
+        showSectionMarkers={showSectionMarkers}
+        onToggleSectionMarkers={() => setShowSectionMarkers(value => !value)}
         showRuler={showRuler}
         onToggleRuler={toggleRuler}
         spellcheckOn={spellcheckOn}
@@ -3768,6 +3818,7 @@ export default function Editor({
         <div className="relative z-10 flex items-center justify-between gap-2">
           <div className="flex items-center gap-2 text-muted-foreground">
             <span className="max-[520px]:hidden"><span className="font-medium text-foreground">{docInfo.selectedType}</span></span>
+            <button type="button" onClick={showSectionLayout} className="max-[520px]:hidden hover:text-foreground" title={sectionLabels(locale).title}>{sectionLabels(locale).sectionName(viewRef.current ? activeSection(viewRef.current.state) + 1 : 1)}</button>
             <span>{t.status.words}: <span className="font-medium text-foreground">{docInfo.words}</span></span>
             <span className="max-[520px]:hidden">{t.status.chars}: <span className="font-medium text-foreground">{docInfo.characters}</span></span>
             {saveStatus !== "idle" && (
@@ -4007,6 +4058,8 @@ export default function Editor({
         if (loadedIdRef.current !== runningEditor.id) { toast.error(tRef.current.toast.openFailed); return; }
         updateDocumentLayout(layout => ({ ...layout, running: { ...layout.running, ...slots } }));
       }} /></Suspense>}
+      {documentLoadError && <div role="alert" className="fixed bottom-4 inset-x-4 z-50 rounded border bg-background p-3 text-sm text-destructive">{sectionLabels(locale).unsupportedModel}</div>}
+      {sectionLayoutOpen && viewRef.current && <Suspense fallback={null}><SectionLayoutDialog view={viewRef.current} onClose={() => setSectionLayoutOpen(false)} /></Suspense>}
       {marginsOpen && viewRef.current && <Suspense fallback={null}><PageMarginsDialog view={viewRef.current} onClose={()=>setMarginsOpen(false)}/></Suspense>}
       {textBoxDialogOpen && viewRef.current && <Suspense fallback={null}><TextBoxDialog view={viewRef.current} onClose={() => setTextBoxDialogOpen(false)} /></Suspense>}
       {imageLayoutOpen && viewRef.current && <Suspense fallback={null}><ImageLayoutDialog view={viewRef.current} onClose={()=>setImageLayoutOpen(false)}/></Suspense>}

@@ -7,7 +7,7 @@ import { placePageImages } from "@/lib/page-image-position";
 import { effectiveParagraph } from "@/lib/paragraph-format";
 import { numberLabel } from "@/lib/page-number";
 import { rawSections, runningSlot, runningFragment, type RunningSlots, type RunningVariant } from "@/lib/running-content";
-import { documentSections, sameGeometry, sectionBlockStyle, type PageGeometry } from "@/lib/document-sections";
+import { documentSections, sectionBlockStyle, type PageGeometry } from "@/lib/document-sections";
 import type { DocumentLayout } from "@/lib/document-layout";
 import { Plugin, PluginKey } from "prosemirror-state";
 import { TableMap } from "prosemirror-tables";
@@ -309,10 +309,10 @@ function computeLayout(view: EditorView, cfg: PageLayoutConfig): { breaks: PageB
         const maxBorder = (row: Element | null, side: "borderTopWidth" | "borderBottomWidth") => Math.max(0, ...Array.from(row?.children || []).map(cell => Number.parseFloat(getComputedStyle(cell)[side]) || 0));
         border = (maxBorder(previous, "borderBottomWidth") + maxBorder(unit.dom, "borderTopWidth")) / 2;
       }
-      breaks.push({ pos, fillPx: Math.max(0, pageContentH - repeatedHeight - (top - pageStart) - border), leftOffset: mixed ? (rect.left - root.left) / scale : Math.max(0, (rect.left - root.left) / scale), rightOffset: mixed ? (root.right - rect.right) / scale : Math.max(0, (root.right - rect.right) / scale), closingMargin: geometry.margins.bottom / 15, openingMargin: sections[nextSection].geometry.margins.top / 15, table: inline ? undefined : unit.table });
+      breaks.push({ pos, fillPx: Math.max(0, pageContentH - repeatedHeight - (top - pageStart) - border), leftOffset: mixed ? (rect.left - root.left) / scale : Math.max(0, (rect.left - root.left) / scale), rightOffset: mixed ? (root.right - rect.right) / scale : Math.max(0, (root.right - rect.right) / scale), closingMargin: pages[pages.length - 1].geometry.margins.bottom / 15, openingMargin: sections[nextSection].geometry.margins.top / 15, table: inline ? undefined : unit.table });
       const previousPage = pages[pages.length - 1];
       const nextGeometry = sections[nextSection].geometry;
-      pages.push({ top: previousPage.top + previousPage.geometry.height / 15 + PAGE_GAP_PX, geometry: nextGeometry, section: nextSection, sectionPage: nextSection === currentSection ? previousPage.sectionPage + 1 : 0 });
+      pages.push({ top: previousPage.top + previousPage.geometry.height / 15 + PAGE_GAP_PX, geometry: nextGeometry, section: nextSection, sectionPage: nextSection === previousPage.section ? previousPage.sectionPage + 1 : 0 });
       currentSection = nextSection; geometry = nextGeometry;
       pageContentH = (geometry.height - geometry.margins.top - geometry.margins.bottom) / 15;
       pageStart = top;
@@ -338,7 +338,8 @@ function computeLayout(view: EditorView, cfg: PageLayoutConfig): { breaks: PageB
       const primary = candidates.find(c => c.cell === dominant)!;
       const crossing = candidates.filter(c => c.cell === dominant || topOf(c.cell.dom) < primary.top - MEASURE_EPS && bottomOf(c.cell.dom) > primary.top + MEASURE_EPS);
       if (primary.top <= pageStart + MEASURE_EPS || breaks.at(-1)?.pos === primary.pos) return false;
-      const physicalEnd = pages[pages.length - 1].top + geometry.height / 15 - sections[0].geometry.margins.top / 15 - geometry.margins.bottom / 15;
+      const physicalSheet = pages[pages.length - 1].geometry;
+      const physicalEnd = pages[pages.length - 1].top + physicalSheet.height / 15 - sections[0].geometry.margins.top / 15 - physicalSheet.margins.bottom / 15;
       const offsets = cellOffsets.get(unit.pos) || new Map<number, number>(); cellOffsets.set(unit.pos, offsets);
       addBreak({ ...unit, node: primary.block.node, pos: primary.block.pos, dom: primary.block.dom }, primary.top, primary.pos, true);
       const point = breaks[breaks.length - 1];
@@ -373,7 +374,10 @@ function computeLayout(view: EditorView, cfg: PageLayoutConfig): { breaks: PageB
       contentBottom = Math.max(contentBottom, bottom);
       const nextGeometry = sections[unit.section].geometry;
       if (mixed && unit.section !== currentSection) {
-        const needsPage = nextGeometry.startType !== "continuous" || !sameGeometry(geometry, nextGeometry);
+        // Word shares the current physical sheet for continuous same-size
+        // sections, including changed margins; the new vertical bands take
+        // effect on the next sheet. A changed paper size starts a new sheet.
+        const needsPage = nextGeometry.startType !== "continuous" || geometry.width !== nextGeometry.width || geometry.height !== nextGeometry.height;
         if (needsPage) addBreak(unit, top, unit.pos, false, unit.section);
         else { currentSection = unit.section; geometry = nextGeometry; }
         forced = false;
@@ -410,8 +414,8 @@ function computeLayout(view: EditorView, cfg: PageLayoutConfig): { breaks: PageB
       const lastPos = view.state.doc.content.size;
       const nextSection = Math.min(currentSection + (sections[currentSection].to === lastPos ? 1 : 0), sections.length - 1);
       const previousPage = pages[pages.length - 1], nextGeometry = sections[nextSection].geometry;
-      breaks.push({ pos: lastPos, fillPx: lastPagePadPx, closingMargin: geometry.margins.bottom / 15, openingMargin: nextGeometry.margins.top / 15 });
-      pages.push({ top: previousPage.top + previousPage.geometry.height / 15 + PAGE_GAP_PX, geometry: nextGeometry, section: nextSection, sectionPage: nextSection === currentSection ? previousPage.sectionPage + 1 : 0 });
+      breaks.push({ pos: lastPos, fillPx: lastPagePadPx, closingMargin: previousPage.geometry.margins.bottom / 15, openingMargin: nextGeometry.margins.top / 15 });
+      pages.push({ top: previousPage.top + previousPage.geometry.height / 15 + PAGE_GAP_PX, geometry: nextGeometry, section: nextSection, sectionPage: nextSection === previousPage.section ? previousPage.sectionPage + 1 : 0 });
       lastPagePadPx = pageContentH;
     }
     return { breaks, pages, tallCells, rowHeights: Array.from(rowHeights.values()), lastPagePadPx, complete: true };
@@ -701,7 +705,9 @@ export function paginationPlugin(getConfig: () => PageLayoutConfig): Plugin {
       let painted = "";
       paintPages = (pages) => {
         const sections = documentSections(view.state.doc), cfg = getConfig();
-        const signature = JSON.stringify([pages, cfg.pageNumbers, cfg.pageNumberFormat, cfg.numberingStyle, suppressNumbering]);
+        // Sheet backgrounds and @page rules depend on every section, even
+        // when a continuous insertion leaves the measured pages unchanged.
+        const signature = JSON.stringify([pages, sections.map(section => section.geometry), cfg.pageNumbers, cfg.pageNumberFormat, cfg.numberingStyle, suppressNumbering]);
         if (painted === signature) return; painted = signature;
         sheets.replaceChildren();
         if (sections.length < 2) return;

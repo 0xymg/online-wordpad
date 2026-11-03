@@ -35,7 +35,7 @@ export async function preparePrintLayout(view: EditorView, host: HTMLElement, cr
   });
   // ProseMirror adds a source-less separator img beside trailing inline atoms.
   // It is editor chrome; rasterizers otherwise fetch the page URL as an image.
-  template.querySelectorAll(".pm-table-drag-handle,.pm-image-handle,.column-resize-handle,.search-match-overlay,.ProseMirror-separator,.pm-image-selection-frame,.pm-textbox-ui").forEach(el => el.remove());
+  template.querySelectorAll(".pm-table-drag-handle,.pm-image-handle,.column-resize-handle,.search-match-overlay,.ProseMirror-separator,.pm-image-selection-frame,.pm-textbox-ui,.pm-section-marker").forEach(el => el.remove());
   template.querySelectorAll("[contenteditable]").forEach(el => el.removeAttribute("contenteditable"));
   template.querySelectorAll(".selectedCell,.ProseMirror-selectednode,.is-selected").forEach(el => el.classList.remove("selectedCell", "ProseMirror-selectednode", "is-selected"));
   const output = document.createDocumentFragment(), style = document.createElement("style");

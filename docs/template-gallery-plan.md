@@ -32,3 +32,6 @@ Bu notlar yalnız kişisel aktarımın teknik sınırlarını anlamak içindir; 
 ## Yapılan işlem
 
 Word Online galerisinden altı kişisel belge kopyası oluşturuldu: Net ve zarif özgeçmiş, Ön yazı, Fatura, Kalın logolu antetli kağıt, Toplantı tutanağı ve APA raporu. Kaynak DOCX dosyaları değiştirilmeden indirildi ve yerel `EDTR-Word-Sablonlari.zip` paketinde SHA/ZIP bütünlüğü doğrulandı. Ayrı LibreOffice önizlemeleri yaklaşık olarak etiketlendi. APA kaynak şablonu APA 6 içeriği taşıyor; APA 7 uyumu iddia edilmiyor. Uygulamanın genel şablon galerisi değiştirilmedi. EDTRDocs içinde birebir yerleşim sağlandığı iddia edilmez; ileri uyumluluk değerlendirmesi ayrı planda sürer.
+
+
+Altı kaynak ayrıca boş, izole EDTRDocs oturumlarında açıldı ve HTML/DOCX/PDF çıktıları alındı. Normalize edilmiş gövde metni sırası altısında da korundu; tablo ve metin kutusu sayıları eşleşti. Yaklaşık LibreOffice önizlemelerine göre özgeçmiş 3→6, toplantı tutanağı 2→3 sayfaya çıktı ve bazı dekoratif şekiller kayboldu. Bu karşılaştırma gerçek Word görsel eşleşmesi kanıtı değildir. Kişisel rapor ve türetilmiş çıktılar Downloads içinde ayrı uyumluluk paketindedir; özgün altı DOCX ve özgün ZIP byte düzeyinde değiştirilmemiştir. Kişisel dosyalar depoya eklenmedi.

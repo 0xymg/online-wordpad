@@ -1,0 +1,11 @@
+{
+  "reference_application": "Microsoft Word Online",
+  "captured_date": "2026-11-03 UTC",
+  "method": "App-generated synthetic DOCX opened in Word Online then native PDF exported",
+  "browser": "Codex in-app browser; engine version unavailable",
+  "hashes": {
+    "ui-smoke.docx": "5a714f6b750bacd585886b1c93aae5cb5c942486ae5ade2144a533bdbbb2de38",
+    "ui-smoke.app.pdf": "6698ab6b5bf22043d95ef7e63e788b6e48e98208e4fe52981fc5e25803720821",
+    "ui-smoke.word.pdf": "d944bdb290cc342d257897c5e46b8c0b572da788065a87472df844977bcaa7fe"
+  }
+}

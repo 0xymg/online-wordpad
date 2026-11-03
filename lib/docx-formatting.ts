@@ -47,6 +47,31 @@ function nearestParagraph(node: Element): Element | null {
     parent = parent.parentElement;
   return parent;
 }
+/** Accept only a complete, unique set of paired hidden bookmarks at the
+ * verified body-section terminals. Partial or misplaced sets are ignored. */
+function nativeSectionBookmarks(doc: Document): { boundaries: Map<Element, string>; finalId: string } | null {
+  const body = child(doc.documentElement, "body"); if (!body) return null;
+  const blocks = Array.from(body.children).filter(el => el.namespaceURI === W && el.localName !== "sectPr");
+  const last = blocks.at(-1);
+  if (!last || last.localName !== "p") return null;
+  const boundaries = blocks.filter(el => el.localName === "p" && !!child(child(el, "pPr"), "sectPr"));
+  const terminals = [...boundaries, last];
+  const allReserved = wordElements(doc, "bookmarkStart").filter(el => (attr(el, "name") || "").startsWith("_edtrsec"));
+  if (allReserved.length !== terminals.length) return null;
+  const ids: string[] = [], pairs: Array<[Element, Element]> = [];
+  for (const paragraph of terminals) {
+    const markers = Array.from(paragraph.children).filter(el => el.namespaceURI === W && el.localName === "bookmarkStart" && (attr(el, "name") || "").startsWith("_edtrsec"));
+    if (markers.length !== 1) return null;
+    const start = markers[0], name = attr(start, "name") || "", match = /^_edtrsec([a-f0-9]{32})$/.exec(name);
+    const end = start.nextElementSibling, id = attr(start, "id");
+    if (!match || !id || !end || end.namespaceURI !== W || end.localName !== "bookmarkEnd" || attr(end, "id") !== id) return null;
+    if (wordElements(doc, "bookmarkStart").filter(el => attr(el, "id") === id).length !== 1 || wordElements(doc, "bookmarkEnd").filter(el => attr(el, "id") === id).length !== 1) return null;
+    ids.push(`sec_${match[1]}`); pairs.push([start, end]);
+  }
+  if (new Set(ids).size !== ids.length) return null;
+  pairs.forEach(([start, end]) => { start.remove(); end.remove(); });
+  return { boundaries: new Map(boundaries.map((p, i) => [p, ids[i]])), finalId: ids[ids.length - 1] };
+}
 function properties(node: Element | undefined): Properties {
   const values: Properties = {};
   for (const el of Array.from(node?.children ?? [])) {
@@ -156,6 +181,7 @@ export async function prepareDocxFormatting(arrayBuffer: ArrayBuffer) {
   const mainDocument = await read(mainPath);
   if (!mainDocument) throw new Error("DOCX document part is missing");
   const preservation = await captureLayout(zip, mainPath, mainDocument, styleXml);
+  const nativeSectionIds = nativeSectionBookmarks(mainDocument);
   const sourceParagraphs = new Map<string, Element>();
   const definitions = new Map<string, Style>();
   let defaultParagraph: string | undefined;
@@ -519,7 +545,11 @@ export async function prepareDocxFormatting(arrayBuffer: ArrayBuffer) {
         }
         if (block && css) setStyles(block, css);
         const original = sourceParagraphs.get(marker.id);
-        if (block && original) restoreLayoutProperties(original, block, preservation.sectionXml);
+        if (block && original) {
+          restoreLayoutProperties(original, block, preservation.sectionXml);
+          const sectionId = nativeSectionIds?.boundaries.get(original);
+          if (sectionId) block.setAttribute("data-edtr-section-end", sectionId);
+        }
         const meta = paragraphMeta.get(marker.id);
         if (block && meta) {
           const resolved = resolveStyle(importedStyles,meta.id);
@@ -576,7 +606,13 @@ export async function prepareDocxFormatting(arrayBuffer: ArrayBuffer) {
           if (empty(block)) block.remove(); if (empty(after)) after.remove();
         } else marker.replaceWith(separator);
       }
-      return wrapDocumentHtml(doc.body.innerHTML, preservation.layout);
+      const result = wrapDocumentHtml(doc.body.innerHTML, preservation.layout);
+      if (!nativeSectionIds) return result;
+      const envelope = new DOMParser().parseFromString(result, "text/html");
+      const root = envelope.body.firstElementChild;
+      if (!root) return result;
+      root.setAttribute("data-edtr-docx-final-section-id", nativeSectionIds.finalId);
+      return envelope.body.innerHTML;
     },
   };
 }
