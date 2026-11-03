@@ -1,0 +1,396 @@
+{
+  "schema_version": 1,
+  "generator": "scripts/compatibility/generate-column-probes.cjs",
+  "fixture_kind": "synthetic_source_only",
+  "fixtures": [
+    {
+      "id": "column-widths-balance",
+      "source": "column-widths-balance.docx",
+      "source_sha256": "add394c7364036947847bfdb3c7661793916f47bc1d06e7fa271196d06256312",
+      "source_facts": {
+        "page_twips": {
+          "width": 12240,
+          "height": 15840
+        },
+        "margins_twips": {
+          "top": 1440,
+          "right": 1440,
+          "bottom": 1440,
+          "left": 1440,
+          "header": 720,
+          "footer": 720
+        },
+        "font": "Arial 11pt",
+        "normal_line_height_twips": 280,
+        "sections": [
+          {
+            "columns": null,
+            "start": "nextPage"
+          },
+          {
+            "columns": {
+              "num": 1,
+              "space": 720,
+              "equalWidth": true,
+              "separator": false
+            },
+            "start": "nextPage"
+          },
+          {
+            "columns": {
+              "num": 2,
+              "space": 720,
+              "equalWidth": true,
+              "separator": true
+            },
+            "start": "nextPage"
+          },
+          {
+            "columns": {
+              "num": 3,
+              "space": 360,
+              "equalWidth": true,
+              "separator": true
+            },
+            "start": "nextPage"
+          }
+        ],
+        "markers_once": [
+          "DEFAULT_COLS_BEGIN",
+          "DEFAULT_COLS_END",
+          "EXPLICIT_ONE_BEGIN",
+          "EXPLICIT_ONE_END",
+          "WIDTH2_BEGIN",
+          "WIDTH2_END",
+          "WIDTH2_0000",
+          "WIDTH2_0419",
+          "SHORT_THREE_BEGIN",
+          "SHORT_THREE_END"
+        ],
+        "marker_families": [
+          {
+            "prefix": "WIDTH2_",
+            "digits": 4,
+            "count": 420
+          },
+          {
+            "prefix": "BALANCE3_",
+            "digits": 3,
+            "count": 12
+          }
+        ],
+        "breaks": null
+      },
+      "questions": [
+        "How does absent w:cols compare with explicit count=1?",
+        "What are the actual column left/right edges for 2/3 equal columns and their explicit gaps/separators?",
+        "Where does one long paragraph cross columns and physical pages?",
+        "How are the short final section and the long section final page balanced?"
+      ],
+      "word_reference": {
+        "status": "CAPTURED",
+        "pdf": "references/column-widths-balance.word.pdf",
+        "provenance": "references/column-widths-balance.provenance.json",
+        "source_sha256": "add394c7364036947847bfdb3c7661793916f47bc1d06e7fa271196d06256312",
+        "pdf_sha256": "bcfc943ffcb69d3ba79a91551e69616f433da4f56e79dd40edc20e219a132921",
+        "captured_at_utc": "2026-11-03T03:58:30.260468+00:00",
+        "page_count": 6,
+        "measurements": "references/report.json",
+        "app_comparison": "NOT_PERFORMED"
+      }
+    },
+    {
+      "id": "continuous-column-changes",
+      "source": "continuous-column-changes.docx",
+      "source_sha256": "278d16d36589e487fee2bf8ccb4db45ac483dfc9cdc57c9b1122ad7462a4c365",
+      "source_facts": {
+        "page_twips": {
+          "width": 12240,
+          "height": 15840
+        },
+        "margins_twips": {
+          "top": 1440,
+          "right": 1440,
+          "bottom": 1440,
+          "left": 1440,
+          "header": 720,
+          "footer": 720
+        },
+        "font": "Arial 11pt",
+        "normal_line_height_twips": 280,
+        "sections": [
+          {
+            "columns": {
+              "num": 1,
+              "space": 720,
+              "equalWidth": true,
+              "separator": false
+            },
+            "start": "nextPage"
+          },
+          {
+            "columns": {
+              "num": 2,
+              "space": 720,
+              "equalWidth": true,
+              "separator": true
+            },
+            "start": "continuous"
+          },
+          {
+            "columns": {
+              "num": 1,
+              "space": 720,
+              "equalWidth": true,
+              "separator": false
+            },
+            "start": "continuous"
+          },
+          {
+            "columns": {
+              "num": 2,
+              "space": 720,
+              "equalWidth": true,
+              "separator": true
+            },
+            "start": "continuous"
+          },
+          {
+            "columns": {
+              "num": 3,
+              "space": 720,
+              "equalWidth": true,
+              "separator": true
+            },
+            "start": "continuous"
+          }
+        ],
+        "markers_once": [
+          "CONT1_A_BEGIN",
+          "CONT1_A_END",
+          "CONT2_B_BEGIN",
+          "CONT2_B_END",
+          "CONT1_C_BEGIN",
+          "CONT1_C_END",
+          "CONT2_D_BEGIN",
+          "CONT2_D_END",
+          "CONT3_E_BEGIN",
+          "CONT3_E_END"
+        ],
+        "marker_families": [
+          {
+            "prefix": "CONT1_A_",
+            "digits": 3,
+            "count": 4
+          },
+          {
+            "prefix": "CONT2_B_",
+            "digits": 3,
+            "count": 12
+          },
+          {
+            "prefix": "CONT1_C_",
+            "digits": 3,
+            "count": 3
+          },
+          {
+            "prefix": "CONT2_D_",
+            "digits": 3,
+            "count": 10
+          },
+          {
+            "prefix": "CONT3_E_",
+            "digits": 3,
+            "count": 12
+          }
+        ],
+        "breaks": null
+      },
+      "questions": [
+        "For same-paper continuous 1→2→1, where does each full-width band begin and end?",
+        "Does Word balance the preceding region before opening the next continuous region?",
+        "For continuous 2→3, what constrains the first baseline and last column height?",
+        "Which changes stay on the same physical sheet, and where is a new sheet required by available space?"
+      ],
+      "word_reference": {
+        "status": "CAPTURED",
+        "pdf": "references/continuous-column-changes.word.pdf",
+        "provenance": "references/continuous-column-changes.provenance.json",
+        "source_sha256": "278d16d36589e487fee2bf8ccb4db45ac483dfc9cdc57c9b1122ad7462a4c365",
+        "pdf_sha256": "297a0e5025c89b6d1269f99211d4b8e0461b3ed240cf9c0c29c348387682fa1c",
+        "captured_at_utc": "2026-11-03T03:59:58.854892+00:00",
+        "page_count": 1,
+        "measurements": "references/report.json",
+        "app_comparison": "NOT_PERFORMED"
+      }
+    },
+    {
+      "id": "column-page-break-controls",
+      "source": "column-page-break-controls.docx",
+      "source_sha256": "d4c214fe920fa43773adb220c1cf19adc26082fce6b72e96ab1d3511ad47d5a2",
+      "source_facts": {
+        "page_twips": {
+          "width": 12240,
+          "height": 15840
+        },
+        "margins_twips": {
+          "top": 1440,
+          "right": 1440,
+          "bottom": 1440,
+          "left": 1440,
+          "header": 720,
+          "footer": 720
+        },
+        "font": "Arial 11pt",
+        "normal_line_height_twips": 280,
+        "sections": [
+          {
+            "columns": {
+              "num": 1,
+              "space": 720,
+              "equalWidth": true,
+              "separator": false
+            },
+            "start": "nextPage"
+          },
+          {
+            "columns": {
+              "num": 2,
+              "space": 720,
+              "equalWidth": true,
+              "separator": true
+            },
+            "start": "nextPage"
+          }
+        ],
+        "markers_once": [
+          "SINGLE_BEFORE_COLUMN",
+          "SINGLE_AFTER_COLUMN",
+          "SINGLE_BEFORE_PAGE",
+          "SINGLE_AFTER_PAGE",
+          "SINGLE_CONTROLS_END",
+          "TWO_BEFORE_COLUMN",
+          "TWO_AFTER_COLUMN",
+          "TWO_BEFORE_PAGE",
+          "TWO_AFTER_PAGE",
+          "TWO_BEFORE_TRAILING_COLUMN",
+          "TRAILING_COLUMN_TEXT"
+        ],
+        "marker_families": [],
+        "breaks": {
+          "column": 3,
+          "page": 2,
+          "trailingType": "column"
+        }
+      },
+      "questions": [
+        "Does a column break in one column advance to a new physical page?",
+        "In two columns, how does column break differ from page break within the same paragraph?",
+        "Does the final column break create an empty column, physical page, or another visible terminal effect?",
+        "Which blank sheets result from the explicit single-column/page controls rather than ordinary overflow?"
+      ],
+      "word_reference": {
+        "status": "CAPTURED",
+        "pdf": "references/column-page-break-controls.word.pdf",
+        "provenance": "references/column-page-break-controls.provenance.json",
+        "source_sha256": "d4c214fe920fa43773adb220c1cf19adc26082fce6b72e96ab1d3511ad47d5a2",
+        "pdf_sha256": "3399c1f3b02449f62036599a295c0c4625bf7471564a811e4ad5adc46f0e3447",
+        "captured_at_utc": "2026-11-03T04:02:40.440044+00:00",
+        "page_count": 5,
+        "measurements": "references/report.json",
+        "app_comparison": "NOT_PERFORMED"
+      }
+    },
+    {
+      "id": "rtl-column-order",
+      "source": "rtl-column-order.docx",
+      "source_sha256": "adf32fc0d36fc986ff422d246a9a915947c9f325ee574969099d80e8f71b4b41",
+      "source_facts": {
+        "page_twips": {
+          "width": 12240,
+          "height": 15840
+        },
+        "margins_twips": {
+          "top": 1440,
+          "right": 1440,
+          "bottom": 1440,
+          "left": 1440,
+          "header": 720,
+          "footer": 720
+        },
+        "font": "Arial 11pt",
+        "normal_line_height_twips": 280,
+        "rtl_field_line_height_twips": 320,
+        "sections": [
+          {
+            "columns": {
+              "num": 2,
+              "space": 720,
+              "equalWidth": true,
+              "separator": true
+            },
+            "start": "nextPage",
+            "sectionBidi": false
+          },
+          {
+            "columns": {
+              "num": 2,
+              "space": 720,
+              "equalWidth": true,
+              "separator": true
+            },
+            "start": "nextPage",
+            "sectionBidi": true
+          },
+          {
+            "columns": {
+              "num": 3,
+              "space": 720,
+              "equalWidth": true,
+              "separator": true
+            },
+            "start": "nextPage",
+            "sectionBidi": true
+          }
+        ],
+        "markers_once": [
+          "PARAGRAPH_RTL_BEGIN",
+          "PARAGRAPH_RTL_FIRST",
+          "PARAGRAPH_RTL_SECOND",
+          "PARAGRAPH_RTL_END",
+          "SECTION_RTL2_BEGIN",
+          "SECTION_RTL2_FIRST",
+          "SECTION_RTL2_SECOND",
+          "SECTION_RTL2_END",
+          "SECTION_RTL3_BEGIN",
+          "SECTION_RTL3_FIRST",
+          "SECTION_RTL3_SECOND",
+          "SECTION_RTL3_THIRD",
+          "SECTION_RTL3_END"
+        ],
+        "marker_families": [],
+        "breaks": {
+          "column": 4,
+          "page": 0
+        }
+      },
+      "questions": [
+        "Does paragraph bidi alone change physical column order?",
+        "With section bidi explicitly set, which physical column contains FIRST/SECOND/THIRD?",
+        "Are mixed Latin marker strings readable and extractable once without reversing source order?",
+        "What happens to the final short region and explicit column break constraints in RTL?"
+      ],
+      "word_reference": {
+        "status": "CAPTURED",
+        "pdf": "references/rtl-column-order.word.pdf",
+        "provenance": "references/rtl-column-order.provenance.json",
+        "source_sha256": "adf32fc0d36fc986ff422d246a9a915947c9f325ee574969099d80e8f71b4b41",
+        "pdf_sha256": "a9e3e7bdadec4ee673f10ecd61ee4b621a919a43a98a40ccc6c4a594d15c8b5e",
+        "captured_at_utc": "2026-11-03T04:03:50.241925+00:00",
+        "page_count": 3,
+        "measurements": "references/report.json",
+        "app_comparison": "NOT_PERFORMED"
+      }
+    }
+  ]
+}

@@ -1,0 +1,13 @@
+{
+  "reference_application": "Microsoft Word Online",
+  "source_sha256": "add394c7364036947847bfdb3c7661793916f47bc1d06e7fa271196d06256312",
+  "pdf_sha256": "bcfc943ffcb69d3ba79a91551e69616f433da4f56e79dd40edc20e219a132921",
+  "captured_at_utc": "2026-11-03T03:58:30.260468+00:00",
+  "capture_timestamp_basis": "downloaded file mtime in UTC; exact export event time unavailable",
+  "method": "Root opened the exact source and used Word Online File > Export > Download as PDF",
+  "browser": "Codex in-app browser; exact engine version unavailable",
+  "word_build": "not exposed",
+  "paper": "Source Letter portrait 12240x15840 twips, margins1440 twips; exported media boxes checked in report",
+  "font_specification": "Arial 11pt in source script slots; actual substitution not independently verified",
+  "original_download_filename": "column-widths-balance.pdf"
+}

@@ -1,0 +1,13 @@
+{
+  "reference_application": "Microsoft Word Online",
+  "source_sha256": "278d16d36589e487fee2bf8ccb4db45ac483dfc9cdc57c9b1122ad7462a4c365",
+  "pdf_sha256": "297a0e5025c89b6d1269f99211d4b8e0461b3ed240cf9c0c29c348387682fa1c",
+  "captured_at_utc": "2026-11-03T03:59:58.854892+00:00",
+  "capture_timestamp_basis": "downloaded file mtime in UTC; exact export event time unavailable",
+  "method": "Root opened the exact source and used Word Online File > Export > Download as PDF",
+  "browser": "Codex in-app browser; exact engine version unavailable",
+  "word_build": "not exposed",
+  "paper": "Source Letter portrait 12240x15840 twips, margins1440 twips; exported media boxes checked in report",
+  "font_specification": "Arial 11pt in source script slots; actual substitution not independently verified",
+  "original_download_filename": "continuous-column-changes.pdf"
+}

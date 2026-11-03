@@ -1,0 +1,14 @@
+{
+  "reference_application": "Microsoft Word Online",
+  "source_sha256": "d4c214fe920fa43773adb220c1cf19adc26082fce6b72e96ab1d3511ad47d5a2",
+  "pdf_sha256": "3399c1f3b02449f62036599a295c0c4625bf7471564a811e4ad5adc46f0e3447",
+  "captured_at_utc": "2026-11-03T04:02:40.440044+00:00",
+  "capture_timestamp_basis": "downloaded file mtime in UTC; exact export event time unavailable",
+  "method": "Root opened the exact source and used Word Online File > Export > Download as PDF",
+  "browser": "Codex in-app browser; exact engine version unavailable",
+  "word_build": "not exposed",
+  "paper": "Source Letter portrait 12240x15840 twips, four 1440-twip margins; PDF media boxes measured in report",
+  "font_specification": "Arial 11pt in source script slots; actual substitution not independently verified",
+  "original_download_filename": "column-page-break-controls.pdf",
+  "capture_notes": "The first native PDF export returned a transient HTTP error; a normal retry succeeded. Only the successful Word PDF is archived."
+}

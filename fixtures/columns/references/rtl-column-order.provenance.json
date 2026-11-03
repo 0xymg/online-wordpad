@@ -1,0 +1,13 @@
+{
+  "reference_application": "Microsoft Word Online",
+  "source_sha256": "adf32fc0d36fc986ff422d246a9a915947c9f325ee574969099d80e8f71b4b41",
+  "pdf_sha256": "a9e3e7bdadec4ee673f10ecd61ee4b621a919a43a98a40ccc6c4a594d15c8b5e",
+  "captured_at_utc": "2026-11-03T04:03:50.241925+00:00",
+  "capture_timestamp_basis": "downloaded file mtime in UTC; exact export event time unavailable",
+  "method": "Root opened the exact source and used Word Online File > Export > Download as PDF",
+  "browser": "Codex in-app browser; exact engine version unavailable",
+  "word_build": "not exposed",
+  "paper": "Source Letter portrait 12240x15840 twips, four 1440-twip margins; PDF media boxes measured in report",
+  "font_specification": "Arial 11pt in source script slots; actual substitution not independently verified",
+  "original_download_filename": "rtl-column-order.pdf"
+}
