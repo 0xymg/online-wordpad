@@ -522,6 +522,18 @@ export const tr: Dictionary = {
   },
 
   image: {
+    layout: "Görsel yerleşimi",
+    layoutDescription: "Metnin görsel etrafında nasıl akacağını seçin. Görsel metinle birlikte hareket eder.",
+    wrapping: "Metin kaydırma",
+    inline: "Metinle aynı hizada",
+    topBottom: "Üst ve alt",
+    wrapLeft: "Görsel solda, metin sağda",
+    wrapRight: "Görsel sağda, metin solda",
+    alignment: "Hizalama",
+    widthCm: "Genişlik (cm)",
+    distancePt: "Metne uzaklık (pt)",
+    keepRatio: "Boyut değişirken görselin en-boy oranı korunur.",
+    invalidSize: "Metin alanına sığan bir genişlik ve boşluk seçin.",
     rotate: "Döndür",
     crop: "Kırp",
     flipHorizontal: "Yatay çevir",

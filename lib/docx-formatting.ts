@@ -21,7 +21,7 @@ type RunFormat = {
   underline?: boolean;
   strike?: boolean;
   vertical?: string;
-  image?: { width: number; ratio: number; align: string };
+  image?: { width: number; ratio: number; align: string; wrap: string; distance: number; rotate: number; flipX: boolean; flipY: boolean };
 };
 
 function child(node: Element | undefined, name: string): Element | undefined {
@@ -441,7 +441,19 @@ export async function prepareDocxFormatting(arrayBuffer: ArrayBuffer) {
         );
         const extent = run.getElementsByTagNameNS("http://schemas.openxmlformats.org/drawingml/2006/wordprocessingDrawing", "extent")[0];
         const imageWidth = Number(extent?.getAttribute("cx")) / 9525, imageHeight = Number(extent?.getAttribute("cy")) / 9525;
-        if (imageWidth > 0 && imageHeight > 0) format.image = { width: imageWidth, ratio: imageWidth / imageHeight, align: ["center", "right"].includes(paragraphProps.jc) ? paragraphProps.jc : "left" };
+        if (imageWidth > 0 && imageHeight > 0) {
+          const WP = "http://schemas.openxmlformats.org/drawingml/2006/wordprocessingDrawing";
+          const anchor = run.getElementsByTagNameNS(WP, "anchor")[0];
+          const horizontal = anchor?.getElementsByTagNameNS(WP, "positionH")[0]?.getElementsByTagNameNS(WP, "align")[0]?.textContent;
+          const align = horizontal || (["center", "right"].includes(paragraphProps.jc) ? paragraphProps.jc : "left");
+          const square = anchor?.getElementsByTagNameNS(WP, "wrapSquare")[0];
+          const wrapped = square || anchor?.getElementsByTagNameNS(WP, "wrapTight")[0] || anchor?.getElementsByTagNameNS(WP, "wrapThrough")[0];
+          const wrap = !anchor ? "inline" : wrapped ? (align === "right" || wrapped.getAttribute("wrapText") === "left" ? "wrapRight" : "wrapLeft") : "topBottom";
+          const distances = ["distT", "distB", "distL", "distR"].map(key => Number(wrapped?.getAttribute(key) || anchor?.getAttribute(key) || 0) / 9525);
+          const transform = run.getElementsByTagNameNS(A, "xfrm")[0];
+          format.image = { width: imageWidth, ratio: imageWidth / imageHeight, align, wrap, distance: Math.max(...distances),
+            rotate: Number(transform?.getAttribute("rot") || 0) / 60000, flipX: ["1", "true"].includes(transform?.getAttribute("flipH") || ""), flipY: ["1", "true"].includes(transform?.getAttribute("flipV") || "") };
+        }
         const key = JSON.stringify(format);
         let className = formatIds.get(key);
         if (!className) {
@@ -523,6 +535,8 @@ export async function prepareDocxFormatting(arrayBuffer: ArrayBuffer) {
         if (format.image) for (const image of Array.from(span.querySelectorAll("img"))) {
           image.setAttribute("data-width", `${format.image.width}px`); image.style.width = `${format.image.width}px`;
           image.setAttribute("data-aspect-ratio", String(format.image.ratio)); image.setAttribute("data-align", format.image.align);
+          image.setAttribute("data-wrap", format.image.wrap); image.setAttribute("data-distance", String(format.image.distance));
+          image.setAttribute("data-rotate", String(format.image.rotate)); image.setAttribute("data-flip-x", String(format.image.flipX)); image.setAttribute("data-flip-y", String(format.image.flipY));
         }
         for (const [tag, apply] of [
           ["strong", format.bold],

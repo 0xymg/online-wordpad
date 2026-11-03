@@ -2,18 +2,21 @@
 // Loaded on demand via dynamic import so the docx library stays out of the main bundle.
 import { resolvedAlignment, textDirection } from "./text-direction";
 import { restoreDocxPackage, parseXml, xmlString, W } from "./docx-preservation";
-import { paragraphXml } from "./paragraph-format";
+import { paragraphXml, effectiveParagraph } from "./paragraph-format";
 import { textFormat } from "./document-styles";
 import type { DocumentStyles } from "./paragraph-format";
 import type { DocumentLayout } from "./document-layout";
 import { TableMap } from "prosemirror-tables";
 import { DEFAULT_DOCUMENT_FONT } from "./document-font";
+import { imageWrap, imageDistance } from "./image-layout";
+import { documentSections } from "./document-sections";
 import { DOMParser as PMParser, type Node as PMNode, type Mark } from "prosemirror-model";
 import { mySchema } from "@/app/components/editor-schema";
 import {
   Document, Packer, Paragraph, TextRun, HeadingLevel, AlignmentType,
   Table, TableRow, TableCell, WidthType, ImageRun, ExternalHyperlink, Bookmark, Header, Footer, PageNumber, SimpleField,
   LevelFormat, ShadingType, BorderStyle, PageBreak, PageOrientation,
+  TextWrappingType, TextWrappingSide, HorizontalPositionRelativeFrom, VerticalPositionRelativeFrom,
   type FileChild, type ParagraphChild, type INumberingOptions,
 } from "docx";
 
@@ -140,7 +143,7 @@ class DocxBuilder {
   private imageQueue: Array<LoadedImage | null>;
   numbering: INumberingOptions["config"][number][] = [];
 
-  constructor(images: Array<LoadedImage | null>, private styles: DocumentStyles = {}) {
+  constructor(images: Array<LoadedImage | null>, private styles: DocumentStyles = {}, private imageWidths = new Map<PMNode, number>()) {
     this.imageQueue = [...images];
   }
 
@@ -195,12 +198,22 @@ class DocxBuilder {
           const attrWidth = String(child.attrs.width || "");
           let width = img.width;
           if (attrWidth.endsWith("px") && Number.parseFloat(attrWidth) > 0) width = Number.parseFloat(attrWidth);
-          else width = Math.min(width, MAX_IMAGE_WIDTH);
+          else if (attrWidth.endsWith("%")) width = (this.imageWidths.get(child) || MAX_IMAGE_WIDTH) * Number.parseFloat(attrWidth) / 100;
+          else width = Math.min(width, this.imageWidths.get(child) || MAX_IMAGE_WIDTH);
+          const wrap = imageWrap(child.attrs.wrap), distance = imageDistance(child.attrs.distance);
+          width = Math.max(1, Math.min(width, (this.imageWidths.get(child) || MAX_IMAGE_WIDTH) - (wrap === "inline" ? 2 : wrap === "topBottom" ? 0 : 1) * distance));
           const height = Math.round(child.attrs.aspectRatio ? width / Number(child.attrs.aspectRatio) : (width / img.width) * img.height);
           out.push(new ImageRun({
             type: img.type,
             data: img.data,
-            transformation: { width, height },
+            transformation: { width, height, rotation: Number(child.attrs.rotate) || 0, flip: { horizontal: !!child.attrs.flipX, vertical: !!child.attrs.flipY } },
+            ...(wrap !== "inline" ? { floating: {
+              horizontalPosition: { relative: HorizontalPositionRelativeFrom.COLUMN, align: wrap === "wrapRight" ? "right" : wrap === "wrapLeft" ? "left" : child.attrs.align === "center" ? "center" : child.attrs.align === "right" ? "right" : "left" },
+              verticalPosition: { relative: VerticalPositionRelativeFrom.PARAGRAPH, offset: 0 },
+              allowOverlap: false, layoutInCell: true,
+              wrap: { type: wrap === "topBottom" ? TextWrappingType.TOP_AND_BOTTOM : TextWrappingType.SQUARE, side: wrap === "wrapRight" ? TextWrappingSide.LEFT : TextWrappingSide.RIGHT },
+              margins: { top: wrap === "topBottom" ? Math.round(distance * 9525) : 0, bottom: Math.round(distance * 9525), left: wrap === "wrapRight" ? Math.round(distance * 9525) : 0, right: wrap === "wrapLeft" ? Math.round(distance * 9525) : 0 },
+            } } : {}),
           }));
         } else {
           out.push(new TextRun({ text: "[image]", italics: true, color: "888888" }));
@@ -388,7 +401,20 @@ export async function docToDocxBlob(
   const pageNumberFormat = layout?.pageNumberFormat ?? defaults.pageNumberFormat ?? "plain";
   const numberingParagraph = new Paragraph({ alignment: AlignmentType.RIGHT, children: [new TextRun({ children: pageNumberFormat === "of" ? [PageNumber.CURRENT, " / ", PageNumber.TOTAL_PAGES] : [PageNumber.CURRENT] })] });
   const images = await preloadImages(doc);
-  const builder = new DocxBuilder(images,layout?.styles);
+  const sections = documentSections(doc), imageWidths = new Map<PMNode, number>();
+  doc.descendants((node, pos) => {
+    if (node.type.name !== "image") return;
+    const geometry = (sections.find(s => pos >= s.from && pos < s.to) || sections[0]).geometry;
+    let width = (geometry.width - geometry.margins.left - geometry.margins.right) / 15;
+    const parent = doc.resolve(pos);
+    for (let depth = 1; depth <= parent.depth; depth++) {
+      const ancestor = parent.node(depth);
+      if (ancestor.attrs.colwidth?.length && ancestor.attrs.colwidth.every((w: number) => w > 0)) width = Math.min(width, ancestor.attrs.colwidth.reduce((sum: number, w: number) => sum + w, 0) - 16);
+      if (ancestor.isTextblock) { const p = effectiveParagraph(ancestor); width -= ((p.left || 0) + (p.right || 0)) / 15; }
+    }
+    imageWidths.set(node, Math.max(1, width));
+  });
+  const builder = new DocxBuilder(images,layout?.styles,imageWidths);
   const children: FileChild[] = [];
   doc.forEach((block) => children.push(...builder.blockToDocx(block)));
   // A4 portrait in twips (11906×16838) — docx.js swaps the two itself when

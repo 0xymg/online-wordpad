@@ -1,5 +1,7 @@
 "use client";
 
+import { alignSelection, imageAlignment, setTextAlign as applyTextAlign } from "@/lib/editor-commands";
+
 import { documentSections } from "@/lib/document-sections";
 import { MARGIN_PRESETS, marginPreset, setPageMargins, activeSection, requestedMargins, type PageMargins } from "@/lib/page-margins";
 import { paragraphStylePlugin, splitStyledParagraph } from "@/lib/paragraph-style-plugin";
@@ -54,6 +56,7 @@ import {
 import { cn } from "@/lib/utils";
 import { DEFAULT_DOCUMENT_FONT_CSS } from "@/lib/document-font";
 import { authClient, useSession } from "@/lib/auth-client";
+import { applyImageLayout } from "@/lib/image-layout";
 import { prepareImageFile, insertWidth } from "@/lib/image-util";
 import { OPEN_ACCEPT } from "@/lib/doc-import";
 import WelcomeScreen from "./WelcomeScreen";
@@ -64,6 +67,7 @@ const AboutDialog = lazy(() => import("./AboutDialog"));
 const AuthModal = lazy(() => import("./AuthModal"));
 const HeaderFooterDialog = lazy(() => import("./HeaderFooterDialog"));
 const PageMarginsDialog = lazy(() => import("./PageMarginsDialog"));
+const ImageLayoutDialog = lazy(() => import("./ImageLayoutDialog"));
 const ParagraphDialog = lazy(() => import("./ParagraphDialog"));
 const StylesDialog = lazy(() => import("./StylesDialog"));
 const TablePropertiesDialog = lazy(() => import("./TablePropertiesDialog"));
@@ -164,20 +168,7 @@ const PROFILE_EXIT_MS = 180;
 const ZIP_NAME = "edtrdocs-documents.zip";
 
 function setTextAlignCmd(align: "left" | "center" | "right" | "justify") {
-  return (state: EditorState, dispatch?: (tr: Transaction) => void): boolean => {
-    const { from, to } = state.selection;
-    let found = false;
-    const tr = state.tr;
-    state.doc.nodesBetween(from, to, (node, pos) => {
-      if (node.type === mySchema.nodes.paragraph || node.type === mySchema.nodes.heading) {
-        found = true;
-        tr.setNodeMarkup(pos, undefined, { ...node.attrs, textAlign: align, paragraphFormat: { ...node.attrs.paragraphFormat,alignment:align } });
-      }
-    });
-    if (!found) return false;
-    if (dispatch) dispatch(tr);
-    return true;
-  };
+  return (state: EditorState, dispatch?: (tr: Transaction) => void): boolean => alignSelection(state, dispatch, align);
 }
 
 function parseHtmlToDoc(html: string): PMNode {
@@ -492,19 +483,7 @@ class ImageNodeView {
     this.img.style.display = "block";
     this.img.style.transform = `rotate(${rotate}deg) scale(${sx}, ${sy})`;
     this.img.style.transformOrigin = "center center";
-    this.dom.style.width = "fit-content";
-    this.dom.style.display = "block";
-    this.dom.style.marginLeft = "0";
-    this.dom.style.marginRight = "0";
-    if (align === "center") {
-      this.dom.style.marginLeft = "auto";
-      this.dom.style.marginRight = "auto";
-    } else if (align === "right") {
-      this.dom.style.marginLeft = "auto";
-    } else if (align === "justify") {
-      this.dom.style.width = "100%";
-      this.img.style.width = "100%";
-    }
+    applyImageLayout(this.dom, this.img, node.attrs);
   }
 
   private startResize(event: PointerEvent, corner: "tl" | "tr" | "bl" | "br") {
@@ -514,20 +493,21 @@ class ImageNodeView {
     const pos = this.getPos();
     if (pos === undefined) return;
     this.view.dispatch(this.view.state.tr.setSelection(NodeSelection.create(this.view.state.doc, pos)));
+    this.view.focus();
 
-    const rect = this.img.getBoundingClientRect();
     const startX = event.clientX;
-    const startWidth = rect.width;
+    const scale = this.view.dom.getBoundingClientRect().width / parseFloat(getComputedStyle(this.view.dom).width);
+    const startWidth = this.dom.getBoundingClientRect().width / scale;
     const resizeFromLeft = corner === "tl" || corner === "bl";
-    const parentWidth = this.dom.parentElement?.getBoundingClientRect().width ?? window.innerWidth;
+    const parentWidth = (this.dom.parentElement?.getBoundingClientRect().width ?? window.innerWidth) / scale;
     const minWidth = 40;
     const maxWidth = Math.max(minWidth, Math.floor(parentWidth - 8));
 
     this.onMove = (moveEvent: MouseEvent) => {
-      const dx = moveEvent.clientX - startX;
+      const dx = (moveEvent.clientX - startX) / scale;
       const rawWidth = resizeFromLeft ? startWidth - dx : startWidth + dx;
       const nextWidth = Math.max(minWidth, Math.min(maxWidth, rawWidth));
-      this.img.style.width = `${Math.round(nextWidth)}px`;
+      this.dom.style.width = `${Math.round(nextWidth)}px`;
       this.img.setAttribute("data-width", `${Math.round(nextWidth)}px`);
     };
 
@@ -543,7 +523,9 @@ class ImageNodeView {
           ...this.node.attrs,
           width: nextWidth,
         });
+        tr.setSelection(NodeSelection.create(tr.doc, latestPos));
         this.view.dispatch(tr);
+        this.view.focus();
       }
       this.onMove = undefined;
       this.onUp = undefined;
@@ -662,6 +644,9 @@ type SlashMenuState = {
 type ImagePopoverState = {
   left: number;
   top: number;
+  align: string | null;
+  flipX: boolean;
+  flipY: boolean;
 };
 
 type DocInfo = {
@@ -1055,6 +1040,7 @@ export default function Editor({
     onPrintError: () => { printRef.current?.replaceChildren(); toast.error(tRef.current.toast.printFailed); },
   });
   const [slashMenu, setSlashMenu] = useState<SlashMenuState | null>(null);
+  const [imageLayoutOpen, setImageLayoutOpen] = useState(false);
   const [imagePopover, setImagePopover] = useState<ImagePopoverState | null>(null);
   const [cropDialogOpen, setCropDialogOpen] = useState(false);
   const [cropSource, setCropSource] = useState<string | null>(null);
@@ -1143,10 +1129,17 @@ export default function Editor({
       setImagePopover(null);
       return;
     }
+    const attrs = sel.node.attrs;
+    const active = {
+      align: imageAlignment(attrs) || null,
+      flipX: !!attrs.flipX,
+      flipY: !!attrs.flipY,
+    };
     const domAtPos = view.nodeDOM(sel.from) as HTMLElement | null;
     if (domAtPos) {
       const rect = domAtPos.getBoundingClientRect();
       setImagePopover({
+        ...active,
         left: Math.round(rect.left + rect.width / 2),
         top: Math.round(rect.top + 8),
       });
@@ -1155,6 +1148,7 @@ export default function Editor({
     const from = view.coordsAtPos(sel.from);
     const to = view.coordsAtPos(sel.to);
     setImagePopover({
+      ...active,
       left: Math.round((from.left + to.right) / 2),
       top: Math.round(from.top + 8),
     });
@@ -2078,6 +2072,10 @@ export default function Editor({
     // Start with an empty document; the session-driven effect below loads the
     // real content (DB for signed-in users, localStorage for guests).
     const state = EditorState.create({ schema: mySchema, plugins: buildPlugins() });
+    let emptyBackspaces = 0;
+    let backspaceDocumentId = activeIdRef.current;
+    const resetEmptyBackspaces = () => { emptyBackspaces = 0; };
+    window.addEventListener("pointerdown", resetEmptyBackspaces);
     const view = new EditorView(editorRef.current, {
       state,
       nodeViews: {
@@ -2145,6 +2143,7 @@ export default function Editor({
         return true;
       },
       handleTextInput(v, from, _to, text) {
+        resetEmptyBackspaces();
         if (text !== "/") return false;
         // "/" inside a code block is just code — no command menu there.
         if (v.state.doc.resolve(from).parent.type === mySchema.nodes.code_block) return false;
@@ -2173,6 +2172,32 @@ export default function Editor({
         return true;
       },
       handleKeyDown(v, event) {
+        if (backspaceDocumentId !== activeIdRef.current) {
+          resetEmptyBackspaces();
+          backspaceDocumentId = activeIdRef.current;
+        }
+        const selection = v.state.selection;
+        const emptyParagraph = selection instanceof TextSelection && selection.empty
+          && selection.$from.parent.type === mySchema.nodes.paragraph
+          && selection.$from.parent.content.size === 0;
+        if (event.key === "Backspace" && !event.ctrlKey && !event.metaKey && !event.altKey && !event.isComposing && emptyParagraph) {
+          emptyBackspaces += 1;
+          if (emptyBackspaces >= 3) {
+            resetEmptyBackspaces();
+            const paragraph = selection.$from.parent;
+            const tr = v.state.tr.setNodeMarkup(selection.$from.before(), undefined, {
+              ...paragraph.attrs,
+              textAlign: "left",
+              indent: 0,
+              paragraphFormat: { ...paragraph.attrs.paragraphFormat, alignment: "left", left: 0, right: 0, firstLine: 0 },
+            });
+            v.dispatch(tr);
+            event.preventDefault();
+            return true;
+          }
+        } else {
+          resetEmptyBackspaces();
+        }
         const activeSlashMenu = slashMenuStateRef.current;
         if (!activeSlashMenu) return false;
         const activeItems = slashItemsRef.current;
@@ -2235,6 +2260,7 @@ export default function Editor({
     refreshDocInfo(view.state);
     view.focus();
     return () => {
+      window.removeEventListener("pointerdown", resetEmptyBackspaces);
       view.destroy();
       // Clear the ref too: other effects dispatch through it, and dispatching
       // into a destroyed view throws inside updateState.
@@ -2765,10 +2791,12 @@ export default function Editor({
     if (!v) return;
     const sel = v.state.selection;
     if (!(sel instanceof NodeSelection) || sel.node.type !== mySchema.nodes.image) return;
-    v.dispatch(v.state.tr.setNodeMarkup(sel.from, undefined, {
+    const tr = v.state.tr.setNodeMarkup(sel.from, undefined, {
       ...sel.node.attrs,
       ...patch,
-    }));
+    });
+    tr.setSelection(NodeSelection.create(tr.doc, sel.from));
+    v.dispatch(tr);
     v.focus();
   }, []);
 
@@ -2798,8 +2826,8 @@ export default function Editor({
   }, [updateSelectedImageAttrs]);
 
   const setImageAlign = useCallback((align: "left" | "center" | "right") => {
-    updateSelectedImageAttrs({ align });
-  }, [updateSelectedImageAttrs]);
+    applyTextAlign(viewRef.current, mySchema, align);
+  }, []);
 
   const openCropDialog = useCallback(() => {
     const v = viewRef.current;
@@ -3164,7 +3192,7 @@ export default function Editor({
           <ArrowsInSimple size={14} /> {t.status.exitFocusMode}
         </button>
       )}
-      {imagePopover && (
+      {imagePopover && !imageLayoutOpen && (
         <Popover open>
           <PopoverAnchor asChild>
             <span
@@ -3179,28 +3207,29 @@ export default function Editor({
               }}
             />
           </PopoverAnchor>
-          <PopoverContent side="bottom" align="center" sideOffset={8} className="w-auto p-1">
-            <div className="flex items-center gap-1">
-              <button type="button" className="h-8 w-8 rounded hover:bg-accent/70" title={t.image.rotate} aria-label={t.image.rotate} onMouseDown={(e) => e.preventDefault()} onClick={rotateImage}>
+          <PopoverContent side="bottom" align="center" sideOffset={8} onOpenAutoFocus={e => e.preventDefault()} className="w-auto max-w-[calc(100vw-16px)] p-1">
+            <div className="flex flex-wrap items-center gap-1">
+              <button type="button" className="outline-none focus:outline-none focus-visible:outline-none focus:ring-0 focus-visible:ring-0 h-8 rounded px-2 text-xs hover:bg-accent/70" onMouseDown={e=>e.preventDefault()} onClick={()=>setImageLayoutOpen(true)}>{t.image.layout}</button>
+              <button type="button" className="outline-none focus:outline-none focus-visible:outline-none focus:ring-0 focus-visible:ring-0 h-8 w-8 rounded hover:bg-accent/70" title={t.image.rotate} aria-label={t.image.rotate} onMouseDown={(e) => e.preventDefault()} onClick={rotateImage}>
                 <ArrowClockwise className="mx-auto h-4 w-4" />
               </button>
-              <button type="button" className="h-8 w-8 rounded hover:bg-accent/70" title={t.image.crop} aria-label={t.image.crop} onMouseDown={(e) => e.preventDefault()} onClick={openCropDialog}>
+              <button type="button" className="outline-none focus:outline-none focus-visible:outline-none focus:ring-0 focus-visible:ring-0 h-8 w-8 rounded hover:bg-accent/70" title={t.image.crop} aria-label={t.image.crop} onMouseDown={(e) => e.preventDefault()} onClick={openCropDialog}>
                 <Crop className="mx-auto h-4 w-4" />
               </button>
-              <button type="button" className="h-8 w-8 rounded hover:bg-accent/70" title={t.image.flipHorizontal} aria-label={t.image.flipHorizontal} onMouseDown={(e) => e.preventDefault()} onClick={flipImageHorizontal}>
+              <button type="button" className="outline-none focus:outline-none focus-visible:outline-none focus:ring-0 focus-visible:ring-0 h-8 w-8 rounded hover:bg-accent/70 aria-pressed:bg-accent aria-pressed:text-accent-foreground" title={t.image.flipHorizontal} aria-label={t.image.flipHorizontal} aria-pressed={imagePopover.flipX} onMouseDown={(e) => e.preventDefault()} onClick={flipImageHorizontal}>
                 <FlipHorizontal className="mx-auto h-4 w-4" />
               </button>
-              <button type="button" className="h-8 w-8 rounded hover:bg-accent/70" title={t.image.flipVertical} aria-label={t.image.flipVertical} onMouseDown={(e) => e.preventDefault()} onClick={flipImageVertical}>
+              <button type="button" className="outline-none focus:outline-none focus-visible:outline-none focus:ring-0 focus-visible:ring-0 h-8 w-8 rounded hover:bg-accent/70 aria-pressed:bg-accent aria-pressed:text-accent-foreground" title={t.image.flipVertical} aria-label={t.image.flipVertical} aria-pressed={imagePopover.flipY} onMouseDown={(e) => e.preventDefault()} onClick={flipImageVertical}>
                 <FlipVertical className="mx-auto h-4 w-4" />
               </button>
               <div className="mx-1 h-5 w-px bg-border" />
-              <button type="button" className="h-8 w-8 rounded hover:bg-accent/70" title={t.image.alignLeft} aria-label={t.image.alignLeft} onMouseDown={(e) => e.preventDefault()} onClick={() => setImageAlign("left")}>
+              <button type="button" className="outline-none focus:outline-none focus-visible:outline-none focus:ring-0 focus-visible:ring-0 h-8 w-8 rounded hover:bg-accent/70 aria-pressed:bg-accent aria-pressed:text-accent-foreground" title={t.image.alignLeft} aria-label={t.image.alignLeft} aria-pressed={imagePopover.align === "left"} onMouseDown={(e) => e.preventDefault()} onClick={() => setImageAlign("left")}>
                 <TextAlignLeft className="mx-auto h-4 w-4" />
               </button>
-              <button type="button" className="h-8 w-8 rounded hover:bg-accent/70" title={t.image.alignCenter} aria-label={t.image.alignCenter} onMouseDown={(e) => e.preventDefault()} onClick={() => setImageAlign("center")}>
+              <button type="button" className="outline-none focus:outline-none focus-visible:outline-none focus:ring-0 focus-visible:ring-0 h-8 w-8 rounded hover:bg-accent/70 aria-pressed:bg-accent aria-pressed:text-accent-foreground" title={t.image.alignCenter} aria-label={t.image.alignCenter} aria-pressed={imagePopover.align === "center"} onMouseDown={(e) => e.preventDefault()} onClick={() => setImageAlign("center")}>
                 <TextAlignCenter className="mx-auto h-4 w-4" />
               </button>
-              <button type="button" className="h-8 w-8 rounded hover:bg-accent/70" title={t.image.alignRight} aria-label={t.image.alignRight} onMouseDown={(e) => e.preventDefault()} onClick={() => setImageAlign("right")}>
+              <button type="button" className="outline-none focus:outline-none focus-visible:outline-none focus:ring-0 focus-visible:ring-0 h-8 w-8 rounded hover:bg-accent/70 aria-pressed:bg-accent aria-pressed:text-accent-foreground" title={t.image.alignRight} aria-label={t.image.alignRight} aria-pressed={imagePopover.align === "right"} onMouseDown={(e) => e.preventDefault()} onClick={() => setImageAlign("right")}>
                 <TextAlignRight className="mx-auto h-4 w-4" />
               </button>
             </div>
@@ -3733,6 +3762,7 @@ export default function Editor({
         updateDocumentLayout(layout => ({ ...layout, running: { ...layout.running, ...slots } }));
       }} /></Suspense>}
       {marginsOpen && viewRef.current && <Suspense fallback={null}><PageMarginsDialog view={viewRef.current} onClose={()=>setMarginsOpen(false)}/></Suspense>}
+      {imageLayoutOpen && viewRef.current && <Suspense fallback={null}><ImageLayoutDialog view={viewRef.current} onClose={()=>setImageLayoutOpen(false)}/></Suspense>}
       {paragraphOpen && viewRef.current && <Suspense fallback={null}><ParagraphDialog view={viewRef.current} onClose={()=>setParagraphOpen(false)}/></Suspense>}
       {stylesOpen && viewRef.current && <Suspense fallback={null}><StylesDialog view={viewRef.current} onClose={()=>setStylesOpen(false)}/></Suspense>}
       {tablePropertiesOpen && viewRef.current && <Suspense fallback={null}><TablePropertiesDialog view={viewRef.current} onClose={closeTableProperties} /></Suspense>}

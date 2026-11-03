@@ -1,3 +1,4 @@
+import { DEV_SERVICE_WORKER_RESET } from "@/lib/dev-service-worker-reset";
 import { ORGANIZATION_ID, SITE_URL, SOCIAL_IMAGE, WEBSITE_ID } from "@/lib/landing-seo";
 import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
@@ -81,6 +82,9 @@ export default function RootLayout({
   return (
     <html lang={locale} dir={locale === "ar" ? "rtl" : "ltr"}>
       <head>
+        {process.env.NODE_ENV === "development" && (
+          <script dangerouslySetInnerHTML={{ __html: DEV_SERVICE_WORKER_RESET }} />
+        )}
         <link rel="describedby" href={`${SITE_URL}/llms.txt`} type="text/plain" />
         <script
           dangerouslySetInnerHTML={{

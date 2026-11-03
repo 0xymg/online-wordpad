@@ -818,6 +818,18 @@ body {
   --sidebar-ring: oklch(0.556 0 0);
 }
 
+/* Keep native scrollbars readable on dark surfaces, including nested panels. */
+.dark { scrollbar-color: #686868 transparent; }
+.light { scrollbar-color: auto; }
+
+/* Older WebKit versions do not support scrollbar-color. */
+@supports not (scrollbar-color: auto) {
+  .dark ::-webkit-scrollbar-thumb { background-color: #686868; }
+  .dark ::-webkit-scrollbar-track { background-color: transparent; }
+  .dark .light ::-webkit-scrollbar-thumb,
+  .dark .light ::-webkit-scrollbar-track { background-color: revert; }
+}
+
 /* ── Dark mode surfaces ── */
 .dark body { background: #141414; }
 .dark .editor-shell { background: #141414 !important; }

@@ -151,7 +151,15 @@ function findLineSplit(
       if (lineTop(mid) >= crossTop - MEASURE_EPS) hi2 = mid;
       else lo2 = mid + 1;
     }
-    return { pos: lo2, lineTop: lineTop(lo2) };
+    const splitTop = lineTop(lo2);
+    // A floated image must stay on one sheet together with its anchor. Text
+    // coordinates alone don't include its height and can bisect the image.
+    const block = view.nodeDOM(blockPos) as HTMLElement | null;
+    for (const image of Array.from(block?.querySelectorAll<HTMLElement>('.pm-image-wrapper[data-wrap^="wrap"]') || [])) {
+      const rect = image.getBoundingClientRect();
+      if (rect.top / scale - baseTop < splitTop && rect.bottom / scale - baseTop > splitTop + MEASURE_EPS) return null;
+    }
+    return { pos: lo2, lineTop: splitTop };
   } catch {
     // coordsAtPos can throw on odd positions (atoms at edges) — fall back to
     // pushing the whole block.
@@ -356,7 +364,11 @@ function computeLayout(view: EditorView, cfg: PageLayoutConfig): { breaks: PageB
     const groupShifts = new Map<number, Array<{ cut: number; height: number }>>();
     const cellOffsets = new Map<number, Map<number, number>>();
     for (let i = 0; i < units.length; i++) {
-      const unit = units[i], top = topOf(unit.dom), bottom = bottomOf(unit.endDom || unit.dom), policy = rules(unit.node);
+      const unit = units[i], top = topOf(unit.dom), policy = rules(unit.node);
+      // Floats can extend below a short anchor paragraph, including the final
+      // paragraph in a document. Count them in both page fitting and padding.
+      const floats = Array.from(unit.dom.querySelectorAll<HTMLElement>('.pm-image-wrapper[data-wrap^="wrap"]'));
+      const bottom = Math.max(bottomOf(unit.endDom || unit.dom), ...floats.map(el => bottomOf(el) + (parseFloat(getComputedStyle(el).marginBottom) || 0)));
       contentBottom = Math.max(contentBottom, bottom);
       const nextGeometry = sections[unit.section].geometry;
       if (mixed && unit.section !== currentSection) {

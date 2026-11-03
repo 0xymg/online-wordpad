@@ -591,6 +591,18 @@ export const en = {
   },
 
   image: {
+    layout: "Image layout",
+    layoutDescription: "Choose how text flows around the image. The image moves with its text.",
+    wrapping: "Text wrapping",
+    inline: "In line with text",
+    topBottom: "Top and bottom",
+    wrapLeft: "Image left, text right",
+    wrapRight: "Image right, text left",
+    alignment: "Alignment",
+    widthCm: "Width (cm)",
+    distancePt: "Distance from text (pt)",
+    keepRatio: "The image keeps its proportions when resized.",
+    invalidSize: "Choose a width and spacing that fit inside the text area.",
     rotate: "Rotate",
     crop: "Crop",
     flipHorizontal: "Flip horizontally",

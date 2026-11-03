@@ -519,6 +519,18 @@ export const zh: Dictionary = {
   },
 
   image: {
+    layout: "图片布局",
+    layoutDescription: "选择文字环绕图片的方式。图片随文字移动。",
+    wrapping: "文字环绕",
+    inline: "嵌入行内",
+    topBottom: "上下环绕",
+    wrapLeft: "图片在左，文字在右",
+    wrapRight: "图片在右，文字在左",
+    alignment: "对齐方式",
+    widthCm: "宽度（厘米）",
+    distancePt: "与文字的距离（磅）",
+    keepRatio: "调整大小时保持图片比例。",
+    invalidSize: "请选择适合文字区域的宽度和间距。",
     rotate: "旋转",
     crop: "裁剪",
     flipHorizontal: "水平翻转",

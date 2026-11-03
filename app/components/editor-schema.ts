@@ -4,6 +4,7 @@
 // the entire Editor.tsx module graph (react-to-print, dialogs, actions, …).
 
 import { paragraphAttrs, paragraphDOM, paragraphCSS } from "@/lib/paragraph-format";
+import { imageWrap, imageDistance, imageLayoutStyle, imageDataAttrs } from "@/lib/image-layout";
 import { Schema, Node as PMNode, Mark, type NodeSpec } from "prosemirror-model";
 import { schema as basicSchema } from "prosemirror-schema-basic";
 import { addListNodes } from "prosemirror-schema-list";
@@ -140,6 +141,8 @@ const imageNodeSpec: NodeSpec = {
     flipX: { default: false },
     flipY: { default: false },
     align: { default: "left" },
+    wrap: { default: "topBottom" },
+    distance: { default: 0 },
   },
   parseDOM: [{
     tag: "img[src]",
@@ -155,6 +158,8 @@ const imageNodeSpec: NodeSpec = {
         flipX: img.getAttribute("data-flip-x") === "true",
         flipY: img.getAttribute("data-flip-y") === "true",
         align: img.getAttribute("data-align") || "left",
+        wrap: imageWrap(img.getAttribute("data-wrap") || (img.style.float === "left" ? "wrapLeft" : img.style.float === "right" ? "wrapRight" : "topBottom")),
+        distance: imageDistance(img.getAttribute("data-distance")),
       };
     },
   }],
@@ -164,14 +169,6 @@ const imageNodeSpec: NodeSpec = {
     const sy = a.flipY ? -1 : 1;
     const transform = `rotate(${Number(a.rotate || 0)}deg) scale(${sx}, ${sy})`;
     const align = String(a.align || "left");
-    const alignStyle =
-      align === "center"
-        ? "display:block;margin:0 auto;"
-        : align === "right"
-          ? "display:block;margin-left:auto;margin-right:0;"
-          : align === "justify"
-            ? "display:block;width:100%;"
-            : "display:block;margin:0;";
     return ["img", {
       src: a.src,
       alt: a.alt || "",
@@ -182,7 +179,8 @@ const imageNodeSpec: NodeSpec = {
       "data-flip-x": a.flipX ? "true" : "false",
       "data-flip-y": a.flipY ? "true" : "false",
       "data-align": align,
-      style: `width:${a.width || "100%"};height:auto;${a.aspectRatio ? `aspect-ratio:${a.aspectRatio};` : ""}max-width:100%;transform:${transform};transform-origin:center center;${alignStyle}`,
+      ...imageDataAttrs(a),
+      style: `${imageLayoutStyle(a)}height:auto;${a.aspectRatio ? `aspect-ratio:${a.aspectRatio};` : ""}transform:${transform};transform-origin:center center;`,
     }];
   },
 };

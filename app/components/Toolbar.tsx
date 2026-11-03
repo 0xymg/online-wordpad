@@ -8,10 +8,10 @@ import { resolvedAlignment } from "@/lib/text-direction";
 
 import { memo, useCallback, useState, useEffect, lazy, Suspense } from "react";
 import { EditorView } from "prosemirror-view";
-import { EditorState, Transaction, TextSelection } from "prosemirror-state";
+import { EditorState, Transaction, TextSelection, NodeSelection } from "prosemirror-state";
 import { toggleMark, setBlockType, wrapIn } from "prosemirror-commands";
 import { wrapInList } from "prosemirror-schema-list";
-import { setTextAlign as applyTextAlign, adjustIndent as applyIndent } from "@/lib/editor-commands";
+import { paragraphAlignmentImage, paragraphHasImage, imageAlignment, setTextAlign as applyTextAlign, adjustIndent as applyIndent } from "@/lib/editor-commands";
 import { undo, redo } from "prosemirror-history";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
@@ -97,8 +97,8 @@ const BTN = cn(
   "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset"
 );
 
-function TBtn({ onClick, active, tip, children }: {
-  onClick: () => void; active?: boolean; tip: string; children: React.ReactNode;
+function TBtn({ onClick, active, disabled, tip, children }: {
+  onClick: () => void; active?: boolean; disabled?: boolean; tip: string; children: React.ReactNode;
 }) {
   return (
     <Tooltip>
@@ -109,9 +109,10 @@ function TBtn({ onClick, active, tip, children }: {
           type="button"
           aria-label={tip}
           aria-pressed={active}
+          disabled={disabled}
           onMouseDown={(e) => e.preventDefault()}
           onClick={onClick}
-          className={cn(BTN, active && "bg-accent text-accent-foreground")}
+          className={cn(BTN, "disabled:opacity-40 disabled:cursor-default", active && "bg-accent text-accent-foreground")}
         >
           {children}
         </button>
@@ -347,10 +348,13 @@ function Toolbar({
   const DEFAULT_FONT = FONTS[0].value;
   const [styles,setStyles] = useState<DocumentStyles>(BUILTIN_STYLES);
   const [selectedStyle,setSelectedStyle] = useState("");
-  const [selFmt, setSelFmt] = useState({ fontFamily: DEFAULT_FONT, fontSize: "12", block: "paragraph", align: "left" });
+  const [selFmt, setSelFmt] = useState({ fontFamily: DEFAULT_FONT, fontSize: "12", block: "paragraph", align: "left", image: false });
   useEffect(() => {
     const v = viewRef.current; if (!v) return;
-    const parent = v.state.selection.$from.parent;
+    const selection = v.state.selection;
+    const selectedImage = selection instanceof NodeSelection && selection.node.type === schema.nodes.image ? selection.node : null;
+    const parent = selection.$from.parent;
+    const alignmentImage = selectedImage || paragraphAlignmentImage(parent);
     setStyles(documentStyles(v.state.doc.attrs.layout));
     setSelectedStyle(parent.attrs.styleId || "");
     setSelFmt({
@@ -359,7 +363,8 @@ function Toolbar({
       block: parent.type === schema.nodes.heading ? `h${parent.attrs.level}`
         : parent.type === schema.nodes.code_block ? "code_block"
         : "paragraph",
-      align: resolvedAlignment(effectiveParagraph(parent).alignment, parent.textContent),
+      align: alignmentImage && imageAlignment(alignmentImage.attrs) || resolvedAlignment(effectiveParagraph(parent).alignment, parent.textContent),
+      image: !!selectedImage || paragraphHasImage(parent),
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [tick]);
@@ -527,7 +532,7 @@ function Toolbar({
           <TBtn onClick={() => setTextAlign("left")}    active={currentAlign === "left"}    tip={t.format.alignLeft}>    <TextAlignLeft size={sz} /></TBtn>
           <TBtn onClick={() => setTextAlign("center")}  active={currentAlign === "center"}  tip={t.format.alignCenter}>  <TextAlignCenter size={sz} /></TBtn>
           <TBtn onClick={() => setTextAlign("right")}   active={currentAlign === "right"}   tip={t.format.alignRight}>   <TextAlignRight size={sz} /></TBtn>
-          <TBtn onClick={() => setTextAlign("justify")} active={currentAlign === "justify"} tip={t.format.alignJustify}>       <TextAlignJustify size={sz} /></TBtn>
+          <TBtn disabled={selFmt.image} onClick={() => setTextAlign("justify")} active={currentAlign === "justify"} tip={t.format.alignJustify}>       <TextAlignJustify size={sz} /></TBtn>
         </Row>
         {/* Row 2: list + indent + code + quote */}
         <Row>

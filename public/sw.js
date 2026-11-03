@@ -1,7 +1,12 @@
 // EDTRDocs service worker: offline shell for the editor.
 // - Immutable Next.js static assets and fonts: cache-first.
 // - /pad navigations: network-first with cached fallback so the editor opens offline.
-const CACHE = "edtrdocs-v2";
+const CACHE = "edtrdocs-v3";
+// An old production registration may still control a local development server.
+// Its chunk URLs are reused between edits, so always let local requests hit the network.
+const LOCAL_DEVELOPMENT = ["localhost", "127.0.0.1", "[::1]", "::1"].includes(self.location.hostname)
+  || self.location.hostname.endsWith(".localhost");
+const isAppCache = (key) => /^(edtrdocs|edtr|wordpad)-/.test(key);
 
 self.addEventListener("install", () => {
   self.skipWaiting();
@@ -11,12 +16,13 @@ self.addEventListener("activate", (event) => {
   event.waitUntil(
     caches
       .keys()
-      .then((keys) => Promise.all(keys.filter((k) => k !== CACHE).map((k) => caches.delete(k))))
+      .then((keys) => Promise.all(keys.filter((k) => isAppCache(k) && (LOCAL_DEVELOPMENT || k !== CACHE)).map((k) => caches.delete(k))))
       .then(() => self.clients.claim())
   );
 });
 
 self.addEventListener("fetch", (event) => {
+  if (LOCAL_DEVELOPMENT) return;
   const request = event.request;
   if (request.method !== "GET") return;
   const url = new URL(request.url);

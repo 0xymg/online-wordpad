@@ -522,6 +522,18 @@ export const fr: Dictionary = {
   },
 
   image: {
+    layout: "Disposition de l’image",
+    layoutDescription: "Choisissez comment le texte entoure l’image. Elle se déplace avec le texte.",
+    wrapping: "Habillage du texte",
+    inline: "Aligné sur le texte",
+    topBottom: "Haut et bas",
+    wrapLeft: "Image à gauche, texte à droite",
+    wrapRight: "Image à droite, texte à gauche",
+    alignment: "Alignement",
+    widthCm: "Largeur (cm)",
+    distancePt: "Distance du texte (pt)",
+    keepRatio: "Les proportions de l’image sont conservées.",
+    invalidSize: "Choisissez une largeur et un espacement adaptés à la zone de texte.",
     rotate: "Pivoter",
     crop: "Rogner",
     flipHorizontal: "Retourner horizontalement",
