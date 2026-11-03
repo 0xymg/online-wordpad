@@ -9,7 +9,7 @@ import { numberLabel } from "@/lib/page-number";
 import { rawSections, runningSlot, runningFragment, type RunningSlots, type RunningVariant } from "@/lib/running-content";
 import { documentSections, sectionBlockStyle, type PageGeometry } from "@/lib/document-sections";
 import { layoutRunningTabs } from "@/lib/tab-dom-layout";
-import { createColumnFlowCoordinator, flushColumnFlow, type ColumnFlowCoordinator } from "@/lib/column-flow-coordinator";
+import { createColumnFlowCoordinator, flushColumnFlow, ColumnFlowStaleError, type ColumnFlowCoordinator } from "@/lib/column-flow-coordinator";
 import { columnContentGeometryAtPos, columnPageBreakPositions, columnRelativeXDelta, solveColumnFlow, type FlowLayout } from "@/lib/column-flow";
 import { measureColumnDocument } from "@/lib/column-flow-measure-view";
 import { buildColumnDecorations, type ColumnDecorations } from "@/lib/column-flow-decorations";
@@ -724,6 +724,13 @@ export function paginationPlugin(getConfig: () => PageLayoutConfig): Plugin {
         coordinator.invalidate();
         void coordinator.flush().then(() => { if (columnCoordinator === coordinator && columnActive) setColumnError(view, null); }).catch(error => {
           if (columnCoordinator !== coordinator || !columnActive || view.isDestroyed || !view.dom.isConnected) return;
+          // This flush exhausted its stale attempts while the model kept
+          // changing. Retry a later frame; do not mark the newest document as
+          // malformed. Explicit flush/export still receives the cancellation.
+          if (error instanceof ColumnFlowStaleError) {
+            window.requestAnimationFrame(() => { if (columnCoordinator === coordinator && columnActive && !view.isDestroyed && view.dom.isConnected) measure(view); });
+            return;
+          }
           const message = error instanceof Error ? error.message : String(error);
           failedColumnDocument = view.state.doc; coordinator.destroy(); columnCoordinator = undefined;
           restoreColumnRoot(view, false);
@@ -928,7 +935,7 @@ export function paginationPlugin(getConfig: () => PageLayoutConfig): Plugin {
         referenceTimer = window.setTimeout(() => {
           referenceTimer = 0;
           if (!referenceDestroyed && !view.isDestroyed) void flushReferenceLayout(view).then(() => collectNoteIndex(view.state.doc).notes.some(note => note.kind === 'footnote') ? flushDocumentLayout(view) : undefined).catch(error => {
-            if (!referenceDestroyed && !view.isDestroyed && error instanceof Error && (error.message === 'Document changed while refreshing references' || error.message === 'note-layout-stale')) scheduleReferences();
+            if (!referenceDestroyed && !view.isDestroyed && error instanceof Error && (error.message === 'Document changed while refreshing references' || error.message === 'note-layout-stale' || error instanceof ColumnFlowStaleError)) scheduleReferences();
           });
         }, 50);
       };

@@ -10,6 +10,11 @@ export type ColumnFlowAdapter = {
   apply(view: EditorView, document: PMNode, layout: FlowLayout, assertSafe: () => void): Promise<void>;
 };
 export type ColumnFlowCoordinator = { invalidate(): void; flush(): Promise<void>; destroy(): void };
+/** A single flush exhausted its stale retries; the newest document may still
+ * be valid and can be measured on the next scheduled layout pass. */
+export class ColumnFlowStaleError extends Error {
+  constructor() { super('Column layout could not settle after repeated document changes'); this.name = 'ColumnFlowStaleError'; }
+}
 const instances = new WeakMap<EditorView, ColumnFlowCoordinator>();
 export async function flushColumnFlow(view: EditorView): Promise<boolean> {
   const coordinator = instances.get(view); if (!coordinator) return false;
@@ -17,7 +22,8 @@ export async function flushColumnFlow(view: EditorView): Promise<boolean> {
 }
 /** At most maxPasses measure/apply cycles; repeated unequal signatures are a hard error. */
 export function createColumnFlowCoordinator(view: EditorView, adapter: ColumnFlowAdapter, maxPasses = 8): ColumnFlowCoordinator {
-  let destroyed = false, generation = 0, scheduled = 0, pending: Promise<void> | null = null, runningGeneration = 0;
+  let destroyed = false, generation = 0, scheduled = 0, pending: Promise<void> | null = null;
+  let runningAttempt: { generation: number; doc?: PMNode } | null = null;
   const compositionWaiters = new Set<() => void>();
   const win = view.dom.ownerDocument.defaultView;
   const clearSnapshot = () => { if (instances.get(view) === coordinator) { setColumnFlowPreview(view, view.state.doc, null); setColumnFlowSnapshot(view, view.state.doc, null); } };
@@ -29,9 +35,10 @@ export function createColumnFlowCoordinator(view: EditorView, adapter: ColumnFlo
     compositionWaiters.add(done);
     view.dom.addEventListener('compositionend', done, { once: true });
   });
-  const run = async () => {
+  const run = async (attempt: { generation: number; doc?: PMNode }) => {
     await waitForComposition();
     const doc = view.state.doc, version = generation;
+    attempt.doc = doc; attempt.generation = version;
     await view.dom.ownerDocument.fonts?.ready; assertCurrent(doc, version);
     let previous = '', applied = false;
     const seen = new Set<string>();
@@ -60,14 +67,28 @@ export function createColumnFlowCoordinator(view: EditorView, adapter: ColumnFlo
       if (win) scheduled = win.requestAnimationFrame(() => { scheduled = 0; void coordinator.flush().catch(() => {}); });
     },
     flush() {
-      if (destroyed) return Promise.reject(new Error('Column layout view was destroyed'));
-      if (scheduled && win) { win.cancelAnimationFrame(scheduled); scheduled = 0; }
-      if (!pending) { runningGeneration = generation; const started = generation; pending = run().catch(error => { if (generation === started) clearSnapshot(); throw error; }).finally(() => { pending = null; }); }
-      const version = runningGeneration;
-      return pending.catch(error => {
-        if (!destroyed && version !== generation) return coordinator.flush();
-        throw error;
-      });
+      const retry = (staleRetries: number): Promise<void> => {
+        if (destroyed) return Promise.reject(new Error('Column layout view was destroyed'));
+        if (scheduled && win) { win.cancelAnimationFrame(scheduled); scheduled = 0; }
+        if (!pending) {
+          const attempt: { generation: number; doc?: PMNode } = { generation };
+          runningAttempt = attempt;
+          pending = run(attempt).catch(error => {
+            if (generation === attempt.generation && (!attempt.doc || view.state.doc === attempt.doc)) clearSnapshot();
+            throw error;
+          }).finally(() => { pending = null; });
+        }
+        const attempt = runningAttempt!;
+        return pending.catch(error => {
+          const stale = attempt.generation !== generation || !!attempt.doc && view.state.doc !== attempt.doc;
+          if (!destroyed && instances.get(view) === coordinator && stale) {
+            if (staleRetries >= maxPasses) throw new ColumnFlowStaleError();
+            return retry(staleRetries + 1);
+          }
+          throw error;
+        });
+      };
+      return retry(0);
     },
     destroy() {
       destroyed = true; generation++; clearSnapshot();
