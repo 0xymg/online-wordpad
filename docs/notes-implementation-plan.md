@@ -1,6 +1,6 @@
 # A5 — Sonnot ve gerçek sayfa dipnotu uygulama sözleşmesi
 
-Durum: A5a sonnot `7258ccf` ile yayımlandı ve canlı kabulü tamamlandı. A5b gerçek sayfa dipnotu geliştirmesi `codex/page-footnotes` dalında sürüyor; genel kullanıma açılmadı. Onaylı [advanced-document-plan.md](advanced-document-plan.md) A5 kapsamını somutlaştırır. Aşağıdaki tasarım başlangıç sözleşmesidir; güncel kabul durumu ve kanıtlar [notes-acceptance.md](notes-acceptance.md) dosyasındadır. Bu belge yeni ürün onayı istemez ve A5'in bütünüyle hazır olduğunu ileri sürmez.
+Durum: A5a sonnot `7258ccf`, A5b gerçek sayfa dipnotu `d97ea95` ile yayımlandı; ilk kapsamın canlı kabulü tamamlandı. Onaylı [advanced-document-plan.md](advanced-document-plan.md) A5 kapsamını somutlaştırır. Aşağıdaki tasarım başlangıç sözleşmesidir; güncel kabul durumu, açık destek sınırları ve kanıtlar [notes-acceptance.md](notes-acceptance.md) dosyasındadır. Bu belge yeni ürün onayı istemez.
 
 ## Mevcut kodun getirdiği sınırlar
 

@@ -1,6 +1,6 @@
 # A5 note acceptance
 
-Status: A5a released in `7258ccf` on 2026-11-03. Vercel deployment succeeded and live editing/import/export/PDF smoke tests passed at https://wordpad.info. A5b implementation and local production acceptance are complete on `codex/page-footnotes`; live release acceptance remains pending. A5a endnotes and A5b real page footnotes have separate acceptance gates.
+Status: A5a released in `7258ccf` and A5b released in `d97ea95` on 2026-11-03. Both Vercel deployments and live editing/import/export/PDF acceptance passed at https://wordpad.info. The initial A5 scope is accepted with the explicit layout limits below; this is not a general Word pixel-fidelity claim.
 
 ## A5a implemented and checked locally
 
@@ -32,7 +32,7 @@ Observed limit: the Word Online editor displayed lower Roman labels despite expl
 - Closed: `check-note-word-roundtrip.cjs` passes the actual Word-normalized fixture through product import/export/reimport, preserving the original note ID, both bodies and explicit decimal policy.
 - Closed: `check-note-output-snapshot.cjs` delays the actual exporter chunk, switches A→B, and confirms FILE_A.docx contains only the settled A content/note while the editor stays on B.
 - Final source checks and production build passed. Live `check-notes-ui.cjs` and `check-note-editing-ui.cjs` passed, covering native DOCX reopen, two-page searchable/linkable PDF, body editing/list/tab/formatting, history, numbering/placement, deletion/undo, read-only and document switching.
-- A5b creation/import/editing/conversion is enabled in the accepted local build. The live release remains pending. Unsupported layouts fail with a visible alert and block output.
+- A5b creation/import/editing/conversion is live. Unsupported layouts fail with a visible alert and block output.
 
 ## Live release evidence
 
@@ -47,7 +47,7 @@ Observed limit: the Word Online editor displayed lower Roman labels despite expl
 
 The focused graph/GFM tests cover four notes with identical original labels, both kinds, two sections, nested list/table owners, an empty note and a 600-word body. Ordinary TXT field/status and text-box output matches schema-visible text. Vercel deployment succeeded; `check-note-text-ui.cjs` passed on live https://wordpad.info, downloading all three formats and checking all 450 fixture words exactly once and matching owner/body keys.
 
-## A5b local production acceptance (live release pending)
+## A5b production acceptance
 
 - Actual product PDF/DOCX: two same-line owners, 600-word continuation, one/two/three-column flow, no empty physical pages, body-before-notes extraction and four bidirectional links.
 - Mixed portrait/landscape sections and unequal text widths remeasure only the canonical remaining note range. A 1,600-word five-page fixture retains every word once. Continuous one→two-column sections use one shared note band; actual region margins constrain its width and bottom boundary.
@@ -66,4 +66,12 @@ The focused graph/GFM tests cover four notes with identical original labels, bot
 
 The full shared DOCX import regression passes, including historical no-note packages without root relationships. That fallback returns the original buffer unchanged and rejects any native note graph missing its root relationships. Final TypeScript/scoped lint and production build pass. In the production build, footnote UI/history/conversion and actual native Word import → DOCX download/reopen → two-page PDF pass.
 
-Remaining acceptance: live release. Current explicit backend limits include continuous changes of paper size, page-positioned images, text boxes, nested/merged-cell tables, owner rows too tall to fit, unresolved object overlaps and bounded convergence failures. These are not silently flattened or clipped.
+Current explicit backend limits include continuous changes of paper size, page-positioned images, text boxes, nested/merged-cell tables, owner rows too tall to fit, unresolved object overlaps and bounded convergence failures. These are not silently flattened or clipped.
+
+## A5b live release evidence
+
+- Commit `d97ea95eb027e087519b16e449c137d83f6cf396`; no coauthor trailer.
+- [Successful Vercel deployment](https://vercel.com/312sh/online-wordpad/ASMGbZLe9JHEXVm89oPEVUDow5Ps).
+- Live `NOTE_KIND=footnote check-note-editing-ui.cjs` passed rich editing/IME, settings, owner/layer navigation, conversion identities/history, deletion/undo, read-only and document switching.
+- Live `check-note-word-footnotes-ui.cjs` passed actual Word file import, enabled note editing, native DOCX download/reopen and searchable two-page PDF with all 600 words and the second note once, plus four GoTo links.
+- Local final production build additionally passed the first inactive export with four previously unloaded note-only fonts. Shared DOCX regression and native list start/override/resume/story tests passed before release.
