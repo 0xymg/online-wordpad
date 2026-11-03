@@ -1,6 +1,6 @@
 # A6 bibliography acceptance
 
-Status: initial APA 7 / IEEE implementation accepted locally on 2026-11-03; live release pending. Native Word Source Manager fields are a separate, closed profile. This report does not claim full Word visual fidelity.
+Status: initial APA 7 / IEEE implementation released in `52293af` on 2026-11-03; Vercel and live UI/export/layout acceptance passed. Native Word Source Manager fields are a separate, closed profile. This report does not claim full Word visual fidelity.
 
 ## Implemented scope
 
@@ -35,3 +35,11 @@ Root edited `BIB_START` to `BIB_START WORD_EDIT` in Word Online, saved, refreshe
 - Citation sources inside note bodies, additional source types, multiple bibliography markers or per-section styles are outside the initial scope.
 - A partial selection intersecting a generated entry is rejected. Whole generated blocks inside canonical deletion ranges are supported; arbitrary partial-range remapping is not complete.
 - Page layout retains A5's documented unsupported object/table/continuous-paper-size limits.
+
+## Live release
+
+- Code commit `52293af4e398b8966be0483ce0a3ef5e17637501`, no coauthor trailer.
+- [Successful Vercel deployment](https://vercel.com/312sh/online-wordpad/DwkRzhctcmEgEupHf8DM5Leb94Ma).
+- Live `check-bibliography-ui.cjs` passed source creation, live citation/reference, DOCX graph/ID reopen, HTML/PDF/TXT/MD/RTF exports and safe edited-DOCX refusal.
+- Live `check-bibliography-product-layout.cjs` passed 30 mixed sources, two columns, three APA PDF pages, matching TOC/PAGEREF and exactly-once footnote/endnote content. IEEE two-page layout also passed locally.
+- Existing real Word footnote DOCX UI/import/export/PDF regression passed in the final production build after updating the asserted model version to v6.
