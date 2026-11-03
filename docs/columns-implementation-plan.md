@@ -1,6 +1,6 @@
 # A3 — Eşit sütunlar için uygulama tasarımı
 
-Durum: A3 uygulaması ve yerel üretim kabulü tamamlandı; canlı yayın doğrulaması bekleniyor. Nihai destek sınırları, gerçek Word karşılaştırması ve test kanıtları [columns-acceptance.md](columns-acceptance.md) içinde. Aşağıdaki metin onaylı kapsamın tasarım kaydıdır; bütün Word belgeleri için görsel eşitlik iddiası değildir. Dört gerçek Word Online PDF referansı ve kaynakları donduruldu; ölçümler [columns/REFERENCE_REPORT.md](../fixtures/columns/REFERENCE_REPORT.md) içinde.
+Durum: A3 `2e1f550` ile yayımlandı; yerel üretim ve canlı kabulü tamamlandı. Nihai destek sınırları, gerçek Word karşılaştırması ve test kanıtları [columns-acceptance.md](columns-acceptance.md) içinde. Aşağıdaki metin onaylı kapsamın tasarım kaydıdır; bütün Word belgeleri için görsel eşitlik iddiası değildir. Dört gerçek Word Online PDF referansı ve kaynakları donduruldu; ölçümler [columns/REFERENCE_REPORT.md](../fixtures/columns/REFERENCE_REPORT.md) içinde.
 
 ## Amaç ve başlangıç sınırı
 

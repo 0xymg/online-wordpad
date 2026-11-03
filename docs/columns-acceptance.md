@@ -1,6 +1,6 @@
 # A3 sütun düzeni — kabul ve destek sınırları
 
-3 Kasım 2026: yerel üretim derlemesi ve hedefli kabul kontrolleri geçti. Canlı yayın doğrulaması henüz tamamlanmadı. Gerçek uygulama kontrolleri `next build` ardından `next start` ile, geliştirme bayrağı olmadan ve kullanıcı belgelerinden ayrı tarayıcı oturumlarında çalıştırıldı.
+3 Kasım 2026: `2e1f550` ile canlıya yayımlandı; yerel üretim ve https://wordpad.info üzerinde izole misafir kabul kontrolleri geçti. Gerçek uygulama kontrolleri `next build` ardından `next start` ile, geliştirme bayrağı olmadan ve kullanıcı belgelerinden ayrı tarayıcı oturumlarında çalıştırıldı.
 
 ## Uygulanan davranış
 
@@ -46,3 +46,7 @@ Temel tekrar komutları: `check-columns-ui.cjs`, `check-columns-editor.cjs`, `ch
 - Her Word belgesi için tipografik veya tablo yerleşimi eşitliği kanıtlanmadı. Ölçülmeyen terminal bölüm/kesme kombinasyonları genel Word varsayılanı sayılmıyor.
 - Gerçek işletim sistemi IME testi yapılmadı; composition doğrulaması sentetik. PDF Arapça `/ActualText` içeriği var, fakat bazı metin çıkarıcılar bunu kullanmadığından bütün okuyucularda kopyalama/arama eşdeğerliği iddia edilmiyor.
 - A4 canlı referanslar/içindekiler, A5 notlar, A6 kaynakça ve A7 ileri uyumluluk bu paketin tamamlanmış özellikleri değildir.
+
+## Canlı yayın kabulü
+
+`2e1f550` Vercel dağıtımı başarılı. Canlıda sütun arayüzü/undo/dönüştürme/salt okunur/Arapça mobil, belge göçü ve yükleme koruması, native DOCX kesme/bölüm dönüşü, biçimli bağlantılı kesme, tablo taşıma düğmesi/dil değişimi ve gerçek hücre düzenleme/undo sınandı. 160 sözcük çiftli tablo iki sayfalı PDF’de kayıpsız; aynı hücrede sütunlar arası metin seçimi, farklı hücre seçimi, blur ve seçiliyken çıktı geçti. Rowspan, görsel sürükleme/undo/güvensiz sınır ve metin kutusu regresyonları geçti. Dört gerçek Word kaynağının canlı uygulama PDF’leri yeniden ölçüldü: 515/515 işaret doğru fiziksel sayfa ve sütunda, kayıp veya çoğalma yok. Piksel eşitliği değerlendirilmedi.

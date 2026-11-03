@@ -124,7 +124,7 @@ Tarayıcı ve Word'ün metin biçimleme/yerleşim farkları nedeniyle tüm karma
 2. İlk kapsam: eşit sütunlar; sonnot ardından dipnot; APA 7 + IEEE; destek matrisiyle ölçülen Word uyumluluğu.
 3. Önce mevcut görsel/metin kutusu işi kapanır; bu planın uygulaması ardından başlar.
 
-Kullanıcı 2 Kasım 2026 tarihinde bu kapsamı ve sırayı onayladı. Görsel/metin kutusu paketi `a4b214f` ile canlıda doğrulanarak kapandı. A0 tamamlandı: sekiz sentetik belge için gerçek Word Online PDF referansları, SHA doğrulaması, uygulama çıktıları ve ölçüm raporu hazır. Sekiz örneğin tamamında en az bir uyumsuzluk ölçüldü; görsel birebirlik henüz değerlendirilmiş sayılmıyor. Ayrıntılar `docs/compatibility-baseline.md` dosyasında. A1 `2f6e8bd` ile yayımlandı; canlı bölüm arayüzü ve veri koruma testleri geçti. A2 `3a65144` ile canlıda doğrulandı. A3 sütun akışının tek-editör koordinat prototipi başladı.
+Kullanıcı 2 Kasım 2026 tarihinde bu kapsamı ve sırayı onayladı. Görsel/metin kutusu paketi `a4b214f` ile canlıda doğrulanarak kapandı. A0 tamamlandı: sekiz sentetik belge için gerçek Word Online PDF referansları, SHA doğrulaması, uygulama çıktıları ve ölçüm raporu hazır. Sekiz örneğin tamamında en az bir uyumsuzluk ölçüldü; görsel birebirlik henüz değerlendirilmiş sayılmıyor. Ayrıntılar `docs/compatibility-baseline.md` dosyasında. A1 `2f6e8bd` ile yayımlandı; canlı bölüm arayüzü ve veri koruma testleri geçti. A2 `3a65144` ile canlıda doğrulandı. A3 `2e1f550` ile yayımlandı ve canlı kabulü tamamlandı.
 
 ## Kaynak notları
 
@@ -158,7 +158,7 @@ Gerçek Word referanslarıyla seçili LTR/RTL yatay ankrajlar, dar hücre satır
 
 Sonraki A3 uygulama devri `docs/columns-implementation-plan.md` içindedir. İlk kapı, tek ProseMirror belgesinde sütunlar arasında bölünen paragrafın gerçek imleç/seçim/koordinat kanıtıdır; bu kanıt çıkmadan sütun arayüzü yayımlanmaz.
 
-## Uygulama kaydı — A3 (yerel üretim kabulü tamamlandı, canlı doğrulama bekleniyor)
+## Uygulama kaydı — A3 (canlı kabulü tamamlandı)
 
 `codex/equal-columns` dalında tek editör prototipi 84 etkileşim kontrolünü geçti. Model v3 geçişi, bölüm başına 1/2/3 eşit sütun, aralık/çizgi/yön ayarları, sütun sonu ve native DOCX koruma eklendi. Sütun sonunun biçim ve bağlantı bilgisi, eski bölüm revizyonlarının korunması ve silme/undo ayrı regresyonlarla doğrulandı.
 
@@ -168,4 +168,4 @@ Dört dondurulmuş gerçek Word örneği için uygulama PDF sayıları 6/1/5/3 o
 
 Üretim derlemesinde gerçek arayüz, model v3/gelecek sürüm koruması, native dönüş, RTL/cetvel, görsel ve metin kutusu regresyonları geçti. 40 ve 160 sözcük çifti içeren uzun hücre tablolarında gerçek metin/hücre sürükleme seçimi, boş devam alanına yazma/undo, tekrarlanan başlık ve seçiliyken PDF doğrulandı. İki fiziksel sayfalı örnekte içerik sayıları ve PDF işaretleri kayıpsızdı. Tablo taşıma düğmesi açıklamasının model değişikliğine yol açması, native duplicate uzantıların kaybı ve salt görünüm seçimlerinin baskıya taşınması düzeltildi.
 
-**Kalan yayın kapısı:** canlı dağıtım ve canlı kabul. Ayrıntılar [columns-acceptance.md](columns-acceptance.md) içinde. A4 için mevcut kod ve veri sözleşmeleri okundu; A4–A7 uygulaması henüz başlamadı.
+**Yayın kabulü:** `2e1f550` canlıda; arayüz, veri koruma, native DOCX, uzun tablo/PDF, görsel/metin kutusu ve 515 işaretlik Word karşılaştırması geçti. Ayrıntılar [columns-acceptance.md](columns-acceptance.md) içinde. A4 için mevcut kod ve veri sözleşmeleri okundu; A4–A7 uygulaması henüz başlamadı.
