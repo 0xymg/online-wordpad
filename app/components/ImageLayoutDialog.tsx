@@ -6,7 +6,7 @@ import { closeHistory } from "prosemirror-history";
 import type { EditorView } from "prosemirror-view";
 import { reorderPageImage } from "@/lib/image-layer-order";
 import { alignParagraphImages } from "@/lib/editor-commands";
-import { IMAGE_WRAPS, imageWrap, imageDistance, type ImageWrap } from "@/lib/image-layout";
+import { IMAGE_WRAPS, imageWrap, imageDistance, imageTextPlane, type ImageWrap } from "@/lib/image-layout";
 import { imagePageContext } from "@/lib/page-image-position";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -34,6 +34,7 @@ export default function ImageLayoutDialog({ view, onClose }: { view: EditorView;
       ratio: Number(selection.node.attrs.aspectRatio) || img.naturalWidth / img.naturalHeight || 1 };
   });
   const [position, setPosition] = useState(() => initial?.node.attrs.position === "page" ? "page" : "flow");
+  const [textPlane, setTextPlane] = useState(() => imageTextPlane(initial?.node.attrs.textPlane));
   const [x, setX] = useState(() => cm(initial?.page.x || 0));
   const [y, setY] = useState(() => cm(initial?.page.y || 0));
   const [layerAction, setLayerAction] = useState<"front" | "back" | null>(null);
@@ -55,7 +56,7 @@ export default function ImageLayoutDialog({ view, onClose }: { view: EditorView;
         if (!Number.isFinite(px) || px < 1 || px > available + 1 || !Number.isFinite(gap) || gap < 0 || gap > 96) { setError(labels.invalidSize); return; }
         const left = x === cm(initial.page.x) ? initial.page.x : pixels(x), top = y === cm(initial.page.y) ? initial.page.y : pixels(y);
         if (fixed && (!Number.isFinite(left) || !Number.isFinite(top) || left < 0 || top < 0 || left + px > initial.page.width + 1 || top + px / initial.ratio > initial.page.height + 1)) { setError(labels.invalidPosition); return; }
-        const attrs = { ...initial.node.attrs, position, x: Math.round(left * 100) / 100, y: Math.round(top * 100) / 100,
+        const attrs = { ...initial.node.attrs, position, textPlane, x: Math.round(left * 100) / 100, y: Math.round(top * 100) / 100,
           wrap, align: fixed ? (Math.abs(left - initial.page.margins.left) < 0.5 ? "left" : Math.abs(left - (initial.page.margins.left + (initial.page.width - initial.page.margins.left - initial.page.margins.right - px) / 2)) < 0.5 ? "center" : Math.abs(left - (initial.page.width - initial.page.margins.right - px)) < 0.5 ? "right" : "") : wrap === "wrapLeft" ? "left" : wrap === "wrapRight" ? "right" : align,
           width: `${Math.round(px * 100) / 100}px`, aspectRatio: initial.ratio, distance: gap };
         const tr = closeHistory(view.state.tr).setNodeMarkup(initial.pos, undefined, attrs);
@@ -68,6 +69,7 @@ export default function ImageLayoutDialog({ view, onClose }: { view: EditorView;
           <label className="block space-y-1 text-sm"><span>{labels.position}</span><select className={field} value={position} onChange={e => { setPosition(e.target.value); setError(""); }}><option value="flow">{labels.moveWithText}</option><option value="page">{labels.fixedOnPage}</option></select></label>
           {fixed ? <>
             <p className="text-xs text-muted-foreground">{labels.fixedHint}</p>
+            <label className="block space-y-1 text-sm"><span>{labels.textPlacement}</span><select className={field} value={textPlane} onChange={e => setTextPlane(imageTextPlane(e.target.value))}><option value="front">{labels.inFrontOfText}</option><option value="behind">{labels.behindText}</option></select></label>
             <div className="grid grid-cols-2 gap-3">
               <label className="block space-y-1 text-sm"><span>{labels.xCm}</span><input className={field} type="number" min="0" step="0.01" required value={x} onChange={e => setX(e.target.value)}/></label>
               <label className="block space-y-1 text-sm"><span>{labels.yCm}</span><input className={field} type="number" min="0" step="0.01" required value={y} onChange={e => setY(e.target.value)}/></label>

@@ -3,11 +3,11 @@
 import { useMemo, type RefObject } from "react";
 import { NodeSelection, type EditorState } from "prosemirror-state";
 import type { EditorView } from "prosemirror-view";
-import { imageLayer, imageVisualElement } from "@/lib/image-layout";
-import { reorderPageImage } from "@/lib/image-layer-order";
+import { imageLayer, imageVisualElement, imageTextPlane } from "@/lib/image-layout";
+import { reorderPageObject, setObjectTextPlane } from "@/lib/image-layer-order";
 import { placePageImages } from "@/lib/page-image-position";
 import { useT } from "./I18nProvider";
-import { X } from "./icons";
+import { TextT, X } from "./icons";
 
 type Props = {
   viewRef: RefObject<EditorView | null>;
@@ -18,16 +18,21 @@ type Props = {
 export default function ImageLayersPanel({ viewRef, state, onClose }: Props) {
   const labels = useT().image;
   const images = useMemo(() => {
-    const rows: { pos: number; src: string; alt: string; number: number; fixed: boolean; layer: number }[] = [];
+    const rows: { pos: number; kind: "image" | "text_box"; src: string; alt: string; number: number; fixed: boolean; layer: number; plane: "front" | "behind" }[] = [];
+    let imageNumber = 0, boxNumber = 0;
     state.doc.descendants((node, pos) => {
-      if (node.type.name === "image") rows.push({ pos, src: String(node.attrs.src || ""),
-        alt: String(node.attrs.alt || "").trim(), number: rows.length + 1,
-        fixed: node.attrs.position === "page", layer: imageLayer(node.attrs.layer) });
+      if (node.type.name === "image" || node.type.name === "text_box") {
+        const box = node.type.name === "text_box";
+        rows.push({ pos, kind: box ? "text_box" : "image", src: box ? "" : String(node.attrs.src || ""),
+          alt: box ? String(node.attrs.text || "").replace(/\s+/g, " ").trim().slice(0, 80) : String(node.attrs.alt || "").trim(),
+          number: box ? ++boxNumber : ++imageNumber,
+          fixed: box || node.attrs.position === "page", layer: imageLayer(node.attrs.layer), plane: imageTextPlane(node.attrs.textPlane) });
+      }
     });
-    return rows.sort((a, b) => Number(b.fixed) - Number(a.fixed) || (a.fixed ? b.layer - a.layer || b.pos - a.pos : a.pos - b.pos));
+    return rows.sort((a, b) => Number(b.fixed) - Number(a.fixed) || (a.fixed ? Number(a.plane === "behind") - Number(b.plane === "behind") || b.layer - a.layer || b.pos - a.pos : a.pos - b.pos));
   }, [state.doc]);
   const selection = state.selection;
-  const selectedPos = selection instanceof NodeSelection && selection.node.type.name === "image" ? selection.from : null;
+  const selectedPos = selection instanceof NodeSelection && ["image", "text_box"].includes(selection.node.type.name) ? selection.from : null;
   const selected = images.find(image => image.pos === selectedPos);
   const canReorder = !!selected?.fixed;
   const reason = selected ? labels.layersFlowHint : labels.layersSelectHint;
@@ -42,12 +47,12 @@ export default function ImageLayersPanel({ viewRef, state, onClose }: Props) {
       if (viewRef.current !== view || view.isDestroyed || view.state.doc !== doc) return;
       placePageImages(view);
       const wrapper = view.nodeDOM(pos) as HTMLElement | null;
-      if (wrapper) imageVisualElement(wrapper).scrollIntoView({ block: "center", inline: "nearest" });
+      if (wrapper) (wrapper.querySelector<HTMLElement>(".pm-textbox-frame") || imageVisualElement(wrapper)).scrollIntoView({ block: "center", inline: "nearest" });
     });
   };
   const select = (pos: number, focusEditor: boolean) => {
     const view = currentView();
-    if (!view || view.state.doc.nodeAt(pos)?.type.name !== "image") return;
+    if (!view || !["image", "text_box"].includes(view.state.doc.nodeAt(pos)?.type.name || "")) return;
     view.dispatch(view.state.tr.setSelection(NodeSelection.create(view.state.doc, pos)));
     if (focusEditor) view.focus();
     reveal(view, pos);
@@ -55,12 +60,20 @@ export default function ImageLayersPanel({ viewRef, state, onClose }: Props) {
   const reorder = (action: "front" | "back", focusEditor: boolean) => {
     const view = currentView();
     if (!view || selectedPos === null || !canReorder || !(view.state.selection instanceof NodeSelection) || view.state.selection.from !== selectedPos) return;
-    const tr = reorderPageImage(view.state.tr, selectedPos, action);
+    const tr = reorderPageObject(view.state.tr, selectedPos, action);
     if (tr.docChanged) view.dispatch(tr);
     if (focusEditor) view.focus();
     reveal(view, selectedPos);
   };
-  const buttonStyle = "rounded border border-input px-2 py-1.5 text-xs hover:bg-accent focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-ring disabled:cursor-default disabled:opacity-40";
+  const changePlane = (plane: "front" | "behind", focusEditor: boolean) => {
+    const view = currentView();
+    if (!view || selectedPos === null || !canReorder || !(view.state.selection instanceof NodeSelection) || view.state.selection.from !== selectedPos) return;
+    const tr = setObjectTextPlane(view.state.tr, selectedPos, plane);
+    if (tr.docChanged) view.dispatch(tr);
+    if (focusEditor) view.focus();
+    reveal(view, selectedPos);
+  };
+  const buttonStyle = "rounded border border-input px-2 py-1.5 text-xs hover:bg-accent aria-pressed:bg-accent aria-pressed:text-accent-foreground aria-pressed:font-semibold focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-ring disabled:cursor-default disabled:opacity-40";
 
   return <aside aria-label={labels.layersTitle} className="flex h-56 max-h-[40%] w-full shrink-0 flex-col border-t border-border bg-card text-card-foreground lg:h-auto lg:max-h-none lg:w-72 lg:border-t-0 lg:border-s" onKeyDown={event => {
     if (event.key === "Escape") { event.preventDefault(); event.stopPropagation(); onClose(); }
@@ -71,16 +84,18 @@ export default function ImageLayersPanel({ viewRef, state, onClose }: Props) {
     </div>
     <div className="min-h-0 flex-1 overflow-y-auto p-2">
       {images.length ? <ul className="space-y-1">{images.map(image => {
-        const name = image.alt || labels.layersName(image.number);
+        const name = image.alt || (image.kind === "text_box" ? labels.layersTextBoxName(image.number) : labels.layersName(image.number));
         return <li key={image.pos}><button type="button" aria-label={name} aria-pressed={image.pos === selectedPos}
           className="flex w-full items-center gap-2 rounded px-2 py-1.5 text-start hover:bg-accent/60 focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-ring aria-pressed:bg-accent aria-pressed:text-accent-foreground"
           onMouseDown={event => event.preventDefault()} onClick={event => select(image.pos, event.detail !== 0)}>
           <span className="flex h-10 w-12 shrink-0 items-center justify-center overflow-hidden rounded border border-border bg-muted">
-            {/* Uploaded and data-URL thumbnails have no fixed Next.js image source. */}
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={image.src} alt="" loading="lazy" className="max-h-full max-w-full object-contain" />
+            {image.kind === "text_box" ? <TextT size={24} aria-hidden="true" /> : <>
+              {/* Uploaded and data-URL thumbnails have no fixed Next.js image source. */}
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={image.src} alt="" loading="lazy" className="max-h-full max-w-full object-contain" />
+            </>}
           </span>
-          <span className="min-w-0 flex-1"><span className="block truncate text-sm">{name}</span><span className="block truncate text-[11px] text-muted-foreground">{image.fixed ? labels.fixedOnPage : labels.moveWithText}</span></span>
+          <span className="min-w-0 flex-1"><span className="block truncate text-sm">{name}</span><span className="block truncate text-[11px] text-muted-foreground">{image.kind === "text_box" ? `${labels.layersTextBox} · ` : ""}{image.fixed ? image.plane === "behind" ? labels.behindText : labels.inFrontOfText : labels.moveWithText}</span></span>
         </button></li>;
       })}</ul> : <p className="px-1 py-3 text-sm text-muted-foreground">{labels.layersEmpty}</p>}
     </div>
@@ -90,6 +105,10 @@ export default function ImageLayersPanel({ viewRef, state, onClose }: Props) {
         <button type="button" className={buttonStyle} disabled={!canReorder} aria-describedby={!canReorder && images.length ? "image-layer-order-hint" : undefined} onMouseDown={event => event.preventDefault()} onClick={event => reorder("front", event.detail !== 0)}>{labels.bringToFront}</button>
         <button type="button" className={buttonStyle} disabled={!canReorder} aria-describedby={!canReorder && images.length ? "image-layer-order-hint" : undefined} onMouseDown={event => event.preventDefault()} onClick={event => reorder("back", event.detail !== 0)}>{labels.sendToBack}</button>
       </div>
+      <fieldset className="space-y-1"><legend className="text-xs text-muted-foreground">{labels.textPlacement}</legend><div className="flex gap-2">
+        <button type="button" className={buttonStyle} disabled={!canReorder} aria-pressed={canReorder ? selected.plane === "front" : undefined} onMouseDown={event => event.preventDefault()} onClick={event => changePlane("front", event.detail !== 0)}>{labels.inFrontOfText}</button>
+        <button type="button" className={buttonStyle} disabled={!canReorder} aria-pressed={canReorder ? selected.plane === "behind" : undefined} onMouseDown={event => event.preventDefault()} onClick={event => changePlane("behind", event.detail !== 0)}>{labels.behindText}</button>
+      </div></fieldset>
     </div>
   </aside>;
 }

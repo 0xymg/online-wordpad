@@ -34,6 +34,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { getTemplates } from "@/lib/templates";
 import { DATE_FORMATS, formatDate } from "@/lib/doc-variables";
+import { textBoxLabels } from "@/lib/text-box-i18n";
 
 interface MenuBarProps {
   headerCollapsed?: boolean;
@@ -70,6 +71,7 @@ interface MenuBarProps {
   onLinkAdd: () => void;
   onImageAdd: () => void;
   onImageUrlAdd: () => void;
+  onInsertTextBox: () => void;
   onInsertDivider: () => void;
   onInsertSymbol: (text: string) => void;
   onInsertDate: () => void;
@@ -165,7 +167,7 @@ function MenuBar({
   docTitle, onTitleChange, onNewDoc, onShowHome, onNewFromTemplate, onOpenFile, onExport,
   onSave, onCopyLink, onRenameDoc, onDeleteDoc, onReplace,
   onShowVersions, onShowShortcuts, onShowAbout, onFind,
-  onParagraph, onStyles, onTableProperties, onHeaderFooter, onInsertTable, onPageBreakAdd, onLinkAdd, onImageAdd, onImageUrlAdd,
+  onParagraph, onStyles, onTableProperties, onHeaderFooter, onInsertTable, onPageBreakAdd, onLinkAdd, onImageAdd, onImageUrlAdd, onInsertTextBox,
   onInsertDivider, onInsertSymbol, onInsertDate, onInsertVariable,
   onLineSpacing, onClearFormatting,
   zoomPercent, onZoomChange,
@@ -612,6 +614,7 @@ function MenuBar({
           </MenubarItem>
           <MenubarItem onClick={onImageAdd}>{t.insert.pictureFile}</MenubarItem>
           <MenubarItem onClick={onImageUrlAdd}>{t.insert.pictureUrl}</MenubarItem>
+          <MenubarItem onClick={onInsertTextBox}>{textBoxLabels(locale).insert}</MenubarItem>
           <MenubarItem onClick={() => onInsertTable(3, 3)}>{`${t.insert.table} (${t.tableMenu.rowsByCols(3, 3)})`}</MenubarItem>
           <MenubarItem onClick={onHeaderFooter}>{t.running.title}…</MenubarItem>
           <MenubarItem onClick={onInsertTOC}>{t.insert.tableOfContents}</MenubarItem>

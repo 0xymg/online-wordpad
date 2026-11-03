@@ -4,7 +4,7 @@
 
 Görseli seçme, yerleştirme, sıralama ve dışa aktarma davranışları birlikte tutarlı çalışacak. Yeni özellikler aşağıdaki bağımlılık sırasıyla, ayrı ve doğrulanabilir paketler olarak tamamlanacak.
 
-- Aynı anda bir uygulama aşaması açık olacak. Bir sonraki aşamanın incelemesi yapılabilir; uygulaması mevcut paketin canlı doğrulamasından sonra başlar.
+- Kullanıcının son yönlendirmesiyle kalan 3–5 aşamaları Sol/Terra ajanlarında ayrı dosya sahiplikleriyle paralel geliştiriliyor. Bütünleştirme ve kabul sırası 3 → 4 → 5; ortak dosya değişiklikleri ana ajan tarafından koordine edilir. Tüm etkilenen kabul testleri geçmeden yayın yapılmaz.
 - Bir aşama ancak kabul ölçütleri karşılandığında tamamlandı sayılır. Yerelde hazır, yayında ve canlıda doğrulandı durumları ayrı tutulur.
 - Yeni fikirler doğrudan uygulamaya eklenmez; aşağıdaki bekleyen işler bölümüne yazılır. Sıra değişirse gerekçesi burada kaydedilir.
 - Commit'lere co-author eklenmez. Üretim yayını `main` üzerinden Vercel Git entegrasyonuyla yapılır.
@@ -21,10 +21,10 @@ Görseli seçme, yerleştirme, sıralama ve dışa aktarma davranışları birli
 | Sıra | Paket | Durum | Bağımlılık / sonuç |
 | --- | --- | --- | --- |
 | 1 | Aynı sayfada sürükleyerek konumlandırma | Tamamlandı — `f85dc4d`, canlıda doğrulandı | Mevcut sabit konum modelini doğrudan kullanma |
-| 2 | Görsel katman paneli | Yerel kabul testleri geçti; yayın hazırlanıyor | Üstü örtülmüş görselleri erişilebilir şekilde seçme ve sıralama |
-| 3 | Metnin önüne / arkasına yerleştirme | Bekliyor | Arkadaki görselin panelden seçilebilmesi için 2 tamamlanmalı |
-| 4 | Sayfalar arasında sürükleme | Bekliyor | Sayfa ve paragraf bağlantısını güvenilir biçimde değiştirme |
-| 5 | Metin kutuları | Bekliyor; uygulama tasarımı henüz yapılmadı | Görsellerde doğrulanan seçim, konum ve katman davranışını kullanma |
+| 2 | Görsel katman paneli | Tamamlandı — `22962a1`, canlıda doğrulandı | Üstü örtülmüş görselleri erişilebilir şekilde seçme ve sıralama |
+| 3 | Metnin önüne / arkasına yerleştirme | Yerelde doğrulandı — yayın bekliyor | Arkadaki görselin panelden seçilebilmesi için 2 tamamlanmalı |
+| 4 | Sayfalar arasında sürükleme | Yerelde doğrulandı — yayın bekliyor | Sayfa ve paragraf bağlantısını güvenilir biçimde değiştirme |
+| 5 | Metin kutuları | Yerelde doğrulandı — yayın bekliyor | Görsellerde doğrulanan seçim, konum ve katman davranışını kullanma |
 
 ### 1. Aynı sayfada sürükleme
 
@@ -79,7 +79,7 @@ Kabul ölçütleri:
 - Hedef geçersizse veya işlem iptal edilirse belge aynı kalır.
 - Kaydet/aç ve Word/PDF yeniden aktarımı hedef sayfayı korur.
 
-Boş alana bırakarak yeni sayfa oluşturma bu aşamanın kapsamına otomatik olarak dahil değildir.
+Boş alana bırakarak yeni sayfa oluşturma bu aşamanın kapsamına otomatik olarak dahil değildir. İlk sürümde akış içindeki bir görselin kaldırılması aradaki paragraf veya tabloyu bölen doğal sayfa sınırını değiştirecekse hedef kırmızı/geçersiz gösterilir ve bırakma iptal edilir; görsel yanlış sayfaya sessizce taşınmaz. Üst düzey paragraf sınırları korunur; zaten sabit görseller bu akış yüksekliği kısıtına tabi değildir.
 
 ### 5. Metin kutuları
 
@@ -108,7 +108,16 @@ Bağlı metin kutuları, dönen metin, gruplama ve şekiller ilk pakete dahil de
 - Aşama 1 yayını: `f85dc4d`; üretim derlemesi ve Vercel yayını başarılı. `BASE_URL=https://wordpad.info` ile `scripts/check-image-drag.cjs` canlıda geçti.
 - Aşama 2 yerelde tamamlandı: View → Image layers girişi, örtülü görsel seçimi, ortak sıralama komutu, seçim/silme/geri alma ve belge değişimi senkronu, klavye, açık/koyu tema ve dar ekran kontrolleri geçti.
 - Aşama 2 doğrulama: `scripts/check-image-layers.cjs`, `scripts/check-page-images.cjs`, TypeScript, yeni panel/yardımcı/diyalog için odaklı lint ve üretim derlemesi başarılı. Editor/MenuBar içinde önceden var olan lint bulguları değişmedi.
-- Aktif işlem: Aşama 2 yayını ve canlı panel testi. Aşama 3 henüz başlamadı.
+- Aşama 2 yayını: `22962a1`; Vercel yayını başarılı. `BASE_URL=https://wordpad.info` ile `scripts/check-image-layers.cjs` canlıda geçti; örtülü görsele erişim, ortak sıralama, klavye, kalıcılık ve mobil görünüm doğrulandı.
+- Kullanıcı kalan tüm paketlerin Sol/Terra ajanlarında geliştirilmesini istedi. 3–5 paralel geliştirme, sıralı entegrasyon ve ortak regresyon kapısıyla ilerliyor.
+- Bölüm düzenleyicisi, referanslar ve ileri Word uyumluluğu ayrı `docs/advanced-document-plan.md` planında; kullanıcı kapsamı ve sırayı 2 Kasım 2026 tarihinde onayladı. Uygulama bu görsel/metin kutusu paketi canlıda doğrulandıktan sonra A0 ile başlayacak.
+
+- Aşama 3 yerelde: `scripts/check-image-text-plane.cjs` gerçek ön/arka piksel karşılaştırması, görsel içinden metin yazma, seçim tutamaçları, düzlem/sıra, tek geri alma, HTML/DOCX döngüsü ve PDF raster karşılaştırmalarında geçti.
+- Aşama 4 yerelde: `scripts/check-image-cross-page.cjs` ileri/geri taşıma, zoom, otomatik kaydırma, iptal/geçersiz hedef, doğal sayfa sınırı, farklı yön/marjinli bölümler ve native Word anchor gidiş-dönüşünde geçti.
+- Aşama 5 yerelde: `docs/text-box-design.md` tasarımı uygulandı. `scripts/check-text-boxes.cjs` Insert, Delete/Backspace, ayrı metin düzenleme/taşıma, boyutlandırma, geri alma, kayıt, native düzenlenebilir DOCX ve PDF, taşma uyarısı, örtülü/arkadaki kutu seçimi ve beş dilde arayüz/dar ekran (Arapça RTL dahil) kontrollerinde geçti. İlk kapsam düz çok satırlı metin; zengin metin, döndürme ve bağlı kutular kapsam dışı.
+- Ortak Katmanlar paneli görselleri ve metin kutularını birlikte sıralar. `scripts/check-image-layers.cjs` karma seçim/sıralama ve Word döngüsünde geçti; DOCX z-sırası tekrar içe alımda kaymıyor.
+- Mevcut `check-image-layout.cjs` ve `check-page-images.cjs` regresyonları geçti. Metin kutusu PDF’si ayrıca rasterleştirilerek görsel olarak kontrol edildi. Üretim derlemesi/TypeScript ve odaklı lint başarılı (doc-export içindeki mevcut üç unused-import uyarısı dışında yeni bulgu yok).
+- 3–5 için üretim yayını ve canlı doğrulama henüz tamamlanmadı.
 
 ## Bekleyen fikirler
 

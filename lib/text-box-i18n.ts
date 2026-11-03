@@ -1,0 +1,67 @@
+import type { Locale } from "./i18n";
+
+const en = {
+  insert: "Text box", title: "Edit text box", text: "Text", move: "Move", moveLabel: "Move text box", edit: "Edit text",
+  description: "Plain multiline text. Drag the Move handle to reposition the box. The box grows vertically to show all text.",
+  x: "X (cm)", y: "Y (cm)", width: "Width (cm)", height: "Minimum height (cm)", font: "Font", fontSize: "Font size (pt)",
+  color: "Text color", background: "Background", transparent: "Transparent background", plane: "Text plane", front: "In front of text", behind: "Behind text",
+  cancel: "Cancel", apply: "Apply", resize: "Resize text box; press Enter to edit size",
+  topLeft: "top left", topRight: "top right", bottomLeft: "bottom left", bottomRight: "bottom right",
+  changed: "The document changed. Close and reopen this dialog.",
+  invalid: "Enter a position and minimum size that fit on this page. Font size must be 6–144 pt.",
+  overflow: "Text box exceeds this page. Edit the text or size before printing.",
+  hint: "Height is a minimum. Long text stays visible and may extend beyond the page; shorten the text, reduce its font size, or make the box wider before printing. Native Word text boxes preserve this plain text and appearance; rich text, rotation, and linked boxes are not supported.",
+};
+type Labels = { [K in keyof typeof en]: string };
+const labels: Record<Locale, Labels> = {
+  en,
+  tr: {
+    insert: "Metin kutusu", title: "Metin kutusunu düzenle", text: "Metin", move: "Taşı", moveLabel: "Metin kutusunu taşı", edit: "Metni düzenle",
+    description: "Düz, çok satırlı metin. Kutuyu taşımak için Taşı tutamacını sürükleyin. Tüm metni göstermek için kutunun yüksekliği artar.",
+    x: "X (cm)", y: "Y (cm)", width: "Genişlik (cm)", height: "En az yükseklik (cm)", font: "Yazı tipi", fontSize: "Yazı boyutu (pt)",
+    color: "Metin rengi", background: "Arka plan", transparent: "Saydam arka plan", plane: "Metin düzlemi", front: "Metnin önünde", behind: "Metnin arkasında",
+    cancel: "İptal", apply: "Uygula", resize: "Metin kutusunu boyutlandır; boyutu düzenlemek için Enter'a basın",
+    topLeft: "sol üst", topRight: "sağ üst", bottomLeft: "sol alt", bottomRight: "sağ alt",
+    changed: "Belge değişti. Bu pencereyi kapatıp yeniden açın.",
+    invalid: "Bu sayfaya sığan bir konum ve en az boyut girin. Yazı boyutu 6–144 pt olmalıdır.",
+    overflow: "Metin kutusu bu sayfayı aşıyor. Yazdırmadan önce metni veya boyutu düzenleyin.",
+    hint: "Yükseklik en az değerdir. Uzun metin görünür kalır ve sayfayı aşabilir; yazdırmadan önce metni kısaltın, yazı boyutunu küçültün veya kutuyu genişletin. Word'ün yerel metin kutuları bu düz metni ve görünümü korur; zengin metin, döndürme ve bağlantılı kutular desteklenmez.",
+  },
+  fr: {
+    insert: "Zone de texte", title: "Modifier la zone de texte", text: "Texte", move: "Déplacer", moveLabel: "Déplacer la zone de texte", edit: "Modifier le texte",
+    description: "Texte brut sur plusieurs lignes. Faites glisser la poignée Déplacer pour repositionner la zone. Sa hauteur augmente pour afficher tout le texte.",
+    x: "X (cm)", y: "Y (cm)", width: "Largeur (cm)", height: "Hauteur minimale (cm)", font: "Police", fontSize: "Taille de police (pt)",
+    color: "Couleur du texte", background: "Arrière-plan", transparent: "Arrière-plan transparent", plane: "Plan du texte", front: "Devant le texte", behind: "Derrière le texte",
+    cancel: "Annuler", apply: "Appliquer", resize: "Redimensionner la zone de texte ; appuyez sur Entrée pour modifier la taille",
+    topLeft: "en haut à gauche", topRight: "en haut à droite", bottomLeft: "en bas à gauche", bottomRight: "en bas à droite",
+    changed: "Le document a changé. Fermez puis rouvrez cette fenêtre.",
+    invalid: "Saisissez une position et une taille minimale qui tiennent sur cette page. La police doit mesurer entre 6 et 144 pt.",
+    overflow: "La zone de texte dépasse cette page. Modifiez le texte ou la taille avant d'imprimer.",
+    hint: "La hauteur est un minimum. Le texte long reste visible et peut dépasser la page ; raccourcissez-le, réduisez la police ou élargissez la zone avant d'imprimer. Les zones de texte natives de Word conservent ce texte brut et son apparence ; le texte enrichi, la rotation et les zones liées ne sont pas pris en charge.",
+  },
+  zh: {
+    insert: "文本框", title: "编辑文本框", text: "文本", move: "移动", moveLabel: "移动文本框", edit: "编辑文本",
+    description: "多行纯文本。拖动“移动”手柄可调整位置。文本框会自动增高以显示全部文本。",
+    x: "X（厘米）", y: "Y（厘米）", width: "宽度（厘米）", height: "最小高度（厘米）", font: "字体", fontSize: "字号（磅）",
+    color: "文本颜色", background: "背景", transparent: "透明背景", plane: "文本层次", front: "浮于文字上方", behind: "衬于文字下方",
+    cancel: "取消", apply: "应用", resize: "调整文本框大小；按 Enter 编辑尺寸",
+    topLeft: "左上角", topRight: "右上角", bottomLeft: "左下角", bottomRight: "右下角",
+    changed: "文档已更改。请关闭此对话框后重新打开。",
+    invalid: "请输入可放入此页面的位置和最小尺寸。字号须为 6–144 磅。",
+    overflow: "文本框超出了此页面。请在打印前编辑文本或调整尺寸。",
+    hint: "高度为最小值。长文本会保持可见，但可能超出页面；打印前请缩短文本、减小字号或加宽文本框。Word 原生文本框会保留此纯文本和外观；不支持富文本、旋转和链接文本框。",
+  },
+  ar: {
+    insert: "مربع نص", title: "تحرير مربع النص", text: "النص", move: "نقل", moveLabel: "نقل مربع النص", edit: "تحرير النص",
+    description: "نص عادي متعدد الأسطر. اسحب مقبض النقل لتغيير موضع المربع. يزداد ارتفاعه لعرض النص بالكامل.",
+    x: "X (سم)", y: "Y (سم)", width: "العرض (سم)", height: "الحد الأدنى للارتفاع (سم)", font: "الخط", fontSize: "حجم الخط (نقطة)",
+    color: "لون النص", background: "الخلفية", transparent: "خلفية شفافة", plane: "مستوى النص", front: "أمام النص", behind: "خلف النص",
+    cancel: "إلغاء", apply: "تطبيق", resize: "تغيير حجم مربع النص؛ اضغط Enter لتحرير الحجم",
+    topLeft: "أعلى اليسار", topRight: "أعلى اليمين", bottomLeft: "أسفل اليسار", bottomRight: "أسفل اليمين",
+    changed: "تغير المستند. أغلق هذه النافذة ثم أعد فتحها.",
+    invalid: "أدخل موضعًا وحجمًا أدنى يتسعان في هذه الصفحة. يجب أن يكون حجم الخط من 6 إلى 144 نقطة.",
+    overflow: "يتجاوز مربع النص هذه الصفحة. عدّل النص أو الحجم قبل الطباعة.",
+    hint: "الارتفاع هو حد أدنى. يبقى النص الطويل مرئيًا وقد يتجاوز الصفحة؛ اختصره أو صغّر الخط أو وسّع المربع قبل الطباعة. تحتفظ مربعات النص الأصلية في Word بهذا النص العادي ومظهره؛ النص المنسق والتدوير والمربعات المرتبطة غير مدعومة.",
+  },
+};
+export function textBoxLabels(locale: Locale): Labels { return labels[locale]; }

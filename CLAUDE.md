@@ -6,7 +6,7 @@ Bu dosya, projeyle çalışan Claude için bağlam ve yönergeler içerir.
 
 ## Aktif geliştirme planı
 
-Görsel yerleşimi işlerinde `docs/image-layout-plan.md` dosyasındaki bağımlılık sırası, kapsam ve kabul ölçütlerini izle. Aynı anda bir uygulama paketi açık tut; yeni fikirleri doğrudan koda eklemek yerine plana kaydet. Yerel doğrulama ve canlı doğrulama durumlarını ayrı güncelle. Kullanıcının güncel yönlendirmesi bu plana göre önceliklidir.
+Görsel yerleşimi işlerinde `docs/image-layout-plan.md` dosyasındaki bağımlılık sırası, kapsam ve kabul ölçütlerini izle. Paralel çalışma ve entegrasyon sırası için planın güncel kullanıcı yönlendirmesini izle; yeni fikirleri doğrudan koda eklemek yerine plana kaydet. `docs/advanced-document-plan.md` 2 Kasım 2026 tarihinde kullanıcı tarafından kapsam ve sırasıyla onaylandı; mevcut görsel/metin kutusu paketi kapandıktan sonra A0’dan başlayarak Sol/Terra ajanlarıyla uygula. Yerel doğrulama ve canlı doğrulama durumlarını ayrı güncelle. Kullanıcının güncel yönlendirmesi bu plana göre önceliklidir.
 
 ## Proje Özeti
 

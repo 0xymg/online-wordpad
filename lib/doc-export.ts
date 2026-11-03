@@ -11,6 +11,7 @@ import { DEFAULT_DOCUMENT_FONT } from "./document-font";
 import { imageWrap, imageDistance } from "./image-layout";
 import { documentSections } from "./document-sections";
 import { fixedImageWidth } from "./page-image-position";
+import { exportTextBoxes, textBoxBookmark } from "./text-box-docx";
 import { DOMParser as PMParser, type Node as PMNode, type Mark } from "prosemirror-model";
 import { mySchema } from "@/app/components/editor-schema";
 import {
@@ -141,6 +142,7 @@ const MAX_IMAGE_WIDTH = 600; // px inside an A4 text column
 
 class DocxBuilder {
   paragraphProperties: Array<{ id: string; properties: string }> = [];
+  textBoxes: Record<string, unknown>[] = [];
   private imageQueue: Array<LoadedImage | null>;
   numbering: INumberingOptions["config"][number][] = [];
 
@@ -193,6 +195,9 @@ class DocxBuilder {
         const marks = readMarks(child.marks);
         if (child.attrs.kind === "OTHER" && child.attrs.instruction) { out.push(new SimpleField(child.attrs.instruction, child.attrs.cached || "")); return; }
         out.push(new TextRun({ children: [child.attrs.kind === "NUMPAGES" ? PageNumber.TOTAL_PAGES : PageNumber.CURRENT], font: marks.font, size: marks.size, bold: marks.bold, italics: marks.italics, color: marks.color }));
+      } else if (child.type.name === "text_box") {
+        const index = this.textBoxes.push(child.attrs) - 1;
+        out.push(new Bookmark({ id: textBoxBookmark(index), children: [] }));
       } else if (child.type.name === "image") {
         const img = this.imageQueue.shift() ?? null;
         if (img) {
@@ -214,7 +219,7 @@ class DocxBuilder {
               horizontalPosition: fixed ? { relative: HorizontalPositionRelativeFrom.PAGE, offset: Math.round((Number(child.attrs.x) || 0) * 9525) } : { relative: HorizontalPositionRelativeFrom.COLUMN, align: wrap === "wrapRight" ? "right" : wrap === "wrapLeft" ? "left" : child.attrs.align === "center" ? "center" : child.attrs.align === "right" ? "right" : "left" },
               verticalPosition: fixed ? { relative: VerticalPositionRelativeFrom.PAGE, offset: Math.round((Number(child.attrs.y) || 0) * 9525) } : { relative: VerticalPositionRelativeFrom.PARAGRAPH, offset: 0 },
               allowOverlap: fixed, layoutInCell: !fixed, zIndex: Math.max(0, Math.round(Number(child.attrs.layer) || 0)) + 1,
-              behindDocument: false,
+              behindDocument: fixed && child.attrs.textPlane === "behind",
               wrap: { type: fixed ? TextWrappingType.NONE : wrap === "topBottom" ? TextWrappingType.TOP_AND_BOTTOM : TextWrappingType.SQUARE, side: wrap === "wrapRight" ? TextWrappingSide.LEFT : TextWrappingSide.RIGHT },
               margins: { top: wrap === "topBottom" ? Math.round(distance * 9525) : 0, bottom: Math.round(distance * 9525), left: wrap === "wrapRight" ? Math.round(distance * 9525) : 0, right: wrap === "wrapLeft" ? Math.round(distance * 9525) : 0 },
             } } : {}),
@@ -448,6 +453,7 @@ export async function docToDocxBlob(
     }],
   });
   let result = await restoreDocxPackage(await Packer.toBlob(file), doc, builder.paragraphProperties);
+  result = await exportTextBoxes(result, builder.textBoxes);
   if (layout?.styles) { const { exportDocumentStyles } = await import("./style-docx"); result = await exportDocumentStyles(result,doc); }
   if (!layout?.running || !Object.keys(layout.running).length) return result;
   const { exportRunning } = await import("./header-footer-export");
@@ -522,6 +528,10 @@ class RtfBuilder {
         out += `${open} ${rtfEscape(child.text || "")}}`;
       } else if (child.type.name === "image") {
         out += "{\\i [image]}";
+      } else if (child.type.name === "text_box") {
+        // RTF exports preserve the box text in document flow; geometry is DOCX/HTML only.
+        const p = child.attrs;
+        out += `{\\f${this.fontIndex(firstFontFamily(p.fontFamily))}\\fs${Math.round(Number(p.fontSize || 12) * 2)}\\cf${this.colorIndex(colorToHex(p.color))} ${String(p.text || "").split("\n").map(rtfEscape).join("\\line ")}}`;
       } else if (child.type.name === "hard_break") {
         out += "\\line ";
       }
@@ -655,6 +665,8 @@ function inlineToMd(node: PMNode): string {
       out += t;
     } else if (child.type.name === "image") {
       out += `![${child.attrs.alt || ""}](${child.attrs.src})`;
+    } else if (child.type.name === "text_box") {
+      out += mdEscape(String(child.attrs.text || ""));
     } else if (child.type.name === "hard_break") {
       out += "  \n";
     }

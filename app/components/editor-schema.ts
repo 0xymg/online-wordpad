@@ -4,12 +4,13 @@
 // the entire Editor.tsx module graph (react-to-print, dialogs, actions, …).
 
 import { paragraphAttrs, paragraphDOM, paragraphCSS } from "@/lib/paragraph-format";
-import { imageWrap, imageDistance, imageLayoutStyle, imageDataAttrs, imagePosition, imageCoordinate, imageLayer } from "@/lib/image-layout";
+import { imageWrap, imageDistance, imageLayoutStyle, imageDataAttrs, imagePosition, imageCoordinate, imageLayer, imageTextPlane } from "@/lib/image-layout";
 import { Schema, Node as PMNode, Mark, type NodeSpec } from "prosemirror-model";
 import { schema as basicSchema } from "prosemirror-schema-basic";
 import { addListNodes } from "prosemirror-schema-list";
 import { tableNodes } from "prosemirror-tables";
 import { readDocxProperties } from "@/lib/document-layout";
+import { textBoxNodeSpec } from "@/lib/text-box";
 
 function layoutStyles(el: HTMLElement): string {
   return ["height", "margin-top", "margin-bottom", "margin-left", "margin-right", "text-indent", "line-height", "background-color", "vertical-align", "border-top", "border-right", "border-bottom", "border-left", "padding-top", "padding-right", "padding-bottom", "padding-left"].map(p => el.style.getPropertyValue(p) ? `${p}:${el.style.getPropertyValue(p)}` : "").filter(Boolean).join(";");
@@ -147,6 +148,7 @@ const imageNodeSpec: NodeSpec = {
     x: { default: 0 },
     y: { default: 0 },
     layer: { default: 0 },
+    textPlane: { default: "front" },
   },
   parseDOM: [{
     tag: "img[src]",
@@ -168,6 +170,7 @@ const imageNodeSpec: NodeSpec = {
         x: imageCoordinate(img.getAttribute("data-x")),
         y: imageCoordinate(img.getAttribute("data-y")),
         layer: imageLayer(img.getAttribute("data-layer")),
+        textPlane: imageTextPlane(img.getAttribute("data-text-plane")),
       };
     },
   }],
@@ -235,6 +238,7 @@ export const mySchema = new Schema({
     "block"
   ))
     .append(importedTables)
+    .addToEnd("text_box", textBoxNodeSpec)
     .addToEnd("page_break", pageBreakNodeSpec)
     .addToEnd("doc_field", {
       inline: true, group: "inline", atom: true,

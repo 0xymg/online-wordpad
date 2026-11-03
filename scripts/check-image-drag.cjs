@@ -27,7 +27,9 @@ const { chromium } = require(process.env.PLAYWRIGHT_MODULE || 'playwright');
   await page.getByRole('combobox',{name:'Zoom',exact:true}).click();await page.getByRole('option',{name:'50%',exact:true}).click();await page.waitForTimeout(250);before=await facts();await gesture(30,20);after=await facts();near(after.x,before.x+60,'50% drag x');near(after.y,before.y+40,'50% drag y');
   await page.getByRole('combobox',{name:'Zoom',exact:true}).click();await page.getByRole('option',{name:'100%',exact:true}).click();await page.waitForTimeout(200);await page.waitForTimeout(1100);await page.reload();await image.waitFor();near((await facts()).storedX,after.storedX,'reload x');near((await facts()).storedY,after.storedY,'reload y');
   // Dragging against the page edge clamps the picture without moving its anchor.
-  await gesture(-2000,-2000);after=await facts();near(after.storedX,0,'left edge');near(after.storedY,0,'top edge');assert.equal(after.count,1);await page.keyboard.press('Meta+z');await page.waitForTimeout(250);
+  await image.evaluate(img=>img.scrollIntoView({block:"center"}));await page.waitForTimeout(300);
+  { const r=await image.boundingBox(), sheet=await page.locator(".pm-page").boundingBox(); await page.mouse.move(r.x+65,r.y+90);await page.mouse.down();await page.mouse.move(sheet.x+2,sheet.y+2,{steps:8});await page.mouse.up();await page.waitForTimeout(250); }
+  after=await facts();near(after.storedX,0,'left edge');near(after.storedY,0,'top edge');assert.equal(after.count,1);await page.keyboard.press('Meta+z');await page.waitForTimeout(250);
   // Explicit second-page anchor, selection/deletion, and one-step move undo.
   await load(`<p>FIXTURE FIRST PAGE</p><hr data-page-break="true"><p>${img('data-position="page" data-x="120" data-y="180" data-layer="4" data-align=""')}SECOND PAGE</p>`);
   before=await facts();await gesture(75,45);after=await facts();near(after.y,before.y+45,'second-page drag y');near(after.storedX,195,'second-page X');near(after.storedY,225,'second-page Y');assert.equal(after.layer,'4');assert.equal(after.count,1);

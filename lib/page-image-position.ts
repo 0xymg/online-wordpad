@@ -2,10 +2,27 @@
 import type { EditorView } from "prosemirror-view";
 import type { Node as PMNode } from "prosemirror-model";
 import { documentSections, type PageGeometry } from "./document-sections";
-import { imageCoordinate, imagePosition, imageWidth, imageVisualElement } from "./image-layout";
+import { imageCoordinate, imagePosition, imageWidth, imageVisualElement, syncImageSelectionFrame } from "./image-layout";
 
 export type ImagePage = { top: number; geometry: PageGeometry };
 const measuredPages = new WeakMap<EditorView, readonly ImagePage[]>();
+
+/** Hit-test only real, measured sheets; gaps and the area outside are invalid. */
+export function imagePageAtPoint(view: EditorView, clientX: number, clientY: number) {
+  const host = view.dom.parentElement;
+  const pages = measuredPages.get(view);
+  if (!host || !pages) return null;
+  const rect = host.getBoundingClientRect();
+  const scale = view.dom.getBoundingClientRect().width / Number.parseFloat(getComputedStyle(view.dom).width) || 1;
+  const hostX = (clientX - rect.left) / scale, hostY = (clientY - rect.top) / scale;
+  for (const [index, page] of pages.entries()) {
+    const width = page.geometry.width / 15, height = page.geometry.height / 15;
+    const left = (rect.width / scale - width) / 2;
+    if (hostX >= left && hostX <= left + width && hostY >= page.top && hostY < page.top + height)
+      return { page, index, left, width, height, scale, rect };
+  }
+  return null;
+}
 
 export function fixedImageWidth(attrs: Record<string, unknown>, geometry: PageGeometry): number {
   const width = imageWidth(attrs.width);
@@ -54,7 +71,7 @@ export function imagePageContext(view: EditorView, pos: number) {
     const width = fixedImageWidth(attrs, geometry);
     return { width: geometry.width / 15, height: geometry.height / 15,
       x: imageCoordinate(attrs.x), y: imageCoordinate(attrs.y), imageWidth: width,
-      imageHeight: width / (Number(attrs.aspectRatio) || 1),
+      imageHeight: view.state.doc.nodeAt(pos)?.type.name === "text_box" ? Number(attrs.height) || 96 : width / (Number(attrs.aspectRatio) || 1),
       margins: { left: geometry.margins.left / 15, right: geometry.margins.right / 15,
         top: geometry.margins.top / 15, bottom: geometry.margins.bottom / 15 } };
   }
@@ -71,7 +88,7 @@ export function imagePageContext(view: EditorView, pos: number) {
 
 function placeImage(view: EditorView, node: PMNode, pos: number) {
   const info = context(view, pos);
-  const frame = info?.anchor.querySelector<HTMLElement>(".pm-image-frame");
+  const frame = info?.anchor.querySelector<HTMLElement>(".pm-image-frame, .pm-textbox-frame");
   if (!info || !frame) return;
   const width = fixedImageWidth(node.attrs, info.page.geometry);
   frame.style.width = `${width}px`;
@@ -84,12 +101,13 @@ function placeImage(view: EditorView, node: PMNode, pos: number) {
   // so positioned paragraphs, list items and table cells require no special case.
   frame.style.left = `${info.left + x - (info.anchorRect.left - info.hostRect.left) / info.scale}px`;
   frame.style.top = `${info.page.top + y - (info.anchorRect.top - info.hostRect.top) / info.scale}px`;
+  syncImageSelectionFrame(info.anchor);
 }
 
 /** Called after pagination settles; the same pass runs for live and export views. */
 export function placePageImages(view: EditorView, pages?: readonly ImagePage[]) {
   if (pages) measuredPages.set(view, pages);
   view.state.doc.descendants((node, pos) => {
-    if (node.type.name === "image" && imagePosition(node.attrs.position) === "page") placeImage(view, node, pos);
+    if ((node.type.name === "image" || node.type.name === "text_box") && imagePosition(node.attrs.position) === "page") placeImage(view, node, pos);
   });
 }

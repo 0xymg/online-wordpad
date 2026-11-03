@@ -34,6 +34,9 @@ import { inputRules, wrappingInputRule, textblockTypeInputRule, InputRule } from
 import { tableEditing, columnResizing, isInTable, findTable, CellSelection, TableMap, TableView } from "prosemirror-tables";
 import { mySchema, sanitizeHref, normalizeIndent } from "./editor-schema";
 import MenuBar from "./MenuBar";
+import "./text-box.css";
+import { insertTextBox } from "@/lib/text-box";
+import { createTextBoxNodeView } from "@/lib/text-box-node-view";
 import Toolbar from "./Toolbar";
 import TableContextMenu from "./TableContextMenu";
 import {
@@ -56,8 +59,9 @@ import {
 import { cn } from "@/lib/utils";
 import { DEFAULT_DOCUMENT_FONT_CSS } from "@/lib/document-font";
 import { authClient, useSession } from "@/lib/auth-client";
-import { imagePageContext, placePageImages } from "@/lib/page-image-position";
-import { imageVisualElement, applyImageLayout } from "@/lib/image-layout";
+import { fixedImageWidth, imagePageAtPoint, imagePageContext, placePageImages } from "@/lib/page-image-position";
+import { imageAnchorOnPage } from "@/lib/image-page-drag";
+import { imageVisualElement, applyImageLayout, syncImageSelectionFrame } from "@/lib/image-layout";
 import { prepareImageFile, insertWidth } from "@/lib/image-util";
 import { OPEN_ACCEPT } from "@/lib/doc-import";
 import WelcomeScreen from "./WelcomeScreen";
@@ -70,6 +74,7 @@ const HeaderFooterDialog = lazy(() => import("./HeaderFooterDialog"));
 const PageMarginsDialog = lazy(() => import("./PageMarginsDialog"));
 const ImageLayersPanel = lazy(() => import("./ImageLayersPanel"));
 const ImageLayoutDialog = lazy(() => import("./ImageLayoutDialog"));
+const TextBoxDialog = lazy(() => import("./TextBoxDialog"));
 const ParagraphDialog = lazy(() => import("./ParagraphDialog"));
 const StylesDialog = lazy(() => import("./StylesDialog"));
 const TablePropertiesDialog = lazy(() => import("./TablePropertiesDialog"));
@@ -490,15 +495,16 @@ class ImageNodeView {
       && paginationKey.getState(this.view.state)?.breaks.some(point => point.pos === blockPos);
     const page = imagePageContext(this.view, pos);
     const visualRect = imageVisualElement(this.dom).getBoundingClientRect();
-    const hostRect = host.getBoundingClientRect();
     const scale = this.view.dom.getBoundingClientRect().width / Number.parseFloat(getComputedStyle(this.view.dom).width) || 1;
-    const pageLeft = (visualRect.left - hostRect.left) / scale - page.x;
-    const pageTop = (visualRect.top - hostRect.top) / scale - page.y;
+    const sourcePage = imagePageAtPoint(this.view, visualRect.left + visualRect.width / 2, visualRect.top + visualRect.height / 2);
+    const shell = this.view.dom.closest<HTMLElement>(".editor-shell");
     const width = page.imageWidth, height = page.imageHeight;
     const grabX = (event.clientX - visualRect.left) / scale;
     const grabY = (event.clientY - visualRect.top) / scale;
     let clientX = event.clientX, clientY = event.clientY;
     let x = page.x, y = page.y;
+    let target: ReturnType<typeof imagePageAtPoint> = null;
+    let scrollFrame = 0;
     let preview: HTMLElement | null = null;
     let moved = false;
     let finished = false;
@@ -513,21 +519,59 @@ class ImageNodeView {
       window.removeEventListener("keydown", key, true);
       window.removeEventListener("scroll", scroll, true);
       window.removeEventListener("blur", cancel);
+      cancelAnimationFrame(scrollFrame);
       preview?.remove();
       this.dom.classList.remove("pm-image-dragging");
       document.documentElement.classList.remove("pm-image-drag-active");
       this.cancelDrag = undefined;
       this.dragDocument = undefined;
     };
+    const preservedBoundaries = (destination: NonNullable<ReturnType<typeof imagePageAtPoint>>): number[] | null => {
+      const boundaries: number[] = [];
+      if (!sourcePage) return null;
+      if (this.node.attrs.position === "page" || destination.index <= sourcePage.index) return boundaries;
+      const breaks = paginationKey.getState(this.view.state)?.breaks || [];
+      for (let i = sourcePage.index; i < destination.index; i++) {
+        const point = breaks[i];
+        if (!point) return null;
+        const resolved = originalDoc.resolve(point.pos), next = originalDoc.nodeAt(point.pos);
+        if (resolved.depth !== 0 || !next || !["paragraph", "heading"].includes(next.type.name)) return null;
+        const previous = resolved.index(0) ? originalDoc.child(resolved.index(0) - 1) : null;
+        if (previous?.type.name !== "page_break") boundaries.push(point.pos);
+      }
+      return boundaries;
+    };
     const paint = () => {
       if (!valid()) { cleanup(); return; }
-      const rect = host.getBoundingClientRect();
-      x = Math.max(0, Math.min(Math.max(0, page.width - width), (clientX - rect.left) / scale - pageLeft - grabX));
-      y = Math.max(0, Math.min(Math.max(0, page.height - height), (clientY - rect.top) / scale - pageTop - grabY));
-      if (preview) {
-        preview.style.left = `${rect.left + (pageLeft + x) * scale}px`;
-        preview.style.top = `${rect.top + (pageTop + y) * scale}px`;
+      target = imagePageAtPoint(this.view, clientX, clientY);
+      if (!preview) return;
+      if (!target) {
+        preview.style.opacity = "0.4";
+        preview.style.left = `${clientX - grabX * scale}px`;
+        preview.style.top = `${clientY - grabY * scale}px`;
+        return;
       }
+      const targetWidth = fixedImageWidth({ ...this.node.attrs, width: `${width}px` }, target.page.geometry);
+      const targetHeight = height * targetWidth / width;
+      x = Math.max(0, Math.min(Math.max(0, target.width - targetWidth), (clientX - target.rect.left) / target.scale - target.left - grabX));
+      y = Math.max(0, Math.min(Math.max(0, target.height - targetHeight), (clientY - target.rect.top) / target.scale - target.page.top - grabY));
+      const allowed = preservedBoundaries(target) !== null;
+      preview.style.opacity = allowed ? "1" : "0.4";
+      preview.style.outline = allowed ? "" : "2px solid #dc2626";
+      preview.style.width = `${targetWidth * target.scale}px`;
+      preview.style.height = `${targetHeight * target.scale}px`;
+      preview.style.left = `${target.rect.left + (target.left + x) * target.scale}px`;
+      preview.style.top = `${target.rect.top + (target.page.top + y) * target.scale}px`;
+    };
+    const autoScroll = () => {
+      if (finished || !moved) return;
+      if (shell) {
+        const rect = shell.getBoundingClientRect(), edge = 70;
+        const speed = clientY < rect.top + edge ? -Math.min(22, (rect.top + edge - clientY) * 0.35)
+          : clientY > rect.bottom - edge ? Math.min(22, (clientY - rect.bottom + edge) * 0.35) : 0;
+        if (speed) { shell.scrollTop += speed; paint(); }
+      }
+      scrollFrame = requestAnimationFrame(autoScroll);
     };
     const move = (pointer: PointerEvent) => {
       if (pointer.pointerId !== event.pointerId) return;
@@ -543,6 +587,7 @@ class ImageNodeView {
         document.body.appendChild(preview);
         this.dom.classList.add("pm-image-dragging");
         document.documentElement.classList.add("pm-image-drag-active");
+        scrollFrame = requestAnimationFrame(autoScroll);
       }
       if (moved) { pointer.preventDefault(); paint(); }
     };
@@ -561,20 +606,37 @@ class ImageNodeView {
         window.addEventListener("click", blockClick, true);
         setTimeout(() => window.removeEventListener("click", blockClick, true), 0);
         const currentPos = this.getPos();
-        if (currentPos !== undefined) {
-          const attrs = { ...this.node.attrs, position: "page", x, y, align: "", width: `${width}px`,
-            aspectRatio: this.node.attrs.aspectRatio || width / Math.max(1, height) };
-          cleanup();
-          const tr = closeHistory(this.view.state.tr).setNodeMarkup(currentPos, undefined, attrs);
-          if (keepAnchorPage) {
-            const anchorBlock = tr.doc.nodeAt(blockPos)!;
-            tr.setNodeMarkup(blockPos, undefined, { ...anchorBlock.attrs,
-              paragraphFormat: { ...anchorBlock.attrs.paragraphFormat, pageBreakBefore: true } });
+        const destination = target;
+        if (currentPos !== undefined && destination && sourcePage) {
+          const samePage = destination.index === sourcePage.index;
+          const anchor = samePage ? currentPos : imageAnchorOnPage(this.view, destination.page, clientY);
+          // Preserve representable natural boundaries before removing flow height.
+          // A boundary inside a paragraph or table cannot be represented safely.
+          const boundaries = preservedBoundaries(destination);
+          if (anchor !== null && boundaries !== null) {
+            const attrs = { ...this.node.attrs, position: "page", x, y, align: "", width: `${width}px`,
+              aspectRatio: this.node.attrs.aspectRatio || width / Math.max(1, height) };
+            cleanup();
+            const tr = closeHistory(this.view.state.tr);
+            if (keepAnchorPage) boundaries.push(blockPos);
+            for (const boundary of new Set(boundaries)) {
+              const anchorBlock = tr.doc.nodeAt(boundary)!;
+              tr.setNodeMarkup(boundary, undefined, { ...anchorBlock.attrs,
+                paragraphFormat: { ...anchorBlock.attrs.paragraphFormat, pageBreakBefore: true } });
+            }
+            let selectedPos = currentPos;
+            if (samePage) tr.setNodeMarkup(currentPos, undefined, attrs);
+            else {
+              const image = this.node.type.create(attrs, this.node.content, this.node.marks);
+              tr.delete(currentPos, currentPos + this.node.nodeSize);
+              selectedPos = tr.mapping.map(anchor, anchor <= currentPos ? -1 : 1);
+              tr.insert(selectedPos, image);
+            }
+            tr.setSelection(NodeSelection.create(tr.doc, selectedPos));
+            this.view.dispatch(tr);
+            this.view.focus();
+            return;
           }
-          tr.setSelection(NodeSelection.create(tr.doc, currentPos));
-          this.view.dispatch(tr);
-          this.view.focus();
-          return;
         }
       }
       cleanup();
@@ -663,6 +725,7 @@ class ImageNodeView {
         visual.style.left = `${initialLeft + previewPosition.x - pageContext.x}px`;
         visual.style.top = `${initialTop + previewPosition.y - pageContext.y}px`;
       }
+      syncImageSelectionFrame(this.dom);
       this.img.setAttribute("data-width", `${nextWidth}px`);
     };
 
@@ -1199,6 +1262,7 @@ export default function Editor({
   });
   const [slashMenu, setSlashMenu] = useState<SlashMenuState | null>(null);
   const [imageLayoutOpen, setImageLayoutOpen] = useState(false);
+  const [textBoxDialogOpen, setTextBoxDialogOpen] = useState(false);
   const [imageLayersState, setImageLayersState] = useState<EditorState | null>(null);
   const imageLayersOpenRef = useRef(false);
   const [imagePopover, setImagePopover] = useState<ImagePopoverState | null>(null);
@@ -2180,6 +2244,10 @@ export default function Editor({
   // ── Stable handlers for the memoized MenuBar ───────────────────────────────
   // Every prop MenuBar receives must keep its identity across keystrokes, or
   // React.memo can't skip its ~700-line render. Former inline arrows live here.
+  const handleInsertTextBox = useCallback(() => {
+    const view = viewRef.current;
+    if (view && insertTextBox(view) !== null) setTextBoxDialogOpen(true);
+  }, []);
   const showHome = useCallback(() => openHome(), [openHome]);
   const showShortcuts = useCallback(() => setShortcutsOpen(true), []);
   const showAbout = useCallback(() => setAboutOpen(true), []);
@@ -2251,6 +2319,7 @@ export default function Editor({
       nodeViews: {
         table: (node, v, getPos) => new TableNodeView(node, v, getPos as () => number | undefined, uiText(tRef.current, "Drag to move table")),
         image: (node, v, getPos) => new ImageNodeView(node, v, getPos as () => number | undefined),
+        text_box: (node, v, getPos) => createTextBoxNodeView(node, v, getPos, { onEdit: () => setTextBoxDialogOpen(true) }),
       },
       handleClickOn(view, _pos, node, nodePos, event, direct) {
         if (!direct || node.type !== mySchema.nodes.image) return false;
@@ -3233,6 +3302,7 @@ export default function Editor({
         onLinkAdd={handleLinkAdd}
         onImageAdd={handleImageAdd}
         onImageUrlAdd={handleImageUrlAdd}
+        onInsertTextBox={handleInsertTextBox}
         onInsertDivider={handleInsertDivider}
         onInsertSymbol={handleInsertText}
         onInsertDate={handleInsertDate}
@@ -3938,6 +4008,7 @@ export default function Editor({
         updateDocumentLayout(layout => ({ ...layout, running: { ...layout.running, ...slots } }));
       }} /></Suspense>}
       {marginsOpen && viewRef.current && <Suspense fallback={null}><PageMarginsDialog view={viewRef.current} onClose={()=>setMarginsOpen(false)}/></Suspense>}
+      {textBoxDialogOpen && viewRef.current && <Suspense fallback={null}><TextBoxDialog view={viewRef.current} onClose={() => setTextBoxDialogOpen(false)} /></Suspense>}
       {imageLayoutOpen && viewRef.current && <Suspense fallback={null}><ImageLayoutDialog view={viewRef.current} onClose={()=>setImageLayoutOpen(false)}/></Suspense>}
       {paragraphOpen && viewRef.current && <Suspense fallback={null}><ParagraphDialog view={viewRef.current} onClose={()=>setParagraphOpen(false)}/></Suspense>}
       {stylesOpen && viewRef.current && <Suspense fallback={null}><StylesDialog view={viewRef.current} onClose={()=>setStylesOpen(false)}/></Suspense>}

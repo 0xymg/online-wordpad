@@ -683,13 +683,24 @@ body {
 }
 
 .pm-page .ProseMirror .pm-image-wrapper:not([data-position="page"]).is-selected,
-.pm-page .ProseMirror .pm-image-wrapper[data-position="page"].is-selected > .pm-image-frame {
+.pm-page .ProseMirror .pm-image-wrapper[data-position="page"]:not([data-text-plane="behind"]).is-selected > .pm-image-frame {
   outline: 2px solid #3b82f6;
   outline-offset: 2px;
 }
 
 .pm-image-frame { position: relative; display: block; }
 .pm-image-wrapper[data-position="page"] { overflow: visible; }
+.pm-image-selection-frame {
+  position: absolute;
+  display: none;
+  pointer-events: none;
+  outline: 2px solid #3b82f6;
+  outline-offset: 2px;
+  /* Scoped to the isolated paper stack, above its bounded image layer bands. */
+  z-index: 1000002;
+}
+.pm-image-wrapper.is-selected > .pm-image-selection-frame { display: block; }
+.pm-image-selection-frame .pm-image-handle { pointer-events: auto; }
 .pm-image-frame > img { cursor: grab; touch-action: none; user-select: none; -webkit-user-drag: none; }
 .pm-image-dragging > .pm-image-frame { opacity: 0.3; }
 .pm-image-drag-preview { outline: 2px solid #3b82f6; outline-offset: 2px; }
@@ -1061,6 +1072,16 @@ kbd.hero-kbd {
 .pm-section-number { position: absolute; }
 .pm-page-mixed > .ProseMirror { position: relative; }
 .dark .pm-section-sheet { background: #262626; }
+/* Paint mixed-size paper below behind-text artwork, while keeping page numbers
+   in the normal document plane rather than trapping them behind the image. */
+.pm-page .pm-section-sheet { background: transparent; }
+.pm-section-sheet::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: var(--sheet-bg, #fff);
+  z-index: -1000002;
+}
 @media print {
   .pm-sheet-backgrounds { display: none !important; }
   .pm-section-block { left: 0 !important; width: auto !important; max-width: none !important; }

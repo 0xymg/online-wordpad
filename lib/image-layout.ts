@@ -24,8 +24,11 @@ export function imageLayer(value: unknown): number {
   const n = Number(value);
   return Number.isFinite(n) ? Math.max(0, Math.min(1000000, Math.floor(n))) : 0;
 }
+export function imageTextPlane(value: unknown): "front" | "behind" {
+  return value === "behind" ? "behind" : "front";
+}
 export function imageVisualElement(wrapper: HTMLElement): HTMLElement {
-  return wrapper.dataset.position === "page" ? wrapper.querySelector<HTMLElement>(".pm-image-frame") || wrapper : wrapper;
+  return wrapper.dataset.position === "page" ? wrapper.querySelector<HTMLElement>(".pm-image-frame, .pm-textbox-frame") || wrapper : wrapper;
 }
 export function imageLayoutStyle(attrs: Record<string, unknown>): string {
   if (imagePosition(attrs.position) === "page") return "position:relative;display:inline-block;width:0;height:0;max-width:none;float:none;clear:none;margin:0;vertical-align:baseline;line-height:0;";
@@ -39,7 +42,35 @@ export function imageLayoutStyle(attrs: Record<string, unknown>): string {
   return `${base}display:block;float:none;clear:both;margin:${gap}px ${align === "right" ? "0" : "auto"} ${gap}px ${align === "right" || align === "center" ? "auto" : "0"};`;
 }
 export function imageDataAttrs(attrs: Record<string, unknown>): Record<string, string> {
-  return { "data-wrap": imageWrap(attrs.wrap), "data-distance": String(imageDistance(attrs.distance)), "data-position": imagePosition(attrs.position), "data-x": String(imageCoordinate(attrs.x)), "data-y": String(imageCoordinate(attrs.y)), "data-layer": String(imageLayer(attrs.layer)) };
+  return { "data-wrap": imageWrap(attrs.wrap), "data-distance": String(imageDistance(attrs.distance)), "data-position": imagePosition(attrs.position), "data-x": String(imageCoordinate(attrs.x)), "data-y": String(imageCoordinate(attrs.y)), "data-layer": String(imageLayer(attrs.layer)), "data-text-plane": imageTextPlane(attrs.textPlane) };
+}
+
+/** Live-only selection chrome stays above text without lifting behind-text artwork. */
+export function syncImageSelectionFrame(wrapper: HTMLElement) {
+  const frame = wrapper.querySelector<HTMLElement>(".pm-image-frame");
+  if (!frame) return;
+  let selection = wrapper.querySelector<HTMLElement>(".pm-image-selection-frame");
+  const behind = wrapper.dataset.position === "page" && wrapper.dataset.textPlane === "behind";
+  if (!behind) {
+    if (selection) { selection.querySelectorAll(".pm-image-handle").forEach(handle => frame.appendChild(handle)); selection.remove(); }
+    return;
+  }
+  const handles = wrapper.querySelectorAll(".pm-image-handle");
+  // Read-only/export renderers have no editor handles or selection chrome.
+  if (!handles.length) return;
+  if (!selection) {
+    selection = document.createElement("span");
+    selection.className = "pm-image-selection-frame";
+    selection.setAttribute("contenteditable", "false");
+    wrapper.appendChild(selection);
+  }
+  handles.forEach(handle => { if (handle.parentElement !== selection) selection!.appendChild(handle); });
+  const root = wrapper.closest<HTMLElement>(".ProseMirror");
+  const scale = root ? root.getBoundingClientRect().width / Number.parseFloat(getComputedStyle(root).width) || 1 : 1;
+  selection.style.left = frame.style.left;
+  selection.style.top = frame.style.top;
+  selection.style.width = frame.style.width;
+  selection.style.height = `${frame.getBoundingClientRect().height / scale}px`;
 }
 
 export function applyImageLayout(wrapper: HTMLElement, img: HTMLImageElement, attrs: Record<string, unknown>) {
@@ -51,8 +82,10 @@ export function applyImageLayout(wrapper: HTMLElement, img: HTMLImageElement, at
   const frame = wrapper.querySelector<HTMLElement>(".pm-image-frame");
   if (frame) {
     const fixed = imagePosition(attrs.position) === "page";
+    const behind = fixed && imageTextPlane(attrs.textPlane) === "behind";
+    const z = behind ? imageLayer(attrs.layer) - 1000001 : imageLayer(attrs.layer) + 1;
     frame.style.cssText = fixed
-      ? `position:absolute;display:block;width:${imageWidth(attrs.width)};max-width:none;left:0;top:0;line-height:0;z-index:${imageLayer(attrs.layer) + 1}`
+      ? `position:absolute;display:block;width:${imageWidth(attrs.width)};max-width:none;left:0;top:0;line-height:0;z-index:${z};${behind ? "pointer-events:none;" : ""}`
       : `position:relative;display:block;width:100%;line-height:0;z-index:${imageLayer(attrs.layer) + 1}`;
   }
   img.style.width = "100%";
@@ -61,4 +94,5 @@ export function applyImageLayout(wrapper: HTMLElement, img: HTMLImageElement, at
   img.style.margin = "0";
   img.style.float = "none";
   img.style.clear = "none";
+  syncImageSelectionFrame(wrapper);
 }

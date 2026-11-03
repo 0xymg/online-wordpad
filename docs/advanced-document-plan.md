@@ -1,0 +1,135 @@
+# Bölümler, referanslar ve ileri Word uyumluluğu — onaylı geliştirme planı
+
+**Durum: ONAYLANDI — 2 Kasım 2026. Kullanıcı kapsamı ve sırayı açıkça onayladı.**
+
+Kullanıcının istediği üç başlığı kapsar. Mevcut görsel yerleşimi planının kalan işleri ayrı olarak sürer. Bu plandaki geliştirme, mevcut görsel/metin kutusu paketinin kapanışından sonra Sol/Terra alt ajanlarıyla başlatılır. İlk kapsam: eşit sütunlar, APA 7 + IEEE ve destek matrisiyle Word karşılaştırması. Kullanıcı referans uygulama olarak **Word Online** seçti.
+
+## Hedef
+
+Uzun ve karmaşık belgeleri bölüm bazında düzenlemek, referansları belge değiştikçe güncellemek ve desteklenen DOCX özelliklerini Word ile ölçülebilir biçimde uyumlu hale getirmek. "Her DOCX dosyası her Word sürümünde birebir görünür" gibi doğrulanamayacak bir söz yerine, açık bir destek matrisi ve Word referans çıktılarıyla kanıtlanan uyumluluk hedeflenir.
+
+## Kodda görülen başlangıç durumu
+
+- `lib/document-sections.ts` içe alınmış bölüm özelliklerinden sayfa geometrisi çıkarıyor; `lib/document-layout.ts` bölüm kenar boşlukları ve üst/altbilgi verilerini tutuyor. Genel amaçlı bölüm oluşturma/silme arayüzü ve düzenlenebilir sütun modeli henüz yok.
+- Sayfalama ve PDF/yazdırma aynı ölçülmüş görünümü kullanıyor. Yeni sütun/dipnot yerleşimi bununla birleştirilmeli; ikinci, bağımsız bir PDF yerleşim motoru eklenmemeli.
+- DOCX biçimlendirme akışı dipnot/sonnot parçalarını da okuyabiliyor. Bu, kararlı kimlikli düzenleme modeli, sayfa altında dipnot yerleşimi veya tam gidiş-dönüş desteğinin hazır olduğu anlamına gelmiyor.
+- Menüde içindekiler ekleme ve belge alanı altyapısı mevcut; otomatik, sayfa numaralı, düzenleme sonrası kendini güncelleyen referans sistemi ayrı bir çalışma gerektiriyor.
+- Paragrafın ham DOCX özelliklerinin korunması ile sekme duraklarının editörde gerçekten uygulanması ayrı yetenekler. İkisi bağımsız test edilecek.
+
+## Önerilen sıra ve çıkış kapıları
+
+| Paket | İçerik | Ön koşul | Tamamlandı sayılması için |
+| --- | --- | --- | --- |
+| A0 | Uyumluluk örnekleri, Word referans profili ve veri sözleşmeleri | Plan onayı | Destek matrisi, referans belgeler ve ölçüm raporu |
+| A1 | Bölüm modeli ve bölüm düzenleyicisi | A0 | Bölüm ekleme/silme, yön/boyut/marjin kapsamı, güvenli DOCX döngüsü |
+| A2 | Sekme durakları | A1 | Gerçek tab karakteri, hizalar/liderler, cetvel/diyalog, çıktı eşleşmesi |
+| A3 | Çok sütunlu bölüm yerleşimi | A1–A2 | Sütunlar arası akış ve sayfalama, kesme, çıktı doğrulaması |
+| A4 | Referans çekirdeği, çapraz referans ve canlı içindekiler | A3 | Kararlı hedef kimlikleri, güncellenen metin/sayfa alanları, tıklanabilir hedefler |
+| A5 | Sonnot ve dipnot düzenleyicisi | A4 | Numaralama/bağlantılar; dipnotlar gerçek sayfa altında, taşma kayıpsız |
+| A6 | Kaynak yönetimi ve kaynakça | A4; A5 ile ayrı dosyalarda ilerleyebilir | Yapısal kaynak verisi, atıf biçimlendirme, deterministik güncelleme |
+| A7 | Karmaşık DOCX uyumluluk paketi | A1–A6 | Onaylı örnek setinde semantik ve görsel eşleşme raporu |
+
+Sekme durakları, içindekilerin sağa hizalı sayfa numaraları ve noktalı liderleri için öne alındı. Sütunlar ve sayfalama kararlı hale gelmeden sayfa numaralı referansların tamamlandığı kabul edilmeyecek. Sonnot modeli, sayfa altında alan ayıran dipnot yerleşiminden önce doğrulanacak.
+
+## A0 — Temel sözleşmeler ve referans seti
+
+- Bölüm, başlık/hedef, not ve kaynak nesneleri için kararlı kimlikler; metin ekleme/silme ve kopyala/yapıştırda kimlik çakışması kuralları.
+- Eski kaydedilmiş belgeleri açabilmek için sürümlü veri dönüşümü. Bilinmeyen DOCX özelliğini koruma, düzenleme ve render etme ayrı destek seviyeleri olarak kaydedilir.
+- Başlangıç test seti: basit bölüm, karma yön/boyut, bağlı/bağımsız üstbilgi, sütun, tablo+sütun, sekme+liders, dipnot, sonnot, çapraz referans, TOC ve karma belge. Kullanıcı belgesi kullanılacaksa bir kopya üzerinden çalışılır.
+- Word referans profili: **Word Online** (kullanıcının seçimi). Web sürümü zamanla değiştiği için karşılaştırma tarihi, tarayıcı/sürümü, kağıt ayarı ve kullanılan fontlar kaydedilir. Gerçek Word tarafından üretilmiş PDF referansları alınmadan "Word ile görsel eşleşti" sonucu yazılmaz.
+- Önerilen ölçüm kapısı: içerik ve bağlantılarda sıfır kayıp/çoğalma; onaylı örneklerde sayfa sayısı aynı; başlık/alan/sayfa eşleşmesi doğru; aynı fontlarla seçili nesne ve metin başlangıçlarında 1 CSS px hedefi. İlk ölçüm raporunda bu eşiklerin gerçekçi olup olmadığı doğrulanır; başarısız örnek gizlenmez.
+
+## A1 — Bölüm düzenleyicisi
+
+İlk kapsam:
+
+- İmleçte bölüm sonu: sonraki sayfa ve sürekli bölüm. Tek/çift sayfa başlangıcı ayrı alt paket; gereken boş sayfa davranışı tanımlanır.
+- Geçerli bölümün görünür adı/numarası ve sınır işaretleri; sınır işaretleri baskıya girmez.
+- Bölüme veya bütün belgeye yön, A4/Letter/Legal/özel boyut ve kenar boşluğu uygulama.
+- Bölümü kaldırırken önceki/sonraki bölümün biçiminin hangi tarafa taşınacağı kullanıcıya açık olmalı; tek işlemle geri alınmalı.
+- Bölüm ekleme/silme üst/altbilgi bağlantılarını, sayfa numarası başlangıcını ve bağlı görsel/metin kutularını yanlış bölüme taşımamalı. Mevcut indeks bazlı alanlar kararlı bölüm kimlikleriyle eşlenmeli.
+
+Kabul: başa/ortaya/sona bölüm ekleme ve silme; portrait→landscape→portrait; yalnız bir bölümü değiştirme; üstbilgi bağlantısı; undo/redo; kaydet/aç; DOCX aç-kaydet-aç ve PDF/print sayfa geometrisi.
+
+## A2 — Sekme durakları
+
+- Paragraf/stil bazında sol, orta, sağ ve ondalık sekme; varsayılan sekme aralığı; noktalı/çizgili liderler ve temizleme.
+- Cetvelde ekleme/taşıma/silme ve aynı veriyi kullanan sayısal diyalog.
+- Tab karakteri boşluklara dönüştürülmez. Tablo hücresinde Tab ile hücre gezinme korunur; gerçek sekme için ayrı kısayol sunulur.
+- Ondalık ayraç ve RTL/LTR davranışı açıkça tanımlanır; satır taşması sütun genişliğini kullanır.
+
+Kabul: aynı durak için cetvel/diyalog eşleşmesi, orantılı fontlar, dar sütun, RTL, farklı ondalık ayraçlar, boş liderler, DOCX sekme özellikleri ve Word referans çıktısı.
+
+## A3 — Çok sütunlu metin
+
+- İlk sürümde bölüm bazında 1/2/3 eşit sütun, aralık, ayırıcı çizgi ve sütun sonu.
+- Son sütunun dengelenmesi, sürekli bölüm geçişi ve sayfa sonu politikası önceden belirlenir.
+- Seçim, imleç hareketi, kopyalama ve erişilebilir okuma sırası belge sırasını korur. Sadece CSS `columns` eklemek kabul sayılmaz; ProseMirror koordinatları ve sayfalama birlikte doğrulanır.
+- Tablo, görsel, metin kutusu ve dipnot yerleşiminin sütun sınırıyla ilişkisi test edilir. Sütunları aşan nesneler için destek sınırı açıkça gösterilir; sessizce kırpılmaz.
+- Eşit olmayan özel sütun genişlikleri ancak eşit sütun paketi kararlı olduktan sonra eklenir.
+
+## A4 — Referans çekirdeği ve içindekiler
+
+- Başlık, yer imi, şekil/tablo açıklaması gibi hedeflere kararlı kimlik; görünür etiket ile hedef kimliği ayrı tutulur.
+- Çapraz referans ekle/düzenle: hedef metni, numarası veya sayfası. Silinen hedef açık bir "hedef bulunamadı" durumu üretir; yanlış başka hedefe bağlanmaz.
+- TOC başlık seviyelerini seçer, bağlantı ve sağa hizalı sayfa numarası üretir. Kullanıcı tarafından yazılan metin parçası gibi sessizce bayatlamaz.
+- Düzenleme sonrasında kontrollü yeniden hesaplama; dışa aktarma/yazdırma öncesinde tüm alanların güncellenmesi. Sayfa numarası değişimi yeniden satır kırılmasına yol açarsa sınırlı sabit noktaya ulaşma döngüsü ve kararlı sonuç testi.
+- DOCX alan talimatları, önbellek sonuçları ve bookmark hedefleri birlikte korunur. Word'ün alan güncelleme davranışı ile editörün otomatik güncellemesi ayrı olarak test edilir.
+
+Kabul: başlık ekle/yeniden adlandır/taşı/sil; sayfa eklenmesi; TOC birden fazla sayfaya taşması; 9→10 ve 99→100 sayfa numarası geçişi; kırık hedef; undo/redo; bağlantı ve numaraların PDF/DOCX eşleşmesi.
+
+## A5 — Sonnot ve dipnot
+
+- Ortak not modeli; belge/bölüm bazında otomatik numaralama, ekleme, düzenleme, silme ve metindeki işarete geri dönme.
+- İlk alt paket sonnot: belge sonunda/bölüm sonunda toplanma; ardından dipnot: ilgili sayfanın altında gerçek alan ayırma.
+- Not işareti ile not gövdesi birlikte taşınır/silinir/geri alınır; kopyalama yeni kimlik oluşturur.
+- Uzun dipnotun devam sayfası, ayırıcı çizgi, referans satırının tek başına kalmaması ve sütunlu sayfada not alanı politikası tanımlanır.
+- Dipnot yüksekliği sayfalamayı etkiler; not işaretinin başka sayfaya taşınması kararlı bir yerleşim çözümü gerektirir.
+
+Kabul: aynı sayfada çok not, uzun not devamı, bölüm numaralama yeniden başlangıcı, dipnot/sonnot dönüşümü, silme/undo, karışık sütunlar, DOCX paket ilişkilerinin ve PDF okuma sırasının korunması.
+
+## A6 — Kaynakça
+
+- Yapısal kaynak havuzu: kitap, makale, web kaynağı; yazar, başlık, tarih, yayın/URL/DOI gibi alanlar; eksik alanları kullanıcıya gösterme.
+- Metin içi atıf ve kaynakça aynı kaynağa bağlanır; kaynak düzenlenince ikisi güncellenir.
+- Önerilen ilk stiller: APA 7 ve IEEE. Başka stiller veri modeli değil biçimlendirme katmanı üzerinden eklenir.
+- Stil biçimlendirme motoru/lisansı araştırılıp belgelenir; el yazımı birkaç şablon tam stil desteği diye sunulmaz.
+- Kaynakları internetten otomatik bulma/DOI arama ilk pakette yok; kullanıcı tarafından girilen bilgi üzerinde çalışılır. Kaynak uydurulmaz.
+
+Kabul: aynı yazarlı/aynı yıllı kaynaklar, çok yazarlı ve kurumsal yazar, Unicode/RTL, eksik tarih, birden fazla atıf, kullanılmayan kaynak politikası, sıralama ve DOCX aktarımındaki düzenlenebilirlik sınırları.
+
+## A7 — İleri uyumluluk ve sınırlar
+
+Uyumluluk üç ayrı sonuç olarak raporlanır:
+
+1. **İçerik/model:** metin, not, hedef, kaynak, bölüm ve ilişkiler kayıpsız mı?
+2. **Düzenlenebilirlik:** Word nesnesi editörde ve geri aktarılan Word'de aynı işlevle düzenlenebilir mi?
+3. **Görünüm:** onaylı font/Word profilinde sayfalar ve nesne koordinatları referansla eşleşiyor mu?
+
+Alt paketler, örnek setindeki gerçek hatalara göre sıralanır: font ölçüleri/fallback, paragraf satır kırımı ve keep/widow kuralları, tablolar/satır devamı, yüzen nesne bağlantıları, bölüm/sütunlar, dipnotlar ve alanlar. Her düzeltme bir regresyon örneği ekler.
+
+Tarayıcı ve Word'ün metin biçimleme/yerleşim farkları nedeniyle tüm karmaşık belgeler için koşulsuz birebirlik garanti edilmez. Desteklenmeyen/yalnız korunan özellikler kullanıcıya açıkça bildirilir. Makrolar, ActiveX, OLE, change tracking ve denklem motoru bu planın ilk kapsamına dahil değildir; dosya açarken bunlar çalıştırılmaz.
+
+## Onay sonrası Sol/Terra iş paylaşımı
+
+- **Sol:** belge modeli, komutlar, editör panelleri, not/alan/kaynak kimlikleri ve kullanıcı akışları.
+- **Terra:** sayfalama/geometri, sütun ve dipnot alanı, DOCX okuma/yazma, Word/PDF karşılaştırma ve regresyon testleri.
+- **Ana ajan:** arayüz/veri sözleşmelerini sabitler, dosya sahipliğini ayırır, entegrasyon ve yayın kabulünü yapar. Aynı paylaşılan dosya iki ajan tarafından kontrolsüz değiştirilmez.
+- Bağımlılığı olmayan işler paralel yürür; her paket küçük, ayrı doğrulanan sürümler halinde yayımlanır. Belirtilen kabul testleri geçmeden paket tamamlandı olarak işaretlenmez.
+- İlerleme dosyada "tasarım / uygulama / yerel doğrulama / canlı doğrulama" durumlarıyla tutulur. Süre tahmini A0 örnek ve ölçüm raporundan sonra verilir.
+
+## Onaylanan kararlar
+
+1. Sıra: A0 → A1 → A2 → A3 → A4 → A5/A6 → A7.
+2. İlk kapsam: eşit sütunlar; sonnot ardından dipnot; APA 7 + IEEE; destek matrisiyle ölçülen Word uyumluluğu.
+3. Önce mevcut görsel/metin kutusu işi kapanır; bu planın uygulaması ardından başlar.
+
+Kullanıcı 2 Kasım 2026 tarihinde bu kapsamı ve sırayı onayladı. Mevcut görsel/metin kutusu paketinin kapanışı bekleniyor.
+
+## Kaynak notları
+
+Yerel kod incelemesi yukarıda belirtilen mevcut yeteneklerin temelidir. Word dosyasında notların ayrı parçalarda tutulması ve alanların güncelleme davranışı için birincil kaynaklar:
+
+- [Microsoft — WordprocessingML belge yapısı](https://learn.microsoft.com/en-us/office/open-xml/word/structure-of-a-wordprocessingml-document): ana belge ve dipnot/sonnot gibi paket parçaları.
+- [Microsoft — Alanları güncelleme](https://support.microsoft.com/en-us/word/update-fields): Word içinde alan güncelleme işlemleri.
+- [Microsoft — İçindekileri güncelleme](https://support.microsoft.com/en-us/word/update-a-table-of-contents): sayfa numaraları ile başlık/metin değişikliklerinin güncellenmesi.

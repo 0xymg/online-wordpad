@@ -1,0 +1,19 @@
+.pm-textbox-wrapper { user-select: none; }
+.pm-textbox-frame { cursor: default; text-align: start; }
+.pm-textbox-wrapper[data-text-plane="behind"] .pm-textbox-frame { pointer-events: none; }
+.pm-textbox-controls { position: absolute; display: none; box-sizing: border-box; pointer-events: none; z-index: 1000002; line-height: normal; outline: 2px solid #3b82f6; }
+.pm-textbox-wrapper.is-selected .pm-textbox-controls { display: block; }
+.pm-textbox-controls button { pointer-events: auto; font: 11px/1.4 Arial,sans-serif; border: 1px solid #3b82f6; background: white; color: #172554; border-radius: 3px; position: absolute; }
+.pm-textbox-controls button:focus-visible { outline: 2px solid #172554; outline-offset: 2px; }
+.pm-textbox-actions { display: flex; gap: 4px; position: absolute; top: -25px; left: 0; }
+.pm-textbox-actions button { position: static; white-space: nowrap; }
+.pm-textbox-move { padding: 2px 6px; cursor: move; }
+.pm-textbox-edit { padding: 2px 6px; cursor: pointer; }
+.pm-textbox-controls .pm-textbox-handle { width: 10px; height: 10px; padding: 0; border-radius: 1px; }
+.pm-textbox-handle-tl { left: -5px; top: -5px; cursor: nwse-resize; }
+.pm-textbox-handle-tr { right: -5px; top: -5px; cursor: nesw-resize; }
+.pm-textbox-handle-bl { left: -5px; bottom: -5px; cursor: nesw-resize; }
+.pm-textbox-handle-br { right: -5px; bottom: -5px; cursor: nwse-resize; }
+.pm-textbox-warning { position: absolute; z-index: 1000002; width: 240px; display: none; pointer-events: none; font: 11px/1.3 Arial,sans-serif; color: #b45309; background: #fffbeb; border: 1px solid #f59e0b; padding: 4px; }
+.pm-textbox-wrapper.has-page-overflow .pm-textbox-warning { display: block; }
+@media print { .pm-textbox-ui { display: none !important; } }
