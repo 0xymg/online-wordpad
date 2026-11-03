@@ -1,3 +1,4 @@
+import { resolveNativeKerningHTML } from "./native-kerning";
 import type { DocumentStyles } from "./paragraph-format";
 import type { DocumentModel, DocumentModelV1 } from "./document-model";
 import type { DecimalSeparator } from "./tab-stops";
@@ -34,6 +35,7 @@ export function wrapDocumentHtml(html: string, layout: DocumentLayout | null, mo
   if (layout) wrapper.setAttribute(LAYOUT_ATTRIBUTE, JSON.stringify(layout));
   if (model) wrapper.setAttribute("data-edtr-model", JSON.stringify(model));
   wrapper.innerHTML = html;
+  resolveNativeKerningHTML(wrapper);
   // The atom's inner sup is an authored default. Native owners have their real
   // run marks outside the atom; preserve those in standalone HTML as in views.
   for (const owner of wrapper.querySelectorAll<HTMLElement>("[data-edtr-note-reference]")) {

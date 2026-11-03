@@ -41,6 +41,7 @@ export async function exportDocumentStyles(blob: Blob,doc: PMNode): Promise<Blob
     for(const [key,tag] of [["bold","b"],["italic","i"]]as const)if(text[key]!==undefined)r.appendChild(make(tag,text[key]?"1":"0"));
     if(text.color)r.appendChild(make("color",text.color.replace(/^#/,"")));
     if(text.size){r.appendChild(make("sz",Math.round(text.size*2)));r.appendChild(make("szCs",Math.round(text.size*2)));}
+    if(text.kerning!==undefined)r.appendChild(make("kern",text.kerning));
     if(text.underline!==undefined)r.appendChild(make("u",text.underline?"single":"none"));
     el.appendChild(r);xml.documentElement.appendChild(el);
   }

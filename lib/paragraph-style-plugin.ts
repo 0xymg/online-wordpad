@@ -26,7 +26,7 @@ export function paragraphStylePlugin(){return new Plugin({appendTransaction(tran
   return tr.setMeta("addToHistory",false);
  }
  const text=parent.attrs.styleText||resolveStyle(documentStyles(state.doc.attrs.layout),parent.attrs.styleId).text,m=state.schema.marks;
- const marks=[m.fontFamily.create({family:text.family}),m.fontSize.create({size:`${text.size}pt`}),m.textColor.create({color:text.color})];
+ const marks=[...(text.kerning!==undefined&&m.nativeKerning?[m.nativeKerning.create({threshold:text.kerning})]:[]),m.fontFamily.create({family:text.family}),m.fontSize.create({size:`${text.size}pt`}),m.textColor.create({color:text.color})];
  if(text.bold)marks.push(m.strong.create());if(text.italic)marks.push(m.em.create());if(text.underline)marks.push(m.underline.create());
  return tr.setStoredMarks(marks).setMeta("addToHistory",false);
 }});}

@@ -2,9 +2,25 @@ import type { EditorView } from 'prosemirror-view';
 import { collectNoteIndex, noteBodyReference, noteSeparators } from './document-notes';
 import { documentSections } from './document-sections';
 import { flushBodyDocumentLayout, paginationKey, setNoteReservations, noteGeometryRevision, invalidateNoteGeometry } from '@/app/components/paginationPlugin';
-import { measureNoteBody, type MeasuredNoteBody } from './note-body-measure';
+import { measureNoteBody, type MeasuredNoteBody, type MeasuredNoteLine } from './note-body-measure';
 import { planPageNotes } from './note-layout';
 import { renderPageNotes } from './note-render';
+import { documentStyles, resolveStyle } from './document-styles';
+import { createNativeNoteSeparator, nativeArialSeparatorProfile } from './note-separator';
+
+function measureNativeRule(view: EditorView, normal: ReturnType<typeof resolveStyle>, firstLine: MeasuredNoteLine, width: number) {
+  const owner = view.dom.ownerDocument, probe = owner.createElement('div');
+  probe.className = 'pm-page pm-note-measure';
+  probe.style.cssText = `position:fixed;left:-100000px;top:0;width:${width}px;visibility:hidden;pointer-events:none;`;
+  const widget = createNativeNoteSeparator(owner, normal), rule = widget.querySelector<HTMLElement>('.pm-endnote-separator-rule')!;
+  const line = owner.createElement('div'); line.className = 'pm-footnote-line';
+  line.style.cssText = `${firstLine.style};position:relative;white-space:pre;`; line.innerHTML = firstLine.html || '<br>';
+  probe.append(widget, line); owner.body.appendChild(probe);
+  try {
+    const widgetBox = widget.getBoundingClientRect(), ruleBox = rule.getBoundingClientRect(), lineBox = line.getBoundingClientRect();
+    return { left: ruleBox.left - widgetBox.left, top: ruleBox.top - lineBox.top, width: ruleBox.width, height: ruleBox.height, color: widget.style.color };
+  } finally { probe.remove(); }
+}
 
 const layers = new WeakMap<EditorView, HTMLElement[]>();
 export type FootnoteTarget = { noteId: string; ownerPos: number; note: { pageIndex: number; x: number; y: number } };
@@ -165,7 +181,13 @@ async function runSimpleFootnoteLayout(view: EditorView): Promise<void> {
         if (prior !== undefined && owner.pageIndex > prior) advance.set(note.pos, Math.max(advance.get(note.pos) || 0, owner.pageIndex));
         previousOwnerPages.set(owner.noteId, owner.pageIndex);
       }
-      const plan = planPageNotes({ pages, owners, separatorHeight: 8, continuationSeparatorHeight: 8, gap: 4, maxContinuationContentHeight: Math.max(...sections.map(section => (section.geometry.height - section.geometry.margins.top - section.geometry.margins.bottom) / 15)),
+      const nativeNormalStyle = resolveStyle(documentStyles(doc.attrs.layout), 'Normal');
+      const nativeRule = sourceSeparators && separatorProfile.separator === 'default' && nativeArialSeparatorProfile(nativeNormalStyle);
+      const separatorHeight = nativeRule ? Math.max(8, ...owners.map(owner => {
+        const line = owner.units[0] as MeasuredNoteLine;
+        return Math.max(0, -line.leading - measureNativeRule(view, nativeNormalStyle, line, pages[owner.pageIndex].width).top);
+      })) : 8;
+      const plan = planPageNotes({ pages, owners, separatorHeight, continuationSeparatorHeight: 8, gap: 4, maxContinuationContentHeight: Math.max(...sections.map(section => (section.geometry.height - section.geometry.margins.top - section.geometry.margins.bottom) / 15)),
         resolveContinuation: (noteId, from, width) => variants.find(item => item.noteId === noteId && item.from === from && Math.abs(item.body.width - width) < 0.01)?.body.lines });
       if (plan.diagnostics.length) throw new Error(plan.diagnostics[0].code);
       if (plan.remeasure.length) {
@@ -245,9 +267,18 @@ async function runSimpleFootnoteLayout(view: EditorView): Promise<void> {
           if (separator !== 'none') {
             const band = view.dom.ownerDocument.createElement('div'); band.className = 'pm-footnote-separator';
             const bounds = pages[page.pageIndex], nativeNormal = sourceSeparators && !continuation;
-            // Word's standard w:separator is a two-inch, half-point rule.
-            // Keep existing continuation geometry until separately measured.
+            // Preserve the historical fallback and continuation geometry for
+            // profiles without measured native separator evidence.
             band.style.cssText = `position:absolute;left:${bounds.x}px;top:${bounds.y + bounds.height - page.reservePx}px;width:${Math.min(nativeNormal ? 192 : 120, bounds.width)}px;border-top:${nativeNormal ? '0.5pt' : '1px'} solid currentColor;`;
+            const normal = resolveStyle(documentStyles(doc.attrs.layout), 'Normal');
+            const firstFragment = page.fragments[0], firstLine = measured.get(firstFragment.noteId)?.lines.find(line => line.from === firstFragment.from);
+            if (nativeNormal && firstLine && nativeArialSeparatorProfile(normal)) {
+              // Measure the same separator widget immediately before the exact
+              // first rendered line. This leaves the bottom reservation and
+              // body placement intact and derives the artwork from font geometry.
+              const geometry = measureNativeRule(view, normal, firstLine, bounds.width);
+              band.style.cssText = `position:absolute;left:${bounds.x + geometry.left}px;top:${firstFragment.rect.y + firstLine.leading + geometry.top}px;width:${geometry.width}px;height:${geometry.height}px;color:${geometry.color};background:currentColor;`;
+            }
             rendered.element.appendChild(band);
           }
           host.appendChild(rendered.element); result.push(rendered.element);

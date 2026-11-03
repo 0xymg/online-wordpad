@@ -1,0 +1,390 @@
+{
+  "schema_version": 1,
+  "units": "points",
+  "results": [
+    {
+      "id": "base-11",
+      "kind": "word",
+      "pdf_sha256": "513bba4487c459203a5cae9b910d176833a58d636be1e593ba5a1ae8344bb4e3",
+      "pages": [
+        {
+          "page": 1,
+          "rules": [
+            {
+              "x0": 90.05,
+              "x1": 234.10000000000002,
+              "top": 154.04999999999995,
+              "bottom": 154.54999999999995
+            },
+            {
+              "x0": 90.05,
+              "x1": 234.10000000000002,
+              "top": 690.73,
+              "bottom": 691.23
+            }
+          ],
+          "markers": [
+            {
+              "text": "ENDNOTE_BODY",
+              "x0": 90.05,
+              "top": 160.6099999999999,
+              "bottom": 171.6099999999999
+            },
+            {
+              "text": "FOOTNOTE_BODY",
+              "x0": 90.05,
+              "top": 697.285,
+              "bottom": 708.285
+            }
+          ],
+          "object_types": {
+            "char": 81,
+            "rect": 3
+          }
+        }
+      ]
+    },
+    {
+      "id": "base-11",
+      "kind": "app",
+      "pdf_sha256": "43fa0f1415a33d603d0232dc3122ffc9186c280ecfe9afd4196cf3a9c9918edd",
+      "pages": [
+        {
+          "page": 1,
+          "rules": [],
+          "markers": [
+            {
+              "text": "ENDNOTE_BODY",
+              "x0": 90.0,
+              "top": 160.6552537353516,
+              "bottom": 171.65527873535154
+            },
+            {
+              "text": "FOOTNOTE_BODY",
+              "x0": 90.0,
+              "top": 697.2802537353516,
+              "bottom": 708.2802787353515
+            }
+          ],
+          "object_types": {
+            "image": 1,
+            "char": 75
+          }
+        }
+      ]
+    },
+    {
+      "id": "zero-11",
+      "kind": "word",
+      "pdf_sha256": "8f9970a56592a61fa45c3a8e486709ba50a4fe7356ba49bcd9be19a1c85aa34f",
+      "pages": [
+        {
+          "page": 1,
+          "rules": [
+            {
+              "x0": 90.05,
+              "x1": 234.10000000000002,
+              "top": 154.04999999999995,
+              "bottom": 154.54999999999995
+            },
+            {
+              "x0": 90.05,
+              "x1": 234.10000000000002,
+              "top": 690.73,
+              "bottom": 691.23
+            }
+          ],
+          "markers": [
+            {
+              "text": "ENDNOTE_BODY",
+              "x0": 90.05,
+              "top": 160.6099999999999,
+              "bottom": 171.6099999999999
+            },
+            {
+              "text": "FOOTNOTE_BODY",
+              "x0": 90.05,
+              "top": 697.285,
+              "bottom": 708.285
+            }
+          ],
+          "object_types": {
+            "char": 81,
+            "rect": 3
+          }
+        }
+      ]
+    },
+    {
+      "id": "zero-11",
+      "kind": "app",
+      "pdf_sha256": "29f8d94d8dad98a61771ac2d8f5b6fcb6018b2f8ab4697a52d2ce973d55059b2",
+      "pages": [
+        {
+          "page": 1,
+          "rules": [],
+          "markers": [
+            {
+              "text": "ENDNOTE_BODY",
+              "x0": 90.0,
+              "top": 160.6552537353516,
+              "bottom": 171.65527873535154
+            },
+            {
+              "text": "FOOTNOTE_BODY",
+              "x0": 90.0,
+              "top": 697.2802537353516,
+              "bottom": 708.2802787353515
+            }
+          ],
+          "object_types": {
+            "image": 1,
+            "char": 75
+          }
+        }
+      ]
+    },
+    {
+      "id": "base-16",
+      "kind": "word",
+      "pdf_sha256": "f1f44b5ab287130f91a49f6178b81ca66599ec6f0f94bbf6e28c5b4ef50772d5",
+      "pages": [
+        {
+          "page": 1,
+          "rules": [
+            {
+              "x0": 90.05,
+              "x1": 234.10000000000002,
+              "top": 163.79999999999995,
+              "bottom": 164.54999999999995
+            },
+            {
+              "x0": 90.05,
+              "x1": 234.10000000000002,
+              "top": 681.23,
+              "bottom": 681.98
+            }
+          ],
+          "markers": [
+            {
+              "text": "ENDNOTE_BODY",
+              "x0": 90.05,
+              "top": 173.90999999999997,
+              "bottom": 189.90999999999997
+            },
+            {
+              "text": "FOOTNOTE_BODY",
+              "x0": 90.05,
+              "top": 691.335,
+              "bottom": 707.335
+            }
+          ],
+          "object_types": {
+            "char": 81,
+            "rect": 3
+          }
+        }
+      ]
+    },
+    {
+      "id": "base-16",
+      "kind": "app",
+      "pdf_sha256": "9dcce649d833fc1118dc25366467841fccf1168cbadce817ab540956071e6f7b",
+      "pages": [
+        {
+          "page": 1,
+          "rules": [],
+          "markers": [
+            {
+              "text": "ENDNOTE_BODY",
+              "x0": 90.0,
+              "top": 174.3164259521484,
+              "bottom": 190.31640095214846
+            },
+            {
+              "text": "FOOTNOTE_BODY",
+              "x0": 90.0,
+              "top": 691.9922072021484,
+              "bottom": 707.9921822021485
+            }
+          ],
+          "object_types": {
+            "image": 1,
+            "char": 75
+          }
+        }
+      ]
+    },
+    {
+      "id": "zero-16",
+      "kind": "word",
+      "pdf_sha256": "ebcdd4d6ef6e90461e5e3b0a4f8c68a8c42adc729f8e9cfc059403d3be5dbdfb",
+      "pages": [
+        {
+          "page": 1,
+          "rules": [
+            {
+              "x0": 90.05,
+              "x1": 234.10000000000002,
+              "top": 163.79999999999995,
+              "bottom": 164.54999999999995
+            },
+            {
+              "x0": 90.05,
+              "x1": 234.10000000000002,
+              "top": 681.23,
+              "bottom": 681.98
+            }
+          ],
+          "markers": [
+            {
+              "text": "ENDNOTE_BODY",
+              "x0": 90.05,
+              "top": 173.90999999999997,
+              "bottom": 189.90999999999997
+            },
+            {
+              "text": "FOOTNOTE_BODY",
+              "x0": 90.05,
+              "top": 691.335,
+              "bottom": 707.335
+            }
+          ],
+          "object_types": {
+            "char": 81,
+            "rect": 3
+          }
+        }
+      ]
+    },
+    {
+      "id": "zero-16",
+      "kind": "app",
+      "pdf_sha256": "1309051d347529c388b15aecc08e7fec70b0b19da02356227bf0a688742e5474",
+      "pages": [
+        {
+          "page": 1,
+          "rules": [],
+          "markers": [
+            {
+              "text": "ENDNOTE_BODY",
+              "x0": 90.0,
+              "top": 174.3164259521484,
+              "bottom": 190.31640095214846
+            },
+            {
+              "text": "FOOTNOTE_BODY",
+              "x0": 90.0,
+              "top": 691.9922072021484,
+              "bottom": 707.9921822021485
+            }
+          ],
+          "object_types": {
+            "image": 1,
+            "char": 75
+          }
+        }
+      ]
+    },
+    {
+      "id": "columns-base-11",
+      "kind": "word",
+      "pdf_sha256": "658c37c3a3254590fe00b8b82ff08d468ea7925696935c7b270d6734226bcea5",
+      "pages": [
+        {
+          "page": 1,
+          "rules": [
+            {
+              "x0": 90.05,
+              "x1": 234.10000000000002,
+              "top": 168.79999999999995,
+              "bottom": 169.29999999999995
+            },
+            {
+              "x0": 90.05,
+              "x1": 234.10000000000002,
+              "top": 690.73,
+              "bottom": 691.23
+            }
+          ],
+          "markers": [
+            {
+              "text": "ENDNOTE_BODY",
+              "x0": 90.05,
+              "top": 175.3599999999999,
+              "bottom": 186.3599999999999
+            },
+            {
+              "text": "FOOTNOTE_BODY",
+              "x0": 90.05,
+              "top": 697.285,
+              "bottom": 708.285
+            }
+          ],
+          "object_types": {
+            "char": 81,
+            "rect": 3
+          }
+        }
+      ]
+    },
+    {
+      "id": "columns-base-11",
+      "kind": "app",
+      "pdf_sha256": "a6b9f914047a4ec848c886f89a3f16308045659f11fde4e045d0be3fc5dd3f29",
+      "pages": [
+        {
+          "page": 1,
+          "rules": [],
+          "markers": [
+            {
+              "text": "ENDNOTE_BODY",
+              "x0": 90.0,
+              "top": 175.2099412353516,
+              "bottom": 186.20996623535154
+            },
+            {
+              "text": "FOOTNOTE_BODY",
+              "x0": 90.0,
+              "top": 697.2802537353516,
+              "bottom": 708.2802787353515
+            }
+          ],
+          "object_types": {
+            "image": 1,
+            "char": 75
+          }
+        }
+      ]
+    },
+    {
+      "id": "columns-zero-11",
+      "kind": "app",
+      "pdf_sha256": "99836321cbc53442d459ad0ae2d456a9e2ac272a986ecc0b314d2f8a43437f13",
+      "pages": [
+        {
+          "page": 1,
+          "rules": [],
+          "markers": [
+            {
+              "text": "ENDNOTE_BODY",
+              "x0": 90.0,
+              "top": 175.2099412353516,
+              "bottom": 186.20996623535154
+            },
+            {
+              "text": "FOOTNOTE_BODY",
+              "x0": 90.0,
+              "top": 697.2802537353516,
+              "bottom": 708.2802787353515
+            }
+          ],
+          "object_types": {
+            "image": 1,
+            "char": 75
+          }
+        }
+      ]
+    }
+  ]
+}

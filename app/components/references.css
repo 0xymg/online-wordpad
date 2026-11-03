@@ -9,3 +9,5 @@
 @media print {
  .ProseMirror .edtr-reference-field { background: transparent; }
 }
+/* ProseMirror's terminal-atom caret helper must occupy no layout space. */
+.ProseMirror img.ProseMirror-separator { display: inline !important; border: none !important; margin: 0 !important; width: 0 !important; height: 0 !important; }

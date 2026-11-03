@@ -1,0 +1,202 @@
+{
+  "schema_version": 1,
+  "complete": true,
+  "base_url": "http://localhost:3120",
+  "browser_version": "156.0.8078.4",
+  "viewport": {
+    "width": 1450,
+    "height": 1050
+  },
+  "application_revision": null,
+  "selected_cases": null,
+  "captured_at": "2026-11-03T23:44:25.859Z",
+  "results": [
+    {
+      "id": "base-11",
+      "source_sha256": "a650e8d23a0c2ccc75052013b6080f6229024233f891b3471bbeafadd15cae82",
+      "status": "EXPORTED",
+      "base_url": "http://localhost:3120",
+      "captured_at": "2026-11-03T23:43:57.331Z",
+      "geometry": {
+        "separator": {
+          "top": 409.90625,
+          "bottom": 426.765625,
+          "height": 16.859375
+        },
+        "rule": {
+          "top": 418.609375,
+          "bottom": 419.609375,
+          "height": 1
+        },
+        "baseline": {
+          "top": 422.90625,
+          "bottom": 422.90625,
+          "height": 0
+        },
+        "font": "",
+        "lineHeight": "16.8652px",
+        "fontFamily": "Arial, sans-serif",
+        "fontSize": "14.6667px"
+      },
+      "pdf_sha256": "3c22ea618863500e4780d7ed827b42d279394e33382b23b93294ad2d060e11c4",
+      "pdf_bytes": 62028,
+      "page_errors": []
+    },
+    {
+      "id": "zero-11",
+      "source_sha256": "1f94ae28f8788e09806df131e82c122b0c7dbd1278eabb5ff770ca934685fbe2",
+      "status": "EXPORTED",
+      "base_url": "http://localhost:3120",
+      "captured_at": "2026-11-03T23:44:02.067Z",
+      "geometry": {
+        "separator": {
+          "top": 409.90625,
+          "bottom": 426.765625,
+          "height": 16.859375
+        },
+        "rule": {
+          "top": 418.609375,
+          "bottom": 419.609375,
+          "height": 1
+        },
+        "baseline": {
+          "top": 422.90625,
+          "bottom": 422.90625,
+          "height": 0
+        },
+        "font": "",
+        "lineHeight": "16.8652px",
+        "fontFamily": "Arial, sans-serif",
+        "fontSize": "14.6667px"
+      },
+      "pdf_sha256": "9fa28a90abf8e0c0c5cd6797c011b2f33d42be3b61bfc2f8a30acb21d5ca5c37",
+      "pdf_bytes": 62029,
+      "page_errors": []
+    },
+    {
+      "id": "base-16",
+      "source_sha256": "74aa7b7077e9be142ba359478c00c15a9a90f14aff9c6a67b2550e264e9b04bd",
+      "status": "EXPORTED",
+      "base_url": "http://localhost:3120",
+      "captured_at": "2026-11-03T23:44:06.690Z",
+      "geometry": {
+        "separator": {
+          "top": 418.71875,
+          "bottom": 443.25,
+          "height": 24.53125
+        },
+        "rule": {
+          "top": 431.6875,
+          "bottom": 432.6875,
+          "height": 1
+        },
+        "baseline": {
+          "top": 437.71875,
+          "bottom": 437.71875,
+          "height": 0
+        },
+        "font": "",
+        "lineHeight": "24.5312px",
+        "fontFamily": "Arial, sans-serif",
+        "fontSize": "21.3333px"
+      },
+      "pdf_sha256": "bbd2814300d87d69366ea5efa6721d5bc145bbf3848f6a6d058b743051bc1a4c",
+      "pdf_bytes": 70239,
+      "page_errors": []
+    },
+    {
+      "id": "zero-16",
+      "source_sha256": "93cdbe70d682e373da6ee2c3d3ce46d608a5945abe952622b61626c558fb9468",
+      "status": "EXPORTED",
+      "base_url": "http://localhost:3120",
+      "captured_at": "2026-11-03T23:44:11.343Z",
+      "geometry": {
+        "separator": {
+          "top": 418.71875,
+          "bottom": 443.25,
+          "height": 24.53125
+        },
+        "rule": {
+          "top": 431.6875,
+          "bottom": 432.6875,
+          "height": 1
+        },
+        "baseline": {
+          "top": 437.71875,
+          "bottom": 437.71875,
+          "height": 0
+        },
+        "font": "",
+        "lineHeight": "24.5312px",
+        "fontFamily": "Arial, sans-serif",
+        "fontSize": "21.3333px"
+      },
+      "pdf_sha256": "1f85538da6f15aefa7a08f21eb88401fcf693039b185c0bf8e69e3b5265ca8f3",
+      "pdf_bytes": 70240,
+      "page_errors": []
+    },
+    {
+      "id": "columns-base-11",
+      "source_sha256": "9647c7d2d351988da224fe4c84cd9cc6cbc6e6b21990f8288383724728c4292b",
+      "status": "EXPORTED",
+      "base_url": "http://localhost:3120",
+      "captured_at": "2026-11-03T23:44:15.951Z",
+      "geometry": {
+        "separator": {
+          "top": 447.171875,
+          "bottom": 464.03125,
+          "height": 16.859375
+        },
+        "rule": {
+          "top": 455.875,
+          "bottom": 456.875,
+          "height": 1
+        },
+        "baseline": {
+          "top": 460.171875,
+          "bottom": 460.171875,
+          "height": 0
+        },
+        "font": "",
+        "lineHeight": "16.8652px",
+        "fontFamily": "Arial, sans-serif",
+        "fontSize": "14.6667px"
+      },
+      "pdf_sha256": "fa0c574e5c86d19037598b0c1751e35993ce82f719a838038d0f50f47e0c7bbb",
+      "pdf_bytes": 62926,
+      "page_errors": []
+    },
+    {
+      "id": "columns-zero-11",
+      "source_sha256": "9e9f089c498032de78cd741698c74d4e645fac9c880236c29b7f95c34c2e1b62",
+      "status": "EXPORTED",
+      "base_url": "http://localhost:3120",
+      "captured_at": "2026-11-03T23:44:20.856Z",
+      "geometry": {
+        "separator": {
+          "top": 447.171875,
+          "bottom": 464.03125,
+          "height": 16.859375
+        },
+        "rule": {
+          "top": 455.875,
+          "bottom": 456.875,
+          "height": 1
+        },
+        "baseline": {
+          "top": 460.171875,
+          "bottom": 460.171875,
+          "height": 0
+        },
+        "font": "",
+        "lineHeight": "16.8652px",
+        "fontFamily": "Arial, sans-serif",
+        "fontSize": "14.6667px"
+      },
+      "pdf_sha256": "554b6e8ce0c0544d01474de49293dbeb9b57586c211afd885d8cd78e552997ff",
+      "pdf_bytes": 62927,
+      "page_errors": []
+    }
+  ],
+  "experimental_change": "Transient Arial CSS vertical-align:middle; reverted after measurement; not acceptance output"
+}

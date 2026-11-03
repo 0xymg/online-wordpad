@@ -1,0 +1,216 @@
+{
+  "schema_version": 1,
+  "method": "PDFium 4px/pt, intensity-weighted centroid across x=100..200pt within 2pt of Word vector rule; coverage includes rasterization",
+  "results": [
+    {
+      "id": "base-11",
+      "kind": "word",
+      "pdf_sha256": "513bba4487c459203a5cae9b910d176833a58d636be1e593ba5a1ae8344bb4e3",
+      "rules": [
+        {
+          "story": "endnote",
+          "word_vector_top_pt": 154.04999999999995,
+          "word_vector_height_pt": 0.5,
+          "raster_ink_centroid_pt": 154.25,
+          "raster_ink_coverage_pt": 0.5
+        },
+        {
+          "story": "footnote",
+          "word_vector_top_pt": 690.73,
+          "word_vector_height_pt": 0.5,
+          "raster_ink_centroid_pt": 691.0,
+          "raster_ink_coverage_pt": 0.5
+        }
+      ]
+    },
+    {
+      "id": "base-11",
+      "kind": "app",
+      "pdf_sha256": "0af7639dd09f9f2831cb18d6d38f8200f3f45358dd48ff7039f8c8451e016a2e",
+      "rules": [
+        {
+          "story": "endnote",
+          "word_vector_top_pt": 154.04999999999995,
+          "word_vector_height_pt": 0.5,
+          "raster_ink_centroid_pt": 153.8671568627451,
+          "raster_ink_coverage_pt": 0.75
+        },
+        {
+          "story": "footnote",
+          "word_vector_top_pt": 690.73,
+          "word_vector_height_pt": 0.5,
+          "raster_ink_centroid_pt": 690.375,
+          "raster_ink_coverage_pt": 0.75
+        }
+      ]
+    },
+    {
+      "id": "base-16",
+      "kind": "word",
+      "pdf_sha256": "f1f44b5ab287130f91a49f6178b81ca66599ec6f0f94bbf6e28c5b4ef50772d5",
+      "rules": [
+        {
+          "story": "endnote",
+          "word_vector_top_pt": 163.79999999999995,
+          "word_vector_height_pt": 0.75,
+          "raster_ink_centroid_pt": 164.125,
+          "raster_ink_coverage_pt": 0.75
+        },
+        {
+          "story": "footnote",
+          "word_vector_top_pt": 681.23,
+          "word_vector_height_pt": 0.75,
+          "raster_ink_centroid_pt": 681.625,
+          "raster_ink_coverage_pt": 0.75
+        }
+      ]
+    },
+    {
+      "id": "base-16",
+      "kind": "app",
+      "pdf_sha256": "e7a6ceaa81f79b0cb0c4cab77cc3b97ef4f9b4dab1982a06084721d51b6ef1e5",
+      "rules": [
+        {
+          "story": "endnote",
+          "word_vector_top_pt": 163.79999999999995,
+          "word_vector_height_pt": 0.75,
+          "raster_ink_centroid_pt": 163.875,
+          "raster_ink_coverage_pt": 0.75
+        },
+        {
+          "story": "footnote",
+          "word_vector_top_pt": 681.23,
+          "word_vector_height_pt": 0.75,
+          "raster_ink_centroid_pt": 681.375,
+          "raster_ink_coverage_pt": 0.75
+        }
+      ]
+    },
+    {
+      "id": "columns-base-11",
+      "kind": "word",
+      "pdf_sha256": "658c37c3a3254590fe00b8b82ff08d468ea7925696935c7b270d6734226bcea5",
+      "rules": [
+        {
+          "story": "endnote",
+          "word_vector_top_pt": 168.79999999999995,
+          "word_vector_height_pt": 0.5,
+          "raster_ink_centroid_pt": 169.0,
+          "raster_ink_coverage_pt": 0.5
+        },
+        {
+          "story": "footnote",
+          "word_vector_top_pt": 690.73,
+          "word_vector_height_pt": 0.5,
+          "raster_ink_centroid_pt": 691.0,
+          "raster_ink_coverage_pt": 0.5
+        }
+      ]
+    },
+    {
+      "id": "columns-base-11",
+      "kind": "app",
+      "pdf_sha256": "5c0e099cea3b14631b72236ba73eafd1599ca73baa8e7aa36548fee86000f1dc",
+      "rules": [
+        {
+          "story": "endnote",
+          "word_vector_top_pt": 168.79999999999995,
+          "word_vector_height_pt": 0.5,
+          "raster_ink_centroid_pt": 168.375,
+          "raster_ink_coverage_pt": 0.75
+        },
+        {
+          "story": "footnote",
+          "word_vector_top_pt": 690.73,
+          "word_vector_height_pt": 0.5,
+          "raster_ink_centroid_pt": 690.375,
+          "raster_ink_coverage_pt": 0.75
+        }
+      ]
+    },
+    {
+      "id": "base-12",
+      "kind": "word",
+      "pdf_sha256": "0ab5908dfb2bf28fd7dd54470806b739cf888216b8aa25ec0e24740d4ab1a81c",
+      "rules": [
+        {
+          "story": "endnote",
+          "word_vector_top_pt": 156.04999999999995,
+          "word_vector_height_pt": 0.5,
+          "raster_ink_centroid_pt": 156.25,
+          "raster_ink_coverage_pt": 0.5
+        },
+        {
+          "story": "footnote",
+          "word_vector_top_pt": 688.73,
+          "word_vector_height_pt": 0.5,
+          "raster_ink_centroid_pt": 689.0,
+          "raster_ink_coverage_pt": 0.5
+        }
+      ]
+    },
+    {
+      "id": "base-12",
+      "kind": "app",
+      "pdf_sha256": "b6ac483d9784ff27cd7bdfedd9d2f43414b1c3877fd4257e22083196a9078233",
+      "rules": [
+        {
+          "story": "endnote",
+          "word_vector_top_pt": 156.04999999999995,
+          "word_vector_height_pt": 0.5,
+          "raster_ink_centroid_pt": 155.3671568627451,
+          "raster_ink_coverage_pt": 0.75
+        },
+        {
+          "story": "footnote",
+          "word_vector_top_pt": 688.73,
+          "word_vector_height_pt": 0.5,
+          "raster_ink_centroid_pt": 688.125,
+          "raster_ink_coverage_pt": 0.75
+        }
+      ]
+    },
+    {
+      "id": "base-20",
+      "kind": "word",
+      "pdf_sha256": "ba3de1c445f6acc5e56c117ef3acad8273d72f070098a50fba2ea7328ba98e6d",
+      "rules": [
+        {
+          "story": "endnote",
+          "word_vector_top_pt": 171.79999999999995,
+          "word_vector_height_pt": 1.0,
+          "raster_ink_centroid_pt": 172.25,
+          "raster_ink_coverage_pt": 1.0
+        },
+        {
+          "story": "footnote",
+          "word_vector_top_pt": 674.23,
+          "word_vector_height_pt": 1.0,
+          "raster_ink_centroid_pt": 674.75,
+          "raster_ink_coverage_pt": 1.0
+        }
+      ]
+    },
+    {
+      "id": "base-20",
+      "kind": "app",
+      "pdf_sha256": "6b6a01288d8bafc93648daaa97b4c2946089acd44b92ca93aae142859dc4111f",
+      "rules": [
+        {
+          "story": "endnote",
+          "word_vector_top_pt": 171.79999999999995,
+          "word_vector_height_pt": 1.0,
+          "raster_ink_centroid_pt": 171.9983617300131,
+          "raster_ink_coverage_pt": 1.496078431372549
+        },
+        {
+          "story": "footnote",
+          "word_vector_top_pt": 674.23,
+          "word_vector_height_pt": 1.0,
+          "raster_ink_centroid_pt": 674.625,
+          "raster_ink_coverage_pt": 0.75
+        }
+      ]
+    }
+  ]
+}

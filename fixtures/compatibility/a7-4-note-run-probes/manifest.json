@@ -1,0 +1,26 @@
+{
+  "schema_version": 1,
+  "source": "../notes.docx",
+  "source_sha256": "a650e8d23a0c2ccc75052013b6080f6229024233f891b3471bbeafadd15cae82",
+  "cases": [
+    {
+      "id": "separate-run-11",
+      "source": "separate-run-11.docx",
+      "sha256": "e7c98e3c7f428cfcb6138f999258209da1f66db81011ade12f937553a66e418b",
+      "normal_size_pt": 11,
+      "word_only_unsupported_separator_marker": true,
+      "word_reference_status": "CAPTURED",
+      "word_pdf": "separate-run-11.word.pdf",
+      "word_pdf_sha256": "303fe5fed4ce757d8ef36a27de73dcbcebbc150d85c652708fb3e594e998b5e0",
+      "word_provenance": "separate-run-11.provenance.json"
+    },
+    {
+      "id": "separate-run-16",
+      "source": "separate-run-16.docx",
+      "sha256": "4b423c005a12bb3969fc5ff35181d405c7b9ce729ac3a7ccd9c2197fd89b375e",
+      "normal_size_pt": 16,
+      "word_only_unsupported_separator_marker": true,
+      "word_reference_status": "PENDING"
+    }
+  ]
+}

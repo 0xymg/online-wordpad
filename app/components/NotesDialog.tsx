@@ -1,4 +1,5 @@
 "use client";
+import { nativeKerningPlugin } from "@/lib/native-kerning";
 
 import { useEffect, useRef, useState } from 'react';
 import { EditorState, TextSelection, type Command } from 'prosemirror-state';
@@ -93,7 +94,7 @@ export default function NotesDialog({ view, request, onClose }: { view: EditorVi
       Tab: insertTabCharacter,
     };
     const editor = new EditorView(host, {
-      state: EditorState.create({ schema, doc: schema.nodeFromJSON(record.body), plugins: [keymap(keys), tabCharactersPlugin(), tabLayoutPlugin()] }),
+      state: EditorState.create({ schema, doc: schema.nodeFromJSON(record.body), plugins: [nativeKerningPlugin(), keymap(keys), tabCharactersPlugin(), tabLayoutPlugin()] }),
       nodeViews: { tab: createTabNodeView },
       editable: () => view.editable && validParent() && noteKindEditingEnabled(view.state.doc.attrs.documentModel.notes[noteId].kind),
       attributes: { role: 'textbox', 'aria-label': labelsRef.current.body, 'aria-multiline': 'true', dir: locale === 'ar' ? 'rtl' : 'auto' },

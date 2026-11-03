@@ -1,3 +1,4 @@
+import { nativeKerningValue } from "./native-kerning";
 /** Preserve Word formatting around Mammoth's semantic conversion.
  * Temporary run styles and bookmarks provide identity through conversion, including
  * repeated text, lists, tables and notes. Never match paragraphs by text or order.
@@ -16,6 +17,7 @@ const A = "http://schemas.openxmlformats.org/drawingml/2006/main";
 type Properties = Record<string, string>;
 type Style = { basedOn?: string; paragraph: Properties; run: Properties };
 type RunFormat = {
+  kerning: number;
   css: Properties;
   bold?: boolean;
   italic?: boolean;
@@ -77,6 +79,7 @@ function properties(node: Element | undefined): Properties {
   const values: Properties = {};
   for (const el of Array.from(node?.children ?? [])) {
     if (el.namespaceURI !== W) continue;
+    if (el.localName === "kern" && (attr(el) === undefined || Object.hasOwn(values,"kern"))) throw new Error("Unsupported native font kerning threshold");
     // Flatten individual attributes so a direct font/spacing override does not
     // erase other inherited attributes in the same OOXML property element.
     values[el.localName] = attr(el) ?? "1";
@@ -400,8 +403,10 @@ export async function prepareDocxFormatting(arrayBuffer: ArrayBuffer) {
     if (highlight) css["background-color"] = highlight;
     else if (shading && /^[\da-f]{6}$/i.test(shading))
       css["background-color"] = `#${shading}`;
+    const kerning = props.kern === undefined ? 0 : nativeKerningValue(props.kern);
+    if (kerning === undefined) throw new Error("Unsupported native font kerning threshold");
     return {
-      css,
+      css, kerning,
       bold: enabled(props.b),
       italic: enabled(props.i),
       underline: enabled(props.u),
@@ -454,6 +459,7 @@ export async function prepareDocxFormatting(arrayBuffer: ArrayBuffer) {
     if (own.b !== undefined) text.bold = !!format.bold;
     if (own.i !== undefined) text.italic = !!format.italic;
     if (own.u !== undefined) text.underline = !!format.underline;
+    if (own.kern !== undefined || !definition.basedOn) text.kerning = format.kerning;
     const pPr = child(el,"pPr"), paragraph = paragraphFromXml(pPr || null);
     const paragraphDefaults = !definition.basedOn ? mergeParagraphFormats({ before:0,after:0,lineMode:"multiple",lineValue:1,lineBasis:"font" }, paragraphFromXml(child(child(defaults,"pPrDefault"),"pPr") || null)) : undefined;
     const level = Number(attr(child(pPr,"outlineLvl")));
@@ -576,7 +582,7 @@ export async function prepareDocxFormatting(arrayBuffer: ArrayBuffer) {
         for (const [key, value] of attrs) el.setAttributeNS(W, `w:${key.slice(property.length + 1)}`, value);
       }
       const baseRun = mergeStyle(defaultRun, inherited.run);
-      const markFormat = runFormat(mergeProperties(baseRun, properties(child(pPr, "rPr")))), baseText: Partial<StyleText> = {};
+      const markFormat = runFormat(mergeProperties(baseRun, properties(child(pPr, "rPr")))), baseText: Partial<StyleText> = { kerning: runFormat(baseRun).kerning };
       if (markFormat.css["font-family"]) baseText.family = markFormat.css["font-family"];
       if (markFormat.css["font-size"]) baseText.size = Number.parseFloat(markFormat.css["font-size"]);
       for (const marker of wordElements(p, "bookmarkStart")) {
@@ -715,6 +721,7 @@ export async function prepareDocxFormatting(arrayBuffer: ArrayBuffer) {
         if (!format) continue;
         span.removeAttribute("class");
         setStyles(span, format.css);
+        span.setAttribute("data-edtr-native-kern", String(format.kerning));
         if (format.image) for (const image of Array.from(span.querySelectorAll("img"))) {
           image.setAttribute("data-width", `${format.image.width}px`); image.style.width = `${format.image.width}px`;
           image.setAttribute("data-aspect-ratio", String(format.image.ratio)); image.setAttribute("data-align", format.image.align);
@@ -741,7 +748,8 @@ export async function prepareDocxFormatting(arrayBuffer: ArrayBuffer) {
         const br = doc.createElement("br"); br.setAttribute("data-edtr-column-break", "true");
         const format = columnBreakFormats.get(marker.id);
         if (!format) { marker.replaceWith(br); continue; }
-        const span = doc.createElement("span"); setStyles(span, format.css); span.appendChild(br);
+        const span = doc.createElement("span"); setStyles(span, format.css);
+        span.setAttribute("data-edtr-native-kern", String(format.kerning)); span.appendChild(br);
         for (const [tag, apply] of [["strong", format.bold], ["em", format.italic], ["u", format.underline], ["s", format.strike], ["sup", format.vertical === "superscript"], ["sub", format.vertical === "subscript"]] as const) {
           if (apply) { const wrapper = doc.createElement(tag); wrapper.append(...Array.from(span.childNodes)); span.appendChild(wrapper); }
         }

@@ -14,7 +14,7 @@ export type ReferenceStatus = "ok" | "missing-target" | "ambiguous" | "unsupport
 export type TocConfiguration = { fieldId: string; levels: number[]; status?: "unsupported"; nativeSource?: string; markerOnly?: boolean };
 export type ReferenceTarget = { id: string; pos: number; end: number; text: string; number: string; level: number; kind: "heading" | "bookmark" | "caption"; name: string; nativeName?: string };
 export type ReferenceIndex = { targets: ReferenceTarget[]; byId: Map<string, ReferenceTarget[]>; fields: { pos: number; node: PMNode }[]; tocs: { pos: number; node: PMNode; fieldId: string; levels: number[]; status?: "unsupported"; nativeSource?: string }[] };
-export const referenceParagraphAttrs = { targetId: { default: null }, targetKind: { default: null }, captionLabel: { default: null }, toc: { default: null }, tocOwnerId: { default: null }, tocTargetId: { default: null } };
+export const referenceParagraphAttrs = { targetId: { default: null }, targetKind: { default: null }, captionLabel: { default: null }, toc: { default: null }, tocOwnerId: { default: null }, tocTargetId: { default: null }, tocSourceIndent: { default: null } };
 export const referenceHeadingAttrs = { targetId: { default: null } };
 const displays = new Set(["text", "number", "page"]), statuses = new Set(["ok", "missing-target", "ambiguous", "unsupported", "pending"]);
 export function normalizeTocLevels(value: unknown): number[] {
@@ -23,7 +23,9 @@ export function normalizeTocLevels(value: unknown): number[] {
 export function parseReferenceParagraphAttrs(el: HTMLElement) {
   let toc = null;
   if (el.hasAttribute("data-edtr-toc")) { try { const value = JSON.parse(el.getAttribute("data-edtr-toc") || ""); if (value && typeof value.fieldId === "string") toc = { fieldId: value.fieldId, levels: normalizeTocLevels(value.levels), ...(value.status === "unsupported" ? { status: "unsupported" as const } : {}), ...(typeof value.nativeSource === "string" ? { nativeSource: value.nativeSource } : {}), ...(value.markerOnly === true ? { markerOnly: true } : {}) }; } catch { /* Invalid metadata is not executable content. */ } }
-  return { targetId: el.getAttribute("data-target-id"), targetKind: el.getAttribute("data-target-kind") === "caption" ? "caption" : null, captionLabel: el.getAttribute("data-caption-label"), toc, tocOwnerId: el.getAttribute("data-toc-owner-id"), tocTargetId: el.getAttribute("data-toc-target-id") };
+  let tocSourceIndent = null;
+  try { const value = JSON.parse(el.getAttribute("data-toc-source-indent") || "null"); if (value && typeof value === "object" && !Array.isArray(value) && Object.entries(value).every(([key,n]) => ["left","right","firstLine"].includes(key) && typeof n === "number" && Number.isFinite(n) && Math.abs(n) <= 14400)) tocSourceIndent = value; } catch { /* Invalid source indent is ignored. */ }
+  return { tocSourceIndent, targetId: el.getAttribute("data-target-id"), targetKind: el.getAttribute("data-target-kind") === "caption" ? "caption" : null, captionLabel: el.getAttribute("data-caption-label"), toc, tocOwnerId: el.getAttribute("data-toc-owner-id"), tocTargetId: el.getAttribute("data-toc-target-id") };
 }
 export function referenceParagraphDOM(node: PMNode): Record<string, string> {
   const a = node.attrs, result: Record<string, string> = {};
@@ -31,6 +33,7 @@ export function referenceParagraphDOM(node: PMNode): Record<string, string> {
   if (a.targetId) { result.id = `edtr-target-${a.targetId}`; result["data-edtr-target-id"] = String(a.targetId); }
   if (a.toc) result["data-edtr-toc"] = JSON.stringify(a.toc);
   if (a.toc?.markerOnly && a.toc.status !== "unsupported" && !node.content.size) result["data-edtr-toc-marker-only"] = "true";
+  if (a.tocSourceIndent) result["data-toc-source-indent"] = JSON.stringify(a.tocSourceIndent);
   if (a.tocOwnerId) result.contenteditable = "false";
   return result;
 }

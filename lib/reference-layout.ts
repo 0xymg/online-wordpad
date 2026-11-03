@@ -150,14 +150,30 @@ export function refreshTableOfContents(tr: Transaction): Transaction {
       // target. Preserve its imported paragraph/run formatting on regeneration.
       const previous = old.find(node => node.attrs.tocTargetId === target.id) || (toc.node.attrs.toc?.markerOnly && old.length === 1 && targets.length === 1 && !old[0].attrs.tocTargetId ? old[0] : undefined);
       const mark = schema.marks.link?.create({ href: `#edtr-target-${target.id}` });
-      let inheritedMarks: readonly import('prosemirror-model').Mark[] = [];
-      previous?.descendants(node => { if (node.isText && !inheritedMarks.length) inheritedMarks = node.marks.filter(m => m.type.name !== 'link'); });
+      let inheritedMarks: readonly import('prosemirror-model').Mark[] = [], foundLabel = false;
+      previous?.descendants(node => { if (node.isText && !foundLabel) { inheritedMarks = node.marks.filter(m => m.type.name !== 'link'); foundLabel = true; } });
       const marks = mark ? [...inheritedMarks, mark] : [...inheritedMarks];
-      const contents = [schema.text(target.text || ' ', marks), schema.nodes.tab.create(null, undefined, inheritedMarks), schema.nodes.reference_field.create({ fieldId, targetId: target.id, display: 'page', cached: '', status: 'pending' }, undefined, marks)];
-      if (previous) { const f = previous.lastChild; if (f?.type.name === 'reference_field' && f.attrs.targetId === target.id) contents[2] = schema.nodes.reference_field.create(f.attrs, undefined, marks); }
+      // The page result can have its own native run formatting. Keep it
+      // independently from the entry label when a tab separates the result.
+      let pageMarks = inheritedMarks, afterTab = false;
+      previous?.descendants(node => {
+        if (node.type.name === 'tab') afterTab = true;
+        else if (afterTab && (node.type.name === 'reference_field' || (node.isText && node.text?.trim()))) pageMarks = node.marks.filter(m => m.type.name !== 'link');
+      });
+      const resultMarks = mark ? [...pageMarks, mark] : [...pageMarks];
+      const contents = [schema.text(target.text || ' ', marks), schema.nodes.tab.create(null, undefined, inheritedMarks), schema.nodes.reference_field.create({ fieldId, targetId: target.id, display: 'page', cached: '', status: 'pending' }, undefined, resultMarks)];
+      if (previous) { const f = previous.lastChild; if (f?.type.name === 'reference_field' && f.attrs.targetId === target.id) contents[2] = schema.nodes.reference_field.create(f.attrs, undefined, resultMarks); }
       const strong = target.text.match(/[A-Za-z\u0590-\u08ff\ufb1d-\ufdff\ufe70-\ufeff]/u)?.[0];
       const rtl = !!strong && /[\u0590-\u08ff\ufb1d-\ufdff\ufe70-\ufeff]/u.test(strong), indent = Math.min(width - 1, Math.max(0, target.level - 1) * 240);
-      return schema.nodes.paragraph.create({ ...previous?.attrs, tocOwnerId: toc.fieldId, tocTargetId: target.id, paragraphFormat: { ...previous?.attrs.paragraphFormat, left: rtl ? 0 : indent, right: rtl ? indent : 0, tabs: [{ position: width, alignment: 'right', leader: 'dot' }] } }, contents);
+      // Native rows can use implicit default tabs or an explicit tab profile.
+      // Updating results must not turn that source presentation into dotted,
+      // right-aligned application TOC artwork. Authored rows keep our default.
+      const native = toc.node.attrs.toc?.markerOnly && previous;
+      const sourceIndent = native ? previous.attrs.tocSourceIndent || Object.fromEntries(Object.entries({ ...previous.attrs.styleParagraph, ...previous.attrs.paragraphFormat }).filter(([key]) => ['left','right','firstLine'].includes(key))) : null;
+      const tabs = native
+        ? previous.attrs.paragraphFormat?.tabs
+        : [{ position: width, alignment: 'right', leader: 'dot' }];
+      return schema.nodes.paragraph.create({ ...previous?.attrs, tocOwnerId: toc.fieldId, tocTargetId: target.id, tocSourceIndent: sourceIndent, paragraphFormat: { ...previous?.attrs.paragraphFormat, left: rtl ? 0 : indent, right: rtl ? indent : 0, ...sourceIndent, ...(tabs ? { tabs } : {}) } }, contents);
     });
     // Only replace the contiguous generated range attached to this marker.
     const end = toc.pos + toc.node.nodeSize; let cursor = end; const attached: PMNode[] = [];

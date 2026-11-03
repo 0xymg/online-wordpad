@@ -52,3 +52,15 @@ The user approved this next increment with Sol/Terra delegation. Preserve every 
 - Report residual text-layer coordinates and visible glyph differences separately. Do not introduce per-fixture offsets or suppress text/link differences to pass a report.
 
 Acceptance requires note codec/clipboard/migration and authored paragraph roundtrips, native spacing/style regressions, the full eight-case comparison, page/column placement checks, rendered note inspection, a production build and live import/export/reopen checks. New font profiles need their own Word provenance. A missing Word capture keeps that profile pending while independently proven fixes can ship. This increment does not close A7's broader 1 CSS px, field/link or arbitrary font/layout gates.
+
+## A7.4 — references, native field presentation and residual geometry
+
+The user requested completion of these two remaining areas with the established Sol/Terra workflow. Broader arbitrary-font/script support remains separate.
+
+- Retain native TOC tab stops, indentation and independent title/page-result formatting when regenerating current results. Preserve field/target identities, rename/edit/undo and native reopening; do not restore stale cached page numbers to match an old Word PDF.
+- Correct editor caret-helper layout so trailing bookmark/field atoms do not add a screen-only line. Resolve PDF navigation from the actual printed target and physical page, with empty/paragraph-end bookmarks and clipped duplicate page clones covered.
+- Retain native Word kerning thresholds across style/run inheritance, font resizing, detached HTML, notes and DOCX output. Native absence must not silently opt into browser automatic kerning; authored content keeps its existing default.
+- Preserve measured font-box leading when relocating column lines, and translate separator artwork by the same measured displacement as its source text. Keep occupied heights, page/column assignments, tables, images and footnote reservations stable.
+- Measure separator geometry against independently varied genuine Word Online outputs. Keep Word-only unsupported controls separate from supported import fixtures. Do not turn an inconclusive diagnostic or a fixed fixture offset into a claimed general rule.
+
+Acceptance: source/identity/history regressions, actual native import/edit/output/reopen, all eight frozen corpus exports with unchanged old evidence, expanded column/anchor and visible-artwork inspection, a production build and live checks. Semantic navigation (correct visible target and physical page) is recorded separately from Word's viewport coordinates and original cached-link count; the original raw report is never filtered or reclassified to hide these differences.

@@ -1,0 +1,13 @@
+{
+  "reference_application": "Word Online",
+  "capture_method": "Upload source in Word Online; File > Export > Download as PDF > Download in UI",
+  "source": "separate-run-11.docx",
+  "source_sha256": "e7c98e3c7f428cfcb6138f999258209da1f66db81011ade12f937553a66e418b",
+  "pdf": "separate-run-11.word.pdf",
+  "pdf_sha256": "303fe5fed4ce757d8ef36a27de73dcbcebbc150d85c652708fb3e594e998b5e0",
+  "captured_at_utc": "2026-11-03T23:43:21.215254+00:00",
+  "capture_timestamp_basis": "download file modification time",
+  "fonts": "unknown",
+  "paper_settings": "source document settings",
+  "note": "Word-only unsupported separate-run separator baseline control"
+}

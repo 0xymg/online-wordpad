@@ -220,12 +220,21 @@ export async function prepareReferenceImport(arrayBuffer: ArrayBuffer): Promise<
   const token = crypto.randomUUID().replace(/-/g, "");
   let serial = 0;
   const markers = new Map<string, { type: "start" | "end" | "field" | "block-start" | "block-end" | "toc" | "toc-entry" | "toc-title"; attrs: Record<string, string> }>();
-  function marker(replace: Element, value: { type: "start" | "end" | "field" | "block-start" | "block-end" | "toc" | "toc-entry" | "toc-title"; attrs: Record<string, string> }) {
+  function marker(replace: Element, value: { type: "start" | "end" | "field" | "block-start" | "block-end" | "toc" | "toc-entry" | "toc-title"; attrs: Record<string, string> }, resultRuns?: Element[]) {
     const name = `EDTRI${token}${serial++}`;
     const id = String(uniqueId());
     const a = doc.createElementNS(W, "w:bookmarkStart"), b = doc.createElementNS(W, "w:bookmarkEnd");
     a.setAttributeNS(W, "w:id", id); a.setAttributeNS(W, "w:name", name); b.setAttributeNS(W, "w:id", id);
-    replace.replaceWith(a, b); markers.set(name, value);
+    if (value.type === "field" && resultRuns?.length) {
+      if (resultRuns.some(run => Array.from(run.children).some(el => el.namespaceURI !== W || !["rPr","t"].includes(el.localName)))) throw new ReferenceDocxError("Cannot safely import non-text native reference result content");
+      const formats = resultRuns.filter(run => elements(run,"t").length).map(run => Array.from(run.children).find(el => el.namespaceURI === W && el.localName === "rPr"));
+      const first = formats[0], signature = first ? xmlString(first) : "";
+      if (formats.some(format => (format ? xmlString(format) : "") !== signature)) throw new ReferenceDocxError("Cannot safely import mixed native reference result formatting");
+      const run = doc.createElementNS(W,"w:r"), text = doc.createElementNS(W,"w:t");
+      if (first) run.appendChild(first.cloneNode(true)); text.textContent = name; run.appendChild(text);
+      replace.replaceWith(a, run, b); value.attrs["data-result-format-token"] = name;
+    } else replace.replaceWith(a, b);
+    markers.set(name, value);
   }
   // Complex TOCs are captured while they are still a field tree. Their cache
   // paragraphs become owned entries, and the live coordinator regenerates them.
@@ -327,7 +336,7 @@ export async function prepareReferenceImport(arrayBuffer: ArrayBuffer): Promise<
   for (const simple of elements(body, "fldSimple")) {
     const instruction = attr(simple, "instr");
     if (/^\s*TOC\b/i.test(instruction) || elements(simple, "fldSimple").length || elements(simple, "fldChar").length || elements(simple, "bookmarkStart").length || elements(simple, "bookmarkEnd").length) throw new ReferenceDocxError("Cannot safely import a nested native field");
-    marker(simple, fieldValue(instruction, elements(simple, "t").map(el => el.textContent || "").join(""), xmlString(simple), simple));
+    marker(simple, fieldValue(instruction, elements(simple, "t").map(el => el.textContent || "").join(""), xmlString(simple), simple), elements(simple,"r"));
   }
   const containers = [body, ...Array.from(body.getElementsByTagNameNS(W, "*"))];
   for (const container of containers) {
@@ -350,7 +359,7 @@ export async function prepareReferenceImport(arrayBuffer: ArrayBuffer): Promise<
       const portion = runs.slice(i, end + 1), cached = runs.slice(separate + 1, end).flatMap(r => elements(r, "t")).map(el => el.textContent || "").join("");
       if (portion.some(run => run.namespaceURI !== W || run.localName !== "r")) throw new ReferenceDocxError("Cannot safely import a field containing non-run content");
       for (const control of [begin, runs[separate], runs[end]]) if (Array.from(control.children).some(el => el.namespaceURI !== W || !["rPr", "fldChar"].includes(el.localName))) throw new ReferenceDocxError("Cannot safely split a mixed field control run");
-      marker(begin, fieldValue(instruction, cached, portion.map(xmlString).join(""), container));
+      marker(begin, fieldValue(instruction, cached, portion.map(xmlString).join(""), container), runs.slice(separate + 1,end));
       portion.slice(1).forEach(el => el.remove()); i = end;
     }
   }
@@ -413,9 +422,16 @@ export async function prepareReferenceImport(arrayBuffer: ArrayBuffer): Promise<
       const span = parsed.createElement("span");
       if (value.type === "field") span.setAttribute("data-edtr-reference", "true");
       else span.setAttribute("data-edtr-bookmark", value.type);
-      for (const [key, valueAttr] of Object.entries(value.attrs)) if (valueAttr) span.setAttribute(key, valueAttr);
+      for (const [key, valueAttr] of Object.entries(value.attrs)) if (valueAttr && key !== "data-result-format-token") span.setAttribute(key, valueAttr);
       if (value.type === "field") span.textContent = value.attrs["data-cached"];
-      anchors[0].replaceWith(span);
+      if (value.type === "field" && value.attrs["data-result-format-token"]) {
+        const walker = parsed.createTreeWalker(parsed.body, NodeFilter.SHOW_TEXT), tokens: Text[] = [];
+        while (walker.nextNode()) if (walker.currentNode.textContent?.includes(value.attrs["data-result-format-token"])) tokens.push(walker.currentNode as Text);
+        if (tokens.length !== 1) throw new ReferenceDocxError("A native reference formatting anchor was lost or duplicated");
+        const token = value.attrs["data-result-format-token"], text = tokens[0], offset = text.data.indexOf(token);
+        if (text.data.indexOf(token,offset+token.length) !== -1) throw new ReferenceDocxError("A native reference formatting anchor was duplicated");
+        const result = offset ? text.splitText(offset) : text; result.splitText(token.length); result.replaceWith(span); anchors[0].remove();
+      } else anchors[0].replaceWith(span);
     }
     for (const link of Array.from(parsed.querySelectorAll<HTMLAnchorElement>('a[href^="#"]'))) {
       const ids = targetNames.get((link.getAttribute("href") || "").slice(1).toLowerCase()) || [];

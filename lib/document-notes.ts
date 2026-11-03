@@ -1,3 +1,4 @@
+import { nativeKerningValue } from "./native-kerning";
 /** Canonical note records, owner identities and derived ordinary-block endnotes.
  * Deliberately independent of document-model to keep migration imports acyclic. */
 import { Fragment, Slice, type Mark, type Node as PMNode, type Schema } from "prosemirror-model";
@@ -42,8 +43,8 @@ export function validateNotePolicy(value: unknown): asserts value is NotePolicy 
   if ((value.footnote as NotePolicy["footnote"]).placement !== "pageBottom" || !["documentEnd", "sectionEnd"].includes((value.endnote as NotePolicy["endnote"]).placement)) fail("invalid-note-policy", "Unsupported note placement");
 }
 const allowedNodes = new Set(["doc", "paragraph", "bullet_list", "ordered_list", "list_item", "text", "hard_break", "tab"]);
-const allowedMarks = new Set(["strong", "em", "underline", "strikethrough", "superscript", "subscript", "textColor", "bgColor", "fontSize", "fontFamily", "link", "code"]);
-const forbiddenAttrs = new Set(["sectionEndId", "targetId", "targetKind", "captionLabel", "toc", "tocOwnerId", "tocTargetId", "noteId", "noteOwnerId", "noteBlock", "noteScope", "noteSectionId", "fieldId", "documentModel", "layout"]);
+const allowedMarks = new Set(["strong", "em", "underline", "strikethrough", "superscript", "subscript", "textColor", "bgColor", "fontSize", "fontFamily", "nativeKerning", "link", "code"]);
+const forbiddenAttrs = new Set(["sectionEndId", "targetId", "targetKind", "captionLabel", "toc", "tocOwnerId", "tocTargetId", "tocSourceIndent", "noteId", "noteOwnerId", "noteBlock", "noteScope", "noteSectionId", "fieldId", "documentModel", "layout"]);
 /** Validate source JSON before nodeFromJSON can silently discard unknown attrs. */
 function validateBodyJSON(value: unknown, schema?: Schema, root = true): void {
   if (!plain(value) || typeof value.type !== "string" || !allowedNodes.has(value.type) || (root ? value.type !== "doc" : value.type === "doc")) fail("unsupported-note-body", "Unsupported note body node");
@@ -62,6 +63,7 @@ function validateBodyJSON(value: unknown, schema?: Schema, root = true): void {
       if (!plain(mark) || typeof mark.type !== "string" || !allowedMarks.has(mark.type) || (schema && !schema.marks[mark.type])) fail("unsupported-note-body", "Unsupported note text mark");
       if (Object.keys(mark).some(key => !["type", "attrs"].includes(key)) || mark.attrs !== undefined && !plain(mark.attrs)) fail("invalid-note-body", "Invalid note mark data");
       if (schema && plain(mark.attrs) && Object.keys(mark.attrs).some(key => !Object.hasOwn(schema.marks[String(mark.type)].spec.attrs || {}, key))) fail("unsupported-note-body", "Unknown note mark attribute");
+      if (mark.type === "nativeKerning" && (!plain(mark.attrs) || typeof mark.attrs.threshold !== "number" || nativeKerningValue(mark.attrs.threshold) === undefined)) fail("invalid-note-body", "Invalid native note kerning threshold");
       if (mark.type === "link") {
         const href = plain(mark.attrs) ? mark.attrs.href : undefined;
         if (typeof href !== "string" || !/^(?:https?:|mailto:|tel:)/i.test(href)) fail("unsupported-note-body", "Only external note links are supported");

@@ -1,0 +1,13 @@
+{
+  "reference_application": "Word Online",
+  "capture_method": "Upload source in Word Online; File > Export > Download as PDF > Download in UI",
+  "source": "baseline-11.docx",
+  "source_sha256": "8bdcac9cc504b05cae46328b75cd46043f9dc3f60ce66aa08744a10346d78c5c",
+  "pdf": "baseline-11.word.pdf",
+  "pdf_sha256": "10c2198c796e8450c918a5de631b64413c63424ad07461281c244067055dcb29",
+  "captured_at_utc": "2026-11-03T23:41:37.667886+00:00",
+  "capture_timestamp_basis": "download file modification time",
+  "fonts": "unknown",
+  "paper_settings": "source document settings",
+  "note": "Word-only unsupported separator text baseline control"
+}

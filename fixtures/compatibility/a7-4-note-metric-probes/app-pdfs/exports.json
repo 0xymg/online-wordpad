@@ -1,0 +1,80 @@
+{
+  "schema_version": 1,
+  "complete": true,
+  "base_url": "http://localhost:3120",
+  "browser_version": "156.0.8078.4",
+  "viewport": {
+    "width": 1450,
+    "height": 1050
+  },
+  "application_revision": null,
+  "selected_cases": [
+    "base-12",
+    "base-20"
+  ],
+  "captured_at": "2026-11-03T23:53:05.637Z",
+  "results": [
+    {
+      "id": "base-12",
+      "source_sha256": "123c75b2ab73d120b24f4417700becb9cd403fee530ae8582f3207a1ddf095f0",
+      "status": "EXPORTED",
+      "base_url": "http://localhost:3120",
+      "captured_at": "2026-11-03T23:52:56.273Z",
+      "geometry": {
+        "separator": {
+          "top": 411.671875,
+          "bottom": 430.0625,
+          "height": 18.390625
+        },
+        "rule": {
+          "top": 421.84375,
+          "bottom": 422.5,
+          "height": 0.65625
+        },
+        "baseline": {
+          "top": 425.671875,
+          "bottom": 425.671875,
+          "height": 0
+        },
+        "font": "",
+        "lineHeight": "18.3984px",
+        "fontFamily": "Arial, sans-serif",
+        "fontSize": "16px"
+      },
+      "pdf_sha256": "b6ac483d9784ff27cd7bdfedd9d2f43414b1c3877fd4257e22083196a9078233",
+      "pdf_bytes": 63406,
+      "page_errors": []
+    },
+    {
+      "id": "base-20",
+      "source_sha256": "07427de99206390698382a8cf36c48b103f9a387608f455e2fc4f7076988f84d",
+      "status": "EXPORTED",
+      "base_url": "http://localhost:3120",
+      "captured_at": "2026-11-03T23:53:00.984Z",
+      "geometry": {
+        "separator": {
+          "top": 425.78125,
+          "bottom": 456.4375,
+          "height": 30.65625
+        },
+        "rule": {
+          "top": 443.53125,
+          "bottom": 444.859375,
+          "height": 1.328125
+        },
+        "baseline": {
+          "top": 449.78125,
+          "bottom": 449.78125,
+          "height": 0
+        },
+        "font": "",
+        "lineHeight": "30.6641px",
+        "fontFamily": "Arial, sans-serif",
+        "fontSize": "26.6667px"
+      },
+      "pdf_sha256": "6b6a01288d8bafc93648daaa97b4c2946089acd44b92ca93aae142859dc4111f",
+      "pdf_bytes": 79854,
+      "page_errors": []
+    }
+  ]
+}

@@ -1,3 +1,4 @@
+import { nativeKerningMark } from "@/lib/native-kerning";
 import { bibliographyParagraphAttrs, parseBibliographyParagraphAttrs, bibliographyParagraphDOM, citationFieldNodeSpec } from "@/lib/document-bibliography";
 // ── Schema ────────────────────────────────────────────────────────────────
 // The ProseMirror schema lives in its own module so lightweight consumers
@@ -320,6 +321,7 @@ export const mySchema = new Schema({
       }}],
       toDOM: (mark: Mark) => ["a", { href: mark.attrs.href, title: mark.attrs.title, rel: "noopener noreferrer" }, 0],
     },
+    nativeKerning: nativeKerningMark,
   }),
 });
 

@@ -11,9 +11,9 @@ import { defaultDocumentLayout } from "./document-layout";
 import { getDocumentModel } from "./document-model";
 import { collectNoteIndex } from "./document-notes";
 import { collectReferenceIndex } from "./document-references";
-import { referencePageAtPos, type ReferencePage } from "./reference-layout";
 import { preparePrintLayout } from "./print-layout";
 import { printPageStyle } from "./print-style";
+import { printedLinkTargets, type PdfLinkTarget } from "./pdf-link-targets";
 import type { PdfExportOptions } from "./pdf-export";
 const fontBytes=new Map<string,Promise<ArrayBuffer>>();
 function fontFile(css:CSSStyleDeclaration,text:string){
@@ -71,28 +71,28 @@ async function hiddenText(page:PDFPage,sheet:HTMLElement,fonts:Map<string,Promis
 
 }
 /** Internal reference links are PDF GoTo actions, never website fragment URLs. */
-function addPdfLinks(pdf: PDFDocument, sheets: HTMLElement[], targets: Map<string, ReferencePage>) {
+function addPdfLinks(pdf: PDFDocument, sheets: HTMLElement[], targets: Map<string, PdfLinkTarget>) {
  const pages = pdf.getPages();
  sheets.forEach((sheet, index) => {
   const page = pages[index], box = sheet.getBoundingClientRect();
   for (const element of sheet.querySelectorAll<HTMLElement>('a[href], [data-edtr-reference], [data-edtr-note-reference], [data-note-owner-id][data-note-block="0"] sup')) {
    if (element.hasAttribute('data-edtr-reference') && element.closest('a[href]')) continue;
-   let target: ReferencePage | undefined, uri: string | undefined;
+   let target: PdfLinkTarget | undefined, uri: string | undefined;
    if (element.hasAttribute('data-edtr-note-reference')) {
     target = targets.get(`note-body:${element.getAttribute('data-note-id')}`);
-    if (!target) continue;
+    if (!target) throw new Error('PDF note body target is not visible');
    } else if (element.hasAttribute('data-note-backlink')) {
     target = targets.get(`note-owner:${element.getAttribute('data-note-backlink')}`);
-    if (!target) continue;
+    if (!target) throw new Error('PDF note owner target is not visible');
    } else if (element.tagName === 'SUP' && element.closest('[data-note-owner-id]')) {
     const block = element.closest('[data-note-owner-id]')!;
     if (block.querySelector('sup') !== element) continue;
     target = targets.get(`note-owner:${block.getAttribute('data-note-owner-id')}`);
-    if (!target) continue;
+    if (!target) throw new Error('PDF note owner target is not visible');
    } else if (element.hasAttribute('data-edtr-reference')) {
     if (element.dataset.status !== 'ok') continue;
     target = targets.get(element.getAttribute('data-reference-target') || '');
-    if (!target) continue;
+    if (!target) throw new Error('PDF reference target is not visible');
    } else {
     const href = element.getAttribute('href') || '';
     if (href.startsWith('#')) {
@@ -107,7 +107,7 @@ function addPdfLinks(pdf: PDFDocument, sheets: HTMLElement[], targets: Map<strin
     const left = Math.max(rect.left, box.left), right = Math.min(rect.right, box.right);
     const top = Math.max(rect.top, box.top), bottom = Math.min(rect.bottom, box.bottom);
     if (right - left < .1 || bottom - top < .1) continue;
-    const action = target ? { S: PDFName.of('GoTo'), D: [pages[target.pageIndex].ref, PDFName.of('XYZ'), target.x * .75, pages[target.pageIndex].getHeight() - target.y * .75, null] } : { S: PDFName.of('URI'), URI: PDFString.of(uri!) };
+    const action = target ? { S: PDFName.of('GoTo'), D: [pages[target.pageIndex].ref, PDFName.of('XYZ'), target.x * .75, pages[target.pageIndex].getHeight() - target.y * .75, 0] } : { S: PDFName.of('URI'), URI: PDFString.of(uri!) };
     const annotation = pdf.context.obj({ Type: PDFName.of('Annot'), Subtype: PDFName.of('Link'), Rect: [(left-box.left)*.75, page.getHeight()-(bottom-box.top)*.75, (right-box.left)*.75, page.getHeight()-(top-box.top)*.75], Border: [0,0,0], A: action });
     page.node.addAnnot(pdf.context.register(annotation));
    }
@@ -132,14 +132,11 @@ export async function viewToPdfBlob(view:EditorView,opts:PdfExportOptions):Promi
  getDocumentModel(view.state.doc);
  const host=document.createElement('div');host.className='edtr-print-root';
  await preparePrintLayout(view,host,opts.headerFooter?{title:opts.title,date:new Date().toLocaleDateString()}:undefined);
- const index = collectReferenceIndex(view.state.doc), targets = new Map<string, ReferencePage>();
- for (const target of index.targets) if (index.byId.get(target.id)?.length === 1) targets.set(target.id, referencePageAtPos(view, target.pos));
- for (const note of collectNoteIndex(view.state.doc).notes) targets.set(`note-owner:${note.noteId}`, referencePageAtPos(view, note.pos));
- view.state.doc.forEach((node, pos) => {
-  if (node.attrs.noteOwnerId && node.attrs.noteBlock === 0) targets.set(`note-body:${node.attrs.noteOwnerId}`, referencePageAtPos(view, pos));
- });
- const { getFootnoteTargets } = await import("./note-single-layout");
- for (const note of getFootnoteTargets(view) || []) targets.set(`note-body:${note.noteId}`, { ...note.note, label: "" });
+ const index = collectReferenceIndex(view.state.doc), targets = new Set<string>();
+ for (const target of index.targets) if (index.byId.get(target.id)?.length === 1) targets.add(target.id);
+ for (const note of collectNoteIndex(view.state.doc).notes) {
+  targets.add(`note-owner:${note.noteId}`); targets.add(`note-body:${note.noteId}`);
+ }
  // html-to-image discovers fonts using instanceof HTMLElement. Its font scan
  // cannot descend into another window's elements, so collect from a main-window
  // clone before capturing the isolated, light-mode page artwork.
@@ -164,7 +161,7 @@ export async function viewToPdfBlob(view:EditorView,opts:PdfExportOptions):Promi
    const image=await pdf.embedPng(canvas.toDataURL('image/png'));page.drawImage(image,{x:0,y:0,width,height});canvas.width=0;canvas.height=0;
    await hiddenText(page,sheet,fonts);
   }
-  addPdfLinks(pdf, sheets, targets);
+  addPdfLinks(pdf, sheets, printedLinkTargets(sheets, targets));
   const bytes=await pdf.save();return new Blob([new Uint8Array(bytes).buffer],{type:'application/pdf'});
  }finally{frame.remove();}
 }

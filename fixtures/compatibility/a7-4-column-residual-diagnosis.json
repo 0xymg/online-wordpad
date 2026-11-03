@@ -1,0 +1,2996 @@
+{
+  "schema_version": 1,
+  "method": "Unrotated PDF text-matrix baseline from page top, independent of font search bounds; 1 pt = 4/3 CSS px.",
+  "cases": [
+    {
+      "id": "columns",
+      "reference_pdf": "fixtures/compatibility/references/columns.pdf",
+      "app_pdf": "fixtures/compatibility/a7-3-final-app-pdfs/columns.pdf",
+      "source_sha256": "05c6050e5be6317fdae35036cfdf8509b58a44f7c85e9525d3b122f15fc7cc0b",
+      "reference_sha256": "78ba2e0d7153dd7a51dae32f1566691e690e234b30ff59486669a27f09f6e263",
+      "app_sha256": "f66abdbe9c852cdc36843e699152f345c35de80fb68164d13c0f94e13dfa6188",
+      "checks": {
+        "provenance_valid": true,
+        "page_count_equal": true,
+        "media_boxes_within_0_75pt": true,
+        "all_expanded_markers_once": true,
+        "expanded_marker_regions_equal": true,
+        "all_expanded_anchors_within_1_css_px": false
+      },
+      "content_checks": {
+        "token_multisets_equal": true,
+        "expected_markers_once": true,
+        "link_count_equal": true,
+        "link_destination_geometry_equal": true
+      },
+      "same_region_max_absolute_delta_css_px": {
+        "x": 0.173,
+        "y": 1.436
+      },
+      "paragraph_pitch": {
+        "comparable_pairs": 24,
+        "mean_word_css_px": 52.142,
+        "mean_app_css_px": 52.118,
+        "pairs": [
+          {
+            "from": "COLUMN_00",
+            "to": "COLUMN_01",
+            "word_css_px": 52.373,
+            "app_css_px": 52.125,
+            "delta_css_px": -0.248
+          },
+          {
+            "from": "COLUMN_01",
+            "to": "COLUMN_02",
+            "word_css_px": 52.0,
+            "app_css_px": 52.109,
+            "delta_css_px": 0.109
+          },
+          {
+            "from": "COLUMN_02",
+            "to": "COLUMN_03",
+            "word_css_px": 52.027,
+            "app_css_px": 52.125,
+            "delta_css_px": 0.098
+          },
+          {
+            "from": "COLUMN_03",
+            "to": "COLUMN_04",
+            "word_css_px": 52.333,
+            "app_css_px": 52.124,
+            "delta_css_px": -0.209
+          },
+          {
+            "from": "COLUMN_04",
+            "to": "COLUMN_05",
+            "word_css_px": 52.027,
+            "app_css_px": 52.111,
+            "delta_css_px": 0.084
+          },
+          {
+            "from": "COLUMN_05",
+            "to": "COLUMN_06",
+            "word_css_px": 52.0,
+            "app_css_px": 52.124,
+            "delta_css_px": 0.124
+          },
+          {
+            "from": "COLUMN_06",
+            "to": "COLUMN_07",
+            "word_css_px": 52.373,
+            "app_css_px": 52.109,
+            "delta_css_px": -0.264
+          },
+          {
+            "from": "COLUMN_07",
+            "to": "COLUMN_08",
+            "word_css_px": 52.0,
+            "app_css_px": 52.125,
+            "delta_css_px": 0.125
+          },
+          {
+            "from": "COLUMN_08",
+            "to": "COLUMN_09",
+            "word_css_px": 52.36,
+            "app_css_px": 52.125,
+            "delta_css_px": -0.235
+          },
+          {
+            "from": "COLUMN_09",
+            "to": "COLUMN_10",
+            "word_css_px": 52.0,
+            "app_css_px": 52.109,
+            "delta_css_px": 0.109
+          },
+          {
+            "from": "COLUMN_10",
+            "to": "COLUMN_11",
+            "word_css_px": 52.04,
+            "app_css_px": 52.125,
+            "delta_css_px": 0.085
+          },
+          {
+            "from": "COLUMN_11",
+            "to": "COLUMN_12",
+            "word_css_px": 52.333,
+            "app_css_px": 52.109,
+            "delta_css_px": -0.224
+          },
+          {
+            "from": "COLUMN_12",
+            "to": "COLUMN_13",
+            "word_css_px": 52.027,
+            "app_css_px": 52.124,
+            "delta_css_px": 0.097
+          },
+          {
+            "from": "COLUMN_14",
+            "to": "COLUMN_15",
+            "word_css_px": 52.027,
+            "app_css_px": 52.109,
+            "delta_css_px": 0.082
+          },
+          {
+            "from": "COLUMN_15",
+            "to": "COLUMN_16",
+            "word_css_px": 52.333,
+            "app_css_px": 52.125,
+            "delta_css_px": -0.208
+          },
+          {
+            "from": "COLUMN_16",
+            "to": "COLUMN_17",
+            "word_css_px": 52.04,
+            "app_css_px": 52.109,
+            "delta_css_px": 0.069
+          },
+          {
+            "from": "COLUMN_17",
+            "to": "COLUMN_18",
+            "word_css_px": 52.0,
+            "app_css_px": 52.125,
+            "delta_css_px": 0.125
+          },
+          {
+            "from": "COLUMN_18",
+            "to": "COLUMN_19",
+            "word_css_px": 52.36,
+            "app_css_px": 52.124,
+            "delta_css_px": -0.236
+          },
+          {
+            "from": "COLUMN_19",
+            "to": "COLUMN_20",
+            "word_css_px": 52.0,
+            "app_css_px": 52.109,
+            "delta_css_px": 0.109
+          },
+          {
+            "from": "COLUMN_20",
+            "to": "COLUMN_21",
+            "word_css_px": 52.36,
+            "app_css_px": 52.125,
+            "delta_css_px": -0.235
+          },
+          {
+            "from": "COLUMN_21",
+            "to": "COLUMN_22",
+            "word_css_px": 52.0,
+            "app_css_px": 52.109,
+            "delta_css_px": 0.109
+          },
+          {
+            "from": "COLUMN_22",
+            "to": "COLUMN_23",
+            "word_css_px": 52.04,
+            "app_css_px": 52.125,
+            "delta_css_px": 0.085
+          },
+          {
+            "from": "COLUMN_23",
+            "to": "COLUMN_24",
+            "word_css_px": 52.333,
+            "app_css_px": 52.125,
+            "delta_css_px": -0.208
+          },
+          {
+            "from": "COLUMN_24",
+            "to": "COLUMN_25",
+            "word_css_px": 52.027,
+            "app_css_px": 52.109,
+            "delta_css_px": 0.082
+          }
+        ]
+      },
+      "relative_table_geometry": {},
+      "region_baseline_summary": {
+        "1:0": {
+          "first_marker": "COLUMN_00",
+          "last_marker": "COLUMN_13",
+          "marker_count": 14,
+          "first_baseline_delta_css_px": -1.019792,
+          "last_baseline_delta_css_px": -1.36625,
+          "first_to_last_baseline_drift_css_px": -0.346458
+        },
+        "1:1": {
+          "first_marker": "COLUMN_14",
+          "last_marker": "COLUMN_25",
+          "marker_count": 12,
+          "first_baseline_delta_css_px": -0.706667,
+          "last_baseline_delta_css_px": -0.929792,
+          "first_to_last_baseline_drift_css_px": -0.223125
+        }
+      },
+      "anchors": {
+        "COLUMN_00": {
+          "word": {
+            "page": 1,
+            "x_pt": 90.05,
+            "baseline_top_pt": 162.04999999999995,
+            "search_top_pt": 153.3599999999999,
+            "font_names": [
+              "BCDFEE+ArialMT"
+            ]
+          },
+          "app": {
+            "page": 1,
+            "x_pt": 90.0,
+            "baseline_top_pt": 161.28515625,
+            "search_top_pt": 152.6161912353516,
+            "font_names": [
+              "LiberationSans-4899"
+            ]
+          },
+          "same_region": true,
+          "baseline_delta_css_px": -1.019792,
+          "search_top_delta_css_px": -0.992,
+          "search_bounds_contribution_css_px": 0.027792
+        },
+        "COLUMN_01": {
+          "word": {
+            "page": 1,
+            "x_pt": 90.05,
+            "baseline_top_pt": 201.33000000000004,
+            "search_top_pt": 192.64,
+            "font_names": [
+              "BCDFEE+ArialMT"
+            ]
+          },
+          "app": {
+            "page": 1,
+            "x_pt": 90.0,
+            "baseline_top_pt": 200.37890625,
+            "search_top_pt": 191.7099412353516,
+            "font_names": [
+              "LiberationSans-4899"
+            ]
+          },
+          "same_region": true,
+          "baseline_delta_css_px": -1.268125,
+          "search_top_delta_css_px": -1.24,
+          "search_bounds_contribution_css_px": 0.028125
+        },
+        "COLUMN_02": {
+          "word": {
+            "page": 1,
+            "x_pt": 90.05,
+            "baseline_top_pt": 240.33000000000004,
+            "search_top_pt": 231.64,
+            "font_names": [
+              "BCDFEE+ArialMT"
+            ]
+          },
+          "app": {
+            "page": 1,
+            "x_pt": 90.0,
+            "baseline_top_pt": 239.4609375,
+            "search_top_pt": 230.7919724853516,
+            "font_names": [
+              "LiberationSans-4899"
+            ]
+          },
+          "same_region": true,
+          "baseline_delta_css_px": -1.15875,
+          "search_top_delta_css_px": -1.131,
+          "search_bounds_contribution_css_px": 0.02775
+        },
+        "COLUMN_03": {
+          "word": {
+            "page": 1,
+            "x_pt": 90.05,
+            "baseline_top_pt": 279.35,
+            "search_top_pt": 270.65999999999997,
+            "font_names": [
+              "BCDFEE+ArialMT"
+            ]
+          },
+          "app": {
+            "page": 1,
+            "x_pt": 90.0,
+            "baseline_top_pt": 278.5546875,
+            "search_top_pt": 269.8857224853516,
+            "font_names": [
+              "LiberationSans-4899"
+            ]
+          },
+          "same_region": true,
+          "baseline_delta_css_px": -1.060417,
+          "search_top_delta_css_px": -1.032,
+          "search_bounds_contribution_css_px": 0.028417
+        },
+        "COLUMN_04": {
+          "word": {
+            "page": 1,
+            "x_pt": 90.05,
+            "baseline_top_pt": 318.6,
+            "search_top_pt": 309.91,
+            "font_names": [
+              "BCDFEE+ArialMT"
+            ]
+          },
+          "app": {
+            "page": 1,
+            "x_pt": 90.0,
+            "baseline_top_pt": 317.6484375,
+            "search_top_pt": 308.97947248535155,
+            "font_names": [
+              "LiberationSans-4899"
+            ]
+          },
+          "same_region": true,
+          "baseline_delta_css_px": -1.26875,
+          "search_top_delta_css_px": -1.241,
+          "search_bounds_contribution_css_px": 0.02775
+        },
+        "COLUMN_05": {
+          "word": {
+            "page": 1,
+            "x_pt": 90.05,
+            "baseline_top_pt": 357.62,
+            "search_top_pt": 348.93,
+            "font_names": [
+              "BCDFEE+ArialMT"
+            ]
+          },
+          "app": {
+            "page": 1,
+            "x_pt": 90.0,
+            "baseline_top_pt": 356.73046875,
+            "search_top_pt": 348.06150373535155,
+            "font_names": [
+              "LiberationSans-4899"
+            ]
+          },
+          "same_region": true,
+          "baseline_delta_css_px": -1.186042,
+          "search_top_delta_css_px": -1.157,
+          "search_bounds_contribution_css_px": 0.029042
+        },
+        "COLUMN_06": {
+          "word": {
+            "page": 1,
+            "x_pt": 90.05,
+            "baseline_top_pt": 396.62,
+            "search_top_pt": 387.93,
+            "font_names": [
+              "BCDFEE+ArialMT"
+            ]
+          },
+          "app": {
+            "page": 1,
+            "x_pt": 90.0,
+            "baseline_top_pt": 395.82421875,
+            "search_top_pt": 387.15525373535155,
+            "font_names": [
+              "LiberationSans-4899"
+            ]
+          },
+          "same_region": true,
+          "baseline_delta_css_px": -1.061042,
+          "search_top_delta_css_px": -1.033,
+          "search_bounds_contribution_css_px": 0.028042
+        },
+        "COLUMN_07": {
+          "word": {
+            "page": 1,
+            "x_pt": 90.05,
+            "baseline_top_pt": 435.9,
+            "search_top_pt": 427.21,
+            "font_names": [
+              "BCDFEE+ArialMT"
+            ]
+          },
+          "app": {
+            "page": 1,
+            "x_pt": 90.0,
+            "baseline_top_pt": 434.90625,
+            "search_top_pt": 426.23728498535155,
+            "font_names": [
+              "LiberationSans-4899"
+            ]
+          },
+          "same_region": true,
+          "baseline_delta_css_px": -1.325,
+          "search_top_delta_css_px": -1.297,
+          "search_bounds_contribution_css_px": 0.028
+        },
+        "COLUMN_08": {
+          "word": {
+            "page": 1,
+            "x_pt": 90.05,
+            "baseline_top_pt": 474.9,
+            "search_top_pt": 466.21,
+            "font_names": [
+              "BCDFEE+ArialMT"
+            ]
+          },
+          "app": {
+            "page": 1,
+            "x_pt": 90.0,
+            "baseline_top_pt": 474.0,
+            "search_top_pt": 465.33103498535155,
+            "font_names": [
+              "LiberationSans-4899"
+            ]
+          },
+          "same_region": true,
+          "baseline_delta_css_px": -1.2,
+          "search_top_delta_css_px": -1.172,
+          "search_bounds_contribution_css_px": 0.028
+        },
+        "COLUMN_09": {
+          "word": {
+            "page": 1,
+            "x_pt": 90.05,
+            "baseline_top_pt": 514.1700000000001,
+            "search_top_pt": 505.48,
+            "font_names": [
+              "BCDFEE+ArialMT"
+            ]
+          },
+          "app": {
+            "page": 1,
+            "x_pt": 90.0,
+            "baseline_top_pt": 513.09375,
+            "search_top_pt": 504.42478498535155,
+            "font_names": [
+              "LiberationSans-4899"
+            ]
+          },
+          "same_region": true,
+          "baseline_delta_css_px": -1.435,
+          "search_top_delta_css_px": -1.407,
+          "search_bounds_contribution_css_px": 0.028
+        },
+        "COLUMN_10": {
+          "word": {
+            "page": 1,
+            "x_pt": 90.05,
+            "baseline_top_pt": 553.17,
+            "search_top_pt": 544.48,
+            "font_names": [
+              "BCDFEE+ArialMT"
+            ]
+          },
+          "app": {
+            "page": 1,
+            "x_pt": 90.0,
+            "baseline_top_pt": 552.17578125,
+            "search_top_pt": 543.5068162353516,
+            "font_names": [
+              "LiberationSans-4899"
+            ]
+          },
+          "same_region": true,
+          "baseline_delta_css_px": -1.325625,
+          "search_top_delta_css_px": -1.297,
+          "search_bounds_contribution_css_px": 0.028625
+        },
+        "COLUMN_11": {
+          "word": {
+            "page": 1,
+            "x_pt": 90.05,
+            "baseline_top_pt": 592.2,
+            "search_top_pt": 583.51,
+            "font_names": [
+              "BCDFEE+ArialMT"
+            ]
+          },
+          "app": {
+            "page": 1,
+            "x_pt": 90.0,
+            "baseline_top_pt": 591.26953125,
+            "search_top_pt": 582.6005662353516,
+            "font_names": [
+              "LiberationSans-4899"
+            ]
+          },
+          "same_region": true,
+          "baseline_delta_css_px": -1.240625,
+          "search_top_delta_css_px": -1.212,
+          "search_bounds_contribution_css_px": 0.028625
+        },
+        "COLUMN_12": {
+          "word": {
+            "page": 1,
+            "x_pt": 90.05,
+            "baseline_top_pt": 631.45,
+            "search_top_pt": 622.76,
+            "font_names": [
+              "BCDFEE+ArialMT"
+            ]
+          },
+          "app": {
+            "page": 1,
+            "x_pt": 90.0,
+            "baseline_top_pt": 630.3515625,
+            "search_top_pt": 621.6825974853516,
+            "font_names": [
+              "LiberationSans-4899"
+            ]
+          },
+          "same_region": true,
+          "baseline_delta_css_px": -1.464583,
+          "search_top_delta_css_px": -1.436,
+          "search_bounds_contribution_css_px": 0.028583
+        },
+        "COLUMN_13": {
+          "word": {
+            "page": 1,
+            "x_pt": 90.05,
+            "baseline_top_pt": 670.47,
+            "search_top_pt": 661.78,
+            "font_names": [
+              "BCDFEE+ArialMT"
+            ]
+          },
+          "app": {
+            "page": 1,
+            "x_pt": 90.0,
+            "baseline_top_pt": 669.4453125,
+            "search_top_pt": 660.7763474853516,
+            "font_names": [
+              "LiberationSans-4899"
+            ]
+          },
+          "same_region": true,
+          "baseline_delta_css_px": -1.36625,
+          "search_top_delta_css_px": -1.339,
+          "search_bounds_contribution_css_px": 0.02725
+        },
+        "COLUMN_14": {
+          "word": {
+            "page": 1,
+            "x_pt": 324.13,
+            "baseline_top_pt": 82.27999999999997,
+            "search_top_pt": 73.58999999999992,
+            "font_names": [
+              "BCDFEE+ArialMT"
+            ]
+          },
+          "app": {
+            "page": 1,
+            "x_pt": 324.0,
+            "baseline_top_pt": 81.75,
+            "search_top_pt": 73.08103498535161,
+            "font_names": [
+              "LiberationSans-4899"
+            ]
+          },
+          "same_region": true,
+          "baseline_delta_css_px": -0.706667,
+          "search_top_delta_css_px": -0.679,
+          "search_bounds_contribution_css_px": 0.027667
+        },
+        "COLUMN_15": {
+          "word": {
+            "page": 1,
+            "x_pt": 324.13,
+            "baseline_top_pt": 121.29999999999995,
+            "search_top_pt": 112.6099999999999,
+            "font_names": [
+              "BCDFEE+ArialMT"
+            ]
+          },
+          "app": {
+            "page": 1,
+            "x_pt": 324.0,
+            "baseline_top_pt": 120.83203125,
+            "search_top_pt": 112.16306623535161,
+            "font_names": [
+              "LiberationSans-4899"
+            ]
+          },
+          "same_region": true,
+          "baseline_delta_css_px": -0.623958,
+          "search_top_delta_css_px": -0.596,
+          "search_bounds_contribution_css_px": 0.027958
+        },
+        "COLUMN_16": {
+          "word": {
+            "page": 1,
+            "x_pt": 324.13,
+            "baseline_top_pt": 160.54999999999995,
+            "search_top_pt": 151.8599999999999,
+            "font_names": [
+              "BCDFEE+ArialMT"
+            ]
+          },
+          "app": {
+            "page": 1,
+            "x_pt": 324.0,
+            "baseline_top_pt": 159.92578125,
+            "search_top_pt": 151.2568162353516,
+            "font_names": [
+              "LiberationSans-4899"
+            ]
+          },
+          "same_region": true,
+          "baseline_delta_css_px": -0.832292,
+          "search_top_delta_css_px": -0.804,
+          "search_bounds_contribution_css_px": 0.028292
+        },
+        "COLUMN_17": {
+          "word": {
+            "page": 1,
+            "x_pt": 324.13,
+            "baseline_top_pt": 199.58000000000004,
+            "search_top_pt": 190.89,
+            "font_names": [
+              "BCDFEE+ArialMT"
+            ]
+          },
+          "app": {
+            "page": 1,
+            "x_pt": 324.0,
+            "baseline_top_pt": 199.0078125,
+            "search_top_pt": 190.3388474853516,
+            "font_names": [
+              "LiberationSans-4899"
+            ]
+          },
+          "same_region": true,
+          "baseline_delta_css_px": -0.762917,
+          "search_top_delta_css_px": -0.735,
+          "search_bounds_contribution_css_px": 0.027917
+        },
+        "COLUMN_18": {
+          "word": {
+            "page": 1,
+            "x_pt": 324.13,
+            "baseline_top_pt": 238.58000000000004,
+            "search_top_pt": 229.89,
+            "font_names": [
+              "BCDFEE+ArialMT"
+            ]
+          },
+          "app": {
+            "page": 1,
+            "x_pt": 324.0,
+            "baseline_top_pt": 238.1015625,
+            "search_top_pt": 229.4325974853516,
+            "font_names": [
+              "LiberationSans-4899"
+            ]
+          },
+          "same_region": true,
+          "baseline_delta_css_px": -0.637917,
+          "search_top_delta_css_px": -0.609,
+          "search_bounds_contribution_css_px": 0.028917
+        },
+        "COLUMN_19": {
+          "word": {
+            "page": 1,
+            "x_pt": 324.13,
+            "baseline_top_pt": 277.85,
+            "search_top_pt": 269.15999999999997,
+            "font_names": [
+              "BCDFEE+ArialMT"
+            ]
+          },
+          "app": {
+            "page": 1,
+            "x_pt": 324.0,
+            "baseline_top_pt": 277.1953125,
+            "search_top_pt": 268.5263474853516,
+            "font_names": [
+              "LiberationSans-4899"
+            ]
+          },
+          "same_region": true,
+          "baseline_delta_css_px": -0.872917,
+          "search_top_delta_css_px": -0.845,
+          "search_bounds_contribution_css_px": 0.027917
+        },
+        "COLUMN_20": {
+          "word": {
+            "page": 1,
+            "x_pt": 324.13,
+            "baseline_top_pt": 316.85,
+            "search_top_pt": 308.16,
+            "font_names": [
+              "BCDFEE+ArialMT"
+            ]
+          },
+          "app": {
+            "page": 1,
+            "x_pt": 324.0,
+            "baseline_top_pt": 316.27734375,
+            "search_top_pt": 307.60837873535155,
+            "font_names": [
+              "LiberationSans-4899"
+            ]
+          },
+          "same_region": true,
+          "baseline_delta_css_px": -0.763542,
+          "search_top_delta_css_px": -0.736,
+          "search_bounds_contribution_css_px": 0.027542
+        },
+        "COLUMN_21": {
+          "word": {
+            "page": 1,
+            "x_pt": 324.13,
+            "baseline_top_pt": 356.12,
+            "search_top_pt": 347.43,
+            "font_names": [
+              "BCDFEE+ArialMT"
+            ]
+          },
+          "app": {
+            "page": 1,
+            "x_pt": 324.0,
+            "baseline_top_pt": 355.37109375,
+            "search_top_pt": 346.70212873535155,
+            "font_names": [
+              "LiberationSans-4899"
+            ]
+          },
+          "same_region": true,
+          "baseline_delta_css_px": -0.998542,
+          "search_top_delta_css_px": -0.971,
+          "search_bounds_contribution_css_px": 0.027542
+        },
+        "COLUMN_22": {
+          "word": {
+            "page": 1,
+            "x_pt": 324.13,
+            "baseline_top_pt": 395.12,
+            "search_top_pt": 386.43,
+            "font_names": [
+              "BCDFEE+ArialMT"
+            ]
+          },
+          "app": {
+            "page": 1,
+            "x_pt": 324.0,
+            "baseline_top_pt": 394.453125,
+            "search_top_pt": 385.78415998535155,
+            "font_names": [
+              "LiberationSans-4899"
+            ]
+          },
+          "same_region": true,
+          "baseline_delta_css_px": -0.889167,
+          "search_top_delta_css_px": -0.861,
+          "search_bounds_contribution_css_px": 0.028167
+        },
+        "COLUMN_23": {
+          "word": {
+            "page": 1,
+            "x_pt": 324.13,
+            "baseline_top_pt": 434.15,
+            "search_top_pt": 425.46,
+            "font_names": [
+              "BCDFEE+ArialMT"
+            ]
+          },
+          "app": {
+            "page": 1,
+            "x_pt": 324.0,
+            "baseline_top_pt": 433.546875,
+            "search_top_pt": 424.87790998535155,
+            "font_names": [
+              "LiberationSans-4899"
+            ]
+          },
+          "same_region": true,
+          "baseline_delta_css_px": -0.804167,
+          "search_top_delta_css_px": -0.776,
+          "search_bounds_contribution_css_px": 0.028167
+        },
+        "COLUMN_24": {
+          "word": {
+            "page": 1,
+            "x_pt": 324.13,
+            "baseline_top_pt": 473.4,
+            "search_top_pt": 464.71,
+            "font_names": [
+              "BCDFEE+ArialMT"
+            ]
+          },
+          "app": {
+            "page": 1,
+            "x_pt": 324.0,
+            "baseline_top_pt": 472.640625,
+            "search_top_pt": 463.97165998535155,
+            "font_names": [
+              "LiberationSans-4899"
+            ]
+          },
+          "same_region": true,
+          "baseline_delta_css_px": -1.0125,
+          "search_top_delta_css_px": -0.984,
+          "search_bounds_contribution_css_px": 0.0285
+        },
+        "COLUMN_25": {
+          "word": {
+            "page": 1,
+            "x_pt": 324.13,
+            "baseline_top_pt": 512.4200000000001,
+            "search_top_pt": 503.73,
+            "font_names": [
+              "BCDFEE+ArialMT"
+            ]
+          },
+          "app": {
+            "page": 1,
+            "x_pt": 324.0,
+            "baseline_top_pt": 511.72265625,
+            "search_top_pt": 503.05369123535155,
+            "font_names": [
+              "LiberationSans-4899"
+            ]
+          },
+          "same_region": true,
+          "baseline_delta_css_px": -0.929792,
+          "search_top_delta_css_px": -0.901,
+          "search_bounds_contribution_css_px": 0.028792
+        }
+      }
+    },
+    {
+      "id": "table-columns",
+      "reference_pdf": "fixtures/compatibility/references/table-columns.pdf",
+      "app_pdf": "fixtures/compatibility/a7-3-final-app-pdfs/table-columns.pdf",
+      "source_sha256": "f4df883b288bfd03e45f1b67ea4f7aa0615ea9924f1ae7db68f47f599cca64ce",
+      "reference_sha256": "6c86b34faea30723e6e89d7fb41740672051d5cb199de9ddb84c2e6d3aeb16c5",
+      "app_sha256": "5483c8b6d0be9824a854a50555105afdcc32febe1532148d3416165a81e990f4",
+      "checks": {
+        "provenance_valid": true,
+        "page_count_equal": true,
+        "media_boxes_within_0_75pt": true,
+        "all_expanded_markers_once": true,
+        "expanded_marker_regions_equal": true,
+        "all_expanded_anchors_within_1_css_px": false
+      },
+      "content_checks": {
+        "token_multisets_equal": true,
+        "expected_markers_once": true,
+        "link_count_equal": true,
+        "link_destination_geometry_equal": true
+      },
+      "same_region_max_absolute_delta_css_px": {
+        "x": 0.483,
+        "y": 1.436
+      },
+      "paragraph_pitch": {
+        "comparable_pairs": 24,
+        "mean_word_css_px": 52.142,
+        "mean_app_css_px": 52.118,
+        "pairs": [
+          {
+            "from": "COLUMN_00",
+            "to": "COLUMN_01",
+            "word_css_px": 52.373,
+            "app_css_px": 52.125,
+            "delta_css_px": -0.248
+          },
+          {
+            "from": "COLUMN_01",
+            "to": "COLUMN_02",
+            "word_css_px": 52.0,
+            "app_css_px": 52.109,
+            "delta_css_px": 0.109
+          },
+          {
+            "from": "COLUMN_02",
+            "to": "COLUMN_03",
+            "word_css_px": 52.027,
+            "app_css_px": 52.125,
+            "delta_css_px": 0.098
+          },
+          {
+            "from": "COLUMN_03",
+            "to": "COLUMN_04",
+            "word_css_px": 52.333,
+            "app_css_px": 52.124,
+            "delta_css_px": -0.209
+          },
+          {
+            "from": "COLUMN_04",
+            "to": "COLUMN_05",
+            "word_css_px": 52.027,
+            "app_css_px": 52.111,
+            "delta_css_px": 0.084
+          },
+          {
+            "from": "COLUMN_05",
+            "to": "COLUMN_06",
+            "word_css_px": 52.0,
+            "app_css_px": 52.124,
+            "delta_css_px": 0.124
+          },
+          {
+            "from": "COLUMN_06",
+            "to": "COLUMN_07",
+            "word_css_px": 52.373,
+            "app_css_px": 52.109,
+            "delta_css_px": -0.264
+          },
+          {
+            "from": "COLUMN_07",
+            "to": "COLUMN_08",
+            "word_css_px": 52.0,
+            "app_css_px": 52.125,
+            "delta_css_px": 0.125
+          },
+          {
+            "from": "COLUMN_08",
+            "to": "COLUMN_09",
+            "word_css_px": 52.36,
+            "app_css_px": 52.125,
+            "delta_css_px": -0.235
+          },
+          {
+            "from": "COLUMN_09",
+            "to": "COLUMN_10",
+            "word_css_px": 52.0,
+            "app_css_px": 52.109,
+            "delta_css_px": 0.109
+          },
+          {
+            "from": "COLUMN_10",
+            "to": "COLUMN_11",
+            "word_css_px": 52.04,
+            "app_css_px": 52.125,
+            "delta_css_px": 0.085
+          },
+          {
+            "from": "COLUMN_11",
+            "to": "COLUMN_12",
+            "word_css_px": 52.333,
+            "app_css_px": 52.109,
+            "delta_css_px": -0.224
+          },
+          {
+            "from": "COLUMN_12",
+            "to": "COLUMN_13",
+            "word_css_px": 52.027,
+            "app_css_px": 52.124,
+            "delta_css_px": 0.097
+          },
+          {
+            "from": "COLUMN_14",
+            "to": "COLUMN_15",
+            "word_css_px": 52.027,
+            "app_css_px": 52.109,
+            "delta_css_px": 0.082
+          },
+          {
+            "from": "COLUMN_15",
+            "to": "COLUMN_16",
+            "word_css_px": 52.333,
+            "app_css_px": 52.125,
+            "delta_css_px": -0.208
+          },
+          {
+            "from": "COLUMN_16",
+            "to": "COLUMN_17",
+            "word_css_px": 52.04,
+            "app_css_px": 52.109,
+            "delta_css_px": 0.069
+          },
+          {
+            "from": "COLUMN_17",
+            "to": "COLUMN_18",
+            "word_css_px": 52.0,
+            "app_css_px": 52.125,
+            "delta_css_px": 0.125
+          },
+          {
+            "from": "COLUMN_18",
+            "to": "COLUMN_19",
+            "word_css_px": 52.36,
+            "app_css_px": 52.124,
+            "delta_css_px": -0.236
+          },
+          {
+            "from": "COLUMN_19",
+            "to": "COLUMN_20",
+            "word_css_px": 52.0,
+            "app_css_px": 52.109,
+            "delta_css_px": 0.109
+          },
+          {
+            "from": "COLUMN_20",
+            "to": "COLUMN_21",
+            "word_css_px": 52.36,
+            "app_css_px": 52.125,
+            "delta_css_px": -0.235
+          },
+          {
+            "from": "COLUMN_21",
+            "to": "COLUMN_22",
+            "word_css_px": 52.0,
+            "app_css_px": 52.109,
+            "delta_css_px": 0.109
+          },
+          {
+            "from": "COLUMN_22",
+            "to": "COLUMN_23",
+            "word_css_px": 52.04,
+            "app_css_px": 52.125,
+            "delta_css_px": 0.085
+          },
+          {
+            "from": "COLUMN_23",
+            "to": "COLUMN_24",
+            "word_css_px": 52.333,
+            "app_css_px": 52.125,
+            "delta_css_px": -0.208
+          },
+          {
+            "from": "COLUMN_24",
+            "to": "COLUMN_25",
+            "word_css_px": 52.027,
+            "app_css_px": 52.109,
+            "delta_css_px": 0.082
+          }
+        ]
+      },
+      "relative_table_geometry": {
+        "table_first_row_width": {
+          "word": {
+            "x_css_px": 115.387,
+            "y_css_px": 0.0
+          },
+          "app": {
+            "x_css_px": 115.0,
+            "y_css_px": 0.0
+          },
+          "delta_css_px": {
+            "x_css_px": -0.387,
+            "y_css_px": 0.0
+          }
+        },
+        "table_first_column_row_pitch": {
+          "word": {
+            "x_css_px": 0.0,
+            "y_css_px": 17.667
+          },
+          "app": {
+            "x_css_px": 0.0,
+            "y_css_px": 17.86
+          },
+          "delta_css_px": {
+            "x_css_px": 0.0,
+            "y_css_px": 0.193
+          }
+        },
+        "table_inset_from_last_paragraph": {
+          "word": {
+            "x_css_px": 0.0,
+            "y_css_px": 53.0
+          },
+          "app": {
+            "x_css_px": 0.656,
+            "y_css_px": 53.124
+          },
+          "delta_css_px": {
+            "x_css_px": 0.656,
+            "y_css_px": 0.124
+          }
+        }
+      },
+      "region_baseline_summary": {
+        "1:0": {
+          "first_marker": "COLUMN_00",
+          "last_marker": "COLUMN_13",
+          "marker_count": 14,
+          "first_baseline_delta_css_px": -1.019792,
+          "last_baseline_delta_css_px": -1.36625,
+          "first_to_last_baseline_drift_css_px": -0.346458
+        },
+        "1:1": {
+          "first_marker": "COLUMN_14",
+          "last_marker": "COLUMN_25",
+          "marker_count": 12,
+          "first_baseline_delta_css_px": -0.706667,
+          "last_baseline_delta_css_px": -0.929792,
+          "first_to_last_baseline_drift_css_px": -0.223125
+        }
+      },
+      "anchors": {
+        "COLUMN_00": {
+          "word": {
+            "page": 1,
+            "x_pt": 90.05,
+            "baseline_top_pt": 162.04999999999995,
+            "search_top_pt": 153.3599999999999,
+            "font_names": [
+              "BCDFEE+ArialMT"
+            ]
+          },
+          "app": {
+            "page": 1,
+            "x_pt": 90.0,
+            "baseline_top_pt": 161.28515625,
+            "search_top_pt": 152.6161912353516,
+            "font_names": [
+              "LiberationSans-8937"
+            ]
+          },
+          "same_region": true,
+          "baseline_delta_css_px": -1.019792,
+          "search_top_delta_css_px": -0.992,
+          "search_bounds_contribution_css_px": 0.027792
+        },
+        "COLUMN_01": {
+          "word": {
+            "page": 1,
+            "x_pt": 90.05,
+            "baseline_top_pt": 201.33000000000004,
+            "search_top_pt": 192.64,
+            "font_names": [
+              "BCDFEE+ArialMT"
+            ]
+          },
+          "app": {
+            "page": 1,
+            "x_pt": 90.0,
+            "baseline_top_pt": 200.37890625,
+            "search_top_pt": 191.7099412353516,
+            "font_names": [
+              "LiberationSans-8937"
+            ]
+          },
+          "same_region": true,
+          "baseline_delta_css_px": -1.268125,
+          "search_top_delta_css_px": -1.24,
+          "search_bounds_contribution_css_px": 0.028125
+        },
+        "COLUMN_02": {
+          "word": {
+            "page": 1,
+            "x_pt": 90.05,
+            "baseline_top_pt": 240.33000000000004,
+            "search_top_pt": 231.64,
+            "font_names": [
+              "BCDFEE+ArialMT"
+            ]
+          },
+          "app": {
+            "page": 1,
+            "x_pt": 90.0,
+            "baseline_top_pt": 239.4609375,
+            "search_top_pt": 230.7919724853516,
+            "font_names": [
+              "LiberationSans-8937"
+            ]
+          },
+          "same_region": true,
+          "baseline_delta_css_px": -1.15875,
+          "search_top_delta_css_px": -1.131,
+          "search_bounds_contribution_css_px": 0.02775
+        },
+        "COLUMN_03": {
+          "word": {
+            "page": 1,
+            "x_pt": 90.05,
+            "baseline_top_pt": 279.35,
+            "search_top_pt": 270.65999999999997,
+            "font_names": [
+              "BCDFEE+ArialMT"
+            ]
+          },
+          "app": {
+            "page": 1,
+            "x_pt": 90.0,
+            "baseline_top_pt": 278.5546875,
+            "search_top_pt": 269.8857224853516,
+            "font_names": [
+              "LiberationSans-8937"
+            ]
+          },
+          "same_region": true,
+          "baseline_delta_css_px": -1.060417,
+          "search_top_delta_css_px": -1.032,
+          "search_bounds_contribution_css_px": 0.028417
+        },
+        "COLUMN_04": {
+          "word": {
+            "page": 1,
+            "x_pt": 90.05,
+            "baseline_top_pt": 318.6,
+            "search_top_pt": 309.91,
+            "font_names": [
+              "BCDFEE+ArialMT"
+            ]
+          },
+          "app": {
+            "page": 1,
+            "x_pt": 90.0,
+            "baseline_top_pt": 317.6484375,
+            "search_top_pt": 308.97947248535155,
+            "font_names": [
+              "LiberationSans-8937"
+            ]
+          },
+          "same_region": true,
+          "baseline_delta_css_px": -1.26875,
+          "search_top_delta_css_px": -1.241,
+          "search_bounds_contribution_css_px": 0.02775
+        },
+        "COLUMN_05": {
+          "word": {
+            "page": 1,
+            "x_pt": 90.05,
+            "baseline_top_pt": 357.62,
+            "search_top_pt": 348.93,
+            "font_names": [
+              "BCDFEE+ArialMT"
+            ]
+          },
+          "app": {
+            "page": 1,
+            "x_pt": 90.0,
+            "baseline_top_pt": 356.73046875,
+            "search_top_pt": 348.06150373535155,
+            "font_names": [
+              "LiberationSans-8937"
+            ]
+          },
+          "same_region": true,
+          "baseline_delta_css_px": -1.186042,
+          "search_top_delta_css_px": -1.157,
+          "search_bounds_contribution_css_px": 0.029042
+        },
+        "COLUMN_06": {
+          "word": {
+            "page": 1,
+            "x_pt": 90.05,
+            "baseline_top_pt": 396.62,
+            "search_top_pt": 387.93,
+            "font_names": [
+              "BCDFEE+ArialMT"
+            ]
+          },
+          "app": {
+            "page": 1,
+            "x_pt": 90.0,
+            "baseline_top_pt": 395.82421875,
+            "search_top_pt": 387.15525373535155,
+            "font_names": [
+              "LiberationSans-8937"
+            ]
+          },
+          "same_region": true,
+          "baseline_delta_css_px": -1.061042,
+          "search_top_delta_css_px": -1.033,
+          "search_bounds_contribution_css_px": 0.028042
+        },
+        "COLUMN_07": {
+          "word": {
+            "page": 1,
+            "x_pt": 90.05,
+            "baseline_top_pt": 435.9,
+            "search_top_pt": 427.21,
+            "font_names": [
+              "BCDFEE+ArialMT"
+            ]
+          },
+          "app": {
+            "page": 1,
+            "x_pt": 90.0,
+            "baseline_top_pt": 434.90625,
+            "search_top_pt": 426.23728498535155,
+            "font_names": [
+              "LiberationSans-8937"
+            ]
+          },
+          "same_region": true,
+          "baseline_delta_css_px": -1.325,
+          "search_top_delta_css_px": -1.297,
+          "search_bounds_contribution_css_px": 0.028
+        },
+        "COLUMN_08": {
+          "word": {
+            "page": 1,
+            "x_pt": 90.05,
+            "baseline_top_pt": 474.9,
+            "search_top_pt": 466.21,
+            "font_names": [
+              "BCDFEE+ArialMT"
+            ]
+          },
+          "app": {
+            "page": 1,
+            "x_pt": 90.0,
+            "baseline_top_pt": 474.0,
+            "search_top_pt": 465.33103498535155,
+            "font_names": [
+              "LiberationSans-8937"
+            ]
+          },
+          "same_region": true,
+          "baseline_delta_css_px": -1.2,
+          "search_top_delta_css_px": -1.172,
+          "search_bounds_contribution_css_px": 0.028
+        },
+        "COLUMN_09": {
+          "word": {
+            "page": 1,
+            "x_pt": 90.05,
+            "baseline_top_pt": 514.1700000000001,
+            "search_top_pt": 505.48,
+            "font_names": [
+              "BCDFEE+ArialMT"
+            ]
+          },
+          "app": {
+            "page": 1,
+            "x_pt": 90.0,
+            "baseline_top_pt": 513.09375,
+            "search_top_pt": 504.42478498535155,
+            "font_names": [
+              "LiberationSans-8937"
+            ]
+          },
+          "same_region": true,
+          "baseline_delta_css_px": -1.435,
+          "search_top_delta_css_px": -1.407,
+          "search_bounds_contribution_css_px": 0.028
+        },
+        "COLUMN_10": {
+          "word": {
+            "page": 1,
+            "x_pt": 90.05,
+            "baseline_top_pt": 553.17,
+            "search_top_pt": 544.48,
+            "font_names": [
+              "BCDFEE+ArialMT"
+            ]
+          },
+          "app": {
+            "page": 1,
+            "x_pt": 90.0,
+            "baseline_top_pt": 552.17578125,
+            "search_top_pt": 543.5068162353516,
+            "font_names": [
+              "LiberationSans-8937"
+            ]
+          },
+          "same_region": true,
+          "baseline_delta_css_px": -1.325625,
+          "search_top_delta_css_px": -1.297,
+          "search_bounds_contribution_css_px": 0.028625
+        },
+        "COLUMN_11": {
+          "word": {
+            "page": 1,
+            "x_pt": 90.05,
+            "baseline_top_pt": 592.2,
+            "search_top_pt": 583.51,
+            "font_names": [
+              "BCDFEE+ArialMT"
+            ]
+          },
+          "app": {
+            "page": 1,
+            "x_pt": 90.0,
+            "baseline_top_pt": 591.26953125,
+            "search_top_pt": 582.6005662353516,
+            "font_names": [
+              "LiberationSans-8937"
+            ]
+          },
+          "same_region": true,
+          "baseline_delta_css_px": -1.240625,
+          "search_top_delta_css_px": -1.212,
+          "search_bounds_contribution_css_px": 0.028625
+        },
+        "COLUMN_12": {
+          "word": {
+            "page": 1,
+            "x_pt": 90.05,
+            "baseline_top_pt": 631.45,
+            "search_top_pt": 622.76,
+            "font_names": [
+              "BCDFEE+ArialMT"
+            ]
+          },
+          "app": {
+            "page": 1,
+            "x_pt": 90.0,
+            "baseline_top_pt": 630.3515625,
+            "search_top_pt": 621.6825974853516,
+            "font_names": [
+              "LiberationSans-8937"
+            ]
+          },
+          "same_region": true,
+          "baseline_delta_css_px": -1.464583,
+          "search_top_delta_css_px": -1.436,
+          "search_bounds_contribution_css_px": 0.028583
+        },
+        "COLUMN_13": {
+          "word": {
+            "page": 1,
+            "x_pt": 90.05,
+            "baseline_top_pt": 670.47,
+            "search_top_pt": 661.78,
+            "font_names": [
+              "BCDFEE+ArialMT"
+            ]
+          },
+          "app": {
+            "page": 1,
+            "x_pt": 90.0,
+            "baseline_top_pt": 669.4453125,
+            "search_top_pt": 660.7763474853516,
+            "font_names": [
+              "LiberationSans-8937"
+            ]
+          },
+          "same_region": true,
+          "baseline_delta_css_px": -1.36625,
+          "search_top_delta_css_px": -1.339,
+          "search_bounds_contribution_css_px": 0.02725
+        },
+        "COLUMN_14": {
+          "word": {
+            "page": 1,
+            "x_pt": 324.13,
+            "baseline_top_pt": 82.27999999999997,
+            "search_top_pt": 73.58999999999992,
+            "font_names": [
+              "BCDFEE+ArialMT"
+            ]
+          },
+          "app": {
+            "page": 1,
+            "x_pt": 324.0,
+            "baseline_top_pt": 81.75,
+            "search_top_pt": 73.08103498535161,
+            "font_names": [
+              "LiberationSans-8937"
+            ]
+          },
+          "same_region": true,
+          "baseline_delta_css_px": -0.706667,
+          "search_top_delta_css_px": -0.679,
+          "search_bounds_contribution_css_px": 0.027667
+        },
+        "COLUMN_15": {
+          "word": {
+            "page": 1,
+            "x_pt": 324.13,
+            "baseline_top_pt": 121.29999999999995,
+            "search_top_pt": 112.6099999999999,
+            "font_names": [
+              "BCDFEE+ArialMT"
+            ]
+          },
+          "app": {
+            "page": 1,
+            "x_pt": 324.0,
+            "baseline_top_pt": 120.83203125,
+            "search_top_pt": 112.16306623535161,
+            "font_names": [
+              "LiberationSans-8937"
+            ]
+          },
+          "same_region": true,
+          "baseline_delta_css_px": -0.623958,
+          "search_top_delta_css_px": -0.596,
+          "search_bounds_contribution_css_px": 0.027958
+        },
+        "COLUMN_16": {
+          "word": {
+            "page": 1,
+            "x_pt": 324.13,
+            "baseline_top_pt": 160.54999999999995,
+            "search_top_pt": 151.8599999999999,
+            "font_names": [
+              "BCDFEE+ArialMT"
+            ]
+          },
+          "app": {
+            "page": 1,
+            "x_pt": 324.0,
+            "baseline_top_pt": 159.92578125,
+            "search_top_pt": 151.2568162353516,
+            "font_names": [
+              "LiberationSans-8937"
+            ]
+          },
+          "same_region": true,
+          "baseline_delta_css_px": -0.832292,
+          "search_top_delta_css_px": -0.804,
+          "search_bounds_contribution_css_px": 0.028292
+        },
+        "COLUMN_17": {
+          "word": {
+            "page": 1,
+            "x_pt": 324.13,
+            "baseline_top_pt": 199.58000000000004,
+            "search_top_pt": 190.89,
+            "font_names": [
+              "BCDFEE+ArialMT"
+            ]
+          },
+          "app": {
+            "page": 1,
+            "x_pt": 324.0,
+            "baseline_top_pt": 199.0078125,
+            "search_top_pt": 190.3388474853516,
+            "font_names": [
+              "LiberationSans-8937"
+            ]
+          },
+          "same_region": true,
+          "baseline_delta_css_px": -0.762917,
+          "search_top_delta_css_px": -0.735,
+          "search_bounds_contribution_css_px": 0.027917
+        },
+        "COLUMN_18": {
+          "word": {
+            "page": 1,
+            "x_pt": 324.13,
+            "baseline_top_pt": 238.58000000000004,
+            "search_top_pt": 229.89,
+            "font_names": [
+              "BCDFEE+ArialMT"
+            ]
+          },
+          "app": {
+            "page": 1,
+            "x_pt": 324.0,
+            "baseline_top_pt": 238.1015625,
+            "search_top_pt": 229.4325974853516,
+            "font_names": [
+              "LiberationSans-8937"
+            ]
+          },
+          "same_region": true,
+          "baseline_delta_css_px": -0.637917,
+          "search_top_delta_css_px": -0.609,
+          "search_bounds_contribution_css_px": 0.028917
+        },
+        "COLUMN_19": {
+          "word": {
+            "page": 1,
+            "x_pt": 324.13,
+            "baseline_top_pt": 277.85,
+            "search_top_pt": 269.15999999999997,
+            "font_names": [
+              "BCDFEE+ArialMT"
+            ]
+          },
+          "app": {
+            "page": 1,
+            "x_pt": 324.0,
+            "baseline_top_pt": 277.1953125,
+            "search_top_pt": 268.5263474853516,
+            "font_names": [
+              "LiberationSans-8937"
+            ]
+          },
+          "same_region": true,
+          "baseline_delta_css_px": -0.872917,
+          "search_top_delta_css_px": -0.845,
+          "search_bounds_contribution_css_px": 0.027917
+        },
+        "COLUMN_20": {
+          "word": {
+            "page": 1,
+            "x_pt": 324.13,
+            "baseline_top_pt": 316.85,
+            "search_top_pt": 308.16,
+            "font_names": [
+              "BCDFEE+ArialMT"
+            ]
+          },
+          "app": {
+            "page": 1,
+            "x_pt": 324.0,
+            "baseline_top_pt": 316.27734375,
+            "search_top_pt": 307.60837873535155,
+            "font_names": [
+              "LiberationSans-8937"
+            ]
+          },
+          "same_region": true,
+          "baseline_delta_css_px": -0.763542,
+          "search_top_delta_css_px": -0.736,
+          "search_bounds_contribution_css_px": 0.027542
+        },
+        "COLUMN_21": {
+          "word": {
+            "page": 1,
+            "x_pt": 324.13,
+            "baseline_top_pt": 356.12,
+            "search_top_pt": 347.43,
+            "font_names": [
+              "BCDFEE+ArialMT"
+            ]
+          },
+          "app": {
+            "page": 1,
+            "x_pt": 324.0,
+            "baseline_top_pt": 355.37109375,
+            "search_top_pt": 346.70212873535155,
+            "font_names": [
+              "LiberationSans-8937"
+            ]
+          },
+          "same_region": true,
+          "baseline_delta_css_px": -0.998542,
+          "search_top_delta_css_px": -0.971,
+          "search_bounds_contribution_css_px": 0.027542
+        },
+        "COLUMN_22": {
+          "word": {
+            "page": 1,
+            "x_pt": 324.13,
+            "baseline_top_pt": 395.12,
+            "search_top_pt": 386.43,
+            "font_names": [
+              "BCDFEE+ArialMT"
+            ]
+          },
+          "app": {
+            "page": 1,
+            "x_pt": 324.0,
+            "baseline_top_pt": 394.453125,
+            "search_top_pt": 385.78415998535155,
+            "font_names": [
+              "LiberationSans-8937"
+            ]
+          },
+          "same_region": true,
+          "baseline_delta_css_px": -0.889167,
+          "search_top_delta_css_px": -0.861,
+          "search_bounds_contribution_css_px": 0.028167
+        },
+        "COLUMN_23": {
+          "word": {
+            "page": 1,
+            "x_pt": 324.13,
+            "baseline_top_pt": 434.15,
+            "search_top_pt": 425.46,
+            "font_names": [
+              "BCDFEE+ArialMT"
+            ]
+          },
+          "app": {
+            "page": 1,
+            "x_pt": 324.0,
+            "baseline_top_pt": 433.546875,
+            "search_top_pt": 424.87790998535155,
+            "font_names": [
+              "LiberationSans-8937"
+            ]
+          },
+          "same_region": true,
+          "baseline_delta_css_px": -0.804167,
+          "search_top_delta_css_px": -0.776,
+          "search_bounds_contribution_css_px": 0.028167
+        },
+        "COLUMN_24": {
+          "word": {
+            "page": 1,
+            "x_pt": 324.13,
+            "baseline_top_pt": 473.4,
+            "search_top_pt": 464.71,
+            "font_names": [
+              "BCDFEE+ArialMT"
+            ]
+          },
+          "app": {
+            "page": 1,
+            "x_pt": 324.0,
+            "baseline_top_pt": 472.640625,
+            "search_top_pt": 463.97165998535155,
+            "font_names": [
+              "LiberationSans-8937"
+            ]
+          },
+          "same_region": true,
+          "baseline_delta_css_px": -1.0125,
+          "search_top_delta_css_px": -0.984,
+          "search_bounds_contribution_css_px": 0.0285
+        },
+        "COLUMN_25": {
+          "word": {
+            "page": 1,
+            "x_pt": 324.13,
+            "baseline_top_pt": 512.4200000000001,
+            "search_top_pt": 503.73,
+            "font_names": [
+              "BCDFEE+ArialMT"
+            ]
+          },
+          "app": {
+            "page": 1,
+            "x_pt": 324.0,
+            "baseline_top_pt": 511.72265625,
+            "search_top_pt": 503.05369123535155,
+            "font_names": [
+              "LiberationSans-8937"
+            ]
+          },
+          "same_region": true,
+          "baseline_delta_css_px": -0.929792,
+          "search_top_delta_css_px": -0.901,
+          "search_bounds_contribution_css_px": 0.028792
+        },
+        "TABLE_A": {
+          "word": {
+            "page": 1,
+            "x_pt": 324.13,
+            "baseline_top_pt": 552.17,
+            "search_top_pt": 543.48,
+            "font_names": [
+              "BCDFEE+ArialMT"
+            ]
+          },
+          "app": {
+            "page": 1,
+            "x_pt": 324.4921875,
+            "baseline_top_pt": 551.56640625,
+            "search_top_pt": 542.8974412353516,
+            "font_names": [
+              "LiberationSans-8937"
+            ]
+          },
+          "same_region": true,
+          "baseline_delta_css_px": -0.804792,
+          "search_top_delta_css_px": -0.777,
+          "search_bounds_contribution_css_px": 0.027792
+        },
+        "TABLE_B": {
+          "word": {
+            "page": 1,
+            "x_pt": 410.67,
+            "baseline_top_pt": 552.17,
+            "search_top_pt": 543.48,
+            "font_names": [
+              "BCDFEE+ArialMT"
+            ]
+          },
+          "app": {
+            "page": 1,
+            "x_pt": 410.7421875,
+            "baseline_top_pt": 551.56640625,
+            "search_top_pt": 542.8974412353516,
+            "font_names": [
+              "LiberationSans-8937"
+            ]
+          },
+          "same_region": true,
+          "baseline_delta_css_px": -0.804792,
+          "search_top_delta_css_px": -0.777,
+          "search_bounds_contribution_css_px": 0.027792
+        },
+        "TABLE_C": {
+          "word": {
+            "page": 1,
+            "x_pt": 324.13,
+            "baseline_top_pt": 565.42,
+            "search_top_pt": 556.73,
+            "font_names": [
+              "BCDFEE+ArialMT"
+            ]
+          },
+          "app": {
+            "page": 1,
+            "x_pt": 324.4921875,
+            "baseline_top_pt": 564.9609375,
+            "search_top_pt": 556.2919724853516,
+            "font_names": [
+              "LiberationSans-8937"
+            ]
+          },
+          "same_region": true,
+          "baseline_delta_css_px": -0.612083,
+          "search_top_delta_css_px": -0.584,
+          "search_bounds_contribution_css_px": 0.028083
+        },
+        "TABLE_D": {
+          "word": {
+            "page": 1,
+            "x_pt": 410.67,
+            "baseline_top_pt": 565.42,
+            "search_top_pt": 556.73,
+            "font_names": [
+              "BCDFEE+ArialMT"
+            ]
+          },
+          "app": {
+            "page": 1,
+            "x_pt": 410.7421875,
+            "baseline_top_pt": 564.9609375,
+            "search_top_pt": 556.2919724853516,
+            "font_names": [
+              "LiberationSans-8937"
+            ]
+          },
+          "same_region": true,
+          "baseline_delta_css_px": -0.612083,
+          "search_top_delta_css_px": -0.584,
+          "search_bounds_contribution_css_px": 0.028083
+        }
+      }
+    },
+    {
+      "id": "mixed",
+      "reference_pdf": "fixtures/compatibility/references/mixed.pdf",
+      "app_pdf": "fixtures/compatibility/a7-3-final-app-pdfs/mixed.pdf",
+      "source_sha256": "e0cf199ae6e900fa5cc3aad546d80d1c50348e579b6258fbaeec092cbd63baf7",
+      "reference_sha256": "7dd412a2ae75e38680a1dc134f41ac563a38d5ad4ac9081e215aeef478d2ef6d",
+      "app_sha256": "a928aa8b6d15d4f9ce9157295f6d9fc9dead98f0bd1d2695c8f7adb08f3a5c5a",
+      "checks": {
+        "provenance_valid": true,
+        "page_count_equal": true,
+        "media_boxes_within_0_75pt": true,
+        "all_expanded_markers_once": true,
+        "expanded_marker_regions_equal": true,
+        "all_expanded_anchors_within_1_css_px": false
+      },
+      "content_checks": {
+        "token_multisets_equal": false,
+        "expected_markers_once": true,
+        "link_count_equal": false,
+        "link_destination_geometry_equal": false
+      },
+      "same_region_max_absolute_delta_css_px": {
+        "x": 1.049,
+        "y": 1.797
+      },
+      "paragraph_pitch": {
+        "comparable_pairs": 24,
+        "mean_word_css_px": 52.143,
+        "mean_app_css_px": 52.119,
+        "pairs": [
+          {
+            "from": "COLUMN_00",
+            "to": "COLUMN_01",
+            "word_css_px": 52.04,
+            "app_css_px": 52.125,
+            "delta_css_px": 0.085
+          },
+          {
+            "from": "COLUMN_01",
+            "to": "COLUMN_02",
+            "word_css_px": 52.0,
+            "app_css_px": 52.109,
+            "delta_css_px": 0.109
+          },
+          {
+            "from": "COLUMN_02",
+            "to": "COLUMN_03",
+            "word_css_px": 52.36,
+            "app_css_px": 52.125,
+            "delta_css_px": -0.235
+          },
+          {
+            "from": "COLUMN_03",
+            "to": "COLUMN_04",
+            "word_css_px": 52.0,
+            "app_css_px": 52.124,
+            "delta_css_px": 0.124
+          },
+          {
+            "from": "COLUMN_04",
+            "to": "COLUMN_05",
+            "word_css_px": 52.04,
+            "app_css_px": 52.109,
+            "delta_css_px": 0.069
+          },
+          {
+            "from": "COLUMN_05",
+            "to": "COLUMN_06",
+            "word_css_px": 52.333,
+            "app_css_px": 52.125,
+            "delta_css_px": -0.208
+          },
+          {
+            "from": "COLUMN_06",
+            "to": "COLUMN_07",
+            "word_css_px": 52.027,
+            "app_css_px": 52.125,
+            "delta_css_px": 0.098
+          },
+          {
+            "from": "COLUMN_07",
+            "to": "COLUMN_08",
+            "word_css_px": 52.333,
+            "app_css_px": 52.109,
+            "delta_css_px": -0.224
+          },
+          {
+            "from": "COLUMN_08",
+            "to": "COLUMN_09",
+            "word_css_px": 52.04,
+            "app_css_px": 52.125,
+            "delta_css_px": 0.085
+          },
+          {
+            "from": "COLUMN_09",
+            "to": "COLUMN_10",
+            "word_css_px": 52.0,
+            "app_css_px": 52.109,
+            "delta_css_px": 0.109
+          },
+          {
+            "from": "COLUMN_10",
+            "to": "COLUMN_11",
+            "word_css_px": 52.367,
+            "app_css_px": 52.125,
+            "delta_css_px": -0.242
+          },
+          {
+            "from": "COLUMN_12",
+            "to": "COLUMN_13",
+            "word_css_px": 52.027,
+            "app_css_px": 52.109,
+            "delta_css_px": 0.082
+          },
+          {
+            "from": "COLUMN_13",
+            "to": "COLUMN_14",
+            "word_css_px": 52.333,
+            "app_css_px": 52.125,
+            "delta_css_px": -0.208
+          },
+          {
+            "from": "COLUMN_14",
+            "to": "COLUMN_15",
+            "word_css_px": 52.04,
+            "app_css_px": 52.109,
+            "delta_css_px": 0.069
+          },
+          {
+            "from": "COLUMN_15",
+            "to": "COLUMN_16",
+            "word_css_px": 52.0,
+            "app_css_px": 52.125,
+            "delta_css_px": 0.125
+          },
+          {
+            "from": "COLUMN_16",
+            "to": "COLUMN_17",
+            "word_css_px": 52.36,
+            "app_css_px": 52.124,
+            "delta_css_px": -0.236
+          },
+          {
+            "from": "COLUMN_17",
+            "to": "COLUMN_18",
+            "word_css_px": 52.0,
+            "app_css_px": 52.109,
+            "delta_css_px": 0.109
+          },
+          {
+            "from": "COLUMN_18",
+            "to": "COLUMN_19",
+            "word_css_px": 52.36,
+            "app_css_px": 52.125,
+            "delta_css_px": -0.235
+          },
+          {
+            "from": "COLUMN_19",
+            "to": "COLUMN_20",
+            "word_css_px": 52.0,
+            "app_css_px": 52.109,
+            "delta_css_px": 0.109
+          },
+          {
+            "from": "COLUMN_20",
+            "to": "COLUMN_21",
+            "word_css_px": 52.04,
+            "app_css_px": 52.125,
+            "delta_css_px": 0.085
+          },
+          {
+            "from": "COLUMN_21",
+            "to": "COLUMN_22",
+            "word_css_px": 52.333,
+            "app_css_px": 52.125,
+            "delta_css_px": -0.208
+          },
+          {
+            "from": "COLUMN_22",
+            "to": "COLUMN_23",
+            "word_css_px": 52.027,
+            "app_css_px": 52.109,
+            "delta_css_px": 0.082
+          },
+          {
+            "from": "COLUMN_23",
+            "to": "COLUMN_24",
+            "word_css_px": 52.0,
+            "app_css_px": 52.124,
+            "delta_css_px": 0.124
+          },
+          {
+            "from": "COLUMN_24",
+            "to": "COLUMN_25",
+            "word_css_px": 52.373,
+            "app_css_px": 52.125,
+            "delta_css_px": -0.248
+          }
+        ]
+      },
+      "relative_table_geometry": {
+        "table_first_row_width": {
+          "word": {
+            "x_css_px": 115.387,
+            "y_css_px": 0.0
+          },
+          "app": {
+            "x_css_px": 115.0,
+            "y_css_px": 0.0
+          },
+          "delta_css_px": {
+            "x_css_px": -0.387,
+            "y_css_px": 0.0
+          }
+        },
+        "table_first_column_row_pitch": {
+          "word": {
+            "x_css_px": 0.0,
+            "y_css_px": 17.333
+          },
+          "app": {
+            "x_css_px": 0.0,
+            "y_css_px": 17.86
+          },
+          "delta_css_px": {
+            "x_css_px": 0.0,
+            "y_css_px": 0.527
+          }
+        },
+        "table_inset_from_last_paragraph": {
+          "word": {
+            "x_css_px": 0.0,
+            "y_css_px": 53.0
+          },
+          "app": {
+            "x_css_px": 0.656,
+            "y_css_px": 53.109
+          },
+          "delta_css_px": {
+            "x_css_px": 0.656,
+            "y_css_px": 0.109
+          }
+        }
+      },
+      "region_baseline_summary": {
+        "1:0": {
+          "first_marker": "COLUMN_00",
+          "last_marker": "COLUMN_11",
+          "marker_count": 12,
+          "first_baseline_delta_css_px": -1.598542,
+          "last_baseline_delta_css_px": -1.826042,
+          "first_to_last_baseline_drift_css_px": -0.2275
+        },
+        "1:1": {
+          "first_marker": "COLUMN_12",
+          "last_marker": "COLUMN_25",
+          "marker_count": 14,
+          "first_baseline_delta_css_px": -0.706667,
+          "last_baseline_delta_css_px": -1.053125,
+          "first_to_last_baseline_drift_css_px": -0.346458
+        }
+      },
+      "anchors": {
+        "COLUMN_00": {
+          "word": {
+            "page": 1,
+            "x_pt": 90.05,
+            "baseline_top_pt": 266.57000000000005,
+            "search_top_pt": 257.88,
+            "font_names": [
+              "BCDFEE+ArialMT"
+            ]
+          },
+          "app": {
+            "page": 1,
+            "x_pt": 90.0,
+            "baseline_top_pt": 265.37109375,
+            "search_top_pt": 256.7021287353516,
+            "font_names": [
+              "LiberationSans-6446"
+            ]
+          },
+          "same_region": true,
+          "baseline_delta_css_px": -1.598542,
+          "search_top_delta_css_px": -1.571,
+          "search_bounds_contribution_css_px": 0.027542
+        },
+        "COLUMN_01": {
+          "word": {
+            "page": 1,
+            "x_pt": 90.05,
+            "baseline_top_pt": 305.6,
+            "search_top_pt": 296.91,
+            "font_names": [
+              "BCDFEE+ArialMT"
+            ]
+          },
+          "app": {
+            "page": 1,
+            "x_pt": 90.0,
+            "baseline_top_pt": 304.46484375,
+            "search_top_pt": 295.79587873535155,
+            "font_names": [
+              "LiberationSans-6446"
+            ]
+          },
+          "same_region": true,
+          "baseline_delta_css_px": -1.513542,
+          "search_top_delta_css_px": -1.485,
+          "search_bounds_contribution_css_px": 0.028542
+        },
+        "COLUMN_02": {
+          "word": {
+            "page": 1,
+            "x_pt": 90.05,
+            "baseline_top_pt": 344.6,
+            "search_top_pt": 335.91,
+            "font_names": [
+              "BCDFEE+ArialMT"
+            ]
+          },
+          "app": {
+            "page": 1,
+            "x_pt": 90.0,
+            "baseline_top_pt": 343.546875,
+            "search_top_pt": 334.87790998535155,
+            "font_names": [
+              "LiberationSans-6446"
+            ]
+          },
+          "same_region": true,
+          "baseline_delta_css_px": -1.404167,
+          "search_top_delta_css_px": -1.376,
+          "search_bounds_contribution_css_px": 0.028167
+        },
+        "COLUMN_03": {
+          "word": {
+            "page": 1,
+            "x_pt": 90.05,
+            "baseline_top_pt": 383.87,
+            "search_top_pt": 375.18,
+            "font_names": [
+              "BCDFEE+ArialMT"
+            ]
+          },
+          "app": {
+            "page": 1,
+            "x_pt": 90.0,
+            "baseline_top_pt": 382.640625,
+            "search_top_pt": 373.97165998535155,
+            "font_names": [
+              "LiberationSans-6446"
+            ]
+          },
+          "same_region": true,
+          "baseline_delta_css_px": -1.639167,
+          "search_top_delta_css_px": -1.611,
+          "search_bounds_contribution_css_px": 0.028167
+        },
+        "COLUMN_04": {
+          "word": {
+            "page": 1,
+            "x_pt": 90.05,
+            "baseline_top_pt": 422.87,
+            "search_top_pt": 414.18,
+            "font_names": [
+              "BCDFEE+ArialMT"
+            ]
+          },
+          "app": {
+            "page": 1,
+            "x_pt": 90.0,
+            "baseline_top_pt": 421.734375,
+            "search_top_pt": 413.06540998535155,
+            "font_names": [
+              "LiberationSans-6446"
+            ]
+          },
+          "same_region": true,
+          "baseline_delta_css_px": -1.514167,
+          "search_top_delta_css_px": -1.487,
+          "search_bounds_contribution_css_px": 0.027167
+        },
+        "COLUMN_05": {
+          "word": {
+            "page": 1,
+            "x_pt": 90.05,
+            "baseline_top_pt": 461.9,
+            "search_top_pt": 453.21,
+            "font_names": [
+              "BCDFEE+ArialMT"
+            ]
+          },
+          "app": {
+            "page": 1,
+            "x_pt": 90.0,
+            "baseline_top_pt": 460.81640625,
+            "search_top_pt": 452.14744123535155,
+            "font_names": [
+              "LiberationSans-6446"
+            ]
+          },
+          "same_region": true,
+          "baseline_delta_css_px": -1.444792,
+          "search_top_delta_css_px": -1.417,
+          "search_bounds_contribution_css_px": 0.027792
+        },
+        "COLUMN_06": {
+          "word": {
+            "page": 1,
+            "x_pt": 90.05,
+            "baseline_top_pt": 501.15,
+            "search_top_pt": 492.46,
+            "font_names": [
+              "BCDFEE+ArialMT"
+            ]
+          },
+          "app": {
+            "page": 1,
+            "x_pt": 90.0,
+            "baseline_top_pt": 499.91015625,
+            "search_top_pt": 491.24119123535155,
+            "font_names": [
+              "LiberationSans-6446"
+            ]
+          },
+          "same_region": true,
+          "baseline_delta_css_px": -1.653125,
+          "search_top_delta_css_px": -1.625,
+          "search_bounds_contribution_css_px": 0.028125
+        },
+        "COLUMN_07": {
+          "word": {
+            "page": 1,
+            "x_pt": 90.05,
+            "baseline_top_pt": 540.17,
+            "search_top_pt": 531.48,
+            "font_names": [
+              "BCDFEE+ArialMT"
+            ]
+          },
+          "app": {
+            "page": 1,
+            "x_pt": 90.0,
+            "baseline_top_pt": 539.00390625,
+            "search_top_pt": 530.3349412353516,
+            "font_names": [
+              "LiberationSans-6446"
+            ]
+          },
+          "same_region": true,
+          "baseline_delta_css_px": -1.554792,
+          "search_top_delta_css_px": -1.527,
+          "search_bounds_contribution_css_px": 0.027792
+        },
+        "COLUMN_08": {
+          "word": {
+            "page": 1,
+            "x_pt": 90.05,
+            "baseline_top_pt": 579.42,
+            "search_top_pt": 570.73,
+            "font_names": [
+              "BCDFEE+ArialMT"
+            ]
+          },
+          "app": {
+            "page": 1,
+            "x_pt": 90.0,
+            "baseline_top_pt": 578.0859375,
+            "search_top_pt": 569.4169724853516,
+            "font_names": [
+              "LiberationSans-6446"
+            ]
+          },
+          "same_region": true,
+          "baseline_delta_css_px": -1.77875,
+          "search_top_delta_css_px": -1.751,
+          "search_bounds_contribution_css_px": 0.02775
+        },
+        "COLUMN_09": {
+          "word": {
+            "page": 1,
+            "x_pt": 90.05,
+            "baseline_top_pt": 618.45,
+            "search_top_pt": 609.76,
+            "font_names": [
+              "BCDFEE+ArialMT"
+            ]
+          },
+          "app": {
+            "page": 1,
+            "x_pt": 90.0,
+            "baseline_top_pt": 617.1796875,
+            "search_top_pt": 608.5107224853516,
+            "font_names": [
+              "LiberationSans-6446"
+            ]
+          },
+          "same_region": true,
+          "baseline_delta_css_px": -1.69375,
+          "search_top_delta_css_px": -1.665,
+          "search_bounds_contribution_css_px": 0.02875
+        },
+        "COLUMN_10": {
+          "word": {
+            "page": 1,
+            "x_pt": 90.05,
+            "baseline_top_pt": 657.45,
+            "search_top_pt": 648.76,
+            "font_names": [
+              "BCDFEE+ArialMT"
+            ]
+          },
+          "app": {
+            "page": 1,
+            "x_pt": 90.0,
+            "baseline_top_pt": 656.26171875,
+            "search_top_pt": 647.5927537353516,
+            "font_names": [
+              "LiberationSans-6446"
+            ]
+          },
+          "same_region": true,
+          "baseline_delta_css_px": -1.584375,
+          "search_top_delta_css_px": -1.556,
+          "search_bounds_contribution_css_px": 0.028375
+        },
+        "COLUMN_11": {
+          "word": {
+            "page": 1,
+            "x_pt": 90.05,
+            "baseline_top_pt": 696.725,
+            "search_top_pt": 688.035,
+            "font_names": [
+              "BCDFEE+ArialMT"
+            ]
+          },
+          "app": {
+            "page": 1,
+            "x_pt": 90.0,
+            "baseline_top_pt": 695.35546875,
+            "search_top_pt": 686.6865037353516,
+            "font_names": [
+              "LiberationSans-6446"
+            ]
+          },
+          "same_region": true,
+          "baseline_delta_css_px": -1.826042,
+          "search_top_delta_css_px": -1.797,
+          "search_bounds_contribution_css_px": 0.029042
+        },
+        "COLUMN_12": {
+          "word": {
+            "page": 1,
+            "x_pt": 324.13,
+            "baseline_top_pt": 82.27999999999997,
+            "search_top_pt": 73.58999999999992,
+            "font_names": [
+              "BCDFEE+ArialMT"
+            ]
+          },
+          "app": {
+            "page": 1,
+            "x_pt": 324.0,
+            "baseline_top_pt": 81.75,
+            "search_top_pt": 73.08103498535161,
+            "font_names": [
+              "LiberationSans-6446"
+            ]
+          },
+          "same_region": true,
+          "baseline_delta_css_px": -0.706667,
+          "search_top_delta_css_px": -0.679,
+          "search_bounds_contribution_css_px": 0.027667
+        },
+        "COLUMN_13": {
+          "word": {
+            "page": 1,
+            "x_pt": 324.13,
+            "baseline_top_pt": 121.29999999999995,
+            "search_top_pt": 112.6099999999999,
+            "font_names": [
+              "BCDFEE+ArialMT"
+            ]
+          },
+          "app": {
+            "page": 1,
+            "x_pt": 324.0,
+            "baseline_top_pt": 120.83203125,
+            "search_top_pt": 112.16306623535161,
+            "font_names": [
+              "LiberationSans-6446"
+            ]
+          },
+          "same_region": true,
+          "baseline_delta_css_px": -0.623958,
+          "search_top_delta_css_px": -0.596,
+          "search_bounds_contribution_css_px": 0.027958
+        },
+        "COLUMN_14": {
+          "word": {
+            "page": 1,
+            "x_pt": 324.13,
+            "baseline_top_pt": 160.54999999999995,
+            "search_top_pt": 151.8599999999999,
+            "font_names": [
+              "BCDFEE+ArialMT"
+            ]
+          },
+          "app": {
+            "page": 1,
+            "x_pt": 324.0,
+            "baseline_top_pt": 159.92578125,
+            "search_top_pt": 151.2568162353516,
+            "font_names": [
+              "LiberationSans-6446"
+            ]
+          },
+          "same_region": true,
+          "baseline_delta_css_px": -0.832292,
+          "search_top_delta_css_px": -0.804,
+          "search_bounds_contribution_css_px": 0.028292
+        },
+        "COLUMN_15": {
+          "word": {
+            "page": 1,
+            "x_pt": 324.13,
+            "baseline_top_pt": 199.58000000000004,
+            "search_top_pt": 190.89,
+            "font_names": [
+              "BCDFEE+ArialMT"
+            ]
+          },
+          "app": {
+            "page": 1,
+            "x_pt": 324.0,
+            "baseline_top_pt": 199.0078125,
+            "search_top_pt": 190.3388474853516,
+            "font_names": [
+              "LiberationSans-6446"
+            ]
+          },
+          "same_region": true,
+          "baseline_delta_css_px": -0.762917,
+          "search_top_delta_css_px": -0.735,
+          "search_bounds_contribution_css_px": 0.027917
+        },
+        "COLUMN_16": {
+          "word": {
+            "page": 1,
+            "x_pt": 324.13,
+            "baseline_top_pt": 238.58000000000004,
+            "search_top_pt": 229.89,
+            "font_names": [
+              "BCDFEE+ArialMT"
+            ]
+          },
+          "app": {
+            "page": 1,
+            "x_pt": 324.0,
+            "baseline_top_pt": 238.1015625,
+            "search_top_pt": 229.4325974853516,
+            "font_names": [
+              "LiberationSans-6446"
+            ]
+          },
+          "same_region": true,
+          "baseline_delta_css_px": -0.637917,
+          "search_top_delta_css_px": -0.609,
+          "search_bounds_contribution_css_px": 0.028917
+        },
+        "COLUMN_17": {
+          "word": {
+            "page": 1,
+            "x_pt": 324.13,
+            "baseline_top_pt": 277.85,
+            "search_top_pt": 269.15999999999997,
+            "font_names": [
+              "BCDFEE+ArialMT"
+            ]
+          },
+          "app": {
+            "page": 1,
+            "x_pt": 324.0,
+            "baseline_top_pt": 277.1953125,
+            "search_top_pt": 268.5263474853516,
+            "font_names": [
+              "LiberationSans-6446"
+            ]
+          },
+          "same_region": true,
+          "baseline_delta_css_px": -0.872917,
+          "search_top_delta_css_px": -0.845,
+          "search_bounds_contribution_css_px": 0.027917
+        },
+        "COLUMN_18": {
+          "word": {
+            "page": 1,
+            "x_pt": 324.13,
+            "baseline_top_pt": 316.85,
+            "search_top_pt": 308.16,
+            "font_names": [
+              "BCDFEE+ArialMT"
+            ]
+          },
+          "app": {
+            "page": 1,
+            "x_pt": 324.0,
+            "baseline_top_pt": 316.27734375,
+            "search_top_pt": 307.60837873535155,
+            "font_names": [
+              "LiberationSans-6446"
+            ]
+          },
+          "same_region": true,
+          "baseline_delta_css_px": -0.763542,
+          "search_top_delta_css_px": -0.736,
+          "search_bounds_contribution_css_px": 0.027542
+        },
+        "COLUMN_19": {
+          "word": {
+            "page": 1,
+            "x_pt": 324.13,
+            "baseline_top_pt": 356.12,
+            "search_top_pt": 347.43,
+            "font_names": [
+              "BCDFEE+ArialMT"
+            ]
+          },
+          "app": {
+            "page": 1,
+            "x_pt": 324.0,
+            "baseline_top_pt": 355.37109375,
+            "search_top_pt": 346.70212873535155,
+            "font_names": [
+              "LiberationSans-6446"
+            ]
+          },
+          "same_region": true,
+          "baseline_delta_css_px": -0.998542,
+          "search_top_delta_css_px": -0.971,
+          "search_bounds_contribution_css_px": 0.027542
+        },
+        "COLUMN_20": {
+          "word": {
+            "page": 1,
+            "x_pt": 324.13,
+            "baseline_top_pt": 395.12,
+            "search_top_pt": 386.43,
+            "font_names": [
+              "BCDFEE+ArialMT"
+            ]
+          },
+          "app": {
+            "page": 1,
+            "x_pt": 324.0,
+            "baseline_top_pt": 394.453125,
+            "search_top_pt": 385.78415998535155,
+            "font_names": [
+              "LiberationSans-6446"
+            ]
+          },
+          "same_region": true,
+          "baseline_delta_css_px": -0.889167,
+          "search_top_delta_css_px": -0.861,
+          "search_bounds_contribution_css_px": 0.028167
+        },
+        "COLUMN_21": {
+          "word": {
+            "page": 1,
+            "x_pt": 324.13,
+            "baseline_top_pt": 434.15,
+            "search_top_pt": 425.46,
+            "font_names": [
+              "BCDFEE+ArialMT"
+            ]
+          },
+          "app": {
+            "page": 1,
+            "x_pt": 324.0,
+            "baseline_top_pt": 433.546875,
+            "search_top_pt": 424.87790998535155,
+            "font_names": [
+              "LiberationSans-6446"
+            ]
+          },
+          "same_region": true,
+          "baseline_delta_css_px": -0.804167,
+          "search_top_delta_css_px": -0.776,
+          "search_bounds_contribution_css_px": 0.028167
+        },
+        "COLUMN_22": {
+          "word": {
+            "page": 1,
+            "x_pt": 324.13,
+            "baseline_top_pt": 473.4,
+            "search_top_pt": 464.71,
+            "font_names": [
+              "BCDFEE+ArialMT"
+            ]
+          },
+          "app": {
+            "page": 1,
+            "x_pt": 324.0,
+            "baseline_top_pt": 472.640625,
+            "search_top_pt": 463.97165998535155,
+            "font_names": [
+              "LiberationSans-6446"
+            ]
+          },
+          "same_region": true,
+          "baseline_delta_css_px": -1.0125,
+          "search_top_delta_css_px": -0.984,
+          "search_bounds_contribution_css_px": 0.0285
+        },
+        "COLUMN_23": {
+          "word": {
+            "page": 1,
+            "x_pt": 324.13,
+            "baseline_top_pt": 512.4200000000001,
+            "search_top_pt": 503.73,
+            "font_names": [
+              "BCDFEE+ArialMT"
+            ]
+          },
+          "app": {
+            "page": 1,
+            "x_pt": 324.0,
+            "baseline_top_pt": 511.72265625,
+            "search_top_pt": 503.05369123535155,
+            "font_names": [
+              "LiberationSans-6446"
+            ]
+          },
+          "same_region": true,
+          "baseline_delta_css_px": -0.929792,
+          "search_top_delta_css_px": -0.901,
+          "search_bounds_contribution_css_px": 0.028792
+        },
+        "COLUMN_24": {
+          "word": {
+            "page": 1,
+            "x_pt": 324.13,
+            "baseline_top_pt": 551.42,
+            "search_top_pt": 542.73,
+            "font_names": [
+              "BCDFEE+ArialMT"
+            ]
+          },
+          "app": {
+            "page": 1,
+            "x_pt": 324.0,
+            "baseline_top_pt": 550.81640625,
+            "search_top_pt": 542.1474412353516,
+            "font_names": [
+              "LiberationSans-6446"
+            ]
+          },
+          "same_region": true,
+          "baseline_delta_css_px": -0.804792,
+          "search_top_delta_css_px": -0.777,
+          "search_bounds_contribution_css_px": 0.027792
+        },
+        "COLUMN_25": {
+          "word": {
+            "page": 1,
+            "x_pt": 324.13,
+            "baseline_top_pt": 590.7,
+            "search_top_pt": 582.01,
+            "font_names": [
+              "BCDFEE+ArialMT"
+            ]
+          },
+          "app": {
+            "page": 1,
+            "x_pt": 324.0,
+            "baseline_top_pt": 589.91015625,
+            "search_top_pt": 581.2411912353516,
+            "font_names": [
+              "LiberationSans-6446"
+            ]
+          },
+          "same_region": true,
+          "baseline_delta_css_px": -1.053125,
+          "search_top_delta_css_px": -1.025,
+          "search_bounds_contribution_css_px": 0.028125
+        },
+        "CROSSREF_END": {
+          "word": {
+            "page": 2,
+            "x_pt": 193.83,
+            "baseline_top_pt": 272.83000000000004,
+            "search_top_pt": 264.14,
+            "font_names": [
+              "BCDFEE+ArialMT"
+            ]
+          },
+          "app": {
+            "page": 2,
+            "x_pt": 193.04296875,
+            "baseline_top_pt": 271.98046875,
+            "search_top_pt": 263.3115037353516,
+            "font_names": [
+              "LiberationSans-6446"
+            ]
+          },
+          "same_region": true,
+          "baseline_delta_css_px": -1.132708,
+          "search_top_delta_css_px": -1.104,
+          "search_bounds_contribution_css_px": 0.028708
+        },
+        "CROSSREF_START": {
+          "word": {
+            "page": 2,
+            "x_pt": 90.05,
+            "baseline_top_pt": 258.33000000000004,
+            "search_top_pt": 249.64,
+            "font_names": [
+              "BCDFEE+ArialMT"
+            ]
+          },
+          "app": {
+            "page": 2,
+            "x_pt": 90.0,
+            "baseline_top_pt": 257.4375,
+            "search_top_pt": 248.7685349853516,
+            "font_names": [
+              "LiberationSans-6446"
+            ]
+          },
+          "same_region": true,
+          "baseline_delta_css_px": -1.19,
+          "search_top_delta_css_px": -1.161,
+          "search_bounds_contribution_css_px": 0.029
+        },
+        "ENDNOTE_BODY": {
+          "word": {
+            "page": 2,
+            "x_pt": 90.05,
+            "baseline_top_pt": 310.1,
+            "search_top_pt": 301.41,
+            "font_names": [
+              "BCDFEE+ArialMT"
+            ]
+          },
+          "app": {
+            "page": 2,
+            "x_pt": 90.0,
+            "baseline_top_pt": 309.1640625,
+            "search_top_pt": 300.49509748535155,
+            "font_names": [
+              "LiberationSans-6446"
+            ]
+          },
+          "same_region": true,
+          "baseline_delta_css_px": -1.247917,
+          "search_top_delta_css_px": -1.22,
+          "search_bounds_contribution_css_px": 0.027917
+        },
+        "FOOTNOTE_BODY": {
+          "word": {
+            "page": 2,
+            "x_pt": 90.05,
+            "baseline_top_pt": 705.975,
+            "search_top_pt": 697.285,
+            "font_names": [
+              "BCDFEE+ArialMT"
+            ]
+          },
+          "app": {
+            "page": 2,
+            "x_pt": 90.0,
+            "baseline_top_pt": 705.94921875,
+            "search_top_pt": 697.2802537353516,
+            "font_names": [
+              "LiberationSans-6446"
+            ]
+          },
+          "same_region": true,
+          "baseline_delta_css_px": -0.034375,
+          "search_top_delta_css_px": -0.007,
+          "search_bounds_contribution_css_px": 0.027375
+        },
+        "NOTE_ANCHOR": {
+          "word": {
+            "page": 2,
+            "x_pt": 90.05,
+            "baseline_top_pt": 82.27999999999997,
+            "search_top_pt": 73.58999999999992,
+            "font_names": [
+              "BCDFEE+ArialMT"
+            ]
+          },
+          "app": {
+            "page": 2,
+            "x_pt": 90.0,
+            "baseline_top_pt": 81.75,
+            "search_top_pt": 73.08103498535161,
+            "font_names": [
+              "LiberationSans-6446"
+            ]
+          },
+          "same_region": true,
+          "baseline_delta_css_px": -0.706667,
+          "search_top_delta_css_px": -0.679,
+          "search_bounds_contribution_css_px": 0.027667
+        },
+        "TABLE_A": {
+          "word": {
+            "page": 1,
+            "x_pt": 324.13,
+            "baseline_top_pt": 630.45,
+            "search_top_pt": 621.76,
+            "font_names": [
+              "BCDFEE+ArialMT"
+            ]
+          },
+          "app": {
+            "page": 1,
+            "x_pt": 324.4921875,
+            "baseline_top_pt": 629.7421875,
+            "search_top_pt": 621.0732224853516,
+            "font_names": [
+              "LiberationSans-6446"
+            ]
+          },
+          "same_region": true,
+          "baseline_delta_css_px": -0.94375,
+          "search_top_delta_css_px": -0.916,
+          "search_bounds_contribution_css_px": 0.02775
+        },
+        "TABLE_B": {
+          "word": {
+            "page": 1,
+            "x_pt": 410.67,
+            "baseline_top_pt": 630.45,
+            "search_top_pt": 621.76,
+            "font_names": [
+              "BCDFEE+ArialMT"
+            ]
+          },
+          "app": {
+            "page": 1,
+            "x_pt": 410.7421875,
+            "baseline_top_pt": 629.7421875,
+            "search_top_pt": 621.0732224853516,
+            "font_names": [
+              "LiberationSans-6446"
+            ]
+          },
+          "same_region": true,
+          "baseline_delta_css_px": -0.94375,
+          "search_top_delta_css_px": -0.916,
+          "search_bounds_contribution_css_px": 0.02775
+        },
+        "TABLE_C": {
+          "word": {
+            "page": 1,
+            "x_pt": 324.13,
+            "baseline_top_pt": 643.45,
+            "search_top_pt": 634.76,
+            "font_names": [
+              "BCDFEE+ArialMT"
+            ]
+          },
+          "app": {
+            "page": 1,
+            "x_pt": 324.4921875,
+            "baseline_top_pt": 643.13671875,
+            "search_top_pt": 634.4677537353516,
+            "font_names": [
+              "LiberationSans-6446"
+            ]
+          },
+          "same_region": true,
+          "baseline_delta_css_px": -0.417708,
+          "search_top_delta_css_px": -0.389,
+          "search_bounds_contribution_css_px": 0.028708
+        },
+        "TABLE_D": {
+          "word": {
+            "page": 1,
+            "x_pt": 410.67,
+            "baseline_top_pt": 643.45,
+            "search_top_pt": 634.76,
+            "font_names": [
+              "BCDFEE+ArialMT"
+            ]
+          },
+          "app": {
+            "page": 1,
+            "x_pt": 410.7421875,
+            "baseline_top_pt": 643.13671875,
+            "search_top_pt": 634.4677537353516,
+            "font_names": [
+              "LiberationSans-6446"
+            ]
+          },
+          "same_region": true,
+          "baseline_delta_css_px": -0.417708,
+          "search_top_delta_css_px": -0.389,
+          "search_bounds_contribution_css_px": 0.028708
+        },
+        "TABS_END": {
+          "word": {
+            "page": 1,
+            "x_pt": 230.04200000000003,
+            "baseline_top_pt": 162.04999999999995,
+            "search_top_pt": 153.3599999999999,
+            "font_names": [
+              "BCDFEE+ArialMT"
+            ]
+          },
+          "app": {
+            "page": 1,
+            "x_pt": 230.51953125,
+            "baseline_top_pt": 161.28515625,
+            "search_top_pt": 152.6161912353516,
+            "font_names": [
+              "LiberationSans-6446"
+            ]
+          },
+          "same_region": true,
+          "baseline_delta_css_px": -1.019792,
+          "search_top_delta_css_px": -0.992,
+          "search_bounds_contribution_css_px": 0.027792
+        },
+        "TABS_START": {
+          "word": {
+            "page": 1,
+            "x_pt": 90.05,
+            "baseline_top_pt": 162.04999999999995,
+            "search_top_pt": 153.3599999999999,
+            "font_names": [
+              "BCDFEE+ArialMT"
+            ]
+          },
+          "app": {
+            "page": 1,
+            "x_pt": 90.0,
+            "baseline_top_pt": 161.28515625,
+            "search_top_pt": 152.6161912353516,
+            "font_names": [
+              "LiberationSans-6446"
+            ]
+          },
+          "same_region": true,
+          "baseline_delta_css_px": -1.019792,
+          "search_top_delta_css_px": -0.992,
+          "search_bounds_contribution_css_px": 0.027792
+        }
+      }
+    }
+  ],
+  "limits": [
+    "Diagnostic of supplied captures, not a new application capture or a visible glyph metric.",
+    "All expanded comparator gates and content/link differences remain unchanged.",
+    "Baseline agreement alone does not establish glyph, line-box, border, or editing equivalence.",
+    "Measured residuals do not authorize per-fixture offsets or inferred font-profile changes."
+  ]
+}

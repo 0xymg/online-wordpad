@@ -1,3 +1,4 @@
+import { resolveNativeKerningHTML } from "./native-kerning";
 /** Header/footer HTML is parsed through the editor schema before display. */
 import { DOMParser as PMParser, DOMSerializer, type Node as PMNode } from "prosemirror-model";
 import { mySchema } from "@/app/components/editor-schema";
@@ -51,6 +52,7 @@ export function runningFragment(html: string, page: string | number = 1, total =
   const node = PMParser.fromSchema(mySchema).parse(input.body);
   const fragment = document.createDocumentFragment();
   DOMSerializer.fromSchema(mySchema).serializeFragment(node.content, {}, fragment);
+  resolveNativeKerningHTML(fragment);
   fragment.querySelectorAll<HTMLElement>("[data-doc-field]").forEach(field => { field.classList.remove("edtr-document-field"); if (field.dataset.docField === "PAGE") field.textContent = String(page); else if (field.dataset.docField === "NUMPAGES") field.textContent = String(total); });
   return fragment;
 }

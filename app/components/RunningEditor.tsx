@@ -1,4 +1,5 @@
 "use client";
+import { nativeKerningPlugin } from "@/lib/native-kerning";
 import { useEffect, useRef, useState, lazy, Suspense } from "react";
 import { DOMParser as PMParser, DOMSerializer } from "prosemirror-model";
 import { EditorState, type Command } from "prosemirror-state";
@@ -26,7 +27,7 @@ export default function RunningEditor({ html, label, disabled, onChange, layout,
     if (!host.current) return;
     const dom = new DOMParser().parseFromString(initial.current, "text/html");
     const editor = new EditorView(host.current, {
-      state: EditorState.create({ doc: normalizeTabCharacters(PMParser.fromSchema(mySchema).parse(dom.body, { topNode: mySchema.nodes.doc.create({ layout: initialLayout.current }) })), plugins: [history(), tableEditing(), tabCharactersPlugin(), tabLayoutPlugin(), keymap({ "Tab": (state, dispatch) => isInTable(state) ? goToNextCell(1)(state, dispatch) : insertTabCharacter(state, dispatch), "Shift-Tab": (state, dispatch) => isInTable(state) ? goToNextCell(-1)(state, dispatch) : false, "Mod-Alt-t": insertTabCharacter, "Mod-z": undo, "Mod-Shift-z": redo, "Mod-b": toggleMark(mySchema.marks.strong), "Mod-i": toggleMark(mySchema.marks.em), "Mod-u": toggleMark(mySchema.marks.underline) }), keymap(baseKeymap)] }),
+      state: EditorState.create({ doc: normalizeTabCharacters(PMParser.fromSchema(mySchema).parse(dom.body, { topNode: mySchema.nodes.doc.create({ layout: initialLayout.current }) })), plugins: [nativeKerningPlugin(), history(), tableEditing(), tabCharactersPlugin(), tabLayoutPlugin(), keymap({ "Tab": (state, dispatch) => isInTable(state) ? goToNextCell(1)(state, dispatch) : insertTabCharacter(state, dispatch), "Shift-Tab": (state, dispatch) => isInTable(state) ? goToNextCell(-1)(state, dispatch) : false, "Mod-Alt-t": insertTabCharacter, "Mod-z": undo, "Mod-Shift-z": redo, "Mod-b": toggleMark(mySchema.marks.strong), "Mod-i": toggleMark(mySchema.marks.em), "Mod-u": toggleMark(mySchema.marks.underline) }), keymap(baseKeymap)] }),
       nodeViews: { tab: createTabNodeView },
       attributes: { role: "textbox", "aria-label": initialLabel.current, "aria-multiline": "true" },
       dispatchTransaction(tr) {

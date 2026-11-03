@@ -1,0 +1,12 @@
+{
+  "reference_application": "Word Online",
+  "capture_method": "Upload source in Word Online; File > Export > Download as PDF > Download in UI",
+  "source": "columns-base-11.docx",
+  "source_sha256": "9647c7d2d351988da224fe4c84cd9cc6cbc6e6b21990f8288383724728c4292b",
+  "pdf": "columns-base-11.word.pdf",
+  "pdf_sha256": "658c37c3a3254590fe00b8b82ff08d468ea7925696935c7b270d6734226bcea5",
+  "captured_at_utc": "2026-11-03T23:40:14.944069+00:00",
+  "capture_timestamp_basis": "download file modification time",
+  "fonts": "unknown",
+  "paper_settings": "source document settings"
+}

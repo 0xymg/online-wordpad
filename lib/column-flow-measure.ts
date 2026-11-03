@@ -7,7 +7,7 @@ import { measureColumnTable, type ColumnTableMeasurement, type TableGroupBand } 
 import { annotateParagraphConstraints } from './column-paragraph-flow';
 
 type Line = { from: number; to: number; top: number; bottom: number; keyTop: number };
-export type NaturalBlock = { pos: number; from: number; to: number; top: number; left: number; width: number; height: number; paddingLeft: number; paddingRight: number; marginBottom: number; borderBottom: string; borderBottomWidth: number; textblock: boolean; noteSeparator?: { height: number; top: number; left: number; width: number; color: string } };
+export type NaturalBlock = { pos: number; from: number; to: number; top: number; left: number; width: number; height: number; paddingLeft: number; paddingRight: number; marginBottom: number; borderBottom: string; borderBottomWidth: number; textblock: boolean; noteSeparator?: { topFromBlock: number; left: number; width: number; height: number; color: string } };
 export type ColumnMeasurement = { sections: FlowSection[]; blocks: NaturalBlock[]; tables: ColumnTableMeasurement[]; complete: boolean; diagnostics: FlowDiagnostic[] };
 /**
  * The caller must present an unfragmented, column-width view with settled tabs.
@@ -88,7 +88,12 @@ export function measureNaturalColumnSections(view: EditorView, sections: readonl
       }
     }
     if (!lines.length && !breaks.length) { mutable[index].push({ from: pos + 1, to: pos + 1, height: lineHeight + marginTop + marginBottom + topInset + bottomInset, kind: 'line', sourceTop: (elementRect.top - root.top) / scale, sourceBlock: pos, sourceLeft, sourceWidth, sourceMarginLeft, sourceMarginRight, offsetY: marginTop + topInset, leadingMargin: marginTop, trailingMargin: marginBottom }); return; }
-    let units: FlowUnit[] = lines.map((item, i) => ({ from: item.from, to: item.to, kind: 'line', sourceTop: item.keyTop, sourceBlock: pos, sourceLeft, sourceWidth, sourceMarginLeft, sourceMarginRight, offsetY: item.keyTop - item.top, height: Math.max(item.bottom - item.top, i + 1 < lines.length && lines[i + 1].top > item.top ? lines[i + 1].top - item.top : lineHeight) }));
+    // DOM ranges describe the font box, whose top can sit inside (or above)
+    // the CSS line box. Preserve that natural leading when relocating lines;
+    // aligning the font box itself to the region top silently drops it. This
+    // affects placement only: the measured line height already includes it.
+    const lineLeading = lines.length ? lines[0].top - (elementRect.top - root.top) / scale - topInset : 0;
+    let units: FlowUnit[] = lines.map((item, i) => ({ from: item.from, to: item.to, kind: 'line', sourceTop: item.keyTop, sourceBlock: pos, sourceLeft, sourceWidth, sourceMarginLeft, sourceMarginRight, offsetY: item.keyTop - item.top + lineLeading, height: Math.max(item.bottom - item.top, i + 1 < lines.length && lines[i + 1].top > item.top ? lines[i + 1].top - item.top : lineHeight) }));
     if (units.length) { units[0].height += marginTop + topInset; units[0].leadingMargin = marginTop; units[0].offsetY = (units[0].offsetY || 0) + marginTop + topInset; units[units.length - 1].height += marginBottom + bottomInset; units[units.length - 1].trailingMargin = marginBottom; }
     if (floats.length) {
       const grouped: FlowUnit[] = [];
@@ -163,7 +168,7 @@ export function measureNaturalColumnSections(view: EditorView, sections: readonl
       blocks.push({ pos, from: pos + 1, to: pos + node.nodeSize - 1, top: (rect.top - root.top) / scale, left: (rect.left - root.left) / scale,
         width: rect.width / scale, height: rect.height / scale, paddingLeft: Number.parseFloat(style.paddingLeft) || 0, paddingRight: Number.parseFloat(style.paddingRight) || 0, marginBottom: Number.parseFloat(style.marginBottom) || 0,
         borderBottom: style.borderBottom, borderBottomWidth: Number.parseFloat(style.borderBottomWidth) || 0, textblock: node.isTextblock,
-        ...(separatorBox && ruleBox && rule ? { noteSeparator: { height: separatorBox.height / scale, top: (ruleBox.top - separatorBox.top) / scale, left: (ruleBox.left - separatorBox.left) / scale, width: ruleBox.width / scale, color: separator!.style.color } } : {}) });
+        ...(separatorBox && ruleBox && rule ? { noteSeparator: { topFromBlock: (ruleBox.top - rect.top) / scale, left: (ruleBox.left - separatorBox.left) / scale, width: ruleBox.width / scale, height: ruleBox.height / scale, color: separator!.style.color } } : {}) });
     }
     if (node.isTextblock) { collectTextblock(node, pos, index); return false; }
     if (node.isAtom) { fail(index, 'unsupported-structural-object', pos, node.nodeSize); return false; }

@@ -1,0 +1,51 @@
+{
+  "schema_version": 1,
+  "source": "../notes.docx",
+  "source_sha256": "a650e8d23a0c2ccc75052013b6080f6229024233f891b3471bbeafadd15cae82",
+  "cases": [
+    {
+      "id": "base-12",
+      "source": "base-12.docx",
+      "sha256": "123c75b2ab73d120b24f4417700becb9cd403fee530ae8582f3207a1ddf095f0",
+      "normal_size_pt": 12.0,
+      "word_only_unsupported_separator_marker": false,
+      "word_reference_status": "CAPTURED",
+      "word_pdf": "base-12.word.pdf",
+      "word_pdf_sha256": "0ab5908dfb2bf28fd7dd54470806b739cf888216b8aa25ec0e24740d4ab1a81c",
+      "word_provenance": "base-12.provenance.json"
+    },
+    {
+      "id": "base-20",
+      "source": "base-20.docx",
+      "sha256": "07427de99206390698382a8cf36c48b103f9a387608f455e2fc4f7076988f84d",
+      "normal_size_pt": 20.0,
+      "word_only_unsupported_separator_marker": false,
+      "word_reference_status": "CAPTURED",
+      "word_pdf": "base-20.word.pdf",
+      "word_pdf_sha256": "ba3de1c445f6acc5e56c117ef3acad8273d72f070098a50fba2ea7328ba98e6d",
+      "word_provenance": "base-20.provenance.json"
+    },
+    {
+      "id": "baseline-11",
+      "source": "baseline-11.docx",
+      "sha256": "8bdcac9cc504b05cae46328b75cd46043f9dc3f60ce66aa08744a10346d78c5c",
+      "normal_size_pt": 11.0,
+      "word_only_unsupported_separator_marker": true,
+      "word_reference_status": "CAPTURED",
+      "word_pdf": "baseline-11.word.pdf",
+      "word_pdf_sha256": "10c2198c796e8450c918a5de631b64413c63424ad07461281c244067055dcb29",
+      "word_provenance": "baseline-11.provenance.json"
+    },
+    {
+      "id": "baseline-16",
+      "source": "baseline-16.docx",
+      "sha256": "07104dc47e9d8feae420db9e4484abd0253309b172c52d49d3d491c5d86c867f",
+      "normal_size_pt": 16.0,
+      "word_only_unsupported_separator_marker": true,
+      "word_reference_status": "CAPTURED",
+      "word_pdf": "baseline-16.word.pdf",
+      "word_pdf_sha256": "83841f2b8c8eba7233bab34749b053f56df0ac1c8847a5a64f6138c53d980bf0",
+      "word_provenance": "baseline-16.provenance.json"
+    }
+  ]
+}

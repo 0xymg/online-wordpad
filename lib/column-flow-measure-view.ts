@@ -1,3 +1,4 @@
+import { nativeKerningPlugin } from "./native-kerning";
 /** Isolated read-only natural-width view used by the A3 layout coordinator. */
 import { EditorState, Plugin } from 'prosemirror-state';
 import { Decoration, DecorationSet, EditorView } from 'prosemirror-view';
@@ -61,7 +62,7 @@ export async function measureColumnDocument(source: EditorView): Promise<ColumnM
       decorations.push(Decoration.node(pos, pos + node.nodeSize, { style: `width:${Math.max(1, colWidth - indent)}px;max-width:none;box-sizing:border-box;overflow-wrap:anywhere` }));
     });
     const widthPlugin = new Plugin({ props: { decorations: state => DecorationSet.create(state.doc, decorations) } });
-    measurement = new EditorView(host, { state: EditorState.create({ doc, plugins: [widthPlugin, noteOwnerAppearancePlugin(), noteSeparatorPlugin(), tabLayoutPlugin()] }), editable: () => false,
+    measurement = new EditorView(host, { state: EditorState.create({ doc, plugins: [nativeKerningPlugin(), widthPlugin, noteOwnerAppearancePlugin(), noteSeparatorPlugin(), tabLayoutPlugin()] }), editable: () => false,
       nodeViews: { tab: createTabNodeView, image: readonlyImage, text_box: createReadonlyTextBoxView, table: readonlyTable } });
     measurement.dom.querySelectorAll('[id]').forEach(element => element.removeAttribute('id'));
     const sourceStyle = getComputedStyle(source.dom);

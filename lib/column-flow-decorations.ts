@@ -72,7 +72,11 @@ export function buildColumnDecorations(doc: PMNode, measurement: ColumnMeasureme
       }
       const page = flow.pages[fragment.pageIndex], line = borderLayer.ownerDocument.createElement('div');
       line.className = 'pm-endnote-separator-overlay';
-      line.style.cssText = `position:absolute;left:${(rootWidth - page.geometry.width / 15) / 2 + fragment.rect.x + block.noteSeparator.left}px;top:${fragment.rect.y - block.noteSeparator.height + block.noteSeparator.top}px;width:${Math.min(block.noteSeparator.width, fragment.rect.width)}px;color:${block.noteSeparator.color};border-top:0.5pt solid currentColor;`;
+      // Translate the measured rule by the same displacement as its text.
+      // Separator height alone omits the font box's natural line leading.
+      const sourceBlock = measurement.blocks.find(item => item.pos === block.pos)!;
+      const ruleTop = fragment.rect.y - (fragment.sourceTop! - sourceBlock.top) + block.noteSeparator.topFromBlock;
+      line.style.cssText = `position:absolute;left:${(rootWidth - page.geometry.width / 15) / 2 + fragment.rect.x + block.noteSeparator.left}px;top:${ruleTop}px;width:${Math.min(block.noteSeparator.width, fragment.rect.width)}px;color:${block.noteSeparator.color};height:${block.noteSeparator.height}px;background:currentColor;`;
       borderLayer.appendChild(line);
     }
     const borderOverride = block.textblock && block.borderBottomWidth > 0 ? 'border-bottom-color:transparent;' : '';

@@ -1,0 +1,12 @@
+{
+  "reference_application": "Word Online",
+  "capture_method": "Upload source in Word Online; File > Export > Download as PDF > Download in UI",
+  "source": "zero-11.docx",
+  "source_sha256": "1f94ae28f8788e09806df131e82c122b0c7dbd1278eabb5ff770ca934685fbe2",
+  "pdf": "zero-11.word.pdf",
+  "pdf_sha256": "8f9970a56592a61fa45c3a8e486709ba50a4fe7356ba49bcd9be19a1c85aa34f",
+  "captured_at_utc": "2026-11-03T23:33:08.761349+00:00",
+  "capture_timestamp_basis": "download file modification time",
+  "fonts": "Embedded ArialMT subsets (PDF /FontFile2 in Type0 descendant and TrueType font descriptors; inspected via pypdf)",
+  "paper_settings": "source document settings"
+}

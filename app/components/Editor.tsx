@@ -1,4 +1,5 @@
 "use client";
+import { nativeKerningPlugin } from "@/lib/native-kerning";
 
 import { alignSelection, imageAlignment, setTextAlign as applyTextAlign } from "@/lib/editor-commands";
 
@@ -217,6 +218,7 @@ const editorHistory = history();
 
 function buildPlugins() {
   return [
+    nativeKerningPlugin(),
     editorHistory,
     documentModelPlugin(() => {
       const lang = document.documentElement.lang;

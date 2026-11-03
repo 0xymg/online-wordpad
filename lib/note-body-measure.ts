@@ -1,3 +1,4 @@
+import { nativeKerningPlugin, resolveNativeKerningHTML } from "./native-kerning";
 import { EditorState, Plugin } from 'prosemirror-state';
 import { EditorView, Decoration, DecorationSet } from 'prosemirror-view';
 import { DOMSerializer, type Mark, type Node as PMNode } from 'prosemirror-model';
@@ -54,6 +55,7 @@ export async function measureNoteBody(source: EditorView, body: PMNode, width: n
       span.appendChild(DOMSerializer.fromSchema(source.state.schema).serializeNode(source.state.schema.text(label, prefixSpec.marks), { document: owner }));
       if (prefixSpec.trailingSpace) span.appendChild(owner.createTextNode(' '));
     }
+    resolveNativeKerningHTML(span);
     return span;
   };
   const prefix = new Plugin({ props: { decorations(state) {
@@ -64,7 +66,7 @@ export async function measureNoteBody(source: EditorView, body: PMNode, width: n
   } } });
   let view: EditorView | undefined;
   try {
-    view = new EditorView(shell, { state: EditorState.create({ doc: measuredDoc, plugins: [prefix, tabLayoutPlugin()] }), editable: () => false, nodeViews: { tab: createTabNodeView } });
+    view = new EditorView(shell, { state: EditorState.create({ doc: measuredDoc, plugins: [nativeKerningPlugin(), prefix, tabLayoutPlugin()] }), editable: () => false, nodeViews: { tab: createTabNodeView } });
     // The page editor suppresses the final block's margin for sheet flow. A
     // native note body is an independent story, so retain its explicit final
     // paragraph spacing when computing the bottom-anchored band.

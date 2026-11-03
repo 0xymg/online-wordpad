@@ -1,0 +1,205 @@
+{
+  "schema_version": 1,
+  "complete": true,
+  "base_url": "http://localhost:3120",
+  "browser_version": "156.0.8078.4",
+  "viewport": {
+    "width": 1450,
+    "height": 1050
+  },
+  "application_revision": null,
+  "selected_cases": [
+    "base-11",
+    "base-16",
+    "columns-base-11"
+  ],
+  "captured_at": "2026-11-03T23:52:32.363Z",
+  "results": [
+    {
+      "id": "zero-11",
+      "source_sha256": "1f94ae28f8788e09806df131e82c122b0c7dbd1278eabb5ff770ca934685fbe2",
+      "status": "EXPORTED",
+      "base_url": "http://localhost:3120",
+      "captured_at": "2026-11-03T23:45:00.735Z",
+      "geometry": {
+        "separator": {
+          "top": 409.90625,
+          "bottom": 426.765625,
+          "height": 16.859375
+        },
+        "rule": {
+          "top": 421.90625,
+          "bottom": 422.90625,
+          "height": 1
+        },
+        "baseline": {
+          "top": 422.90625,
+          "bottom": 422.90625,
+          "height": 0
+        },
+        "font": "",
+        "lineHeight": "16.8652px",
+        "fontFamily": "Arial, sans-serif",
+        "fontSize": "14.6667px"
+      },
+      "pdf_sha256": "a08a5dfbe1e39e17cbf0f07f59718d0ccc347de85822fce3bca29992f086b225",
+      "pdf_bytes": 62029,
+      "page_errors": []
+    },
+    {
+      "id": "zero-16",
+      "source_sha256": "93cdbe70d682e373da6ee2c3d3ce46d608a5945abe952622b61626c558fb9468",
+      "status": "EXPORTED",
+      "base_url": "http://localhost:3120",
+      "captured_at": "2026-11-03T23:45:09.948Z",
+      "geometry": {
+        "separator": {
+          "top": 418.71875,
+          "bottom": 443.25,
+          "height": 24.53125
+        },
+        "rule": {
+          "top": 436.71875,
+          "bottom": 437.71875,
+          "height": 1
+        },
+        "baseline": {
+          "top": 437.71875,
+          "bottom": 437.71875,
+          "height": 0
+        },
+        "font": "",
+        "lineHeight": "24.5312px",
+        "fontFamily": "Arial, sans-serif",
+        "fontSize": "21.3333px"
+      },
+      "pdf_sha256": "e39db72923f80ea6282e7d9fd03bbfcc83c7790cc93bd2f802bd9c7fe5603b9c",
+      "pdf_bytes": 70240,
+      "page_errors": []
+    },
+    {
+      "id": "columns-zero-11",
+      "source_sha256": "9e9f089c498032de78cd741698c74d4e645fac9c880236c29b7f95c34c2e1b62",
+      "status": "EXPORTED",
+      "base_url": "http://localhost:3120",
+      "captured_at": "2026-11-03T23:45:46.317Z",
+      "geometry": {
+        "separator": {
+          "top": 447.171875,
+          "bottom": 464.03125,
+          "height": 16.859375
+        },
+        "rule": {
+          "top": 459.171875,
+          "bottom": 460.171875,
+          "height": 1
+        },
+        "baseline": {
+          "top": 460.171875,
+          "bottom": 460.171875,
+          "height": 0
+        },
+        "font": "",
+        "lineHeight": "16.8652px",
+        "fontFamily": "Arial, sans-serif",
+        "fontSize": "14.6667px"
+      },
+      "pdf_sha256": "9ffbf56aa21ae731cd3fd63423d2287908eda1db1458cac2aad70c6cc931848c",
+      "pdf_bytes": 62927,
+      "page_errors": []
+    },
+    {
+      "id": "base-11",
+      "source_sha256": "a650e8d23a0c2ccc75052013b6080f6229024233f891b3471bbeafadd15cae82",
+      "status": "EXPORTED",
+      "base_url": "http://localhost:3120",
+      "captured_at": "2026-11-03T23:52:18.046Z",
+      "geometry": {
+        "separator": {
+          "top": 409.90625,
+          "bottom": 426.765625,
+          "height": 16.859375
+        },
+        "rule": {
+          "top": 419.4375,
+          "bottom": 420.09375,
+          "height": 0.65625
+        },
+        "baseline": {
+          "top": 422.90625,
+          "bottom": 422.90625,
+          "height": 0
+        },
+        "font": "",
+        "lineHeight": "16.8652px",
+        "fontFamily": "Arial, sans-serif",
+        "fontSize": "14.6667px"
+      },
+      "pdf_sha256": "0af7639dd09f9f2831cb18d6d38f8200f3f45358dd48ff7039f8c8451e016a2e",
+      "pdf_bytes": 62035,
+      "page_errors": []
+    },
+    {
+      "id": "base-16",
+      "source_sha256": "74aa7b7077e9be142ba359478c00c15a9a90f14aff9c6a67b2550e264e9b04bd",
+      "status": "EXPORTED",
+      "base_url": "http://localhost:3120",
+      "captured_at": "2026-11-03T23:52:22.716Z",
+      "geometry": {
+        "separator": {
+          "top": 418.71875,
+          "bottom": 443.25,
+          "height": 24.53125
+        },
+        "rule": {
+          "top": 432.6875,
+          "bottom": 433.6875,
+          "height": 1
+        },
+        "baseline": {
+          "top": 437.71875,
+          "bottom": 437.71875,
+          "height": 0
+        },
+        "font": "",
+        "lineHeight": "24.5312px",
+        "fontFamily": "Arial, sans-serif",
+        "fontSize": "21.3333px"
+      },
+      "pdf_sha256": "e7a6ceaa81f79b0cb0c4cab77cc3b97ef4f9b4dab1982a06084721d51b6ef1e5",
+      "pdf_bytes": 70239,
+      "page_errors": []
+    },
+    {
+      "id": "columns-base-11",
+      "source_sha256": "9647c7d2d351988da224fe4c84cd9cc6cbc6e6b21990f8288383724728c4292b",
+      "status": "EXPORTED",
+      "base_url": "http://localhost:3120",
+      "captured_at": "2026-11-03T23:52:27.303Z",
+      "geometry": {
+        "separator": {
+          "top": 447.171875,
+          "bottom": 464.03125,
+          "height": 16.859375
+        },
+        "rule": {
+          "top": 456.703125,
+          "bottom": 457.359375,
+          "height": 0.65625
+        },
+        "baseline": {
+          "top": 460.171875,
+          "bottom": 460.171875,
+          "height": 0
+        },
+        "font": "",
+        "lineHeight": "16.8652px",
+        "fontFamily": "Arial, sans-serif",
+        "fontSize": "14.6667px"
+      },
+      "pdf_sha256": "5c0e099cea3b14631b72236ba73eafd1599ca73baa8e7aa36548fee86000f1dc",
+      "pdf_bytes": 62925,
+      "page_errors": []
+    }
+  ]
+}

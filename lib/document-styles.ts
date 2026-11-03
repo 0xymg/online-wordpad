@@ -43,6 +43,7 @@ export function textFormat(marks: readonly Mark[]): StyleText {
   for (const mark of marks) {
     if (mark.type.name === "fontFamily") result.family = mark.attrs.family;
     if (mark.type.name === "fontSize") result.size = Number.parseFloat(mark.attrs.size) || 12;
+    if (mark.type.name === "nativeKerning") result.kerning = mark.attrs.threshold;
     if (mark.type.name === "textColor") { const color = String(mark.attrs.color), rgb = color.match(/^rgb\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)/i); result.color = rgb ? "#" + rgb.slice(1,4).map(n=>Number(n).toString(16).padStart(2,"0")).join("") : color; }
     if (mark.type.name === "strong") result.bold = true;
     if (mark.type.name === "em") result.italic = true;
@@ -52,16 +53,16 @@ export function textFormat(marks: readonly Mark[]): StyleText {
 }
 function equal(a: unknown,b: unknown) { return typeof a === "string" && typeof b === "string" ? a.replace(/["'\s]/g,"").toLowerCase() === b.replace(/["'\s]/g,"").toLowerCase() : a === b; }
 function restyleText(tr: Transaction, node: PMNode, pos: number, old: StyleText | null, next: StyleText) {
-  const specs = { family:["fontFamily","family"],size:["fontSize","size"],bold:["strong",""],italic:["em",""],underline:["underline",""],color:["textColor","color"] } as const;
+  const specs = { kerning:["nativeKerning","threshold"],family:["fontFamily","family"],size:["fontSize","size"],bold:["strong",""],italic:["em",""],underline:["underline",""],color:["textColor","color"] } as const;
   node.descendants((child,relative) => {
     if (!child.isInline || !child.isText && child.type.name !== "doc_field" && child.type.name !== "tab") return;
     const actual = textFormat(child.marks), from = pos+1+relative,to = from+child.nodeSize;
-    for (const key of Object.keys(specs) as Array<keyof StyleText>) {
+    for (const key of Object.keys(specs) as Array<keyof typeof specs>) {
       const [name,attr] = specs[key], type = tr.doc.type.schema.marks[name]; if (!type) continue;
       // Explicit applications reset font/size/colour; character emphasis remains.
       if (old ? !equal(actual[key],old[key]) : ["bold","italic","underline"].includes(key) && actual[key] === true && next[key] === false) continue;
       tr.removeMark(from,to,type);
-      if (typeof next[key] === "boolean" ? next[key] : true) tr.addMark(from,to,type.create(attr ? { [attr]:key === "size" ? `${next.size}pt` : next[key] } : undefined));
+      if (next[key] !== undefined && (typeof next[key] === "boolean" ? next[key] : true)) tr.addMark(from,to,type.create(attr ? { [attr]:key === "size" ? `${next.size}pt` : next[key] } : undefined));
     }
   });
 }

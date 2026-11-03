@@ -1,0 +1,101 @@
+{
+  "schema_version": 1,
+  "source": "../notes.docx",
+  "source_sha256": "a650e8d23a0c2ccc75052013b6080f6229024233f891b3471bbeafadd15cae82",
+  "description": "Independent native separator spacing, Normal font size, and column probes; Word reference capture pending. No output is a Word reference until captured from Word.",
+  "cases": [
+    {
+      "id": "base-11",
+      "source": "base-11.docx",
+      "sha256": "a650e8d23a0c2ccc75052013b6080f6229024233f891b3471bbeafadd15cae82",
+      "normal_size_pt": 11.0,
+      "separator_spacing": "inherited",
+      "columns": 1,
+      "markers": [
+        "FOOTNOTE_BODY",
+        "ENDNOTE_BODY"
+      ],
+      "word_reference_status": "CAPTURED",
+      "word_pdf": "base-11.word.pdf",
+      "word_pdf_sha256": "513bba4487c459203a5cae9b910d176833a58d636be1e593ba5a1ae8344bb4e3",
+      "word_provenance": "base-11.provenance.json"
+    },
+    {
+      "id": "zero-11",
+      "source": "zero-11.docx",
+      "sha256": "1f94ae28f8788e09806df131e82c122b0c7dbd1278eabb5ff770ca934685fbe2",
+      "normal_size_pt": 11.0,
+      "separator_spacing": "single-zero",
+      "columns": 1,
+      "markers": [
+        "FOOTNOTE_BODY",
+        "ENDNOTE_BODY"
+      ],
+      "word_reference_status": "CAPTURED",
+      "word_pdf": "zero-11.word.pdf",
+      "word_pdf_sha256": "8f9970a56592a61fa45c3a8e486709ba50a4fe7356ba49bcd9be19a1c85aa34f",
+      "word_provenance": "zero-11.provenance.json"
+    },
+    {
+      "id": "base-16",
+      "source": "base-16.docx",
+      "sha256": "74aa7b7077e9be142ba359478c00c15a9a90f14aff9c6a67b2550e264e9b04bd",
+      "normal_size_pt": 16.0,
+      "separator_spacing": "inherited",
+      "columns": 1,
+      "markers": [
+        "FOOTNOTE_BODY",
+        "ENDNOTE_BODY"
+      ],
+      "word_reference_status": "CAPTURED",
+      "word_pdf": "base-16.word.pdf",
+      "word_pdf_sha256": "f1f44b5ab287130f91a49f6178b81ca66599ec6f0f94bbf6e28c5b4ef50772d5",
+      "word_provenance": "base-16.provenance.json"
+    },
+    {
+      "id": "zero-16",
+      "source": "zero-16.docx",
+      "sha256": "93cdbe70d682e373da6ee2c3d3ce46d608a5945abe952622b61626c558fb9468",
+      "normal_size_pt": 16.0,
+      "separator_spacing": "single-zero",
+      "columns": 1,
+      "markers": [
+        "FOOTNOTE_BODY",
+        "ENDNOTE_BODY"
+      ],
+      "word_reference_status": "CAPTURED",
+      "word_pdf": "zero-16.word.pdf",
+      "word_pdf_sha256": "ebcdd4d6ef6e90461e5e3b0a4f8c68a8c42adc729f8e9cfc059403d3be5dbdfb",
+      "word_provenance": "zero-16.provenance.json"
+    },
+    {
+      "id": "columns-base-11",
+      "source": "columns-base-11.docx",
+      "sha256": "9647c7d2d351988da224fe4c84cd9cc6cbc6e6b21990f8288383724728c4292b",
+      "normal_size_pt": 11.0,
+      "separator_spacing": "inherited",
+      "columns": 2,
+      "markers": [
+        "FOOTNOTE_BODY",
+        "ENDNOTE_BODY"
+      ],
+      "word_reference_status": "CAPTURED",
+      "word_pdf": "columns-base-11.word.pdf",
+      "word_pdf_sha256": "658c37c3a3254590fe00b8b82ff08d468ea7925696935c7b270d6734226bcea5",
+      "word_provenance": "columns-base-11.provenance.json"
+    },
+    {
+      "id": "columns-zero-11",
+      "source": "columns-zero-11.docx",
+      "sha256": "9e9f089c498032de78cd741698c74d4e645fac9c880236c29b7f95c34c2e1b62",
+      "normal_size_pt": 11.0,
+      "separator_spacing": "single-zero",
+      "columns": 2,
+      "markers": [
+        "FOOTNOTE_BODY",
+        "ENDNOTE_BODY"
+      ],
+      "word_reference_status": "PENDING"
+    }
+  ]
+}

@@ -25,7 +25,7 @@ import { captionMetadataNames, captionSequenceAlias, nativeReferenceAlias, nativ
 import { DOMParser as PMParser, DOMSerializer, type Node as PMNode, type Mark } from "prosemirror-model";
 import { mySchema } from "@/app/components/editor-schema";
 import {
-  Document, Packer, Paragraph, TextRun, Tab, HeadingLevel, AlignmentType,
+  Document, Packer, Paragraph, TextRun as NativeTextRun, HpsMeasureElement, Tab, HeadingLevel, AlignmentType,
   Table, TableRow, TableCell, WidthType, ImageRun, ExternalHyperlink, InternalHyperlink, Bookmark, Header, Footer, PageNumber, SimpleField,
   LevelFormat, ShadingType, BorderStyle, PageBreak, BuilderElement, PageOrientation,
   TextWrappingType, TextWrappingSide, HorizontalPositionRelativeFrom, VerticalPositionRelativeFrom,
@@ -58,6 +58,14 @@ function firstFontFamily(value: string | undefined | null): string | undefined {
   return first || undefined;
 }
 
+/** docx omits numeric zero for kern. Zero is meaningful native disabling. */
+class TextRun extends NativeTextRun {
+  constructor(options: ConstructorParameters<typeof NativeTextRun>[0]) {
+    super(options);
+    if (typeof options !== 'string' && options.kern === 0) this.properties.push(new HpsMeasureElement('w:kern', 0));
+  }
+}
+
 function fontSizeHalfPoints(value: string | undefined | null): number | undefined {
   if (!value) return undefined;
   const n = Number.parseFloat(String(value));
@@ -68,7 +76,7 @@ function fontSizeHalfPoints(value: string | undefined | null): number | undefine
 
 type MarkProps = {
   bold?: boolean; italics?: boolean; underline?: boolean; strike?: boolean;
-  color?: string; size?: number; font?: string; highlight?: string;
+  color?: string; size?: number; font?: string; highlight?: string; kern?: number;
   superScript?: boolean; subScript?: boolean; link?: string;
 };
 
@@ -86,6 +94,7 @@ function readMarks(marks: readonly Mark[]): MarkProps {
       case "bgColor": p.highlight = colorToHex(m.attrs.color); break;
       case "fontSize": p.size = fontSizeHalfPoints(m.attrs.size); break;
       case "fontFamily": p.font = firstFontFamily(m.attrs.family); break;
+      case "nativeKerning": p.kern = m.attrs.threshold; break;
       case "link": p.link = String(m.attrs.href || ""); break;
     }
   }
@@ -210,6 +219,7 @@ class DocxBuilder {
       // Plain HTML paragraph fonts are a CSS base, rather than a linked Word
       // style. Materialize that base beneath each run's explicit overrides.
       if ((!node.attrs.styleId || !this.styles[node.attrs.styleId]) && node.attrs.styleText) {
+        p.kern ??= node.attrs.styleText.kerning;
         p.font ??= firstFontFamily(node.attrs.styleText.family);
         p.size ??= fontSizeHalfPoints(node.attrs.styleText.size ? `${node.attrs.styleText.size}pt` : undefined);
       }
@@ -259,7 +269,7 @@ class DocxBuilder {
           underline: p.underline === false ? { type: "none" } : p.underline ? {} : undefined,
           strike: p.strike,
           color: p.color,
-          size: p.size,
+          size: p.size, kern: p.kern,
           font: p.font,
           superScript: p.superScript,
           subScript: p.subScript,
@@ -275,7 +285,7 @@ class DocxBuilder {
         }
       } else if (child.type.name === "tab") {
         const p = inlineMarks(child.marks);
-        const run = new TextRun({ children: [new Tab()], font: p.font, size: p.size, bold: p.bold, italics: p.italics,
+        const run = new TextRun({ children: [new Tab()], font: p.font, size: p.size, kern: p.kern, bold: p.bold, italics: p.italics,
           underline: p.underline === false ? { type: "none" } : p.underline ? {} : undefined, strike: p.strike, color: p.color,
           superScript: p.superScript, subScript: p.subScript,
           shading: p.highlight ? { type: ShadingType.CLEAR, fill: p.highlight } : undefined,
@@ -303,7 +313,7 @@ class DocxBuilder {
         const marker = this.noteOwnerMarkers.get(String(child.attrs.noteId));
         if (!marker) throw new Error("Cannot export a note without its canonical body");
         const p = inlineMarks(child.marks), run = new TextRun({ text: marker,
-          font: p.font, size: p.size, bold: p.bold, italics: p.italics,
+          font: p.font, size: p.size, kern: p.kern, bold: p.bold, italics: p.italics,
           underline: p.underline === false ? { type: "none" } : p.underline ? {} : undefined,
           strike: p.strike, color: p.color, superScript: p.superScript, subScript: p.subScript,
           shading: p.highlight ? { type: ShadingType.CLEAR, fill: p.highlight } : undefined,
@@ -337,12 +347,14 @@ class DocxBuilder {
           if (attrs.display === "number" && this.referenceKinds.get(String(attrs.targetId)) !== "caption") throw new Error("Cannot export an unavailable paragraph number");
           const fieldTarget = attrs.display === "number" ? nativeReferenceAlias(String(attrs.targetId), "number") : target;
           const instruction = attrs.display === "page" ? `PAGEREF ${fieldTarget} \\h` : `REF ${fieldTarget} \\h`;
-          out.push(new SimpleField(instruction, String(attrs.cached || "")));
+          const field = new SimpleField(instruction), p = inlineMarks(child.marks);
+          field.addChildElement(new TextRun({ text: String(attrs.cached || ""), font: p.font, size: p.size, kern: p.kern, bold: p.bold, italics: p.italics, underline: p.underline === false ? { type: "none" } : p.underline ? {} : undefined, strike: p.strike, color: p.color, superScript: p.superScript, subScript: p.subScript, shading: p.highlight ? { type: ShadingType.CLEAR, fill: p.highlight } : undefined }));
+          out.push(field);
         }
       } else if (child.type.name === "doc_field") {
         const marks = inlineMarks(child.marks);
         if (child.attrs.kind === "OTHER" && child.attrs.instruction) { out.push(new SimpleField(child.attrs.instruction, child.attrs.cached || "")); return; }
-        out.push(new TextRun({ children: [child.attrs.kind === "NUMPAGES" ? PageNumber.TOTAL_PAGES : PageNumber.CURRENT], font: marks.font, size: marks.size, bold: marks.bold, italics: marks.italics, color: marks.color }));
+        out.push(new TextRun({ children: [child.attrs.kind === "NUMPAGES" ? PageNumber.TOTAL_PAGES : PageNumber.CURRENT], font: marks.font, size: marks.size, kern: marks.kern, bold: marks.bold, italics: marks.italics, color: marks.color }));
       } else if (child.type.name === "text_box") {
         const index = this.textBoxes.push(child.attrs) - 1;
         out.push(new Bookmark({ id: textBoxBookmark(index), children: [] }));
@@ -377,7 +389,7 @@ class DocxBuilder {
         }
       } else if (child.type.name === "column_break") {
         const p = inlineMarks(child.marks);
-        const run = new TextRun({ font: p.font, size: p.size, bold: p.bold, italics: p.italics,
+        const run = new TextRun({ font: p.font, size: p.size, kern: p.kern, bold: p.bold, italics: p.italics,
           underline: p.underline === false ? { type: "none" } : p.underline ? {} : undefined, strike: p.strike, color: p.color,
           superScript: p.superScript, subScript: p.subScript,
           shading: p.highlight ? { type: ShadingType.CLEAR, fill: p.highlight } : undefined,

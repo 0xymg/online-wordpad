@@ -1,3 +1,4 @@
+import { nativeKerningValue, nativeKerningCSS } from "./native-kerning";
 /** Paragraph values use Word twips, except unitless line-spacing multiples. */
 import type { Node as PMNode } from "prosemirror-model";
 import { cleanTabStops, mergeTabStops, effectiveTabs, parseTabStopsXml, writeTabStopsXml, type TabStop } from "./tab-stops";
@@ -11,7 +12,7 @@ export type ParagraphFormat = {
   keepNext?: boolean; keepLines?: boolean; pageBreakBefore?: boolean; widowControl?: boolean;
   tabs?: TabStop[];
 };
-export type StyleText = { family: string; size: number; bold: boolean; italic: boolean; underline: boolean; color: string };
+export type StyleText = { family: string; size: number; bold: boolean; italic: boolean; underline: boolean; color: string; kerning?: number };
 export type DocumentStyle = { name: string; basedOn?: string; level?: number; paragraph: ParagraphFormat; paragraphDefaults?: ParagraphFormat; text: Partial<StyleText>; rawParagraphProperties?: string };
 export type DocumentStyles = Record<string, DocumentStyle>;
 export const DEFAULT_STYLE_TEXT: StyleText = { family: "Calibri, Carlito, Arial, sans-serif", size: 12, bold: false, italic: false, underline: false, color: "#000000" };
@@ -39,6 +40,7 @@ export function jsonAttribute(el: HTMLElement, key: string): unknown { try { ret
 export function cleanStyleText(value: unknown): Partial<StyleText> {
   if (!value || typeof value !== "object") return {};
   const raw = value as Record<string,unknown>, text: Partial<StyleText> = {};
+  const kern = nativeKerningValue(raw.kerning); if (kern !== undefined) text.kerning = kern;
   if (typeof raw.family === "string") text.family = raw.family.replace(/[;{}<>]/g,"").slice(0,250);
   if (typeof raw.size === "number" && Number.isFinite(raw.size)) text.size = Math.max(1,Math.min(1638,raw.size));
   for (const key of ["bold","italic","underline"] as const) if (typeof raw[key] === "boolean") text[key] = raw[key];
@@ -110,7 +112,9 @@ export function paragraphCSS(node: PMNode): string {
     const text = node.attrs.styleText as Partial<StyleText>;
     if (text.family) css.push(`font-family:${text.family}`);
     if (text.size) css.push(`font-size:${text.size}pt`);
+    if (text.kerning !== undefined) css.push(`font-kerning:${nativeKerningCSS(text.kerning, text.size || 12)}`);
   }
+  if (node.attrs.styleId && node.attrs.styleText?.kerning !== undefined) css.push(`font-kerning:${nativeKerningCSS(node.attrs.styleText.kerning,node.attrs.styleText.size || 12)}`);
   for (const [key, prop] of [["left","margin-left"],["right","margin-right"],["firstLine","text-indent"],["before","margin-top"],["after","margin-bottom"]] as const) if (p[key] !== undefined) css.push(`${prop}:${p[key]! / 20}pt`);
   if (p.alignment !== undefined) css.push(`text-align:${p.alignment}`);
   if (p.lineValue !== undefined) {
@@ -175,6 +179,7 @@ export function paragraphXml(node: PMNode, linked = true, convertAuthoredSpacing
       for (const key of ["ascii", "hAnsi"]) fonts.setAttributeNS(W,`w:${key}`,family);
       run.appendChild(fonts);
     }
+    if (text.kerning !== undefined) { const kern = Array.from(run.children).find(el => el.localName === "kern") || xml.createElementNS(W,"w:kern"); kern.setAttributeNS(W,"w:val",String(text.kerning)); run.appendChild(kern); }
     if (text.size) for (const name of ["sz", "szCs"]) { const size = Array.from(run.children).find(el => el.localName === name) || xml.createElementNS(W,`w:${name}`); size.setAttributeNS(W,"w:val",String(Math.round(text.size * 2))); run.appendChild(size); }
   }
   if (ownsStyle) set("pStyle","val",node.attrs.styleId);
