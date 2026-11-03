@@ -26,7 +26,7 @@ Each priority closes with its own regression fixture and acceptance evidence; pu
 
 ## A7.2 — column and mixed placement corrections
 
-Local production acceptance passed at `dfe361b`; live release acceptance is pending against the same frozen references. The starting evidence and focused page/column gate are in [advanced-column-compatibility-acceptance.md](advanced-column-compatibility-acceptance.md).
+Released without coauthor trailers at `b46b698`; local production acceptance passed at code revision `dfe361b`, followed by live table, native TOC, focus and bibliography checks against the same frozen references. The starting evidence and focused page/column gate are in [advanced-column-compatibility-acceptance.md](advanced-column-compatibility-acceptance.md).
 
 - Preserve native automatic spacing separately from authored CSS multipliers. Use demonstrated Arial/Liberation Sans single-line metrics; retain a conservative fallback for unknown or mixed font families. Font changes must refresh paragraph metrics without adding history steps.
 - Include paragraph padding/borders in column flow height, and paint supported bottom rules within the containing column.

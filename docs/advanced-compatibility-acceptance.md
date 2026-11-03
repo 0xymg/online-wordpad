@@ -1,6 +1,6 @@
 # A7 advanced compatibility acceptance
 
-Latest increment: A7.2 column/mixed geometry is locally verified; final release acceptance is pending. See [A7.2 evidence](advanced-column-compatibility-acceptance.md) for the current eight-file report, expanded column markers, rendered comparisons and remaining note/font limits. The sections below retain the historical A7.1 capture; its eight mismatches are not the current A7.2 count.
+Latest increment: A7.2 column/mixed geometry was released at `b46b698`; production and live acceptance passed on 2026-11-03. See [A7.2 evidence](advanced-column-compatibility-acceptance.md) for the current eight-file report, expanded column markers, rendered comparisons and remaining note/font limits. The sections below retain the historical A7.1 capture; its eight mismatches are not the current A7.2 count.
 
 Status: A7.1 released and live acceptance passed on 2026-11-03 at `fd6dfb1`. A7 overall remains open. The frozen A0 corpus is refreshed against the A1–A6 implementation; this document does not declare general Word visual equivalence. Original DOCX, Word PDF, provenance, A0 application PDFs and baseline report remain unchanged.
 
