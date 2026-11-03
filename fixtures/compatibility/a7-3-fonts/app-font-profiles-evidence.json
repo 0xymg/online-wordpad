@@ -1,0 +1,460 @@
+{
+  "schema_version": 1,
+  "source_sha256": "94420dc25611eabee1129ca01fc41b5714811a4d1f0e8d3287b13f33f4212d00",
+  "app_pdf_sha256": "5e2e17c39e553a39b7034e466391d2f73e964be31fa5ebd61c541b59c0161537",
+  "app_pdf_bytes": 1352267,
+  "base_url": "http://localhost:3119",
+  "browser_version": "156.0.8078.4",
+  "captured_at": "2026-11-03T20:18:38.527Z",
+  "actual_fonts": [
+    {
+      "profile": 1,
+      "requested_font": "Arial",
+      "fonts": [
+        {
+          "familyName": "Arial",
+          "postScriptName": "ArialMT",
+          "isCustomFont": false,
+          "glyphCount": 176
+        }
+      ]
+    },
+    {
+      "profile": 2,
+      "requested_font": "Calibri",
+      "fonts": [
+        {
+          "familyName": "Carlito",
+          "postScriptName": "Carlito-Regular",
+          "isCustomFont": true,
+          "glyphCount": 176
+        }
+      ]
+    },
+    {
+      "profile": 3,
+      "requested_font": "Times New Roman",
+      "fonts": [
+        {
+          "familyName": "Times New Roman",
+          "postScriptName": "TimesNewRomanPSMT",
+          "isCustomFont": false,
+          "glyphCount": 176
+        }
+      ]
+    },
+    {
+      "profile": 4,
+      "requested_font": "Courier New",
+      "fonts": [
+        {
+          "familyName": "Courier New",
+          "postScriptName": "CourierNewPSMT",
+          "isCustomFont": false,
+          "glyphCount": 176
+        }
+      ]
+    },
+    {
+      "profile": 5,
+      "requested_font": "Roboto",
+      "fonts": [
+        {
+          "familyName": "Roboto",
+          "postScriptName": "Roboto-Regular",
+          "isCustomFont": true,
+          "glyphCount": 176
+        }
+      ]
+    }
+  ],
+  "paragraphs": [
+    {
+      "text": "FONT_PROFILE_1 Arial",
+      "size": 14.6667,
+      "line": 16.8652,
+      "family": "Arial, sans-serif",
+      "mode": "multiple",
+      "base": {
+        "family": "\"Arial\", sans-serif",
+        "size": 11
+      }
+    },
+    {
+      "text": "F1_AUTO_1_L1 HAMBURGEFONS abc xyz 0123456789F1_AUTO_1_L2 HAMBURGEFONS abc xyz 0123456789F1_AUTO_1_L3 HAMBURGEFONS abc xyz 0123456789F1_AUTO_1_L4 HAMBURGEFONS abc xyz 0123456789",
+      "size": 14.6667,
+      "line": 16.8652,
+      "family": "Arial, sans-serif",
+      "mode": "multiple",
+      "base": {
+        "family": "\"Arial\", sans-serif",
+        "size": 11
+      }
+    },
+    {
+      "text": "F1_AUTO_1_15_L1 HAMBURGEFONS abc xyz 0123456789F1_AUTO_1_15_L2 HAMBURGEFONS abc xyz 0123456789F1_AUTO_1_15_L3 HAMBURGEFONS abc xyz 0123456789F1_AUTO_1_15_L4 HAMBURGEFONS abc xyz 0123456789",
+      "size": 14.6667,
+      "line": 19.3951,
+      "family": "Arial, sans-serif",
+      "mode": "multiple",
+      "base": {
+        "family": "\"Arial\", sans-serif",
+        "size": 11
+      }
+    },
+    {
+      "text": "F1_AUTO_1_5_L1 HAMBURGEFONS abc xyz 0123456789F1_AUTO_1_5_L2 HAMBURGEFONS abc xyz 0123456789F1_AUTO_1_5_L3 HAMBURGEFONS abc xyz 0123456789F1_AUTO_1_5_L4 HAMBURGEFONS abc xyz 0123456789",
+      "size": 14.6667,
+      "line": 25.2978,
+      "family": "Arial, sans-serif",
+      "mode": "multiple",
+      "base": {
+        "family": "\"Arial\", sans-serif",
+        "size": 11
+      }
+    },
+    {
+      "text": "F1_AUTHORED_EXACT_L1 CSS 12pt x 1.15 = 13.8ptF1_AUTHORED_EXACT_L2 CSS 12pt x 1.15 = 13.8ptF1_AUTHORED_EXACT_L3 CSS 12pt x 1.15 = 13.8pt",
+      "size": 14.6667,
+      "line": 18.4,
+      "family": "Arial, sans-serif",
+      "mode": "exact",
+      "base": {
+        "family": "\"Arial\", sans-serif",
+        "size": 11
+      }
+    },
+    {
+      "text": "F1_VARIANT_REGULARF1_VARIANT_BOLDF1_VARIANT_ITALIC",
+      "size": 14.6667,
+      "line": 19.3951,
+      "family": "Arial, sans-serif",
+      "mode": "multiple",
+      "base": {
+        "family": "\"Arial\", sans-serif",
+        "size": 11
+      }
+    },
+    {
+      "text": "Section 1 \u00b7 Next page section",
+      "size": 14.6667,
+      "line": 16.8652,
+      "family": "Arial, sans-serif",
+      "mode": "multiple",
+      "base": {
+        "family": "\"Arial\", sans-serif",
+        "size": 11
+      }
+    },
+    {
+      "text": "FONT_PROFILE_2 Calibri",
+      "size": 14.6667,
+      "line": 17.9036,
+      "family": "Arial, sans-serif",
+      "mode": "multiple",
+      "base": {
+        "family": "\"Arial\", sans-serif",
+        "size": 11
+      }
+    },
+    {
+      "text": "F2_AUTO_1_L1 HAMBURGEFONS abc xyz 0123456789F2_AUTO_1_L2 HAMBURGEFONS abc xyz 0123456789F2_AUTO_1_L3 HAMBURGEFONS abc xyz 0123456789F2_AUTO_1_L4 HAMBURGEFONS abc xyz 0123456789",
+      "size": 14.6667,
+      "line": 17.9036,
+      "family": "Arial, sans-serif",
+      "mode": "multiple",
+      "base": {
+        "family": "\"Arial\", sans-serif",
+        "size": 11
+      }
+    },
+    {
+      "text": "F2_AUTO_1_15_L1 HAMBURGEFONS abc xyz 0123456789F2_AUTO_1_15_L2 HAMBURGEFONS abc xyz 0123456789F2_AUTO_1_15_L3 HAMBURGEFONS abc xyz 0123456789F2_AUTO_1_15_L4 HAMBURGEFONS abc xyz 0123456789",
+      "size": 14.6667,
+      "line": 20.5892,
+      "family": "Arial, sans-serif",
+      "mode": "multiple",
+      "base": {
+        "family": "\"Arial\", sans-serif",
+        "size": 11
+      }
+    },
+    {
+      "text": "F2_AUTO_1_5_L1 HAMBURGEFONS abc xyz 0123456789F2_AUTO_1_5_L2 HAMBURGEFONS abc xyz 0123456789F2_AUTO_1_5_L3 HAMBURGEFONS abc xyz 0123456789F2_AUTO_1_5_L4 HAMBURGEFONS abc xyz 0123456789",
+      "size": 14.6667,
+      "line": 26.8554,
+      "family": "Arial, sans-serif",
+      "mode": "multiple",
+      "base": {
+        "family": "\"Arial\", sans-serif",
+        "size": 11
+      }
+    },
+    {
+      "text": "F2_AUTHORED_EXACT_L1 CSS 12pt x 1.15 = 13.8ptF2_AUTHORED_EXACT_L2 CSS 12pt x 1.15 = 13.8ptF2_AUTHORED_EXACT_L3 CSS 12pt x 1.15 = 13.8pt",
+      "size": 14.6667,
+      "line": 18.4,
+      "family": "Arial, sans-serif",
+      "mode": "exact",
+      "base": {
+        "family": "\"Arial\", sans-serif",
+        "size": 11
+      }
+    },
+    {
+      "text": "F2_VARIANT_REGULARF2_VARIANT_BOLDF2_VARIANT_ITALIC",
+      "size": 14.6667,
+      "line": 20.5892,
+      "family": "Arial, sans-serif",
+      "mode": "multiple",
+      "base": {
+        "family": "\"Arial\", sans-serif",
+        "size": 11
+      }
+    },
+    {
+      "text": "Section 2 \u00b7 Next page section",
+      "size": 14.6667,
+      "line": 16.8652,
+      "family": "Arial, sans-serif",
+      "mode": "multiple",
+      "base": {
+        "family": "\"Arial\", sans-serif",
+        "size": 11
+      }
+    },
+    {
+      "text": "FONT_PROFILE_3 Times New Roman",
+      "size": 14.6667,
+      "line": 16.8652,
+      "family": "Arial, sans-serif",
+      "mode": "multiple",
+      "base": {
+        "family": "\"Arial\", sans-serif",
+        "size": 11
+      }
+    },
+    {
+      "text": "F3_AUTO_1_L1 HAMBURGEFONS abc xyz 0123456789F3_AUTO_1_L2 HAMBURGEFONS abc xyz 0123456789F3_AUTO_1_L3 HAMBURGEFONS abc xyz 0123456789F3_AUTO_1_L4 HAMBURGEFONS abc xyz 0123456789",
+      "size": 14.6667,
+      "line": 16.8652,
+      "family": "Arial, sans-serif",
+      "mode": "multiple",
+      "base": {
+        "family": "\"Arial\", sans-serif",
+        "size": 11
+      }
+    },
+    {
+      "text": "F3_AUTO_1_15_L1 HAMBURGEFONS abc xyz 0123456789F3_AUTO_1_15_L2 HAMBURGEFONS abc xyz 0123456789F3_AUTO_1_15_L3 HAMBURGEFONS abc xyz 0123456789F3_AUTO_1_15_L4 HAMBURGEFONS abc xyz 0123456789",
+      "size": 14.6667,
+      "line": 19.3951,
+      "family": "Arial, sans-serif",
+      "mode": "multiple",
+      "base": {
+        "family": "\"Arial\", sans-serif",
+        "size": 11
+      }
+    },
+    {
+      "text": "F3_AUTO_1_5_L1 HAMBURGEFONS abc xyz 0123456789F3_AUTO_1_5_L2 HAMBURGEFONS abc xyz 0123456789F3_AUTO_1_5_L3 HAMBURGEFONS abc xyz 0123456789F3_AUTO_1_5_L4 HAMBURGEFONS abc xyz 0123456789",
+      "size": 14.6667,
+      "line": 25.2978,
+      "family": "Arial, sans-serif",
+      "mode": "multiple",
+      "base": {
+        "family": "\"Arial\", sans-serif",
+        "size": 11
+      }
+    },
+    {
+      "text": "F3_AUTHORED_EXACT_L1 CSS 12pt x 1.15 = 13.8ptF3_AUTHORED_EXACT_L2 CSS 12pt x 1.15 = 13.8ptF3_AUTHORED_EXACT_L3 CSS 12pt x 1.15 = 13.8pt",
+      "size": 14.6667,
+      "line": 18.4,
+      "family": "Arial, sans-serif",
+      "mode": "exact",
+      "base": {
+        "family": "\"Arial\", sans-serif",
+        "size": 11
+      }
+    },
+    {
+      "text": "F3_VARIANT_REGULARF3_VARIANT_BOLDF3_VARIANT_ITALIC",
+      "size": 14.6667,
+      "line": 19.3951,
+      "family": "Arial, sans-serif",
+      "mode": "multiple",
+      "base": {
+        "family": "\"Arial\", sans-serif",
+        "size": 11
+      }
+    },
+    {
+      "text": "Section 3 \u00b7 Next page section",
+      "size": 14.6667,
+      "line": 16.8652,
+      "family": "Arial, sans-serif",
+      "mode": "multiple",
+      "base": {
+        "family": "\"Arial\", sans-serif",
+        "size": 11
+      }
+    },
+    {
+      "text": "FONT_PROFILE_4 Courier New",
+      "size": 14.6667,
+      "line": 16.6145,
+      "family": "Arial, sans-serif",
+      "mode": "multiple",
+      "base": {
+        "family": "\"Arial\", sans-serif",
+        "size": 11
+      }
+    },
+    {
+      "text": "F4_AUTO_1_L1 HAMBURGEFONS abc xyz 0123456789F4_AUTO_1_L2 HAMBURGEFONS abc xyz 0123456789F4_AUTO_1_L3 HAMBURGEFONS abc xyz 0123456789F4_AUTO_1_L4 HAMBURGEFONS abc xyz 0123456789",
+      "size": 14.6667,
+      "line": 16.6145,
+      "family": "Arial, sans-serif",
+      "mode": "multiple",
+      "base": {
+        "family": "\"Arial\", sans-serif",
+        "size": 11
+      }
+    },
+    {
+      "text": "F4_AUTO_1_15_L1 HAMBURGEFONS abc xyz 0123456789F4_AUTO_1_15_L2 HAMBURGEFONS abc xyz 0123456789F4_AUTO_1_15_L3 HAMBURGEFONS abc xyz 0123456789F4_AUTO_1_15_L4 HAMBURGEFONS abc xyz 0123456789",
+      "size": 14.6667,
+      "line": 19.1067,
+      "family": "Arial, sans-serif",
+      "mode": "multiple",
+      "base": {
+        "family": "\"Arial\", sans-serif",
+        "size": 11
+      }
+    },
+    {
+      "text": "F4_AUTO_1_5_L1 HAMBURGEFONS abc xyz 0123456789F4_AUTO_1_5_L2 HAMBURGEFONS abc xyz 0123456789F4_AUTO_1_5_L3 HAMBURGEFONS abc xyz 0123456789F4_AUTO_1_5_L4 HAMBURGEFONS abc xyz 0123456789",
+      "size": 14.6667,
+      "line": 24.9219,
+      "family": "Arial, sans-serif",
+      "mode": "multiple",
+      "base": {
+        "family": "\"Arial\", sans-serif",
+        "size": 11
+      }
+    },
+    {
+      "text": "F4_AUTHORED_EXACT_L1 CSS 12pt x 1.15 = 13.8ptF4_AUTHORED_EXACT_L2 CSS 12pt x 1.15 = 13.8ptF4_AUTHORED_EXACT_L3 CSS 12pt x 1.15 = 13.8pt",
+      "size": 14.6667,
+      "line": 18.4,
+      "family": "Arial, sans-serif",
+      "mode": "exact",
+      "base": {
+        "family": "\"Arial\", sans-serif",
+        "size": 11
+      }
+    },
+    {
+      "text": "F4_VARIANT_REGULARF4_VARIANT_BOLDF4_VARIANT_ITALIC",
+      "size": 14.6667,
+      "line": 19.1067,
+      "family": "Arial, sans-serif",
+      "mode": "multiple",
+      "base": {
+        "family": "\"Arial\", sans-serif",
+        "size": 11
+      }
+    },
+    {
+      "text": "Section 4 \u00b7 Next page section",
+      "size": 14.6667,
+      "line": 16.8652,
+      "family": "Arial, sans-serif",
+      "mode": "multiple",
+      "base": {
+        "family": "\"Arial\", sans-serif",
+        "size": 11
+      }
+    },
+    {
+      "text": "FONT_PROFILE_5 Roboto",
+      "size": 14.6667,
+      "line": 17.6029,
+      "family": "Arial, sans-serif",
+      "mode": "multiple",
+      "base": {
+        "family": "\"Arial\", sans-serif",
+        "size": 11
+      }
+    },
+    {
+      "text": "F5_AUTO_1_L1 HAMBURGEFONS abc xyz 0123456789F5_AUTO_1_L2 HAMBURGEFONS abc xyz 0123456789F5_AUTO_1_L3 HAMBURGEFONS abc xyz 0123456789F5_AUTO_1_L4 HAMBURGEFONS abc xyz 0123456789",
+      "size": 14.6667,
+      "line": 17.6029,
+      "family": "Arial, sans-serif",
+      "mode": "multiple",
+      "base": {
+        "family": "\"Arial\", sans-serif",
+        "size": 11
+      }
+    },
+    {
+      "text": "F5_AUTO_1_15_L1 HAMBURGEFONS abc xyz 0123456789F5_AUTO_1_15_L2 HAMBURGEFONS abc xyz 0123456789F5_AUTO_1_15_L3 HAMBURGEFONS abc xyz 0123456789F5_AUTO_1_15_L4 HAMBURGEFONS abc xyz 0123456789",
+      "size": 14.6667,
+      "line": 20.2432,
+      "family": "Arial, sans-serif",
+      "mode": "multiple",
+      "base": {
+        "family": "\"Arial\", sans-serif",
+        "size": 11
+      }
+    },
+    {
+      "text": "F5_AUTO_1_5_L1 HAMBURGEFONS abc xyz 0123456789F5_AUTO_1_5_L2 HAMBURGEFONS abc xyz 0123456789F5_AUTO_1_5_L3 HAMBURGEFONS abc xyz 0123456789F5_AUTO_1_5_L4 HAMBURGEFONS abc xyz 0123456789",
+      "size": 14.6667,
+      "line": 26.4043,
+      "family": "Arial, sans-serif",
+      "mode": "multiple",
+      "base": {
+        "family": "\"Arial\", sans-serif",
+        "size": 11
+      }
+    },
+    {
+      "text": "F5_AUTHORED_EXACT_L1 CSS 12pt x 1.15 = 13.8ptF5_AUTHORED_EXACT_L2 CSS 12pt x 1.15 = 13.8ptF5_AUTHORED_EXACT_L3 CSS 12pt x 1.15 = 13.8pt",
+      "size": 14.6667,
+      "line": 18.4,
+      "family": "Arial, sans-serif",
+      "mode": "exact",
+      "base": {
+        "family": "\"Arial\", sans-serif",
+        "size": 11
+      }
+    },
+    {
+      "text": "F5_VARIANT_REGULARF5_VARIANT_BOLDF5_VARIANT_ITALIC",
+      "size": 14.6667,
+      "line": 20.2432,
+      "family": "Arial, sans-serif",
+      "mode": "multiple",
+      "base": {
+        "family": "\"Arial\", sans-serif",
+        "size": 11
+      }
+    }
+  ],
+  "checks": {
+    "native_auto_values_preserved": true,
+    "app_reopen_profile_line_boxes": true,
+    "renderer_requested_or_compatible_fonts": true,
+    "actual_word_downloaded_profiles_reopen": true,
+    "actual_word_authored_253twips_reopen": true,
+    "new_profile_script_mixed_and_atom_guards": true
+  },
+  "limits": [
+    "Font-family/table compatibility is not glyph identity.",
+    "Word PDF is the reference; app PDF and CDP data are application evidence."
+  ],
+  "application_revision": "d91e3278af918b1306c6a8b712565c554eac425d"
+}

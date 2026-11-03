@@ -1,0 +1,22 @@
+{
+  "schema_version": 1,
+  "reference_application": "Microsoft Word Online",
+  "source": "metrics-probe.docx",
+  "source_sha256": "94420dc25611eabee1129ca01fc41b5714811a4d1f0e8d3287b13f33f4212d00",
+  "observed_date": "2026-11-03",
+  "method": "Frozen synthetic source uploaded to OneDrive and opened in actual Word Online; UI screenshot captured by coordinating agent",
+  "browser": "Codex in-app browser; engine version unavailable",
+  "ui_page_count": 5,
+  "screenshot": "word-online-font-probe.jpg",
+  "screenshot_sha256": "976484ec114b6780e8b284cac548d661420d8c76149004715354b6e99136a709",
+  "pdf_status": "CAPTURED",
+  "saved_docx_status": "CAPTURED",
+  "download_status": "Actual Word Online native PDF export downloaded by the user after the automation transfer failed; two local Downloads copies were byte-identical. Word-downloaded DOCX obtained via File > Create a Copy > Download a copy and its final download dialog. Coordinating agent verified and copied the real artifacts.",
+  "fonts": "PDF embeds actual ArialMT, Calibri, TimesNewRomanPSMT, CourierNewPSMT and Roboto regular/bold/italic faces. Resources and metrics are recorded in font-metrics-evidence.json.",
+  "acceptance": "Bounded uniform-ASCII native line-pitch/font resource evidence. Word-downloaded DOCX app reopening checked; no general Word-normalization equivalence claim.",
+  "pdf": "metrics-probe.word.pdf",
+  "pdf_sha256": "cbf81f43f61db2df6538bfb3f265653aa1fdc46b9ee9688d933d9f77dfafb2ce",
+  "pdf_bytes": 473416,
+  "saved_docx": "metrics-probe.word-downloaded.docx",
+  "saved_docx_sha256": "e5e199b956f3389f4eefec7e80ec6970cf5448b7b92a8dfb4cb88bf20f76a384"
+}

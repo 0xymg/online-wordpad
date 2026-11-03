@@ -1,0 +1,139 @@
+{
+  "schema_version": 1,
+  "source": "metrics-probe.docx",
+  "source_sha256": "94420dc25611eabee1129ca01fc41b5714811a4d1f0e8d3287b13f33f4212d00",
+  "expected_pages": 5,
+  "reference_application": "Microsoft Word Online",
+  "reference_status": "CAPTURED",
+  "fonts_requested": [
+    "Arial",
+    "Calibri",
+    "Times New Roman",
+    "Courier New",
+    "Roboto"
+  ],
+  "markers": [
+    {
+      "id": "F1_AUTO_1",
+      "font": "Arial",
+      "size_pt": 11,
+      "word_auto_multiple": 1,
+      "line_count": 4
+    },
+    {
+      "id": "F1_AUTO_1_15",
+      "font": "Arial",
+      "size_pt": 11,
+      "word_auto_multiple": 1.15,
+      "line_count": 4
+    },
+    {
+      "id": "F1_AUTO_1_5",
+      "font": "Arial",
+      "size_pt": 11,
+      "word_auto_multiple": 1.5,
+      "line_count": 4
+    },
+    {
+      "id": "F2_AUTO_1",
+      "font": "Calibri",
+      "size_pt": 11,
+      "word_auto_multiple": 1,
+      "line_count": 4
+    },
+    {
+      "id": "F2_AUTO_1_15",
+      "font": "Calibri",
+      "size_pt": 11,
+      "word_auto_multiple": 1.15,
+      "line_count": 4
+    },
+    {
+      "id": "F2_AUTO_1_5",
+      "font": "Calibri",
+      "size_pt": 11,
+      "word_auto_multiple": 1.5,
+      "line_count": 4
+    },
+    {
+      "id": "F3_AUTO_1",
+      "font": "Times New Roman",
+      "size_pt": 11,
+      "word_auto_multiple": 1,
+      "line_count": 4
+    },
+    {
+      "id": "F3_AUTO_1_15",
+      "font": "Times New Roman",
+      "size_pt": 11,
+      "word_auto_multiple": 1.15,
+      "line_count": 4
+    },
+    {
+      "id": "F3_AUTO_1_5",
+      "font": "Times New Roman",
+      "size_pt": 11,
+      "word_auto_multiple": 1.5,
+      "line_count": 4
+    },
+    {
+      "id": "F4_AUTO_1",
+      "font": "Courier New",
+      "size_pt": 11,
+      "word_auto_multiple": 1,
+      "line_count": 4
+    },
+    {
+      "id": "F4_AUTO_1_15",
+      "font": "Courier New",
+      "size_pt": 11,
+      "word_auto_multiple": 1.15,
+      "line_count": 4
+    },
+    {
+      "id": "F4_AUTO_1_5",
+      "font": "Courier New",
+      "size_pt": 11,
+      "word_auto_multiple": 1.5,
+      "line_count": 4
+    },
+    {
+      "id": "F5_AUTO_1",
+      "font": "Roboto",
+      "size_pt": 11,
+      "word_auto_multiple": 1,
+      "line_count": 4
+    },
+    {
+      "id": "F5_AUTO_1_15",
+      "font": "Roboto",
+      "size_pt": 11,
+      "word_auto_multiple": 1.15,
+      "line_count": 4
+    },
+    {
+      "id": "F5_AUTO_1_5",
+      "font": "Roboto",
+      "size_pt": 11,
+      "word_auto_multiple": 1.5,
+      "line_count": 4
+    }
+  ],
+  "note": "Explicit breaks give 4 known lines per auto paragraph; separate native next-page sections isolate requested fonts. Font availability/substitution must be established from actual Word PDF resources. Authored exact 276twips case documents the 12pt x 1.15 CSS conversion target; it is not evidence of auto equivalence.",
+  "ui_observation": {
+    "reference_application": "Microsoft Word Online",
+    "observed_date": "2026-11-03",
+    "browser": "Codex in-app browser; engine version unavailable",
+    "visible_document_name": "metrics-probe",
+    "ui_page_count": 5,
+    "screenshot": "word-online-font-probe.jpg",
+    "screenshot_sha256": "976484ec114b6780e8b284cac548d661420d8c76149004715354b6e99136a709",
+    "capture_scope": "Word UI opened the frozen uploaded probe and reported Page 1 of 5. The screenshot shows the Arial profile and start of the Calibri profile.",
+    "limits": "UI evidence does not establish PDF font resources, exact print baselines, actual fallback faces or saved-DOCX equivalence."
+  },
+  "capture_status": "Actual Microsoft Word PDF and Word-downloaded DOCX received and inspected. UI/source/artifact hashes retained.",
+  "word_pdf": "metrics-probe.word.pdf",
+  "word_pdf_sha256": "cbf81f43f61db2df6538bfb3f265653aa1fdc46b9ee9688d933d9f77dfafb2ce",
+  "word_downloaded_docx": "metrics-probe.word-downloaded.docx",
+  "word_downloaded_docx_sha256": "e5e199b956f3389f4eefec7e80ec6970cf5448b7b92a8dfb4cb88bf20f76a384"
+}

@@ -1,0 +1,85 @@
+{
+  "comparison": "Native Chromium PDF versus actual-font invisible search baselines; not Microsoft Word evidence",
+  "facts": [
+    {
+      "marker": "ARIAL_ELEVEN",
+      "descent": 3,
+      "measuredBaselinePt": 10.5,
+      "fallbackBaselinePt": 10.549995
+    },
+    {
+      "marker": "ARIAL_TWENTYSIX",
+      "descent": 7,
+      "measuredBaselinePt": 40.04296875,
+      "fallbackBaselinePt": 40.092963749999996
+    },
+    {
+      "marker": "TIMES_ELEVEN",
+      "descent": 3,
+      "measuredBaselinePt": 59.42578125,
+      "fallbackBaselinePt": 59.475776249999996
+    },
+    {
+      "marker": "COURIER_ELEVEN",
+      "descent": 4,
+      "measuredBaselinePt": 73.21875,
+      "fallbackBaselinePt": 74.018745
+    },
+    {
+      "marker": "ARIAL_BOLDITALIC",
+      "descent": 3,
+      "measuredBaselinePt": 90.01171875,
+      "fallbackBaselinePt": 90.06171375
+    },
+    {
+      "marker": "FONT_FALLBACK",
+      "descent": 3,
+      "measuredBaselinePt": 105.01171875,
+      "fallbackBaselinePt": 105.06171375000001
+    },
+    {
+      "marker": "ARABIC_MIXED",
+      "descent": 3,
+      "measuredBaselinePt": 119.5546875,
+      "fallbackBaselinePt": 119.60468250000001
+    }
+  ],
+  "baselines": {
+    "measured": {
+      "ARIAL_ELEVEN": 10.5,
+      "ARIAL_TWENTYSIX": 40.04296875,
+      "TIMES_ELEVEN": 59.42578125,
+      "COURIER_ELEVEN": 73.21875,
+      "ARIAL_BOLDITALIC": 90.01171875,
+      "FONT_FALLBACK": 105.01171875,
+      "ARABIC_MIXED": 119.5546875
+    },
+    "null": {
+      "ARIAL_ELEVEN": 10.549994999999967,
+      "ARIAL_TWENTYSIX": 40.09296374999997,
+      "TIMES_ELEVEN": 59.47577624999997,
+      "COURIER_ELEVEN": 74.01874499999997,
+      "ARIAL_BOLDITALIC": 90.06171375000002,
+      "FONT_FALLBACK": 105.06171375000002,
+      "ARABIC_MIXED": 119.60468250000002
+    },
+    "invalid": {
+      "ARIAL_ELEVEN": 10.549994999999967,
+      "ARIAL_TWENTYSIX": 40.09296374999997,
+      "TIMES_ELEVEN": 59.47577624999997,
+      "COURIER_ELEVEN": 74.01874499999997,
+      "ARIAL_BOLDITALIC": 90.06171375000002,
+      "FONT_FALLBACK": 105.06171375000002,
+      "ARABIC_MIXED": 119.60468250000002
+    },
+    "native-chromium": {
+      "ARIAL_ELEVEN": 10.499999562499966,
+      "ARIAL_TWENTYSIX": 39.74999834375001,
+      "TIMES_ELEVEN": 59.24999753124996,
+      "COURIER_ELEVEN": 73.49999693749999,
+      "ARIAL_BOLDITALIC": 89.99999624999998,
+      "FONT_FALLBACK": 104.999995625,
+      "ARABIC_MIXED": 119.24999503125002
+    }
+  }
+}

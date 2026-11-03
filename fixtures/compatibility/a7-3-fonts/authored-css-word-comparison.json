@@ -1,0 +1,88 @@
+{
+  "word": {
+    "pdf_sha256": "d0c7ad2bb91d3aa4ce04fc42ce08a89888aaa3944310b58eca9fe45dee6a2bd9",
+    "pages": 1,
+    "markers": [
+      {
+        "token": "EXACT_AUTHOR",
+        "x_pt": 72.025,
+        "top_pt": 73.58999999999992,
+        "baseline_from_top_pt": 82.27999999999997,
+        "font": "BCDEEE+Arial-BoldMT",
+        "size_pt": 11.0
+      },
+      {
+        "token": "SECOND_LINE",
+        "x_pt": 72.025,
+        "top_pt": 86.08999999999992,
+        "baseline_from_top_pt": 94.77999999999997,
+        "font": "BCDFEE+ArialMT",
+        "size_pt": 11.0
+      }
+    ],
+    "baseline_pitch_pt": 12.5,
+    "glyph_ink_row_extents_at_3px_per_pt": [
+      [
+        223,
+        246
+      ],
+      [
+        260,
+        283
+      ]
+    ]
+  },
+  "app": {
+    "pdf_sha256": "2185b1e5315f1afb2bd5c6386303c41388152f4509777c81ee4de287034268cf",
+    "pages": 1,
+    "markers": [
+      {
+        "token": "EXACT_AUTHOR",
+        "x_pt": 72.0,
+        "top_pt": 73.08103498535161,
+        "baseline_from_top_pt": 81.75,
+        "font": "LiberationSans-Bold-5845",
+        "size_pt": 11.000024999999937
+      },
+      {
+        "token": "SECOND_LINE",
+        "x_pt": 72.0,
+        "top_pt": 85.72556623535161,
+        "baseline_from_top_pt": 94.39453125,
+        "font": "LiberationSans-7592",
+        "size_pt": 11.000024999999937
+      }
+    ],
+    "baseline_pitch_pt": 12.64453125,
+    "glyph_ink_row_extents_at_3px_per_pt": [
+      [
+        221,
+        244
+      ],
+      [
+        259,
+        283
+      ]
+    ]
+  },
+  "method": "PDFium at3px per point; identical crop [210,204,570,294]; physical coordinates retained; glyph cap row threshold >4 pixels with all RGB channels<150 in x216..298, separated line windows210..251 and252..293.",
+  "scope": "Only EXACT_AUTHOR and SECOND_LINE. Numeric native exact253twip serialization and two-line local rendered/pitch evidence; not a universal glyph or page-fidelity score.",
+  "app_minus_word_pitch_pt": 0.14453125,
+  "word_downloaded_docx_target_checks": {
+    "source_sha256": "8e00cb768a6fab985d243089a93b7505e52ab7fa1cb53e17983a6b94292e15ea",
+    "word_docx_sha256": "2fbad9802c841e24e57cd7f7ef932cbaa42577038706211bbfc8ba15670c5d26",
+    "first_paragraph_properties_equal": true,
+    "main_text_equal": true,
+    "exact_rule": "exact",
+    "line_twips": 253,
+    "paragraph_mark_and_run_size_half_points": 22,
+    "app_actual_word_docx_reopen": "PASS11pt strut,12.65pt exact line box via check-word-font-profiles.cjs"
+  },
+  "marker_baseline_deltas_css_px": [
+    -0.7066666666666302,
+    -0.513958333333297
+  ],
+  "app_capture_source": "authored-css.word-downloaded.docx opened in the application by check-word-font-profiles.cjs",
+  "application_revision": "d91e3278af918b1306c6a8b712565c554eac425d",
+  "app_base_url": "http://localhost:3119"
+}

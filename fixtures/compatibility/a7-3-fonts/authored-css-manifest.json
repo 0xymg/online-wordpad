@@ -1,0 +1,27 @@
+{
+  "schema_version": 1,
+  "purpose": "Representable authored CSS paragraph line box, with genuine Word Online reference",
+  "source_html": "authored-css.html",
+  "source_html_sha256": "acfd47752e89a8d137b63455f05345406f20891e83fcf9ebb7fd49892f158a5a",
+  "app_docx": "authored-css.app.docx",
+  "app_docx_sha256": "8e00cb768a6fab985d243089a93b7505e52ab7fa1cb53e17983a6b94292e15ea",
+  "reference_application": "Microsoft Word Online",
+  "reference_status": "CAPTURED",
+  "primary_marker": "EXACT_AUTHOR",
+  "font": "Arial",
+  "font_size_pt": 11,
+  "css_multiple": 1.15,
+  "exported_line_rule": "exact",
+  "exported_line_twips": 253,
+  "app_reopen_computed_line_height_pt": 12.65,
+  "proof": "scripts/check-authored-line-spacing.cjs; complete actual-editor run passed, including 11pt paragraph strut after DOCX reopening",
+  "limits": [
+    "Targeted exact253twip/11pt two-line Word comparison established; whole-document visual equivalence remains open.",
+    "Unsupported guard cases included in this fixture intentionally retain conversion fallback."
+  ],
+  "capture_status": "Actual Microsoft Word PDF and Word-downloaded DOCX received and inspected. UI/source/artifact hashes retained.",
+  "word_pdf": "authored-css.word.pdf",
+  "word_pdf_sha256": "d0c7ad2bb91d3aa4ce04fc42ce08a89888aaa3944310b58eca9fe45dee6a2bd9",
+  "word_downloaded_docx": "authored-css.word-downloaded.docx",
+  "word_downloaded_docx_sha256": "2fbad9802c841e24e57cd7f7ef932cbaa42577038706211bbfc8ba15670c5d26"
+}

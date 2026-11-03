@@ -1,0 +1,19 @@
+{
+  "schema_version": 1,
+  "reference_application": "Microsoft Word Online",
+  "source": "authored-css.app.docx",
+  "source_sha256": "8e00cb768a6fab985d243089a93b7505e52ab7fa1cb53e17983a6b94292e15ea",
+  "pdf": "authored-css.word.pdf",
+  "pdf_sha256": "d0c7ad2bb91d3aa4ce04fc42ce08a89888aaa3944310b58eca9fe45dee6a2bd9",
+  "pdf_bytes": 110308,
+  "saved_docx": "authored-css.word-downloaded.docx",
+  "saved_docx_sha256": "2fbad9802c841e24e57cd7f7ef932cbaa42577038706211bbfc8ba15670c5d26",
+  "method": "Source uploaded to OneDrive and opened in actual Word Online. Native PDF export and File > Create a Copy > Download a copy produced the verified local artifacts.",
+  "captured_date": "2026-11-03",
+  "browser": "Codex in-app browser; engine version unavailable",
+  "screenshot": "word-online-authored-css.jpg",
+  "screenshot_sha256": "da22587dbc5dd7c5af8e70edbdb0d1546f8aa79dbbbab1f19da1fa1369877992",
+  "paper": "Native source section geometry, no browser print substitute",
+  "fonts": "Actual Word PDF first target uses Arial-BoldMT and ArialMT at11pt.",
+  "acceptance": "Targeted native exact253twip, font-strut, two-line pitch and local raster evidence only. See authored-css-word-comparison.json."
+}
