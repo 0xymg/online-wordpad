@@ -7,7 +7,7 @@ import { measureColumnTable, type ColumnTableMeasurement, type TableGroupBand } 
 import { annotateParagraphConstraints } from './column-paragraph-flow';
 
 type Line = { from: number; to: number; top: number; bottom: number; keyTop: number };
-export type NaturalBlock = { pos: number; from: number; to: number; top: number; left: number; width: number; height: number; paddingLeft: number; paddingRight: number; marginBottom: number; borderBottom: string; borderBottomWidth: number; textblock: boolean };
+export type NaturalBlock = { pos: number; from: number; to: number; top: number; left: number; width: number; height: number; paddingLeft: number; paddingRight: number; marginBottom: number; borderBottom: string; borderBottomWidth: number; textblock: boolean; noteSeparator?: { height: number; top: number; left: number; width: number; color: string } };
 export type ColumnMeasurement = { sections: FlowSection[]; blocks: NaturalBlock[]; tables: ColumnTableMeasurement[]; complete: boolean; diagnostics: FlowDiagnostic[] };
 /**
  * The caller must present an unfragmented, column-width view with settled tabs.
@@ -36,7 +36,9 @@ export function measureNaturalColumnSections(view: EditorView, sections: readonl
       return;
     }
     const marginTop = Math.max(0, Number.parseFloat(style.marginTop) || 0), marginBottom = Math.max(0, Number.parseFloat(style.marginBottom) || 0);
-    const topInset = (Number.parseFloat(style.paddingTop) || 0) + (Number.parseFloat(style.borderTopWidth) || 0);
+    const separator = element.querySelector<HTMLElement>(':scope > .pm-endnote-separator');
+    const separatorHeight = separator ? separator.getBoundingClientRect().height / scale : 0;
+    const topInset = (Number.parseFloat(style.paddingTop) || 0) + (Number.parseFloat(style.borderTopWidth) || 0) + separatorHeight;
     const bottomInset = (Number.parseFloat(style.paddingBottom) || 0) + (Number.parseFloat(style.borderBottomWidth) || 0);
     const lines: Line[] = [], breaks: Array<{ at: number; unit: FlowUnit }> = [], floats: Array<{ pos: number; top: number; bottom: number; wrap: string }> = [];
     let line: Line | undefined;
@@ -155,9 +157,13 @@ export function measureNaturalColumnSections(view: EditorView, sections: readonl
       const element = view.nodeDOM(pos);
       if (!(element instanceof HTMLElement)) { fail(index, 'missing-measurement-dom', pos, node.nodeSize); return false; }
       const rect = element.getBoundingClientRect(), style = getComputedStyle(element);
+      const separator = node.isTextblock ? element.querySelector<HTMLElement>(':scope > .pm-endnote-separator') : null;
+      const rule = separator?.querySelector<HTMLElement>('.pm-endnote-separator-rule');
+      const separatorBox = separator?.getBoundingClientRect(), ruleBox = rule?.getBoundingClientRect();
       blocks.push({ pos, from: pos + 1, to: pos + node.nodeSize - 1, top: (rect.top - root.top) / scale, left: (rect.left - root.left) / scale,
         width: rect.width / scale, height: rect.height / scale, paddingLeft: Number.parseFloat(style.paddingLeft) || 0, paddingRight: Number.parseFloat(style.paddingRight) || 0, marginBottom: Number.parseFloat(style.marginBottom) || 0,
-        borderBottom: style.borderBottom, borderBottomWidth: Number.parseFloat(style.borderBottomWidth) || 0, textblock: node.isTextblock });
+        borderBottom: style.borderBottom, borderBottomWidth: Number.parseFloat(style.borderBottomWidth) || 0, textblock: node.isTextblock,
+        ...(separatorBox && ruleBox && rule ? { noteSeparator: { height: separatorBox.height / scale, top: (ruleBox.top - separatorBox.top) / scale, left: (ruleBox.left - separatorBox.left) / scale, width: ruleBox.width / scale, color: separator!.style.color } } : {}) });
     }
     if (node.isTextblock) { collectTextblock(node, pos, index); return false; }
     if (node.isAtom) { fail(index, 'unsupported-structural-object', pos, node.nodeSize); return false; }

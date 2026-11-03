@@ -15,6 +15,7 @@ import { bibliographyPlugin } from "@/lib/document-bibliography";
 import { bibliographyLabel } from "@/lib/bibliography-i18n";
 import { bibliographyLayoutPlugin } from "@/lib/bibliography-layout";
 import { notePlugin } from "@/lib/document-notes";
+import { noteSeparatorPlugin } from "@/lib/note-separator";
 import "./references.css";
 import { referenceLabels } from "@/lib/reference-i18n";
 import type { ReferenceDialogMode } from "./ReferencesDialog";
@@ -224,6 +225,7 @@ function buildPlugins() {
     referenceIdentityPlugin(),
     bibliographyPlugin(),
     bibliographyLayoutPlugin(),
+    noteSeparatorPlugin(),
     notePlugin({ finalize: tr => projectDocumentModel(tr, getDocumentModel(tr.doc)!), onBlocked: error => document.dispatchEvent(new CustomEvent("edtr-note-error", { bubbles: true, detail: { error } })) }),
     sectionMarkersPlugin(),
     tabCharactersPlugin(),

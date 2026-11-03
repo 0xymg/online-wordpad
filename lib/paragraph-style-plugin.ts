@@ -28,9 +28,9 @@ export function paragraphStylePlugin(){return new Plugin({appendTransaction(tran
 }});}
 export const splitStyledParagraph:Command=(state,dispatch)=>{
  const parent=state.selection.$from.parent;
- if(!parent.attrs.styleId||!["paragraph","heading"].includes(parent.type.name))return false;
+ if((!parent.attrs.styleId&&!parent.attrs.styleText&&!parent.attrs.docxProperties)||!["paragraph","heading"].includes(parent.type.name))return false;
  return splitBlockAs((node,atEnd)=>{
   if(node.type.name==="heading"&&atEnd){const style=resolveStyle(documentStyles(state.doc.attrs.layout),"Normal");return {type:state.schema.nodes.paragraph,attrs:{styleId:"Normal",styleText:style.text,styleParagraph:style.paragraph}};}
-  return {type:node.type,attrs:{...node.attrs,docxProperties:null}};
+  return {type:node.type,attrs:{...node.attrs,...(!node.attrs.styleId ? {paragraphFormat:effectiveParagraph(node)} : {}),docxProperties:null}};
  })(state,dispatch);
 };

@@ -34,6 +34,20 @@ export function wrapDocumentHtml(html: string, layout: DocumentLayout | null, mo
   if (layout) wrapper.setAttribute(LAYOUT_ATTRIBUTE, JSON.stringify(layout));
   if (model) wrapper.setAttribute("data-edtr-model", JSON.stringify(model));
   wrapper.innerHTML = html;
+  // The atom's inner sup is an authored default. Native owners have their real
+  // run marks outside the atom; preserve those in standalone HTML as in views.
+  for (const owner of wrapper.querySelectorAll<HTMLElement>("[data-edtr-note-reference]")) {
+    const source = model?.version === 7 && model.notes?.[owner.getAttribute("data-note-id") || ""]?.presentation;
+    owner.removeAttribute("data-note-source-appearance");
+    const synthetic = Array.from(owner.children).find(child => child.tagName === "SUP") as HTMLElement | undefined;
+    if (source) {
+      owner.setAttribute("data-note-source-appearance", "true");
+      if (synthetic) { synthetic.style.fontSize = "inherit"; synthetic.style.lineHeight = "inherit"; synthetic.style.verticalAlign = "baseline"; synthetic.style.position = "static"; }
+    } else if (synthetic) {
+      for (const property of ["font-size", "line-height", "vertical-align", "position"]) synthetic.style.removeProperty(property);
+      if (!synthetic.getAttribute("style")) synthetic.removeAttribute("style");
+    }
+  }
   return wrapper.outerHTML;
 }
 export function readDocxProperties(dom: Node | string): string | null {

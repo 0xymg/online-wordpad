@@ -1,5 +1,6 @@
 /** Print the measured editor sheets, including rich running content. */
 import type { EditorView } from "prosemirror-view";
+import { flushNoteSeparatorAlignment } from "./note-separator";
 import { paginationKey, flushDocumentLayout } from "@/app/components/paginationPlugin";
 
 export async function preparePrintLayout(view: EditorView, host: HTMLElement, credit?: { title: string; date: string }) {
@@ -20,6 +21,7 @@ export async function preparePrintLayout(view: EditorView, host: HTMLElement, cr
   if (!pages?.length || view.state.doc !== doc) throw new Error("Page layout is not ready");
   const maximumWidth = Math.max(...pages.map(page => page.geometry.width)) / 15;
   const rootStyle = getComputedStyle(source);
+  flushNoteSeparatorAlignment(view);
   const template = source.cloneNode(true) as HTMLElement;
   template.classList.remove("pm-measuring");
   for (const [name, value] of Object.entries({ width: `${maximumWidth}px`, margin: "0", zoom: "1", position: "absolute", minHeight: "0", paddingTop: rootStyle.paddingTop, paddingBottom: rootStyle.paddingBottom, paddingLeft: rootStyle.paddingLeft, paddingRight: rootStyle.paddingRight, background: "white", color: "black", boxShadow: "none" })) {

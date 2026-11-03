@@ -3,6 +3,8 @@ import { EditorState, Plugin } from 'prosemirror-state';
 import { Decoration, DecorationSet, EditorView } from 'prosemirror-view';
 import { documentSections } from './document-sections';
 import { effectiveParagraph } from './paragraph-format';
+import { flushNoteSeparatorAlignment, noteSeparatorPlugin } from './note-separator';
+import { noteOwnerAppearancePlugin } from './document-notes';
 import { measureNaturalColumnSections, type ColumnMeasurement } from './column-flow-measure';
 import { applyImageLayout } from './image-layout';
 import { createReadonlyTextBoxView } from './text-box';
@@ -59,7 +61,7 @@ export async function measureColumnDocument(source: EditorView): Promise<ColumnM
       decorations.push(Decoration.node(pos, pos + node.nodeSize, { style: `width:${Math.max(1, colWidth - indent)}px;max-width:none;box-sizing:border-box;overflow-wrap:anywhere` }));
     });
     const widthPlugin = new Plugin({ props: { decorations: state => DecorationSet.create(state.doc, decorations) } });
-    measurement = new EditorView(host, { state: EditorState.create({ doc, plugins: [widthPlugin, tabLayoutPlugin()] }), editable: () => false,
+    measurement = new EditorView(host, { state: EditorState.create({ doc, plugins: [widthPlugin, noteOwnerAppearancePlugin(), noteSeparatorPlugin(), tabLayoutPlugin()] }), editable: () => false,
       nodeViews: { tab: createTabNodeView, image: readonlyImage, text_box: createReadonlyTextBoxView, table: readonlyTable } });
     measurement.dom.querySelectorAll('[id]').forEach(element => element.removeAttribute('id'));
     const sourceStyle = getComputedStyle(source.dom);
@@ -74,6 +76,7 @@ export async function measureColumnDocument(source: EditorView): Promise<ColumnM
     await owner.fonts.ready;
     await Promise.all(Array.from(measurement.dom.querySelectorAll('img')).map(image => image.decode().catch(() => {})));
     await flushTabLayout(measurement);
+    flushNoteSeparatorAlignment(measurement);
     if (source.state.doc !== doc || source.isDestroyed || !source.dom.isConnected) throw new Error('Document changed during column measurement');
     return measureNaturalColumnSections(measurement, sections);
   } finally { measurement?.destroy(); host.remove(); }

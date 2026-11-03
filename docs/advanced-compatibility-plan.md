@@ -39,3 +39,16 @@ Released without coauthor trailers at `b46b698`; local production acceptance pas
 - Capture new application PDFs separately, expand all 26 column markers, distinguish wrong page/column from local coordinate drift, and inspect the rendered output. Require meaningful import/edit/undo/roundtrip regression checks, a production build and live smoke acceptance before release.
 
 The full A7 gate and the provisional 1 CSS px threshold remain separate from this increment's page/column placement gate.
+
+## A7.3 — note appearance, paragraph fonts and residual alignment
+
+The user approved this next increment with Sol/Terra delegation. Preserve every frozen A0/A7.1/A7.2 source, Word reference and application capture. Capture new results under A7.3 names.
+
+- Preserve whether a native note actually contains a body reference, its run marks and literal whitespace. Preserve the standard/empty separator profile; reject unsupported custom separator content instead of dropping it. Keep older authored note appearance and identity/history behavior.
+- Version canonical note presentation in document model v7 and note clipboard v2. Migrate v6 without losing bibliography, note policies, records or identities; refuse future envelopes before replacing current content.
+- Restore explicit native final-paragraph spacing in bottom-anchored footnotes. Measure the standard separator and endnote separator paragraph against the genuine frozen Word PDFs. Account for derived endnote space in both physical flow and painting, without adding canonical note content.
+- Preserve explicit paragraph font/size through HTML, DOCX export and reopening. Convert authored CSS line spacing to native exact spacing only for the bounded uniform-font, whole-twip profile that can retain its actual size; retain conservative fallback behavior elsewhere.
+- Add a separate multi-font source probe. Expand native automatic font metrics only after a genuine Word Online PDF establishes the line pitch and actual embedded font. Unknown or substituted fonts remain unproven; copying proprietary Word/system fonts into the public application is outside this work.
+- Report residual text-layer coordinates and visible glyph differences separately. Do not introduce per-fixture offsets or suppress text/link differences to pass a report.
+
+Acceptance requires note codec/clipboard/migration and authored paragraph roundtrips, native spacing/style regressions, the full eight-case comparison, page/column placement checks, rendered note inspection, a production build and live import/export/reopen checks. New font profiles need their own Word provenance. A missing Word capture keeps that profile pending while independently proven fixes can ship. This increment does not close A7's broader 1 CSS px, field/link or arbitrary font/layout gates.

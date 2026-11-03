@@ -20,7 +20,7 @@ export async function exportDocumentStyles(blob: Blob,doc: PMNode): Promise<Blob
     if(!paragraph){paragraph=make("pPrDefault");root.appendChild(paragraph);}
     const old=Array.from(paragraph.children).find(el=>el.localName==="pPr");
     const node=doc.type.schema.nodes.paragraph.create({paragraphFormat:defaults,docxProperties:old?new XMLSerializer().serializeToString(old):null});
-    const properties=new DOMParser().parseFromString(paragraphXml(node),"application/xml").documentElement;
+    const properties=new DOMParser().parseFromString(paragraphXml(node,true,false),"application/xml").documentElement;
     if(old)old.replaceWith(properties);else paragraph.appendChild(properties);
   }
   for(const [id,style] of Object.entries(styles)){
@@ -28,7 +28,7 @@ export async function exportDocumentStyles(blob: Blob,doc: PMNode): Promise<Blob
     const el=make("style");el.setAttributeNS(W,"w:type","paragraph");el.setAttributeNS(W,"w:styleId",id);if(id==="Normal")el.setAttributeNS(W,"w:default","1");
     el.appendChild(make("name",style.name));if(style.basedOn)el.appendChild(make("basedOn",style.basedOn));el.appendChild(make("qFormat"));
     const node=doc.type.schema.nodes.paragraph.create({paragraphFormat:style.paragraph, docxProperties:(style as typeof style & {rawParagraphProperties?: string}).rawParagraphProperties || null});
-    const p=new DOMParser().parseFromString(paragraphXml(node),"application/xml").documentElement;
+    const p=new DOMParser().parseFromString(paragraphXml(node,true,false),"application/xml").documentElement;
     if(style.level!==undefined){
       // Imported raw pPr may already contain the managed outline level.
       // WordprocessingML permits only one; replace it rather than append.

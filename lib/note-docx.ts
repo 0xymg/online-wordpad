@@ -3,9 +3,9 @@
  * marks. The blocks never enter the editable document or exported main story.
  */
 import JSZip from "jszip";
-import { DOMParser as PMParser, type Node as PMNode, type Schema } from "prosemirror-model";
+import { DOMParser as PMParser, Fragment, Slice, type Node as PMNode, type Schema } from "prosemirror-model";
 import { parseXml, xmlString, W } from "./docx-preservation";
-import { defaultNotePolicy, validateNoteBody, validateNoteGraph, validateNoteModel, type NoteRecord, type NoteSectionPolicy, type NoteModelShape } from "./document-notes";
+import { defaultNotePolicy, noteBodyReference, noteSeparators, validateNoteBody, validateNoteGraph, validateNoteModel, type NoteRecord, type NoteSectionPolicy, type NoteModelShape, type NoteSeparators, type NotePresentation } from "./document-notes";
 
 const R = "http://schemas.openxmlformats.org/officeDocument/2006/relationships";
 const PKG = "http://schemas.openxmlformats.org/package/2006/relationships";
@@ -86,7 +86,7 @@ function markerBlock(root: Element, token: string): Element {
   const text = tokenText(root, token), block = text.parentElement?.closest("p");
   if (!block || block.textContent !== token) fail("A native note body boundary was combined with content"); return block!;
 }
-function validateNativeBody(note: Element, kind: Kind): string | undefined {
+function validateNativeBody(note: Element, kind: Kind): { id?: string; reference?: Element } {
   if (Array.from(note.children).some(el => el.namespaceURI !== W || el.localName !== "p")) fail("This native note contains an unsupported body block");
   const allowed = new Set(["p", "pPr", "r", "rPr", "t", "tab", "br", "cr", "hyperlink", `${kind}Ref`, "bookmarkStart", "bookmarkEnd"]);
   // Property trees are retained by the shared formatting codec; structural
@@ -108,8 +108,38 @@ function validateNativeBody(note: Element, kind: Kind): string | undefined {
     if (ownMarkers.length !== 2 || start.localName !== "bookmarkStart" || end.localName !== "bookmarkEnd" || start.nextElementSibling !== end || val(start, "id") !== val(end, "id")) fail("Invalid native note identity metadata");
     ownMarkers.forEach(el => el.remove());
   }
-  const self = all(note, `${kind}Ref`); if (self.length > 1) fail("A native note has duplicate body reference marks"); self.forEach(el => el.remove());
-  return ownId;
+  const self = all(note, `${kind}Ref`); if (self.length > 1) fail("A native note has duplicate body reference marks");
+  if (self[0]) {
+    const reference = self[0], run = reference.parentElement, first = children(note, "p")[0];
+    const priorBlocks = run && first ? Array.from(first.children).slice(0, Array.from(first.children).indexOf(run)) : [];
+    const priorRunContent = run ? Array.from(run.children).slice(0, Array.from(run.children).indexOf(reference)) : [];
+    if (!run || run.localName !== "r" || run.parentElement !== first || priorBlocks.some(el => el.localName !== "pPr") || priorRunContent.some(el => el.localName !== "rPr") || reference.attributes.length || reference.children.length) fail("Only a leading native note body reference mark is supported");
+  }
+  return { id: ownId, reference: self[0] };
+}
+/** The physical renderer supports Word's bare standard separator and an empty
+ * separator. Refuse other native stories rather than silently replacing them. */
+function separatorAppearance(note: Element, type: "separator" | "continuationSeparator"): { appearance: "default" | "none"; spacing?: "single-zero" } {
+  const blocks = Array.from(note.children);
+  if (blocks.length !== 1 || blocks[0].namespaceURI !== W || blocks[0].localName !== "p") fail("Unsupported native note separator appearance");
+  const p = blocks[0];
+  // Word Online saves these paragraph editing identities without changing the
+  // story's appearance. Other paragraph attributes remain unsupported.
+  const W14 = "http://schemas.microsoft.com/office/word/2010/wordml", XMLNS = "http://www.w3.org/2000/xmlns/";
+  if (Array.from(p.attributes).some(attr => attr.namespaceURI !== XMLNS && !((attr.namespaceURI === W && ["rsidR", "rsidRDefault"].includes(attr.localName) || attr.namespaceURI === W14 && ["paraId", "textId"].includes(attr.localName)) && /^[0-9a-f]{8}$/i.test(attr.value)))) fail("Unsupported native note separator paragraph attributes");
+  if (Array.from(p.childNodes).some(node => node.nodeType === Node.TEXT_NODE && node.textContent?.trim())) fail("Unsupported native note separator paragraph content");
+  if (!p.children.length && !p.textContent?.trim()) return { appearance: "none" };
+  const properties = children(p, "pPr"); let spacing: "single-zero" | undefined;
+  if (properties.length) {
+    const props = properties[0], values = children(props, "spacing"), value = values[0];
+    if (properties.length !== 1 || props.attributes.length || props.textContent?.trim() || props.children.length !== 1 || values.length !== 1 || value.children.length || value.textContent?.trim() || value.attributes.length !== 3 || Array.from(value.attributes).some(attr => attr.namespaceURI !== W || !["after", "line", "lineRule"].includes(attr.localName)) || val(value, "after") !== "0" || val(value, "line") !== "240" || val(value, "lineRule") !== "auto") fail("Unsupported native note separator paragraph spacing");
+    spacing = "single-zero";
+  }
+  const runs = Array.from(p.children).filter(el => el !== properties[0]);
+  if (runs.length !== 1 || runs[0].namespaceURI !== W || runs[0].localName !== "r" || runs[0].attributes.length || runs[0].children.length !== 1) fail("Unsupported native note separator appearance");
+  const mark = runs[0].firstElementChild!;
+  if (mark.namespaceURI !== W || mark.localName !== type || mark.attributes.length || mark.children.length || mark.textContent) fail("Unsupported native note separator appearance");
+  return { appearance: "default", ...(spacing ? { spacing } : {}) };
 }
 export async function prepareNoteImport(arrayBuffer: ArrayBuffer, options: { allowFootnotes?: boolean } = {}) {
   const zip = await JSZip.loadAsync(arrayBuffer);
@@ -145,7 +175,7 @@ export async function prepareNoteImport(arrayBuffer: ArrayBuffer, options: { all
     for (const kind of ["footnote", "endnote"] as const) { const props = children(section, `${kind}Pr`); if (props.length > 1) fail("Duplicate section native note policy"); if (props[0]) { override[kind] = readPolicy(props[0], kind, false); hasSettings = true; } }
     return override;
   });
-  const token = crypto.randomUUID().replace(/-/g, ""), imports: Array<{ id: string; kind: Kind; nativeId: string; part: string; start: string; end: string; owner: string }> = [], used = new Set<string>();
+  const token = crypto.randomUUID().replace(/-/g, ""), imports: Array<{ id: string; kind: Kind; nativeId: string; part: string; start: string; end: string; owner: string; reference?: string; separators: NoteSeparators }> = [], used = new Set<string>();
   const prepended: Element[] = [];
   for (const kind of ["footnote", "endnote"] as const) {
     const references = all(main, `${kind}Reference`);
@@ -155,13 +185,17 @@ export async function prepareNoteImport(arrayBuffer: ArrayBuffer, options: { all
     if (!partRels.length) { if (references.length) fail("A native note owner has no related note part"); continue; }
     const part = partPath(path, partRels[0].getAttribute("Target") || ""), notesXml = await readXml(zip, part), noteRels = await readXml(zip, relPath(part), `<Relationships xmlns="${PKG}"/>`);
     if (notesXml.documentElement.namespaceURI !== W || notesXml.documentElement.localName !== `${kind}s`) fail("Invalid native note part root");
-    const records = new Map<string, Element>(), nativeIds = new Set<string>();
+    const records = new Map<string, Element>(), nativeIds = new Set<string>(), separators: NoteSeparators = { separator: "none", continuationSeparator: "none" };
     for (const note of Array.from(notesXml.documentElement.children)) {
       if (note.namespaceURI !== W || note.localName !== kind) fail("Invalid native note part record");
       const id = nativeId(val(note, "id")), type = val(note, "type");
       if (!/^-?\d+$/.test(id) || nativeIds.has(id)) fail("Duplicate or invalid native note ID");
       nativeIds.add(id);
-      if (["separator", "continuationSeparator"].includes(type)) { if (!(id === "-1" && type === "separator" || id === "0" && type === "continuationSeparator")) fail("Unsupported native note separator identity"); continue; }
+      if (type === "separator" || type === "continuationSeparator") {
+        if (!(id === "-1" && type === "separator" || id === "0" && type === "continuationSeparator")) fail("Unsupported native note separator identity");
+        if (references.length) { const profile = separatorAppearance(note, type); separators[type] = profile.appearance; if (profile.spacing) separators.paragraphSpacing = { ...separators.paragraphSpacing, [type]: profile.spacing }; }
+        continue;
+      }
       if (type && type !== "normal" || Number(id) < 1) fail("Unsupported native note record type");
       records.set(id, note);
     }
@@ -169,8 +203,10 @@ export async function prepareNoteImport(arrayBuffer: ArrayBuffer, options: { all
     for (const ref of references) {
       const sourceId = nativeId(val(ref, "id")); if (!records.has(sourceId) || owners.has(sourceId)) fail("Missing or multiply-owned native note body"); owners.add(sourceId);
       if (ref.hasAttributeNS(W, "customMarkFollows")) fail("Custom native note marks are unsupported");
-      const note = records.get(sourceId)!, id = validateNativeBody(note, kind) || newId(); if (used.has(id)) fail("Duplicate native note identity"); used.add(id);
+      const note = records.get(sourceId)!, validated = validateNativeBody(note, kind), id = validated.id || newId(); if (used.has(id)) fail("Duplicate native note identity"); used.add(id);
       const n = imports.length, start = `EDTRNOTE${token}START${n}`, end = `EDTRNOTE${token}END${n}`, owner = `EDTRNOTE${token}OWNER${n}`;
+      const reference = validated.reference ? `EDTRNOTE${token}REFERENCE${n}` : undefined;
+      if (validated.reference) { const marker = note.ownerDocument.createElementNS(W, "w:t"); marker.textContent = reference!; validated.reference.replaceWith(marker); }
       for (const link of all(note, "hyperlink")) {
         const matching = Array.from(noteRels.documentElement.children).filter(el => el.getAttribute("Id") === link.getAttributeNS(R, "id"));
         if (matching.length !== 1 || matching[0].getAttribute("Type") !== `${R}/hyperlink` || matching[0].getAttribute("TargetMode") !== "External") fail("A native note hyperlink relationship is unsupported or missing");
@@ -185,7 +221,7 @@ export async function prepareNoteImport(arrayBuffer: ArrayBuffer, options: { all
       });
       prepended.push(markerParagraph(main, start), ...blocks, markerParagraph(main, end));
       const t = main.createElementNS(W, "w:t"); t.textContent = owner; ref.replaceWith(t);
-      imports.push({ id, kind, nativeId: sourceId, part, start, end, owner });
+      imports.push({ id, kind, nativeId: sourceId, part, start, end, owner, reference, separators });
     }
     if (owners.size !== records.size) fail("The native note package contains an orphaned body");
     // Mammoth must not independently append a second native note story.
@@ -199,8 +235,15 @@ export async function prepareNoteImport(arrayBuffer: ArrayBuffer, options: { all
       const container = parsed.createElement("div"); let sibling = start.nextElementSibling;
       while (sibling && sibling !== end) { const next = sibling.nextElementSibling; container.append(sibling); sibling = next; }
       if (sibling !== end) fail("Native note body boundaries are out of order"); start.remove(); end.remove();
-      const pm = PMParser.fromSchema(schema).parse(container); pm.check();
-      const bodyJson = validateNoteBody(pm.toJSON(), schema); notes[item.id] = { kind: item.kind, body: bodyJson, native: { partUri: item.part, nativeId: item.nativeId } };
+      let pm = PMParser.fromSchema(schema).parse(container); pm.check();
+      let bodyReference: NotePresentation["bodyReference"] = null;
+      if (item.reference) {
+        let markerPos: number | undefined;
+        pm.descendants((node, pos) => { if (!node.isText || !node.text?.includes(item.reference!)) return; if (markerPos !== undefined || node.text.indexOf(item.reference!) !== node.text.lastIndexOf(item.reference!)) fail("A native note body reference marker was duplicated"); markerPos = pos + node.text.indexOf(item.reference!); bodyReference = { marks: node.marks.map(mark => mark.toJSON()) }; });
+        if (markerPos === undefined) fail("A native note body reference marker was lost");
+        pm = pm.replace(markerPos!, markerPos! + item.reference.length, Slice.empty);
+      }
+      const bodyJson = validateNoteBody(pm.toJSON(), schema); notes[item.id] = { kind: item.kind, body: bodyJson, presentation: { version: 1, bodyReference, separators: item.separators }, native: { partUri: item.part, nativeId: item.nativeId } };
       const owner = tokenText(parsed.body, item.owner), offset = owner.data.indexOf(item.owner), after = owner.splitText(offset); after.splitText(item.owner.length);
       const span = parsed.createElement("span"); span.setAttribute("data-edtr-note-reference", "true"); span.setAttribute("data-note-id", item.id); after.replaceWith(span);
     }
@@ -213,7 +256,7 @@ export async function prepareNoteImport(arrayBuffer: ArrayBuffer, options: { all
 export function createNoteExport(doc: PMNode) {
   const model = doc.attrs.documentModel as NoteModelShape | null;
   const ownerMarkers = new Map<string, string>();
-  const bodies: Array<{ noteId: string; startMarker: string; endMarker: string; body: PMNode }> = [];
+  const bodies: Array<{ noteId: string; startMarker: string; endMarker: string; referenceMarker?: string; body: PMNode }> = [];
   const token = crypto.randomUUID().replace(/-/g, "");
   if (model && model.version >= 5) {
     validateNoteModel(model, doc.type.schema);
@@ -222,7 +265,19 @@ export function createNoteExport(doc: PMNode) {
     const ordered: string[] = []; doc.descendants(node => { if (node.attrs.noteOwnerId) return false; if (node.type.name === "note_reference") ordered.push(String(node.attrs.noteId)); });
     ordered.forEach((noteId, index) => {
       ownerMarkers.set(noteId, `EDTRNOTE${token}EXPORTOWNER${index}`);
-      bodies.push({ noteId, startMarker: `EDTRNOTE${token}EXPORTSTART${index}`, endMarker: `EDTRNOTE${token}EXPORTEND${index}`, body: doc.type.schema.nodeFromJSON(validateNoteBody(model.notes[noteId].body, doc.type.schema)) });
+      const record = model.notes[noteId], reference = noteBodyReference(record, "", doc.type.schema), referenceMarker = reference ? `EDTRNOTE${token}EXPORTREFERENCE${index}` : undefined;
+      let added = false;
+      const prefix = (node: PMNode): PMNode => {
+        if (!added && node.type.name === "paragraph") {
+          added = true;
+          if (!referenceMarker) return node;
+          const prefix = [doc.type.schema.text(referenceMarker, reference!.marks), ...(reference!.trailingSpace ? [doc.type.schema.text(" ")] : [])];
+          return node.copy(Fragment.fromArray(prefix).append(node.content));
+        }
+        return node.isLeaf ? node : node.copy(Fragment.fromArray(Array.from({ length: node.childCount }, (_, i) => prefix(node.child(i)))));
+      };
+      const body = prefix(doc.type.schema.nodeFromJSON(validateNoteBody(record.body, doc.type.schema)));
+      bodies.push({ noteId, startMarker: `EDTRNOTE${token}EXPORTSTART${index}`, endMarker: `EDTRNOTE${token}EXPORTEND${index}`, referenceMarker, body });
     });
   }
   return { ownerMarkers, bodies, async finish(blob: Blob): Promise<Blob> {
@@ -240,9 +295,12 @@ export function createNoteExport(doc: PMNode) {
       if (!bodies.some(item => model.notes[item.noteId].kind === kind)) continue;
       const nativePath = `${path.slice(0, path.lastIndexOf("/") + 1)}${kind}s.xml`;
       const xml = parseXml(`<w:${kind}s xmlns:w="${W}" xmlns:r="${R}"/>`), noteRels = parseXml(`<Relationships xmlns="${PKG}"/>`);
+      const profile = noteSeparators(model.notes, kind);
       for (const [id, type, child] of [["-1", "separator", "separator"], ["0", "continuationSeparator", "continuationSeparator"]]) {
         const note = xml.createElementNS(W, `w:${kind}`); note.setAttributeNS(W, "w:id", id); note.setAttributeNS(W, "w:type", type);
-        const p = xml.createElementNS(W, "w:p"), run = xml.createElementNS(W, "w:r"); run.append(xml.createElementNS(W, `w:${child}`)); p.append(run); note.append(p); xml.documentElement.append(note);
+        const p = xml.createElementNS(W, "w:p"), run = xml.createElementNS(W, "w:r");
+        if (profile.paragraphSpacing?.[type as "separator" | "continuationSeparator"] === "single-zero") { const props = xml.createElementNS(W, "w:pPr"), spacing = xml.createElementNS(W, "w:spacing"); for (const [key, value] of [["after", "0"], ["line", "240"], ["lineRule", "auto"]]) spacing.setAttributeNS(W, `w:${key}`, value); props.append(spacing); p.append(props); }
+        if (profile[type as "separator" | "continuationSeparator"] === "default") { run.append(xml.createElementNS(W, `w:${child}`)); p.append(run); } note.append(p); xml.documentElement.append(note);
       }
       parts.set(kind, { xml, rels: noteRels, path: nativePath, next: 1, relIds: new Set() });
       for (const prior of Array.from(rels.documentElement.children).filter(el => el.getAttribute("Type") === `${R}/${kind}s`)) prior.remove();
@@ -271,9 +329,15 @@ export function createNoteExport(doc: PMNode) {
       }
       start.remove(); end.remove();
       let first = children(note, "p")[0]; if (!first) { first = part.xml.createElementNS(W, "w:p"); note.append(first); }
-      const pPr = children(first, "pPr")[0], reference = part.xml.createElementNS(W, "w:r"), rPr = part.xml.createElementNS(W, "w:rPr"), vertical = part.xml.createElementNS(W, "w:vertAlign"); vertical.setAttributeNS(W, "w:val", "superscript"); rPr.append(vertical); reference.append(rPr, part.xml.createElementNS(W, `w:${record.kind}Ref`));
+      const pPr = children(first, "pPr")[0];
+      if (item.referenceMarker) {
+        const matches = all(note, "t").filter(el => el.textContent?.includes(item.referenceMarker!));
+        if (matches.length !== 1 || !matches[0].textContent!.startsWith(item.referenceMarker) || matches[0].textContent!.indexOf(item.referenceMarker, item.referenceMarker.length) !== -1) fail("A native note body reference export marker was lost or duplicated");
+        const text = matches[0], suffix = text.textContent!.slice(item.referenceMarker.length), reference = part.xml.createElementNS(W, `w:${record.kind}Ref`);
+        text.before(reference); if (suffix) text.textContent = suffix; else text.remove();
+      }
       const a = part.xml.createElementNS(W, "w:bookmarkStart"), b = part.xml.createElementNS(W, "w:bookmarkEnd"); a.setAttributeNS(W, "w:id", String(bookmarkId)); a.setAttributeNS(W, "w:name", `EDNT${item.noteId.slice(4)}`); b.setAttributeNS(W, "w:id", String(bookmarkId++));
-      const insertion = pPr ? pPr.nextSibling : first.firstChild; first.insertBefore(a, insertion); first.insertBefore(b, insertion); first.insertBefore(reference, insertion);
+      const insertion = pPr ? pPr.nextSibling : first.firstChild; first.insertBefore(a, insertion); first.insertBefore(b, insertion);
       const seen = part.relIds;
       for (const link of all(note, "hyperlink")) {
         const id = link.getAttributeNS(R, "id") || "", matches = Array.from(rels.documentElement.children).filter(el => el.getAttribute("Id") === id);
@@ -282,7 +346,8 @@ export function createNoteExport(doc: PMNode) {
       }
       part.xml.documentElement.append(note);
       const owner = findRun(ownerMarkers.get(item.noteId)!), ownerXml = main.createElementNS(W, `w:${record.kind}Reference`); ownerXml.setAttributeNS(W, "w:id", nativeId);
-      const run = main.createElementNS(W, "w:r"), ownerPr = main.createElementNS(W, "w:rPr"), ownerVertical = main.createElementNS(W, "w:vertAlign"); ownerVertical.setAttributeNS(W, "w:val", "superscript"); ownerPr.append(ownerVertical); run.append(ownerPr, ownerXml); owner.replaceWith(run);
+      if (record.presentation) children(owner, "t")[0].replaceWith(ownerXml);
+      else { const run = main.createElementNS(W, "w:r"), ownerPr = main.createElementNS(W, "w:rPr"), ownerVertical = main.createElementNS(W, "w:vertAlign"); ownerVertical.setAttributeNS(W, "w:val", "superscript"); ownerPr.append(ownerVertical); run.append(ownerPr, ownerXml); owner.replaceWith(run); }
     }
     if (terminalIdentity.length) {
       const last = Array.from(body.children).filter(el => el.namespaceURI === W && el.localName !== "sectPr").at(-1);

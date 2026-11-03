@@ -8,7 +8,7 @@ require.extensions['.ts'] = (module, file) => {
   code = code.replace(/require\(["']@\/([^"']+)["']\)/g, (_, name) => `require(${JSON.stringify(path.join(root, name))})`);
   module._compile(code, file);
 };
-const R = require('../lib/document-references.ts'), M = require('../lib/document-model.ts'), { mySchema: schema } = require('../app/components/editor-schema.ts');
+const R = require('../lib/document-references.ts'), M = require('../lib/document-model.ts'), N = require('../lib/document-notes.ts'), B = require('../lib/document-bibliography.ts'), { mySchema: schema } = require('../app/components/editor-schema.ts');
 if (original) require.extensions['.ts'] = original; else delete require.extensions['.ts'];
 const { EditorState, TextSelection } = require('prosemirror-state'), { Slice } = require('prosemirror-model'), { history, undo, redo } = require('prosemirror-history');
 const id = (kind, n) => kind + '_' + n.toString(16).padStart(32, '0'), entropy = (start = 1000) => { let n = start; return () => (n++).toString(16).padStart(32, '0'); };
@@ -72,11 +72,24 @@ test('TOC config allocates a stable field and edits levels as one transaction', 
  let state=stateFor([p('Before')]); state=run(state,R.insertTableOfContents([3,1,1,9],'Contents')); let toc=R.collectReferenceIndex(state.doc).tocs[0]; assert.deepEqual(toc.levels,[1,3]); const fieldId=toc.fieldId;
  state=run(state,R.updateTableOfContents(toc.pos,[2])); toc=R.collectReferenceIndex(state.doc).tocs[0]; assert.equal(toc.fieldId,fieldId); assert.deepEqual(toc.levels,[2]);
 });
-test('v3 to v6 migration preserves document and section identities, future guard runs before DOM parsing', () => {
+test('v3 to v7 migration preserves document and section identities, future guard runs before DOM parsing', () => {
  const sec=id('sec',1), model={version:3,id:id('doc',1),finalSectionId:sec,sections:{[sec]:{page:{width:11906,height:16838,margins:{top:1440,right:1440,bottom:1440,left:1440}},start:'nextPage',numbering:{},running:{},columns:{kind:"equal",count:2,space:720,separator:false},flowDirection:'ltr'}}};
  // getDocumentModel is pure and upgrades without mutating an old snapshot.
- const migrated=M.getDocumentModel(schema.nodes.doc.create({documentModel:model},[p('Legacy')])); assert.equal(migrated.version,6); assert.equal(migrated.id,model.id); assert.equal(migrated.finalSectionId,sec); assert.equal(model.version,3); assert.equal(migrated.sections[sec].columns.count,2);
- const future={...model,version:7}; assert.throws(()=>M.readDocumentModel({hasAttribute:()=>true,getAttribute:()=>JSON.stringify(future)}),error=>error.code==='unsupported-version');
+ const migrated=M.getDocumentModel(schema.nodes.doc.create({documentModel:model},[p('Legacy')])); assert.equal(migrated.version,7); assert.equal(migrated.id,model.id); assert.equal(migrated.finalSectionId,sec); assert.equal(model.version,3); assert.equal(migrated.sections[sec].columns.count,2);
+ const future={...model,version:8}; assert.throws(()=>M.readDocumentModel({hasAttribute:()=>true,getAttribute:()=>JSON.stringify(future)}),error=>error.code==='unsupported-version');
+});
+
+test('v6 migration retains notes, numbering, sources, bibliography and all identities without changing its snapshot', () => {
+ const sec=id('sec',10), note=id('nte',10), source=id('src',10), policy=N.defaultNotePolicy(); policy.endnote={...policy.endnote,start:9,format:'upperRoman'};
+ const model={version:6,id:id('doc',10),finalSectionId:sec,sections:{[sec]:{page:{width:11906,height:16838,margins:{top:1440,right:1440,bottom:1440,left:1440}},start:'nextPage',numbering:{start:4,format:'decimal'},running:{},columns:{kind:'equal',count:2,space:720,separator:true},flowDirection:'ltr',notePolicy:{footnote:{restart:'eachSection',start:3}}}},notes:{[note]:{kind:'endnote',body:{type:'doc',content:[{type:'paragraph',content:[{type:'text',text:'LEGACY_NOTE',marks:[{type:'em'}]}]}]},native:{partUri:'word/endnotes.xml',nativeId:'8'}}},notePolicy:policy,sources:{[source]:{type:'book',title:'Preserved source',authors:[{family:'Author',given:'Ada'}],issued:{year:2024},publisher:'Publisher',native:{partUri:'customXml/item1.xml',tag:'SOURCE_TAG'}}},bibliography:{style:'ieee',locale:'tr-TR',includeUncited:true}};
+ const snapshot=structuredClone(model), citation=schema.nodes.citation_field.create({fieldId:id('fld',10),items:[{sourceId:source,locator:'42',label:'page'}],mode:'normal'}), owner=schema.nodes.note_reference.create({noteId:note}), legacy=schema.nodes.doc.create({documentModel:model},[p([owner,citation])]), migrated=M.getDocumentModel(legacy);
+ assert.equal(migrated.version,7);assert.deepEqual({...migrated,version:6},snapshot);assert.deepEqual(model,snapshot);assert.equal(migrated.notes[note].presentation,undefined);
+ const current=schema.nodes.doc.create({documentModel:migrated},legacy.content);assert.equal(N.collectNoteIndex(current).notes[0].label,'IX');assert.deepEqual(B.collectCitationIndex(current).diagnostics,[]);assert.equal(B.collectCitationIndex(current).citations[0].attrs.items[0].sourceId,source);
+ assert.equal(M.getDocumentModel(current),migrated,'current v7 models are returned unchanged');
+ const spoofed=structuredClone(model);spoofed.notes[note].presentation={version:1,bodyReference:null};const originalSpoof=structuredClone(spoofed);
+ assert.throws(()=>M.readDocumentModel({hasAttribute:()=>true,getAttribute:()=>JSON.stringify(spoofed)}),error=>error.code==='unsupported-version');assert.deepEqual(spoofed,originalSpoof);assert.deepEqual(model,snapshot);
+ const currentPresentation={...spoofed,version:7};assert.deepEqual(M.readDocumentModel({hasAttribute:()=>true,getAttribute:()=>JSON.stringify(currentPresentation)}),currentPresentation);
+ assert.throws(()=>M.readDocumentModel({hasAttribute:()=>true,getAttribute:()=>JSON.stringify({...currentPresentation,version:8})}),error=>error.code==='unsupported-version');
 });
 
 test('live non-split duplicate insertion marks existing fields ambiguous', () => {

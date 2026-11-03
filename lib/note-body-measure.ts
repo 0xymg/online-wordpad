@@ -1,6 +1,6 @@
 import { EditorState, Plugin } from 'prosemirror-state';
 import { EditorView, Decoration, DecorationSet } from 'prosemirror-view';
-import type { Node as PMNode } from 'prosemirror-model';
+import { DOMSerializer, type Mark, type Node as PMNode } from 'prosemirror-model';
 import { tabLayoutPlugin, createTabNodeView, flushTabLayout } from './tab-layout';
 import type { MeasuredNoteUnit } from './note-layout';
 import { waitForEditorFontStyles } from './editor-fonts';
@@ -12,7 +12,7 @@ export type MeasuredNoteLine = MeasuredNoteUnit & {
   marker?: { text: string; left: number; top: number; style: string; width?: number };
 };
 export type MeasuredNoteBody = { lines: MeasuredNoteLine[]; width: number };
-export type NoteBodyMeasureOptions = { from?: number };
+export type NoteBodyMeasureOptions = { from?: number; prefix?: { marks: readonly Mark[]; trailingSpace: boolean } | null; preserveTrailingSpacing?: boolean };
 const textCSS = ['font-family', 'font-size', 'font-weight', 'font-style', 'line-height', 'letter-spacing', 'word-spacing', 'font-kerning', 'font-feature-settings', 'font-variant', 'text-transform', 'direction'];
 const css = (style: CSSStyleDeclaration, names: readonly string[]) => names.map(name => `${name}:${style.getPropertyValue(name)}`).join(';');
 function rangeAt(view: EditorView, from: number, to: number): Range {
@@ -47,16 +47,32 @@ export async function measureNoteBody(source: EditorView, body: PMNode, width: n
   shell.className = 'pm-page pm-note-measure';
   shell.style.cssText = `position:fixed;left:-100000px;top:0;width:${width}px;height:auto;visibility:hidden;pointer-events:none;overflow:visible;`;
   shell.setAttribute('aria-hidden', 'true'); shell.inert = true; owner.body.appendChild(shell);
+  const prefixSpec = options.prefix === undefined ? { marks: source.state.schema.marks.superscript ? [source.state.schema.marks.superscript.create()] : [], trailingSpace: true } : options.prefix;
+  const makePrefix = () => {
+    const span = owner.createElement('span'); span.className = 'pm-note-measure-prefix';
+    if (prefixSpec) {
+      span.appendChild(DOMSerializer.fromSchema(source.state.schema).serializeNode(source.state.schema.text(label, prefixSpec.marks), { document: owner }));
+      if (prefixSpec.trailingSpace) span.appendChild(owner.createTextNode(' '));
+    }
+    return span;
+  };
   const prefix = new Plugin({ props: { decorations(state) {
-    if (from > 0) return DecorationSet.empty;
+    if (from > 0 || !prefixSpec) return DecorationSet.empty;
     return DecorationSet.create(state.doc, [Decoration.widget(first, () => {
-      const span = owner.createElement('span'), sup = owner.createElement('sup');
-      span.className = 'pm-note-measure-prefix'; sup.textContent = label; span.append(sup, owner.createTextNode(' ')); return span;
+      return makePrefix();
     }, { side: -1 })]);
   } } });
   let view: EditorView | undefined;
   try {
     view = new EditorView(shell, { state: EditorState.create({ doc: measuredDoc, plugins: [prefix, tabLayoutPlugin()] }), editable: () => false, nodeViews: { tab: createTabNodeView } });
+    // The page editor suppresses the final block's margin for sheet flow. A
+    // native note body is an independent story, so retain its explicit final
+    // paragraph spacing when computing the bottom-anchored band.
+    if (options.preserveTrailingSpacing) {
+      const last = view.dom.lastElementChild as HTMLElement | null;
+      const margin = last?.style.getPropertyValue('margin-bottom');
+      if (last && margin) last.style.setProperty('margin-bottom', margin, 'important');
+    }
     const sourceStyle = owner.defaultView!.getComputedStyle(source.dom);
     Object.assign(view.dom.style, { width: `${width}px`, minHeight: '0', padding: '0', margin: '0', display: 'flow-root', boxSizing: 'border-box', fontFamily: sourceStyle.fontFamily, fontSize: sourceStyle.fontSize, lineHeight: sourceStyle.lineHeight, direction: sourceStyle.direction });
     // The app uses CSS counters. Honor canonical starts in this disposable view,
@@ -144,7 +160,9 @@ export async function measureNoteBody(source: EditorView, body: PMNode, width: n
       line.style = `${css(style, textCSS)};color:${block.style.color || 'inherit'}`;
       const prefixElement = from === 0 && line === lines[0] ? view.dom.querySelector<HTMLElement>('.pm-note-measure-prefix') : null;
       if (prefixElement) {
-        const anchor = owner.createElement('a'), sup = owner.createElement('sup'); anchor.className = 'pm-footnote-backlink'; anchor.href = '#'; anchor.style.cssText = `${css(owner.defaultView!.getComputedStyle(prefixElement), textCSS)};color:${prefixElement.style.color || 'inherit'}`; sup.textContent = label; anchor.append(sup, owner.createTextNode(' ')); container.prepend(anchor);
+        const anchor = owner.createElement('a'); anchor.className = 'pm-footnote-backlink'; anchor.href = '#'; anchor.style.cssText = `${css(owner.defaultView!.getComputedStyle(prefixElement), textCSS)};color:${prefixElement.style.color || 'inherit'}`;
+        for (const child of Array.from(prefixElement.childNodes)) anchor.appendChild(child.cloneNode(true));
+        container.prepend(anchor);
         range.setStartBefore(prefixElement);
       }
       const sourceRects = Array.from(range.getClientRects()).filter(box => box.height > 0.1 && box.width > 0.01);

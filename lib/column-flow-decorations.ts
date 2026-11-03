@@ -61,6 +61,20 @@ export function buildColumnDecorations(doc: PMNode, measurement: ColumnMeasureme
         borderLayer.appendChild(line);
       }
     }
+    if (block.noteSeparator) {
+      const fragment = flow.fragments.find(item => item.sourceBlock === block.pos && item.kind === 'line');
+      if (!fragment) { fail('missing-note-separator-placement', section.id); return empty(); }
+      if (!borderLayer) {
+        borderLayer = (view?.dom.ownerDocument || document).createElement('div');
+        borderLayer.setAttribute('aria-hidden', 'true'); borderLayer.setAttribute('data-column-paragraph-borders', 'true');
+        borderLayer.style.cssText = `position:absolute;width:${rootWidth}px;height:${flow.pages.at(-1)!.top + flow.pages.at(-1)!.geometry.height / 15}px;pointer-events:none;`;
+        overlays.push(borderLayer);
+      }
+      const page = flow.pages[fragment.pageIndex], line = borderLayer.ownerDocument.createElement('div');
+      line.className = 'pm-endnote-separator-overlay';
+      line.style.cssText = `position:absolute;left:${(rootWidth - page.geometry.width / 15) / 2 + fragment.rect.x + block.noteSeparator.left}px;top:${fragment.rect.y - block.noteSeparator.height + block.noteSeparator.top}px;width:${Math.min(block.noteSeparator.width, fragment.rect.width)}px;color:${block.noteSeparator.color};border-top:0.5pt solid currentColor;`;
+      borderLayer.appendChild(line);
+    }
     const borderOverride = block.textblock && block.borderBottomWidth > 0 ? 'border-bottom-color:transparent;' : '';
     const style = `position:absolute;top:${block.top - parentTop}px;left:${block.left - parentLeft + emptyShift}px;height:${Math.max(0, block.bottom - block.top)}px;width:${block.width + (emptyTextblock ? 0 : extra)}px;box-sizing:border-box;margin:0;overflow-wrap:anywhere;pointer-events:${emptyTextblock ? 'auto' : 'none'};${padding}${borderOverride}`;
     decorations.push(Decoration.node(block.pos, block.pos + node.nodeSize, { style, 'data-column-block': 'true' }));

@@ -16,7 +16,7 @@ const { chromium } = require(process.env.PLAYWRIGHT_MODULE || 'playwright');
   await page.waitForFunction(()=>document.querySelector('.editor-shell [data-note-owner-id]'));
   const snapshot=()=>editor.evaluate(root=>root.pmViewDesc.node.toJSON());
   const check=doc=>{
-   assert.equal(doc.attrs.documentModel.version,6); const records=Object.entries(doc.attrs.documentModel.notes); assert.equal(records.length,1);
+   assert.equal(doc.attrs.documentModel.version,7); const records=Object.entries(doc.attrs.documentModel.notes); assert.equal(records.length,1);
    const [id,note]=records[0]; assert.equal(note.kind,'endnote');
    const body=JSON.stringify(note.body); for(const type of ['strong','em','tab','hard_break','ordered_list','link']) assert.ok(body.includes('"type":"'+type+'"'),type+' retained');
    const flatten=n=>[n,...(n.content||[]).flatMap(flatten)]; const owners=flatten(doc).filter(n=>n.type==='note_reference'); assert.equal(owners.length,1); assert.equal(owners[0].attrs.noteId,id); assert.equal(owners[0].attrs.cachedLabel,'i');

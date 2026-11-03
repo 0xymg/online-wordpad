@@ -494,9 +494,10 @@ export async function prepareDocxFormatting(arrayBuffer: ArrayBuffer) {
     // Conditional table styles remain outside this unconditional cascade.
     return {properties:Object.assign({}, ...chain.map(style => properties(child(style,"pPr")))),paragraph:mergeParagraphFormats(...chain.map(style => paragraphFromXml(child(style,"pPr") || null)))};
   };
-  const paragraphMeta = new Map<string,{ id:string; direct:ParagraphFormat; table:ParagraphFormat }>();
+  const paragraphMeta = new Map<string,{ id:string; direct:ParagraphFormat; table:ParagraphFormat; baseText:Partial<StyleText> }>();
   const prefix = `EDTRimport${crypto.randomUUID().replace(/-/g, "")}`;
   const paragraphFormats = new Map<string, Properties>();
+  const paragraphBaseText = new Map<string, Partial<StyleText>>();
   const runFormats = new Map<string, RunFormat>();
   const columnBreakProperties = new Map<string, Element | null>();
   const columnBreakFormats = new Map<string, RunFormat>();
@@ -575,6 +576,9 @@ export async function prepareDocxFormatting(arrayBuffer: ArrayBuffer) {
         for (const [key, value] of attrs) el.setAttributeNS(W, `w:${key.slice(property.length + 1)}`, value);
       }
       const baseRun = mergeStyle(defaultRun, inherited.run);
+      const markFormat = runFormat(mergeProperties(baseRun, properties(child(pPr, "rPr")))), baseText: Partial<StyleText> = {};
+      if (markFormat.css["font-family"]) baseText.family = markFormat.css["font-family"];
+      if (markFormat.css["font-size"]) baseText.size = Number.parseFloat(markFormat.css["font-size"]);
       for (const marker of wordElements(p, "bookmarkStart")) {
         const markerName = attr(marker, "name") || "";
         if (!columnBreakProperties.has(markerName)) continue;
@@ -584,8 +588,9 @@ export async function prepareDocxFormatting(arrayBuffer: ArrayBuffer) {
       }
       const id = `${prefix}p${paragraphFormats.size}`;
       paragraphFormats.set(id, paragraphFormat(paragraphProps, baseRun));
+      if (Object.keys(baseText).length) paragraphBaseText.set(id, baseText);
       if (list) listPositions.set(id, list);
-      if (Object.hasOwn(importedStyles,paragraphStyle) || (defaultParagraph && Object.hasOwn(importedStyles,defaultParagraph))) paragraphMeta.set(id,{ id:paragraphStyle,direct:directParagraph,table:tableContext.paragraph });
+      if (Object.hasOwn(importedStyles,paragraphStyle) || (defaultParagraph && Object.hasOwn(importedStyles,defaultParagraph))) paragraphMeta.set(id,{ id:paragraphStyle,direct:directParagraph,table:tableContext.paragraph,baseText });
       sourceParagraphs.set(id, p);
       const bookmark = doc.createElementNS(W, "w:bookmarkStart");
       bookmark.setAttributeNS(W, "w:name", id);
@@ -694,10 +699,12 @@ export async function prepareDocxFormatting(arrayBuffer: ArrayBuffer) {
         if (block && meta) {
           const resolved = resolveStyle(importedStyles,Object.hasOwn(importedStyles,meta.id) ? meta.id : defaultParagraph!,new Set(),meta.table);
           block.setAttribute("data-edtr-style",meta.id);
-          block.setAttribute("data-edtr-style-text",JSON.stringify(resolved.text));
+          block.setAttribute("data-edtr-style-text",JSON.stringify({ ...resolved.text, ...meta.baseText }));
           block.setAttribute("data-edtr-style-paragraph",JSON.stringify(resolved.paragraph));
           if (Object.keys(meta.table).length) block.setAttribute("data-edtr-table-style-paragraph",JSON.stringify(meta.table));
           block.setAttribute("data-edtr-paragraph",JSON.stringify(meta.direct));
+        } else if (block && paragraphBaseText.has(marker.id)) {
+          block.setAttribute("data-edtr-style-text",JSON.stringify(paragraphBaseText.get(marker.id)));
         }
         marker.remove();
       }

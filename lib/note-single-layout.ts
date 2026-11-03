@@ -1,5 +1,5 @@
 import type { EditorView } from 'prosemirror-view';
-import { collectNoteIndex } from './document-notes';
+import { collectNoteIndex, noteBodyReference, noteSeparators } from './document-notes';
 import { documentSections } from './document-sections';
 import { flushBodyDocumentLayout, paginationKey, setNoteReservations, noteGeometryRevision, invalidateNoteGeometry } from '@/app/components/paginationPlugin';
 import { measureNoteBody, type MeasuredNoteBody } from './note-body-measure';
@@ -61,6 +61,8 @@ async function runSimpleFootnoteLayout(view: EditorView): Promise<void> {
   completed.delete(view);
   if (index.diagnostics.length) throw new Error('note-invalid-graph');
   const notes = index.notes.filter(note => note.kind === 'footnote');
+  const separatorProfile = noteSeparators(Object.fromEntries(notes.map(note => [note.noteId, note.record])), 'footnote');
+  const sourceSeparators = notes.some(note => !!note.record.presentation?.separators);
   if (!notes.length) { clearLayers(view); setNoteReservations(view, doc, null); return; }
   // A continuous sheet uses one physical band; differing paper sizes remain
   // gated, while shared-sheet margins are reconciled from actual regions.
@@ -99,7 +101,7 @@ async function runSimpleFootnoteLayout(view: EditorView): Promise<void> {
       const geometry = section.geometry, width = (geometry.width - geometry.margins.left - geometry.margins.right) / 15;
       const body = doc.type.schema.nodeFromJSON(note.record.body);
       if (Array.from({ length: body.childCount }, (_, i) => body.child(i)).some(node => !['paragraph', 'bullet_list', 'ordered_list'].includes(node.type.name))) throw new Error('note-body-render-unsupported');
-      const bodyMeasurement = await measureNoteBody(view, body, width, note.label);
+      const bodyMeasurement = await measureNoteBody(view, body, width, note.label, { prefix: noteBodyReference(note.record, note.label, doc.type.schema), preserveTrailingSpacing: !!note.record.presentation });
       // Finish warming every note's fonts before testing the geometry epoch.
       // Otherwise each retry could stop at the next previously unseen font.
       measured.set(note.noteId, bodyMeasurement); assertDocumentCurrent();
@@ -151,7 +153,7 @@ async function runSimpleFootnoteLayout(view: EditorView): Promise<void> {
         if (Math.abs(existing.width - width) > 0.5) {
           const note = notes.find(item => item.noteId === owner.noteId)!;
           const body = doc.type.schema.nodeFromJSON(note.record.body);
-          const revised = await measureNoteBody(view, body, width, note.label); assertCurrent();
+          const revised = await measureNoteBody(view, body, width, note.label, { prefix: noteBodyReference(note.record, note.label, doc.type.schema), preserveTrailingSpacing: !!note.record.presentation }); assertCurrent();
           measured.set(owner.noteId, revised); owner.units = revised.lines;
         }
       }
@@ -170,7 +172,7 @@ async function runSimpleFootnoteLayout(view: EditorView): Promise<void> {
         for (const request of plan.remeasure) {
           const note = notes.find(item => item.noteId === request.noteId); if (!note) throw new Error('note-layout-stale');
           const body = doc.type.schema.nodeFromJSON(note.record.body);
-          const suffix = await measureNoteBody(view, body, request.width, note.label, { from: request.from });
+          const suffix = await measureNoteBody(view, body, request.width, note.label, { from: request.from, prefix: noteBodyReference(note.record, note.label, doc.type.schema), preserveTrailingSpacing: !!note.record.presentation });
           variants.push({ noteId: request.noteId, from: request.from, body: suffix }); assertCurrent();
         }
         continue;
@@ -238,9 +240,17 @@ async function runSimpleFootnoteLayout(view: EditorView): Promise<void> {
             return candidates.find(item => item.body.lines.some(line => line.from === from) && item.body.lines.some(line => line.to === to))?.body;
           });
           if (!rendered.element) throw new Error(rendered.diagnostic || 'note-render-failed');
-          const band = view.dom.ownerDocument.createElement('div'); band.className = 'pm-footnote-separator';
-          const bounds = pages[page.pageIndex]; band.style.cssText = `position:absolute;left:${bounds.x}px;top:${bounds.y + bounds.height - page.reservePx}px;width:${Math.min(120, bounds.width)}px;border-top:1px solid currentColor;`;
-          rendered.element.appendChild(band); host.appendChild(rendered.element); result.push(rendered.element);
+          const continuation = page.fragments[0].continuation;
+          const separator = continuation ? separatorProfile.continuationSeparator : separatorProfile.separator;
+          if (separator !== 'none') {
+            const band = view.dom.ownerDocument.createElement('div'); band.className = 'pm-footnote-separator';
+            const bounds = pages[page.pageIndex], nativeNormal = sourceSeparators && !continuation;
+            // Word's standard w:separator is a two-inch, half-point rule.
+            // Keep existing continuation geometry until separately measured.
+            band.style.cssText = `position:absolute;left:${bounds.x}px;top:${bounds.y + bounds.height - page.reservePx}px;width:${Math.min(nativeNormal ? 192 : 120, bounds.width)}px;border-top:${nativeNormal ? '0.5pt' : '1px'} solid currentColor;`;
+            rendered.element.appendChild(band);
+          }
+          host.appendChild(rendered.element); result.push(rendered.element);
         }
         const targets: FootnoteTarget[] = notes.map(note => {
           const page = plan.pages.find(item => item.fragments.some(fragment => fragment.noteId === note.noteId && !fragment.continuation));

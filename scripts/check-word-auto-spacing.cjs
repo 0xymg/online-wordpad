@@ -36,12 +36,12 @@ const {chromium}=require(process.env.PLAYWRIGHT_MODULE||'playwright');
   // Actual run fonts, including direct edits, govern the metric profile.
   const body=page.locator('.ProseMirror > p').filter({hasText:'BODY_METRICS'});
   async function selectBody(part=false){await body.evaluate((p,part)=>{const walker=document.createTreeWalker(p,NodeFilter.SHOW_TEXT);walker.nextNode();const text=walker.currentNode,r=document.createRange();r.setStart(text,0);r.setEnd(text,part?4:text.textContent.length);getSelection().removeAllRanges();getSelection().addRange(r);document.dispatchEvent(new Event('selectionchange'));},part);await page.waitForTimeout(100);}
-  await selectBody();await page.getByRole('combobox',{name:'Font family',exact:true}).click();await page.getByRole('option',{name:'Times New Roman',exact:true}).click();near((await facts()).find(p=>p.text==='BODY_METRICS').line,12*4/3*1.15);
-  const fontOutput=await download('Word (.docx)','direct-font.docx');await open(fontOutput,'BODY_METRICS');near((await facts()).find(p=>p.text==='BODY_METRICS').line,12*4/3*1.15);
+  await selectBody();await page.getByRole('combobox',{name:'Font family',exact:true}).click();await page.getByRole('option',{name:'Times New Roman',exact:true}).click();near((await facts()).find(p=>p.text==='BODY_METRICS').line,12*4/3*1.15*metric);
+  const fontOutput=await download('Word (.docx)','direct-font.docx');await open(fontOutput,'BODY_METRICS');near((await facts()).find(p=>p.text==='BODY_METRICS').line,12*4/3*1.15*metric);
   await selectBody(true);await page.getByRole('combobox',{name:'Font family',exact:true}).click();await page.getByRole('option',{name:'Arial',exact:true}).click();near((await facts()).find(p=>p.text==='BODY_METRICS').line,12*4/3*1.15);
   // Source-free authored HTML retains CSS multiples; unknown families are not guessed.
   const authored=path.join(dir,'authored.html');await fs.writeFile(authored,'<p style="font-family:Arial;font-size:11pt;line-height:1.15">AUTHORED_CSS</p>');await open(authored,'AUTHORED_CSS');const authoredFacts=(await facts()).find(p=>p.text==='AUTHORED_CSS');near(authoredFacts.line,authoredFacts.size*1.15);
-  const authoredDocx=await download('Word (.docx)','authored.docx');await open(authoredDocx,'AUTHORED_CSS');const reopenedAuthored=(await facts()).find(p=>p.text==='AUTHORED_CSS');near(reopenedAuthored.line,reopenedAuthored.size*1.15*metric);
+  const authoredDocx=await download('Word (.docx)','authored.docx');await open(authoredDocx,'AUTHORED_CSS');const reopenedAuthored=(await facts()).find(p=>p.text==='AUTHORED_CSS');near(reopenedAuthored.line,authoredFacts.line);
   assert.deepEqual(errors,[]);console.log('PASS Word font-based auto spacing; native multiplier/defaults; table/style/direct cascade; style apply/edit; persistence, DOCX and HTML reopen; authored CSS. '+dir);
  }finally{await browser.close();}
 })().catch(error=>{console.error(error);process.exitCode=1});

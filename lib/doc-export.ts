@@ -205,7 +205,17 @@ class DocxBuilder {
 
   inlineChildren(node: PMNode): ParagraphChild[] {
     const out: ParagraphChild[] = [];
-    if (node.attrs.docxProperties || node.attrs.styleId || Object.keys(node.attrs.paragraphFormat || {}).length) {
+    const inlineMarks = (marks: readonly Mark[]) => {
+      const p = readMarks(marks);
+      // Plain HTML paragraph fonts are a CSS base, rather than a linked Word
+      // style. Materialize that base beneath each run's explicit overrides.
+      if ((!node.attrs.styleId || !this.styles[node.attrs.styleId]) && node.attrs.styleText) {
+        p.font ??= firstFontFamily(node.attrs.styleText.family);
+        p.size ??= fontSizeHalfPoints(node.attrs.styleText.size ? `${node.attrs.styleText.size}pt` : undefined);
+      }
+      return p;
+    };
+    if (node.attrs.docxProperties || node.attrs.styleId || node.attrs.styleText || node.attrs.lineHeight || Object.keys(node.attrs.paragraphFormat || {}).length) {
       const id = `EDTRLayout${this.paragraphProperties.length}`;
       this.paragraphProperties.push({ id, properties: paragraphXml(node,!!this.styles[node.attrs.styleId]) });
       out.push(new Bookmark({ id, children: [] }));
@@ -231,7 +241,7 @@ class DocxBuilder {
     }
     node.forEach((child) => {
       if (child.isText) {
-        const p = readMarks(child.marks);
+        const p = inlineMarks(child.marks);
         if (node.attrs.styleId && this.styles[node.attrs.styleId] && node.attrs.styleText) {
           const actual = textFormat(child.marks),base = node.attrs.styleText;
           if (actual.family.replace(/["'\s]/g,"").toLowerCase() === String(base.family).replace(/["'\s]/g,"").toLowerCase()) p.font = undefined;
@@ -264,7 +274,7 @@ class DocxBuilder {
           out.push(run);
         }
       } else if (child.type.name === "tab") {
-        const p = readMarks(child.marks);
+        const p = inlineMarks(child.marks);
         const run = new TextRun({ children: [new Tab()], font: p.font, size: p.size, bold: p.bold, italics: p.italics,
           underline: p.underline === false ? { type: "none" } : p.underline ? {} : undefined, strike: p.strike, color: p.color,
           superScript: p.superScript, subScript: p.subScript,
@@ -292,7 +302,13 @@ class DocxBuilder {
       } else if (child.type.name === "note_reference") {
         const marker = this.noteOwnerMarkers.get(String(child.attrs.noteId));
         if (!marker) throw new Error("Cannot export a note without its canonical body");
-        out.push(new TextRun(marker));
+        const p = inlineMarks(child.marks), run = new TextRun({ text: marker,
+          font: p.font, size: p.size, bold: p.bold, italics: p.italics,
+          underline: p.underline === false ? { type: "none" } : p.underline ? {} : undefined,
+          strike: p.strike, color: p.color, superScript: p.superScript, subScript: p.subScript,
+          shading: p.highlight ? { type: ShadingType.CLEAR, fill: p.highlight } : undefined,
+          style: p.link ? "Hyperlink" : undefined });
+        if (p.link) out.push(this.hyperlink(run, p.link)); else out.push(run);
       } else if (child.type.name === "reference_field") {
         const attrs = child.attrs;
         if (attrs.status === "unsupported") {
@@ -324,7 +340,7 @@ class DocxBuilder {
           out.push(new SimpleField(instruction, String(attrs.cached || "")));
         }
       } else if (child.type.name === "doc_field") {
-        const marks = readMarks(child.marks);
+        const marks = inlineMarks(child.marks);
         if (child.attrs.kind === "OTHER" && child.attrs.instruction) { out.push(new SimpleField(child.attrs.instruction, child.attrs.cached || "")); return; }
         out.push(new TextRun({ children: [child.attrs.kind === "NUMPAGES" ? PageNumber.TOTAL_PAGES : PageNumber.CURRENT], font: marks.font, size: marks.size, bold: marks.bold, italics: marks.italics, color: marks.color }));
       } else if (child.type.name === "text_box") {
@@ -360,7 +376,7 @@ class DocxBuilder {
           out.push(new TextRun({ text: "[image]", italics: true, color: "888888" }));
         }
       } else if (child.type.name === "column_break") {
-        const p = readMarks(child.marks);
+        const p = inlineMarks(child.marks);
         const run = new TextRun({ font: p.font, size: p.size, bold: p.bold, italics: p.italics,
           underline: p.underline === false ? { type: "none" } : p.underline ? {} : undefined, strike: p.strike, color: p.color,
           superScript: p.superScript, subScript: p.subScript,
@@ -369,7 +385,8 @@ class DocxBuilder {
         run.addChildElement(new BuilderElement({ name: "w:br", attributes: { type: { key: "w:type", value: "column" } } }));
         if (p.link) out.push(this.hyperlink(run, p.link)); else out.push(run);
       } else if (child.type.name === "hard_break") {
-        out.push(new TextRun({ break: 1 }));
+        const p = inlineMarks(child.marks);
+        out.push(new TextRun({ break: 1, font: p.font, size: p.size }));
       }
     });
     if (target) out.push(this.marker("end", String(target)));

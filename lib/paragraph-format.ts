@@ -1,7 +1,7 @@
 /** Paragraph values use Word twips, except unitless line-spacing multiples. */
 import type { Node as PMNode } from "prosemirror-model";
 import { cleanTabStops, mergeTabStops, effectiveTabs, parseTabStopsXml, writeTabStopsXml, type TabStop } from "./tab-stops";
-import { wordAutomaticLineHeight } from "./word-font-metrics";
+import { wordAutomaticLineHeight, wordSingleLineMetric } from "./word-font-metrics";
 export type ParagraphFormat = {
   alignment?: "left" | "center" | "right" | "justify";
   left?: number; right?: number; firstLine?: number;
@@ -47,10 +47,18 @@ export function cleanStyleText(value: unknown): Partial<StyleText> {
 }
 export function paragraphAttrs(el: HTMLElement) {
   const rawText = jsonAttribute(el,"data-edtr-style-text");
-  return { styleId: el.getAttribute("data-edtr-style") || null, styleText: rawText ? { ...DEFAULT_STYLE_TEXT,...cleanStyleText(rawText) } : null, styleParagraph: cleanParagraph(jsonAttribute(el, "data-edtr-style-paragraph")), tableStyleParagraph: cleanParagraph(jsonAttribute(el,"data-edtr-table-style-paragraph")), paragraphFormat: cleanParagraph(jsonAttribute(el, "data-edtr-paragraph")) };
+  const explicit: Partial<StyleText> = {};
+  // A paragraph's font establishes its CSS strut even when every child has a
+  // font mark. Retain explicit plain-HTML base fonts independently of styles.
+  if (el.style.fontFamily) explicit.family = el.style.fontFamily;
+  const size = el.style.fontSize.match(/^(\d+(?:\.\d+)?)(pt|px)$/);
+  if (size) explicit.size = Number(size[1]) * (size[2] === "px" ? .75 : 1);
+  const styleId = el.getAttribute("data-edtr-style") || null;
+  const text = rawText ? { ...(styleId ? DEFAULT_STYLE_TEXT : {}), ...cleanStyleText(rawText) } : cleanStyleText(explicit);
+  return { styleId, styleText: Object.keys(text).length ? text : null, styleParagraph: cleanParagraph(jsonAttribute(el, "data-edtr-style-paragraph")), tableStyleParagraph: cleanParagraph(jsonAttribute(el,"data-edtr-table-style-paragraph")), paragraphFormat: cleanParagraph(jsonAttribute(el, "data-edtr-paragraph")) };
 }
 export function paragraphDOM(node: PMNode): Record<string, string> {
-  return { ...(effectiveParagraph(node).lineMode ? { "data-edtr-line-mode":effectiveParagraph(node).lineMode! }:{}), ...(Object.keys(node.attrs.tableStyleParagraph || {}).length ? { "data-edtr-table-style-paragraph":JSON.stringify(node.attrs.tableStyleParagraph) } : {}), ...(node.attrs.styleId ? { "data-edtr-style": node.attrs.styleId, "data-edtr-style-text": JSON.stringify(node.attrs.styleText), "data-edtr-style-paragraph": JSON.stringify(node.attrs.styleParagraph) } : {}), ...(Object.keys(node.attrs.paragraphFormat || {}).length ? { "data-edtr-paragraph": JSON.stringify(node.attrs.paragraphFormat) } : {}) };
+  return { ...(effectiveParagraph(node).lineMode ? { "data-edtr-line-mode":effectiveParagraph(node).lineMode! }:{}), ...(Object.keys(node.attrs.tableStyleParagraph || {}).length ? { "data-edtr-table-style-paragraph":JSON.stringify(node.attrs.tableStyleParagraph) } : {}), ...(node.attrs.styleText ? { "data-edtr-style-text": JSON.stringify(node.attrs.styleText) } : {}), ...(node.attrs.styleId ? { "data-edtr-style": node.attrs.styleId, "data-edtr-style-paragraph": JSON.stringify(node.attrs.styleParagraph) } : {}), ...(Object.keys(node.attrs.paragraphFormat || {}).length ? { "data-edtr-paragraph": JSON.stringify(node.attrs.paragraphFormat) } : {}) };
 }
 const W = "http://schemas.openxmlformats.org/wordprocessingml/2006/main";
 const paragraphCache = new Map<string,ParagraphFormat>();
@@ -77,18 +85,28 @@ export function effectiveParagraph(node: PMNode): ParagraphFormat {
 /** The font profile used for Word automatic spacing, derived from actual runs. */
 export function lineMetricFamily(node: PMNode): string {
   const inherited = node.attrs.styleText?.family || "", families = new Set<string>();
+  let supported = true;
   node.descendants(child => {
     if (!child.isText || !child.text?.trim()) return;
+    // New profiles establish Latin ASCII runs. Existing Arial behavior stays
+    // separate, with its previously documented script/fallback limitations.
+    if (/[^\t\n\r\x20-\x7e]/.test(child.text)) supported = false;
     const family = child.marks.find(mark => mark.type.name === "fontFamily")?.attrs.family || inherited;
     families.add(String(family).split(",")[0].trim().replace(/^["']|["']$/g, "").toLowerCase());
   });
-  return families.size > 1 ? "" : [...families][0] || inherited;
+  const family = [...families][0] || inherited;
+  return families.size > 1 || (!supported && !["arial", "liberation sans"].includes(family)) ? "" : family;
 }
 export function paragraphCSS(node: PMNode): string {
   const native = paragraphFromXml(node.attrs.docxProperties);
   const p = { ...native, ...(node.attrs.styleParagraph || {}), ...(node.attrs.textAlign ? {alignment:node.attrs.textAlign}:{}), ...(node.attrs.indent ? {left:node.attrs.indent*360}:{}), ...(node.attrs.lineHeight ? {lineMode:"multiple",lineValue:Number(node.attrs.lineHeight)}:{}), ...(node.attrs.paragraphFormat || {}) } as ParagraphFormat;
   const css: string[] = [];
   if (node.attrs.styleId && node.attrs.styleText) { const text = node.attrs.styleText as StyleText; css.push(`font-family:${text.family};font-size:${text.size}pt;font-weight:400;font-style:normal;text-decoration:none;color:#000`); }
+  else if (node.attrs.styleText) {
+    const text = node.attrs.styleText as Partial<StyleText>;
+    if (text.family) css.push(`font-family:${text.family}`);
+    if (text.size) css.push(`font-size:${text.size}pt`);
+  }
   for (const [key, prop] of [["left","margin-left"],["right","margin-right"],["firstLine","text-indent"],["before","margin-top"],["after","margin-bottom"]] as const) if (p[key] !== undefined) css.push(`${prop}:${p[key]! / 20}pt`);
   if (p.alignment !== undefined) css.push(`text-align:${p.alignment}`);
   if (p.lineValue !== undefined) {
@@ -107,13 +125,54 @@ export function paragraphCSS(node: PMNode): string {
   if (p.widowControl !== undefined) css.push(`orphans:${p.widowControl ? 2 : 1};widows:${p.widowControl ? 2 : 1}`);
   return css.join(";");
 }
-export function paragraphXml(node: PMNode, linked = true): string {
+/** A fixed Word line box can express a CSS em multiple only when every run
+ * shares the measured paragraph font/size and the height is whole twips.
+ * Keep native rules, unsupported scripts, inline objects and mixed runs as-is.
+ * This is an export conversion; the editor's original CSS basis stays intact.
+ */
+export function authoredExactLineSpacing(node: PMNode): number | undefined {
+  const p = effectiveParagraph(node);
+  if ((p.lineMode && p.lineMode !== "multiple") || p.lineBasis === "font" || !p.lineValue) return;
+  const text = node.attrs.styleText;
+  if (!text || !Number.isFinite(text.size) || text.size <= 0 || !Number.isInteger(text.size * 2)) return;
+  const single = wordSingleLineMetric(text.family || "");
+  if (!single || p.lineValue < single) return;
+  const family = String(text.family).split(",")[0].trim().replace(/^["']|["']$/g, "").toLowerCase();
+  // Native automatic profiles do not automatically authorize authored CSS
+  // conversion. Its genuine exact-spacing evidence remains Arial-only.
+  if (!["arial", "liberation sans"].includes(family)) return;
+  let supported = true;
+  node.descendants(child => {
+    if (!supported) return false;
+    if ((!child.isText && child.type.name !== "hard_break") || /[^\t\n\r\x20-\x7e]/.test(child.text || "")) { supported = false; return false; }
+    const ownFamily = child.marks.find(mark => mark.type.name === "fontFamily")?.attrs.family || text.family;
+    const ownSize = child.marks.find(mark => mark.type.name === "fontSize")?.attrs.size;
+    const size = ownSize === undefined ? text.size : /^\d+(?:\.\d+)?pt$/.test(String(ownSize)) ? Number.parseFloat(ownSize) : NaN;
+    if (String(ownFamily).split(",")[0].trim().replace(/^["']|["']$/g, "").toLowerCase() !== family || size !== text.size || child.marks.some(mark => ["superscript", "subscript"].includes(mark.type.name))) supported = false;
+  });
+  const twips = p.lineValue * text.size * 20;
+  if (supported && Math.abs(twips - Math.round(twips)) < 1e-8) return Math.round(twips) / 20;
+}
+export function paragraphXml(node: PMNode, linked = true, convertAuthoredSpacing = true): string {
   const xml = new DOMParser().parseFromString(node.attrs.docxProperties || `<w:pPr xmlns:w="${W}"/>`, "application/xml");
   const root = xml.documentElement;
   const ownsStyle = linked && !!node.attrs.styleId;
   const p: ParagraphFormat = ownsStyle ? { ...(node.attrs.textAlign ? { alignment: node.attrs.textAlign } : {}), ...(node.attrs.indent ? { left: node.attrs.indent * 360 } : {}), ...(node.attrs.lineHeight ? { lineMode: "multiple", lineValue: Number(node.attrs.lineHeight) } : {}), ...node.attrs.paragraphFormat } : effectiveParagraph(node);
+  const exact = convertAuthoredSpacing ? authoredExactLineSpacing(node) : undefined;
+  if (exact !== undefined) { p.lineMode = "exact"; p.lineValue = exact; }
   if (node.attrs.styleId) for (const el of Array.from(root.children)) if (["pStyle",...(ownsStyle ? ["spacing","ind","jc","keepNext","keepLines","pageBreakBefore","widowControl"] : [])].includes(el.localName)) el.remove();
   const set = (name: string, key: string, value: string | number) => { let el = Array.from(root.children).find(el => el.localName === name); if (!el) { el = xml.createElementNS(W,`w:${name}`); root.appendChild(el); } el.setAttributeNS(W,`w:${key}`,String(value)); };
+  if (!ownsStyle && node.attrs.styleText) {
+    const text = node.attrs.styleText as Partial<StyleText>;
+    let run = Array.from(root.children).find(el => el.localName === "rPr");
+    if (!run) { run = xml.createElementNS(W,"w:rPr"); root.appendChild(run); }
+    if (text.family) {
+      const fonts = Array.from(run.children).find(el => el.localName === "rFonts") || xml.createElementNS(W,"w:rFonts"), family = text.family.split(",")[0].trim().replace(/^["']|["']$/g, "");
+      for (const key of ["ascii", "hAnsi"]) fonts.setAttributeNS(W,`w:${key}`,family);
+      run.appendChild(fonts);
+    }
+    if (text.size) for (const name of ["sz", "szCs"]) { const size = Array.from(run.children).find(el => el.localName === name) || xml.createElementNS(W,`w:${name}`); size.setAttributeNS(W,"w:val",String(Math.round(text.size * 2))); run.appendChild(size); }
+  }
   if (ownsStyle) set("pStyle","val",node.attrs.styleId);
   for (const [key,name,prop] of [["left","ind","left"],["right","ind","right"],["before","spacing","before"],["after","spacing","after"]] as const) if (p[key] !== undefined) set(name,prop,Math.round(p[key]!));
   if (p.firstLine !== undefined) { const ind = Array.from(root.children).find(el => el.localName === "ind"); ind?.removeAttributeNS(W,"firstLine"); ind?.removeAttributeNS(W,"hanging"); set("ind",p.firstLine < 0 ? "hanging" : "firstLine",Math.round(Math.abs(p.firstLine))); }

@@ -24,6 +24,7 @@ function fontFile(css:CSSStyleDeclaration,text:string){
 }
 async function hiddenText(page:PDFPage,sheet:HTMLElement,fonts:Map<string,Promise<PDFFont>>){
  const doc=sheet.ownerDocument,win=doc.defaultView!,box=sheet.getBoundingClientRect(),walker=doc.createTreeWalker(sheet,NodeFilter.SHOW_TEXT),segmenter=new Intl.Segmenter(undefined,{granularity:'grapheme'});
+ const metricContext=doc.createElement('canvas').getContext('2d');
  const inside=(r:DOMRect)=>r.width>.1&&r.height>.1&&r.bottom>box.top+.5&&r.top<box.bottom-.5&&r.right>box.left&&r.left<box.right;
  while(walker.nextNode()){
   const node=walker.currentNode as Text,value=node.textContent||'',parent=node.parentElement;if(!parent||!value.trim()||parent.closest('style,script'))continue;
@@ -36,13 +37,22 @@ async function hiddenText(page:PDFPage,sheet:HTMLElement,fonts:Map<string,Promis
   const flush=async()=>{if(!line||!rect){line='';rect=null;return;}const file=fontFile(css,line);let font=fonts.get(file);
    if(!font){let bytes=fontBytes.get(file);if(!bytes){bytes=fetch(`${location.origin}/pdf-fonts/${file}`).then(r=>{if(!r.ok)throw new Error('PDF font unavailable');return r.arrayBuffer();});fontBytes.set(file,bytes);}font=bytes.then(data=>page.doc.embedFont(data,{subset:true}));fonts.set(file,font);}
    const embedded=await font,size=Number.parseFloat(css.fontSize)*.75;
-   const draw=(text:string,r:DOMRect)=>page.drawText(text,{font:embedded,size,x:Math.max(0,(r.left-box.left)*.75),y:page.getHeight()-(r.bottom-box.top)*.75+size*.2,opacity:0});
+   // Range bottoms include the actual browser font box. Its measured descent
+   // establishes the baseline even when glyphs use a fallback face. The PDF's
+   // invisible, licensed search font can have different metrics/advances.
+   let descent=size*.2;
+   if(metricContext){
+    metricContext.font=`${css.fontStyle} ${css.fontWeight} ${css.fontSize} ${css.fontFamily}`;
+    const measured=metricContext.measureText(line).fontBoundingBoxDescent;
+    if(Number.isFinite(measured)&&measured>=0)descent=measured*.75;
+   }
+   const draw=(text:string,r:DOMRect)=>page.drawText(text,{font:embedded,size,x:Math.max(0,(r.left-box.left)*.75),y:page.getHeight()-(r.bottom-box.top)*.75+descent,opacity:0});
    if(arabic){page.pushOperators(PDFOperator.of(PDFOperatorNames.BeginMarkedContentSequence,[PDFName.of('Span'),`<< /ActualText ${PDFHexString.fromText(line)} >>`]));for(const part of parts)draw(part.text,part.rect);page.pushOperators(endMarkedContent());}
    else {
     // A PDF font can have different advances from the browser font. Position
     // each grapheme with TJ adjustments while keeping one searchable run.
     const items=page.doc.context.obj([]);for(let i=0;i<parts.length;i++){const current=parts[i],next=parts[i+1];items.push(embedded.encodeText(current.text));if(next){const advance=embedded.widthOfTextAtSize(current.text,size),target=(next.rect.left-current.rect.left)*.75;items.push(PDFNumber.of((advance-target)*1000/size));}}
-    const fontKey=page.node.newFontDictionary(embedded.name,embedded.ref),x=Math.max(0,(parts[0].rect.left-box.left)*.75),y=page.getHeight()-(rect.bottom-box.top)*.75+size*.2;
+    const fontKey=page.node.newFontDictionary(embedded.name,embedded.ref),x=Math.max(0,(parts[0].rect.left-box.left)*.75),y=page.getHeight()-(rect.bottom-box.top)*.75+descent;
     page.pushOperators(pushGraphicsState(),beginText(),setFontAndSize(fontKey,size),setTextRenderingMode(TextRenderingMode.Invisible),setTextMatrix(1,0,0,1,x,y),PDFOperator.of(PDFOperatorNames.ShowTextAdjusted,[items]),endText(),popGraphicsState());
    }
    line='';rect=null;parts=[];};

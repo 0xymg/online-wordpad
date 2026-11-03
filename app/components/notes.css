@@ -1,4 +1,11 @@
 .ProseMirror .edtr-note-reference { cursor: pointer; border-radius: 2px; white-space: nowrap; }
+/* Native owner runs already carry their real marks outside the atom. */
+.edtr-note-reference[data-note-source-appearance="true"] > sup {
+  font-size: inherit;
+  line-height: inherit;
+  vertical-align: baseline;
+  position: static;
+}
 .ProseMirror .edtr-note-reference:hover, .ProseMirror .edtr-note-reference:focus-visible { background: color-mix(in srgb, currentColor 10%, transparent); outline: 1px solid currentColor; }
 .ProseMirror [data-note-owner-id] { cursor: pointer; }
 .edtr-note-editor { min-width: 0; border: 1px solid var(--input); border-radius: 6px; overflow: auto; max-height: 40dvh; }
@@ -10,3 +17,10 @@
 .edtr-note-editor .ProseMirror a { color: #2563eb; text-decoration: underline; }
 .edtr-note-toolbar { display: flex; flex-wrap: wrap; gap: 4px; }
 @media print { .ProseMirror .edtr-note-reference { background: transparent; outline: none; } }
+
+/* The column renderer places the measured rule on its physical fragment. */
+.ProseMirror [data-column-block] > .pm-endnote-separator { visibility: hidden; }
+
+.pm-page { --note-separator-ink: #000; }
+.dark .pm-page { --note-separator-ink: #e8e8e8; }
+.edtr-print-sheet .pm-page { --note-separator-ink: #000; }

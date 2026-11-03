@@ -20,14 +20,14 @@ function bundle(file) {
   }
   modules[index] = { code, deps }; return index;
 }
-const entries = Object.fromEntries(Object.entries({ columnBreak: 'lib/column-break.ts', sectionColumns: 'lib/section-columns.ts', model: 'lib/document-model.ts', commands: 'lib/section-commands.ts', sections: 'lib/document-sections.ts', layout: 'lib/document-layout.ts', schema: 'app/components/editor-schema.ts', state: 'prosemirror-state', history: 'prosemirror-history', pm: 'prosemirror-model', list: 'prosemirror-schema-list' }).map(([key, file]) => [key, bundle(file.startsWith('lib/') || file.startsWith('app/') ? path.join(root, file) : require.resolve(file))]));
+const entries = Object.fromEntries(Object.entries({ columnBreak: 'lib/column-break.ts', sectionColumns: 'lib/section-columns.ts', model: 'lib/document-model.ts', notes: 'lib/document-notes.ts', bibliography: 'lib/document-bibliography.ts', commands: 'lib/section-commands.ts', sections: 'lib/document-sections.ts', layout: 'lib/document-layout.ts', schema: 'app/components/editor-schema.ts', state: 'prosemirror-state', history: 'prosemirror-history', pm: 'prosemirror-model', list: 'prosemirror-schema-list' }).map(([key, file]) => [key, bundle(file.startsWith('lib/') || file.startsWith('app/') ? path.join(root, file) : require.resolve(file))]));
 const script = `window.__sections = (() => { const modules=${JSON.stringify(modules)},loaded={};function load(i){if(loaded[i])return loaded[i].exports;const module={exports:{}};loaded[i]=module;new Function('require','module','exports',modules[i].code)(name=>load(modules[i].deps[name]),module,module.exports);return module.exports;}return Object.fromEntries(Object.entries(${JSON.stringify(entries)}).map(([key,id])=>[key,load(id)]));})();`;
 (async () => {
   const browser = await chromium.launch({ headless: true, ...(process.env.CHROMIUM_PATH ? { executablePath: process.env.CHROMIUM_PATH } : {}) });
   try {
     const page = await browser.newPage(); await page.goto(process.env.BASE_URL || 'http://localhost:3107'); await page.addScriptTag({ content: script });
     const result = await page.evaluate(() => {
-      const { columnBreak: B, sectionColumns: SC, model: M, commands: C, sections: D, layout: L, schema: { mySchema: schema }, state: S, history: H, pm: P, list } = window.__sections;
+      const { columnBreak: B, sectionColumns: SC, model: M, notes: N, bibliography: BI, commands: C, sections: D, layout: L, schema: { mySchema: schema }, state: S, history: H, pm: P, list } = window.__sections;
       let checks = 0; const check = (condition, message) => { checks++; if (!condition) throw new Error(message); };
       const same = (a,b) => JSON.stringify(a) === JSON.stringify(b);
       const create = html => S.EditorState.create({ doc: M.parseDocumentHtml(html, schema), plugins: [H.history(), M.documentModelPlugin()] });
@@ -48,7 +48,31 @@ const script = `window.__sections = (() => { const modules=${JSON.stringify(modu
       check(encoded.includes('data-edtr-model'), 'model envelope serializes');
       const oldVersion=JSON.parse(JSON.stringify(M.getDocumentModel(reopened)));oldVersion.version=1;
       const upgraded=M.parseDocumentHtml(L.wrapDocumentHtml(output.innerHTML,reopened.attrs.layout,oldVersion),schema);
-      check(upgraded.attrs.documentModel.version===6 && upgraded.attrs.documentModel.id===oldVersion.id && same(D.documentSections(upgraded).map(s=>s.id),D.documentSections(reopened).map(s=>s.id)),'v1 upgrades to v6 without changing document or section identities');
+      check(upgraded.attrs.documentModel.version===7 && upgraded.attrs.documentModel.id===oldVersion.id && same(D.documentSections(upgraded).map(s=>s.id),D.documentSections(reopened).map(s=>s.id)),'v1 upgrades to v7 without changing document or section identities');
+      // The v7 envelope protects source note presentation, while legacy v6
+      // keeps both existing notes and its complete bibliography registry.
+      const clone=value=>JSON.parse(JSON.stringify(value)), noteId='nte_'+'a'.repeat(32), sourceId='src_'+'b'.repeat(32), citationId='fld_'+'c'.repeat(32);
+      const oldSix=clone(M.getDocumentModel(reopened));oldSix.version=6;
+      oldSix.notePolicy.endnote={...oldSix.notePolicy.endnote,start:9,format:'upperRoman'};
+      oldSix.sections[oldSix.finalSectionId].notePolicy={footnote:{restart:'eachSection',start:3}};
+      oldSix.notes={[noteId]:{kind:'endnote',body:{type:'doc',content:[{type:'paragraph',content:[{type:'text',text:'V6_NOTE_BODY',marks:[{type:'em'}]}]}]},native:{partUri:'word/endnotes.xml',nativeId:'8'}}};
+      oldSix.notes[noteId].body=N.validateNoteBody(oldSix.notes[noteId].body,schema);
+      oldSix.sources={[sourceId]:{type:'book',title:'V6 source',authors:[{family:'Author',given:'Ada'}],issued:{year:2024},publisher:'Publisher',native:{partUri:'customXml/item1.xml',tag:'V6_SOURCE'}}};oldSix.bibliography={style:'ieee',locale:'tr-TR',includeUncited:true};
+      const graphDoc=schema.nodes.doc.create({...reopened.attrs,documentModel:oldSix},reopened.content.append(P.Fragment.from(schema.nodes.paragraph.create(null,[schema.text('V6_OWNER '),schema.nodes.note_reference.create({noteId,cachedLabel:'999'}),schema.nodes.citation_field.create({fieldId:citationId,items:[{sourceId,locator:'42',label:'page'}],mode:'normal'})])))),graphDom=document.createElement('div');graphDom.appendChild(P.DOMSerializer.fromSchema(schema).serializeFragment(graphDoc.content));
+      const graphSource=L.wrapDocumentHtml(graphDom.innerHTML,graphDoc.attrs.layout,oldSix),oldSnapshot=clone(oldSix),migratedGraph=M.parseDocumentHtml(graphSource,schema),currentGraph=M.getDocumentModel(migratedGraph);
+      check(currentGraph.version===7&&same({...currentGraph,version:6},oldSnapshot)&&same(oldSix,oldSnapshot),'v6 migration retains note/policy/source/bibliography registries and all identities without source mutation');
+      check(currentGraph.notes[noteId].presentation===undefined&&N.collectNoteIndex(migratedGraph).notes[0].label==='IX','v6 notes retain established appearance and numbering');
+      check(BI.collectCitationIndex(migratedGraph).diagnostics.length===0&&BI.collectCitationIndex(migratedGraph).citations[0].attrs.items[0].sourceId===sourceId,'v7 retains valid citations to migrated v6 sources');
+      const seven=clone(currentGraph);seven.notes[noteId].presentation={version:1,bodyReference:null,separators:{separator:'default',continuationSeparator:'default'}};
+      const presented=M.parseDocumentHtml(L.wrapDocumentHtml(graphDom.innerHTML,graphDoc.attrs.layout,seven),schema),saved=document.createElement('div');saved.appendChild(P.DOMSerializer.fromSchema(schema).serializeFragment(presented.content));
+      const savedHtml=L.wrapDocumentHtml(saved.innerHTML,presented.attrs.layout,presented.attrs.documentModel),reloadedGraph=M.parseDocumentHtml(savedHtml,schema);
+      check(same(reloadedGraph.toJSON(),presented.toJSON())&&same(reloadedGraph.attrs.documentModel,seven),'v7 HTML save and reopen preserves native presentation and the full canonical graph');
+      check(presented.lastChild.textContent==='V6_NOTE_BODY','native absent body reference survives generated projection without an invented label');
+      const spoofed=clone(oldSix);spoofed.notes[noteId].presentation=seven.notes[noteId].presentation;
+      const savedParser=P.DOMParser.fromSchema;let schemaParseAttempts=0;P.DOMParser.fromSchema=function(...args){schemaParseAttempts++;return savedParser.apply(this,args);};
+      let spoofError,futureError;try{try{M.parseDocumentHtml(L.wrapDocumentHtml(graphDom.innerHTML,graphDoc.attrs.layout,spoofed),schema)}catch(error){spoofError=error}try{M.parseDocumentHtml(L.wrapDocumentHtml(graphDom.innerHTML,graphDoc.attrs.layout,{...seven,version:8}),schema)}catch(error){futureError=error}}finally{P.DOMParser.fromSchema=savedParser;}
+      check(spoofError?.code==='unsupported-version'&&futureError?.code==='unsupported-version'&&schemaParseAttempts===0,'spoofed v6 presentation and future v8 reject before ProseMirror parses or mutates content');
+      check(same(oldSix,oldSnapshot)&&same(reloadedGraph.toJSON(),presented.toJSON()),'rejected envelopes leave source snapshots and the active graph intact');
       const columnRaw = `<w:sectPr xmlns:w="${W}" xmlns:x="urn:test"><w:cols w:num="2" w:equalWidth="1" x:custom="retain"/><w:bidi/><w:docGrid w:linePitch="360"/></w:sectPr>`;
       const baseline = JSON.parse(JSON.stringify(M.getDocumentModel(reopened)));
       const columnId = baseline.finalSectionId;
@@ -155,7 +179,7 @@ const script = `window.__sections = (() => { const modules=${JSON.stringify(modu
       wrapping=withCursor(wrapping,2);const beforeWrap=wrapping.doc;
       list.wrapInList(schema.nodes.bullet_list)(wrapping,tr=>{wrapping=apply(wrapping,tr);});
       check(blocked===1 && wrapping.doc.eq(beforeWrap),'wrapping a section-ending paragraph in a list is rejected intact with one explanation');
-      let future=false;try{M.parseDocumentHtml('<div data-edtr-model="{&quot;version&quot;:99}"><p>FUTURE</p></div>',schema);}catch(e){future=e.code==='unsupported-version';}check(future,'future model rejected before schema parse');
+      let future=false;try{M.parseDocumentHtml('<div data-edtr-model="{&quot;version&quot;:8}"><p>FUTURE</p></div>',schema);}catch(e){future=e.code==='unsupported-version';}check(future,'future model rejected before schema parse');
       const bad=JSON.parse(JSON.stringify(M.getDocumentModel(reopened))), badId=bad.finalSectionId;bad.sections[badId].running=[];
       let malformed=false;try{M.parseDocumentHtml(L.wrapDocumentHtml(output.innerHTML,reopened.attrs.layout,bad),schema);}catch(e){malformed=e.code==='invalid-model';}check(malformed,'malformed v1 running registry rejected without normalization');
       bad.sections[badId].running={};bad.sections[badId].rawProperties=`<w:pPr xmlns:w="${W}"/>`;malformed=false;

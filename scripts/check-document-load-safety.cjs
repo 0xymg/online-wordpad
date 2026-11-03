@@ -6,7 +6,7 @@ const { chromium } = require(process.env.PLAYWRIGHT_MODULE || 'playwright');
  const browser=await chromium.launch({headless:true,...(process.env.CHROMIUM_PATH?{executablePath:process.env.CHROMIUM_PATH}:{})});
  try{
   const page=await browser.newPage({viewport:{width:1450,height:1050}}),errors=[];page.on('pageerror',e=>errors.push(e.message));page.setDefaultTimeout(15000);
-  const future='<div data-edtr-model="{&quot;version&quot;:99}"><p>FUTURE SOURCE MUST SURVIVE</p></div>';
+  const future='<div data-edtr-model="{&quot;version&quot;:8}"><p>FUTURE SOURCE MUST SURVIVE</p></div>';
   await page.addInitScript(({future})=>{if(localStorage.getItem('edtr-load-test'))return;localStorage.setItem('edtr-load-test','seeded');localStorage.setItem('wordpad-files',JSON.stringify([{id:'future-fixture',name:'Future document',html:future}]));localStorage.setItem('wordpad-active','future-fixture');},{future});
   await page.goto((process.env.BASE_URL||'http://localhost:3107')+'/pad');await page.locator('.ProseMirror[contenteditable="false"]').waitFor();await page.waitForTimeout(1100);
   const original=await page.evaluate(()=>localStorage.getItem('wordpad-files'));
@@ -23,7 +23,7 @@ const { chromium } = require(process.env.PLAYWRIGHT_MODULE || 'playwright');
   await page.keyboard.press('Meta+Shift+z');await page.waitForTimeout(200);assert.match(await page.locator('.ProseMirror').innerText(),/NEW DOCUMENT/);
   const beforeReload=await page.evaluate(()=>JSON.parse(localStorage.getItem('wordpad-files'))[0].html);assert.match(beforeReload,/data-edtr-model/,'new document stores versioned model');
   const modelBefore=await page.evaluate(html=>JSON.parse(new DOMParser().parseFromString(html,'text/html').querySelector('[data-edtr-model]').getAttribute('data-edtr-model')),beforeReload);
-  assert.equal(modelBefore.version,6,'reference-capable documents persist model version 6');
+  assert.equal(modelBefore.version,7,'reference-capable documents persist model version 7');
   await page.reload();await page.locator('.ProseMirror[contenteditable="true"]').waitFor();await page.waitForTimeout(1100);
   const modelAfter=await page.evaluate(()=>JSON.parse(new DOMParser().parseFromString(JSON.parse(localStorage.getItem('wordpad-files'))[0].html,'text/html').querySelector('[data-edtr-model]').getAttribute('data-edtr-model')));
   assert.deepEqual(modelAfter,modelBefore,'reopen with no typing preserves persisted identities');
@@ -38,7 +38,7 @@ const { chromium } = require(process.env.PLAYWRIGHT_MODULE || 'playwright');
   },{html:beforeReload,model:modelBefore});
   await page.reload();await page.locator('.ProseMirror[contenteditable="true"]').waitFor();await page.waitForTimeout(1300);
   const v2Saved=await page.evaluate(()=>JSON.parse(new DOMParser().parseFromString(JSON.parse(localStorage.getItem('wordpad-files'))[0].html,'text/html').querySelector('[data-edtr-model]').getAttribute('data-edtr-model')));
-  assert.equal(v2Saved.version,6,'v2 startup migration is persisted without typing');
+  assert.equal(v2Saved.version,7,'v2 startup migration is persisted without typing');
   assert.equal(v2Saved.id,modelBefore.id,'document identity survives v2 startup migration');
   assert.equal(v2Saved.finalSectionId,modelBefore.finalSectionId,'final section identity survives v2 startup migration');
   assert.deepEqual(Object.keys(v2Saved.sections),Object.keys(modelBefore.sections),'all section identities survive v2 startup migration');
@@ -47,22 +47,35 @@ const { chromium } = require(process.env.PLAYWRIGHT_MODULE || 'playwright');
   await page.reload();await page.locator('.ProseMirror').waitFor();await page.waitForTimeout(1300);
   const migrated=await page.evaluate(()=>JSON.parse(localStorage.getItem('wordpad-files'))[0].html);assert.match(migrated,/data-edtr-model/);assert.match(migrated,/LEGACY SOURCE/);
   await page.reload();await page.waitForTimeout(1300);assert.equal(await page.evaluate(()=>JSON.parse(localStorage.getItem('wordpad-files'))[0].html),migrated,'legacy migration is stored once, idempotently');
-  // A5 startup migration persists canonical pool + derived labels/projection without typing.
+  // Legacy v6 startup migration preserves note/source policy and persists v7 without typing.
   const noteSeed=await page.evaluate(({html,model})=>{
    const nativeId='nte_00000000000000000000000000000001', root=new DOMParser().parseFromString(html,'text/html'), envelope=root.querySelector('[data-edtr-model]'), value=JSON.parse(JSON.stringify(model));
+   value.version=6;value.sources={'src_00000000000000000000000000000001':{type:'book',title:'STARTUP_V6_SOURCE',authors:[{family:'Author'}]}};value.bibliography={style:'ieee',locale:'tr-TR',includeUncited:true};value.notePolicy.endnote.start=1;
    value.notes={[nativeId]:{kind:'endnote',body:{type:'doc',content:[{type:'paragraph',content:[{type:'text',text:'STARTUP_NOTE_BODY'}]}]}}};
    envelope.setAttribute('data-edtr-model',JSON.stringify(value));envelope.innerHTML=`<p>STARTUP_NOTE_OWNER <span data-edtr-note-reference="true" data-note-id="${nativeId}">999</span></p>`;
-   const source=root.body.innerHTML;localStorage.setItem('wordpad-files',JSON.stringify([{id:'v5-note-startup',name:'V5 notes',html:source}]));localStorage.setItem('wordpad-active','v5-note-startup');return source;
+   const source=root.body.innerHTML;localStorage.setItem('wordpad-files',JSON.stringify([{id:'v6-note-startup',name:'V6 notes',html:source}]));localStorage.setItem('wordpad-active','v6-note-startup');return source;
   },{html:beforeReload,model:modelBefore});
   await page.reload();await page.locator('.ProseMirror[contenteditable="true"]').waitFor();await page.waitForTimeout(1300);
   assert.equal(await page.locator('.ProseMirror [data-edtr-note-reference]').textContent(),'1','startup recomputes stale note label');
   assert.match(await page.locator('.ProseMirror [data-note-owner-id]').textContent(),/STARTUP_NOTE_BODY/,'startup regenerates real-flow endnote body');
   const noteSaved=await page.evaluate(()=>JSON.parse(localStorage.getItem('wordpad-files'))[0].html);assert.notEqual(noteSaved,noteSeed,'startup persists refreshed cache without typing');
-  await page.reload();await page.locator('.ProseMirror[contenteditable="true"]').waitFor();await page.waitForTimeout(1300);assert.equal(await page.evaluate(()=>JSON.parse(localStorage.getItem('wordpad-files'))[0].html),noteSaved,'v5 note startup is idempotent');
-  // Rejected v5 graphs retain exact original bytes after attempted typing/save.
-  for(const fault of ['missing-body','orphan-body','duplicate-owner','malformed-cache']){
+  await page.reload();await page.locator('.ProseMirror[contenteditable="true"]').waitFor();await page.waitForTimeout(1300);assert.equal(await page.evaluate(()=>JSON.parse(localStorage.getItem('wordpad-files'))[0].html),noteSaved,'v6 note startup migration to v7 is idempotent');
+  const persistedNoteModel=await page.evaluate(html=>JSON.parse(new DOMParser().parseFromString(html,'text/html').querySelector('[data-edtr-model]').getAttribute('data-edtr-model')),noteSaved);
+  assert.equal(persistedNoteModel.version,7);assert.equal(persistedNoteModel.notes['nte_00000000000000000000000000000001'].presentation,undefined,'legacy startup note keeps its original appearance');assert.equal(persistedNoteModel.sources['src_00000000000000000000000000000001'].title,'STARTUP_V6_SOURCE');assert.deepEqual(persistedNoteModel.bibliography,{style:'ieee',locale:'tr-TR',includeUncited:true});assert.equal(persistedNoteModel.id,modelBefore.id);assert.equal(persistedNoteModel.finalSectionId,modelBefore.finalSectionId);
+  // The public Open/add-to-library path uses the same gate before replacing
+  // the current document or creating any persistent entry.
+  const spoofedLibrarySource=await page.evaluate(html=>{const root=new DOMParser().parseFromString(html,'text/html'),envelope=root.querySelector('[data-edtr-model]'),model=JSON.parse(envelope.getAttribute('data-edtr-model'));model.version=6;Object.values(model.notes)[0].presentation={version:1,bodyReference:null};envelope.setAttribute('data-edtr-model',JSON.stringify(model));return root.body.innerHTML;},noteSaved);
+  const libraryBefore=await page.evaluate(()=>({files:localStorage.getItem('wordpad-files'),active:localStorage.getItem('wordpad-active'),document:document.querySelector('.editor-shell .ProseMirror').pmViewDesc.node.toJSON()}));
+  await page.locator('input[type=file][accept*=".docx"]').setInputFiles({name:'unsupported-v6-presentation.html',mimeType:'text/html',buffer:Buffer.from(spoofedLibrarySource)});
+  await page.getByText("This document's section data cannot be edited safely yet.",{exact:true}).last().waitFor();
+  const libraryAfter=await page.evaluate(()=>({files:localStorage.getItem('wordpad-files'),active:localStorage.getItem('wordpad-active'),document:document.querySelector('.editor-shell .ProseMirror').pmViewDesc.node.toJSON()}));
+  assert.deepEqual(libraryAfter,libraryBefore,'library addition refuses spoofed v6 presentation without changing active content, identity or saved files');assert.equal(await page.getByRole('button',{name:'Replace document',exact:true}).count(),0,'unsupported source is rejected before replacement confirmation');
+  // Rejected graphs retain exact original bytes after attempted typing/save.
+
+  for(const fault of ['missing-body','orphan-body','duplicate-owner','malformed-cache','v6-presentation']){
    const bad=await page.evaluate(({html,fault})=>{
     const root=new DOMParser().parseFromString(html,'text/html'), envelope=root.querySelector('[data-edtr-model]'), model=JSON.parse(envelope.getAttribute('data-edtr-model')), id='nte_00000000000000000000000000000001';
+    if(fault==='v6-presentation'){model.version=6;model.notes[id].presentation={version:1,bodyReference:null};}
     if(fault==='missing-body')delete model.notes[id];
     if(fault==='orphan-body')envelope.querySelector('[data-edtr-note-reference]').remove();
     if(fault==='duplicate-owner')envelope.querySelector('p').appendChild(envelope.querySelector('[data-edtr-note-reference]').cloneNode(true));
@@ -73,6 +86,6 @@ const { chromium } = require(process.env.PLAYWRIGHT_MODULE || 'playwright');
    await page.getByRole('menuitem',{name:'File',exact:true}).click();await page.getByRole('menuitem',{name:/^Save now/}).click();await page.waitForTimeout(1100);
    assert.equal(await page.evaluate(()=>JSON.parse(localStorage.getItem('wordpad-files'))[0].html),bad,fault+' never overwrites rejected startup source');assert.ok(await page.getByRole('alert').count(),fault+' is visible');
   }
-  assert.deepEqual(errors,[]);console.log('PASS unsupported startup HTML preservation after typing/save, explicit replacement backup, recovery, history isolation, versioned identity persistence and no-typing legacy/v5-note migration, and malformed note graph source preservation.');
+  assert.deepEqual(errors,[]);console.log('PASS unsupported startup HTML preservation after typing/save, explicit replacement backup, recovery, history isolation, versioned identity persistence and no-typing legacy/v6-note/source migration, v7 persistence, spoofed library-add refusal, and malformed/future note graph source preservation.');
  }finally{await browser.close();}
 })().catch(e=>{console.error(e);process.exitCode=1;});

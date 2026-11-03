@@ -1,15 +1,21 @@
 /** Canonical note records, owner identities and derived ordinary-block endnotes.
  * Deliberately independent of document-model to keep migration imports acyclic. */
-import { Fragment, Slice, type Node as PMNode, type Schema } from "prosemirror-model";
+import { Fragment, Slice, type Mark, type Node as PMNode, type Schema } from "prosemirror-model";
 import { EditorState, Plugin, TextSelection, type Command, type Transaction } from "prosemirror-state";
 import { closeHistory, isHistoryTransaction } from "prosemirror-history";
+import { Decoration, DecorationSet } from "prosemirror-view";
 import { allocateDocumentIdentity, isDocumentIdentity, planDocumentIdentities, type IdentityTokenFactory } from "./document-identity";
 
 export type NoteKind = "footnote" | "endnote";
 export type NoteNumbering = { restart: "continuous" | "eachSection"; start: number; format: "decimal" | "lowerRoman" | "upperRoman" | "lowerLetter" | "upperLetter" };
 export type NotePolicy = { footnote: NoteNumbering & { placement: "pageBottom" }; endnote: NoteNumbering & { placement: "documentEnd" | "sectionEnd" } };
 export type NoteBodyJSON = { type: "doc"; content: unknown[] };
-export type NoteRecord = { kind: NoteKind; body: NoteBodyJSON; native?: { partUri: string; nativeId: string; rawProperties?: string } };
+export type NoteReferenceMark = { type: string; attrs?: Record<string, unknown> };
+export type NoteSeparators = { separator: "default" | "none"; continuationSeparator: "default" | "none"; paragraphSpacing?: { separator?: "single-zero"; continuationSeparator?: "single-zero" } };
+/** Presentation is canonical, independent of the source package's identities.
+ * Missing presentation retains the appearance of notes authored before v7. */
+export type NotePresentation = { version: 1; bodyReference: null | { marks: NoteReferenceMark[] }; separators?: NoteSeparators };
+export type NoteRecord = { kind: NoteKind; body: NoteBodyJSON; presentation?: NotePresentation; native?: { partUri: string; nativeId: string; rawProperties?: string } };
 export type NoteSectionPolicy = { footnote?: Partial<NoteNumbering>; endnote?: Partial<NoteNumbering> };
 export type NoteModelShape = { version: number; finalSectionId: string; sections: Record<string, { notePolicy?: NoteSectionPolicy; [key: string]: unknown }>; notes: Record<string, NoteRecord>; notePolicy: NotePolicy; [key: string]: unknown };
 export type NoteDiagnostic = { code: string; noteId?: string; pos?: number; message: string };
@@ -82,10 +88,41 @@ export function validateNoteModel(value: unknown, schema?: Schema): asserts valu
     }
   }
   for (const [id, record] of Object.entries(value.notes)) {
-    if (!isDocumentIdentity(id, "note") || !plain(record) || !["footnote", "endnote"].includes(String(record.kind))) fail("invalid-note-record", "Invalid note record identity or kind");
+    if (!isDocumentIdentity(id, "note") || !plain(record) || Object.keys(record).some(key => !["kind", "body", "native", "presentation"].includes(key)) || !["footnote", "endnote"].includes(String(record.kind))) fail("invalid-note-record", "Invalid note record identity, kind or data");
     if (schema) validateNoteBody(record.body, schema); else validateBodyJSON(record.body);
-    if (record.native !== undefined && (!plain(record.native) || typeof record.native.partUri !== "string" || typeof record.native.nativeId !== "string" || (record.native.rawProperties !== undefined && typeof record.native.rawProperties !== "string"))) fail("invalid-note-record", "Invalid native note metadata");
+    if (record.presentation !== undefined) {
+      const presentation = record.presentation;
+      if (!plain(presentation) || presentation.version !== 1 || Object.keys(presentation).some(key => !["version", "bodyReference", "separators"].includes(key))) fail("unsupported-note-presentation", "Unsupported note presentation version or data");
+      if (presentation.bodyReference !== null) {
+        const reference = presentation.bodyReference;
+        if (!plain(reference) || Object.keys(reference).some(key => key !== "marks") || !Array.isArray(reference.marks) || reference.marks.some(mark => !plain(mark) || mark.type === "link")) fail("unsupported-note-presentation", "Invalid note body reference appearance");
+        validateBodyJSON({ type: "doc", content: [{ type: "paragraph", content: [{ type: "text", text: "1", marks: reference.marks }] }] }, schema);
+      }
+      if (presentation.separators !== undefined) {
+        const separators = presentation.separators;
+        if (!plain(separators) || Object.keys(separators).some(key => !["separator", "continuationSeparator", "paragraphSpacing"].includes(key)) || !["default", "none"].includes(String(separators.separator)) || !["default", "none"].includes(String(separators.continuationSeparator))) fail("unsupported-note-presentation", "Unsupported note separator appearance");
+        if (separators.paragraphSpacing !== undefined && (!plain(separators.paragraphSpacing) || Object.entries(separators.paragraphSpacing).some(([key, spacing]) => !["separator", "continuationSeparator"].includes(key) || spacing !== "single-zero" || separators[key] !== "default"))) fail("unsupported-note-presentation", "Unsupported note separator paragraph spacing");
+      }
+    }
+    if (record.native !== undefined && (!plain(record.native) || Object.keys(record.native).some(key => !["partUri", "nativeId", "rawProperties"].includes(key)) || typeof record.native.partUri !== "string" || typeof record.native.nativeId !== "string" || (record.native.rawProperties !== undefined && typeof record.native.rawProperties !== "string"))) fail("invalid-note-record", "Invalid native note metadata");
   }
+  for (const kind of ["footnote", "endnote"] as const) noteSeparators(value.notes as Record<string, NoteRecord>, kind);
+}
+/** Source marks remain semantic PM marks, so both physical and generated notes
+ * use the shared schema serializer and never invent a superscript or a space. */
+export function noteBodyReference(record: NoteRecord, _label: string, schema: Schema): { marks: readonly Mark[]; trailingSpace: boolean } | null {
+  if (record.presentation?.bodyReference === null) return null;
+  if (record.presentation) return { marks: record.presentation.bodyReference!.marks.map(mark => schema.markFromJSON(mark)), trailingSpace: false };
+  return { marks: schema.marks.superscript ? [schema.marks.superscript.create()] : [], trailingSpace: true };
+}
+export function noteSeparators(notes: Record<string, NoteRecord>, kind: NoteKind): NoteSeparators {
+  let selected: NoteSeparators | undefined;
+  for (const record of Object.values(notes)) if (record.kind === kind && record.presentation?.separators) {
+    const profile = record.presentation.separators;
+    if (selected && (selected.separator !== profile.separator || selected.continuationSeparator !== profile.continuationSeparator || selected.paragraphSpacing?.separator !== profile.paragraphSpacing?.separator || selected.paragraphSpacing?.continuationSeparator !== profile.paragraphSpacing?.continuationSeparator)) fail("unsupported-note-presentation", "Notes of the same kind have conflicting separator appearance");
+    selected = profile;
+  }
+  return selected || { separator: "default", continuationSeparator: "default" };
 }
 function modelOf(doc: PMNode): NoteModelShape | null { const model = doc.attrs.documentModel; return model?.version >= 5 ? model as NoteModelShape : null; }
 export function noteNumberLabel(number: number, format: NoteNumbering["format"]): string {
@@ -147,7 +184,7 @@ export function insertNote(kind: NoteKind, body: unknown = { type: "doc", conten
 }; }
 export function updateNoteBody(noteId: string, body: unknown): Command { return (state, dispatch) => { const model = commandModel(state.doc); if (!Object.hasOwn(model.notes, noteId)) return false; const record = { ...model.notes[noteId], body: validateNoteBody(body, state.schema) }; if (dispatch) dispatch(noteTransaction(state.tr.setDocAttribute("documentModel", { ...model, notes: { ...model.notes, [noteId]: record } }))); return true; }; }
 export function deleteNote(noteId: string): Command { return (state, dispatch) => { const model = commandModel(state.doc), owners = noteOwners(state.doc).filter(owner => owner.noteId === noteId); if (!model.notes[noteId] || owners.length !== 1) return false; const notes = { ...model.notes }; delete notes[noteId]; if (dispatch) dispatch(noteTransaction(state.tr.delete(owners[0].pos, owners[0].pos + 1).setDocAttribute("documentModel", { ...model, notes }))); return true; }; }
-export function convertNote(noteId: string, kind: NoteKind): Command { return (state, dispatch) => { const model = commandModel(state.doc); if (!model.notes[noteId] || !["footnote", "endnote"].includes(kind)) return false; const record = { ...model.notes[noteId], kind }; delete record.native; if (dispatch) dispatch(noteTransaction(state.tr.setDocAttribute("documentModel", { ...model, notes: { ...model.notes, [noteId]: record } }))); return true; }; }
+export function convertNote(noteId: string, kind: NoteKind): Command { return (state, dispatch) => { const model = commandModel(state.doc); if (!model.notes[noteId] || !["footnote", "endnote"].includes(kind)) return false; const record = { ...model.notes[noteId], kind }; delete record.native; if (record.presentation) record.presentation = { version: 1, bodyReference: record.presentation.bodyReference }; if (dispatch) dispatch(noteTransaction(state.tr.setDocAttribute("documentModel", { ...model, notes: { ...model.notes, [noteId]: record } }))); return true; }; }
 export function setNotePolicy(patch: Partial<{ footnote: Partial<NotePolicy["footnote"]>; endnote: Partial<NotePolicy["endnote"]> }>, scope: "document" | "section" = "document", sectionId?: string): Command { return (state, dispatch) => {
   const model = commandModel(state.doc); let next: NoteModelShape;
   if (scope === "document") { const notePolicy = { footnote: { ...model.notePolicy.footnote, ...patch.footnote }, endnote: { ...model.notePolicy.endnote, ...patch.endnote } }; validateNotePolicy(notePolicy); next = { ...model, notePolicy }; }
@@ -211,9 +248,9 @@ export function unprojectEndnotes(tr: Transaction): Transaction {
   }
   return tr;
 }
-function prefixNoteNumber(node: PMNode, label: string, found: { value: boolean }): PMNode {
-  if (!found.value && node.type.name === "paragraph") { found.value = true; const mark = node.type.schema.marks.superscript; const prefix = [node.type.schema.text(label, mark ? [mark.create()] : undefined), node.type.schema.text(" ")]; return node.copy(Fragment.fromArray(prefix).append(node.content)); }
-  return node.isLeaf ? node : node.copy(Fragment.fromArray(Array.from({ length: node.childCount }, (_, index) => prefixNoteNumber(node.child(index), label, found))));
+function prefixNoteNumber(node: PMNode, label: string, record: NoteRecord, found: { value: boolean }): PMNode {
+  if (!found.value && node.type.name === "paragraph") { found.value = true; const reference = noteBodyReference(record, label, node.type.schema); if (!reference) return node; const prefix = [node.type.schema.text(label, reference.marks), ...(reference.trailingSpace ? [node.type.schema.text(" ")] : [])]; return node.copy(Fragment.fromArray(prefix).append(node.content)); }
+  return node.isLeaf ? node : node.copy(Fragment.fromArray(Array.from({ length: node.childCount }, (_, index) => prefixNoteNumber(node.child(index), label, record, found))));
 }
 /** Derived ordinary paragraphs/lists; canonical bodies always remain in the pool. */
 export function projectEndnotes(tr: Transaction): Transaction {
@@ -235,7 +272,7 @@ export function projectEndnotes(tr: Transaction): Transaction {
       const body = canonical.type.schema.nodeFromJSON(validateNoteBody(entry.record.body, canonical.type.schema)), prefixed = { value: false };
       body.forEach((block, _offset, blockIndex) => {
         if (!Object.hasOwn(block.type.spec.attrs || {}, "noteOwnerId")) fail("unsupported-note-projection", "This body block cannot carry generated note markers");
-        const node = prefixNoteNumber(block, entry.label, prefixed);
+        const node = prefixNoteNumber(block, entry.label, entry.record, prefixed);
         projected.push(node.type.create({ ...node.attrs, noteOwnerId: entry.noteId, noteBlock: blockIndex, noteScope: model.notePolicy.endnote.placement, noteSectionId: endpoint.id, sectionEndId: null }, node.content, node.marks));
       });
     }
@@ -294,9 +331,24 @@ function noteDOMMarkNormalization(tr: Transaction, before: PMNode): boolean {
 }
 
 export type NotePluginOptions = { finalize?: (tr: Transaction) => Transaction; onBlocked?: (error: NoteError) => void };
+/** Native owners already carry their real run marks. The schema's inner sup is
+ * the legacy authored default, so neutralize only that synthetic wrapper. */
+function noteOwnerAppearanceDecorations(doc: PMNode): DecorationSet {
+  const records = modelOf(doc)?.notes;
+  if (!records || !Object.values(records).some(record => record.presentation)) return DecorationSet.empty;
+  const decorations: Decoration[] = [];
+  doc.descendants((node, pos) => {
+    if (node.attrs.noteOwnerId) return false;
+    if (node.type.name === "note_reference" && records[String(node.attrs.noteId)]?.presentation) decorations.push(Decoration.node(pos, pos + node.nodeSize, { "data-note-source-appearance": "true" }));
+  });
+  return DecorationSet.create(doc, decorations);
+}
+/** Natural-width measurement needs the same presentation without edit hooks. */
+export function noteOwnerAppearancePlugin(): Plugin { return new Plugin({ props: { decorations: state => noteOwnerAppearanceDecorations(state.doc) } }); }
 /** One append chain owns cleanup, projection and label caches; no independent save. */
 export function notePlugin(options: NotePluginOptions = {}): Plugin {
   return new Plugin({
+    props: { decorations: state => noteOwnerAppearanceDecorations(state.doc) },
     view() { return { update(updated, previous) { if (updated.state.doc !== previous.doc) updated.dom.dispatchEvent(new CustomEvent("edtr-note-update", { bubbles: true })); } }; },
     filterTransaction(tr, state) {
       if (!tr.docChanged || isHistoryTransaction(tr) || tr.getMeta("documentLoad") || tr.getMeta(NOTE_PROJECTION) || tr.getMeta(NOTE_COMMAND)) return true;
@@ -327,17 +379,18 @@ export function notePlugin(options: NotePluginOptions = {}): Plugin {
   });
 }
 
-export type NoteClipboardPayload = { version: 1; notes: Record<string, NoteRecord> };
+export type NoteClipboardPayload = { version: 1 | 2; notes: Record<string, NoteRecord> };
 export const NOTE_CLIPBOARD_ATTRIBUTE = "data-edtr-note-fragment";
 export function selectedNoteRecords(slice: Slice, doc: PMNode): NoteClipboardPayload {
   const model = modelOf(doc), notes: Record<string, NoteRecord> = {};
   slice.content.descendants(node => { if (node.attrs.noteOwnerId) return false; if (node.type.name !== "note_reference") return; const id = node.attrs.noteId; if (!model || !Object.hasOwn(model.notes, id)) fail("missing-note-body", "The copied note body is missing"); if (Object.hasOwn(notes, id)) fail("duplicate-note-owner", "The copied note has multiple owners"); notes[id] = structuredClone(model.notes[id]); });
-  return { version: 1, notes };
+  return { version: Object.values(notes).some(record => record.presentation) ? 2 : 1, notes };
 }
 export function parseNoteClipboard(value: string | null, schema: Schema): NoteClipboardPayload | null {
   if (!value) return null;
   let parsed: unknown; try { parsed = JSON.parse(value); } catch { fail("invalid-note-clipboard", "The copied note metadata is invalid"); }
-  if (!plain(parsed) || parsed.version !== 1 || !plain(parsed.notes)) fail("invalid-note-clipboard", "The copied note metadata is invalid");
+  if (!plain(parsed) || parsed.version !== 1 && parsed.version !== 2 || Object.keys(parsed).some(key => !["version", "notes"].includes(key)) || !plain(parsed.notes)) fail("invalid-note-clipboard", "The copied note metadata is invalid");
+  if (parsed.version === 1 && Object.values(parsed.notes).some(record => plain(record) && record.presentation !== undefined)) fail("invalid-note-clipboard", "Note presentation requires clipboard version 2");
   validateNoteModel({ notes: parsed.notes, notePolicy: defaultNotePolicy(), sections: {} }, schema);
   return parsed as NoteClipboardPayload;
 }
@@ -348,6 +401,7 @@ export function planNoteClipboard(slice: Slice, payload: NoteClipboardPayload | 
   if (!definitions.length) return { slice, notes: {} };
   if (!model || !payload) fail("missing-note-clipboard", "The copied note body is unavailable");
   const counts = new Set<string>();
+  validateNoteModel({ notes: payload.notes, notePolicy: defaultNotePolicy(), sections: {} }, destination.type.schema);
   for (const definition of definitions) { const id = String(definition.id); if (counts.has(id) || !isDocumentIdentity(id, "note") || !Object.hasOwn(payload.notes, id)) fail("invalid-note-clipboard", "The copied note owner graph is invalid"); counts.add(id); validateNoteBody(payload.notes[id].body, destination.type.schema); }
   if (Object.keys(payload.notes).some(id => !counts.has(id))) fail("invalid-note-clipboard", "The copied note payload contains an unselected note");
   const existing = new Set([...Object.keys(model.notes), ...noteOwners(destination).map(owner => owner.noteId)]), move = options.sameSession && options.move && definitions.every(definition => !existing.has(String(definition.id)));
@@ -357,4 +411,4 @@ export function planNoteClipboard(slice: Slice, payload: NoteClipboardPayload | 
   const map = (fragment: Fragment): Fragment => { const nodes: PMNode[] = []; fragment.forEach(node => { if (node.attrs.noteOwnerId) return; const content = node.isLeaf ? undefined : map(node.content); nodes.push(node.type.name === "note_reference" ? node.type.create({ ...node.attrs, noteId: ids.get(node.attrs.noteId), cachedLabel: "…" }, content, node.marks) : node.isLeaf ? node : node.copy(content!)); }); return Fragment.fromArray(nodes); };
   return { slice: new Slice(map(slice.content), slice.openStart, slice.openEnd), notes };
 }
-export function applyNotePaste(tr: Transaction, notes: Record<string, NoteRecord>): Transaction { if (!Object.keys(notes).length) return tr; const model = commandModel(tr.doc); for (const id of Object.keys(notes)) if (Object.hasOwn(model.notes, id)) fail("note-paste-collision", "The pasted note identity already exists"); return tr.setDocAttribute("documentModel", { ...model, notes: { ...model.notes, ...notes } }); }
+export function applyNotePaste(tr: Transaction, notes: Record<string, NoteRecord>): Transaction { if (!Object.keys(notes).length) return tr; const model = commandModel(tr.doc); for (const id of Object.keys(notes)) if (Object.hasOwn(model.notes, id)) fail("note-paste-collision", "The pasted note identity already exists"); const next = { ...model, notes: { ...model.notes, ...notes } }; validateNoteModel(next, tr.doc.type.schema); return tr.setDocAttribute("documentModel", next); }
