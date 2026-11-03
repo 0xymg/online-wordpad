@@ -87,7 +87,11 @@ export function lineMetricFamily(node: PMNode): string {
   const inherited = node.attrs.styleText?.family || "", families = new Set<string>();
   let supported = true;
   node.descendants(child => {
-    if (!child.isText || !child.text?.trim()) return;
+    if (!child.isText) {
+      if (child.isInline && child.type.name !== "hard_break") supported = false;
+      return;
+    }
+    if (!child.text?.trim()) return;
     // New profiles establish Latin ASCII runs. Existing Arial behavior stays
     // separate, with its previously documented script/fallback limitations.
     if (/[^\t\n\r\x20-\x7e]/.test(child.text)) supported = false;

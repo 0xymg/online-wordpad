@@ -144,6 +144,18 @@ def main():
                            app_mean_within_0_1_pt_word=abs(app['mean_baseline_pitch_pt']-paragraph['mean_baseline_pitch_pt']) <= .1)
             pitches.append(row)
         out['captured_uniform_ascii_profiles'] = pitches
+        out['checks'] = {
+            'word_expected_page_count': out['word']['page_count'] == manifest['expected_pages'],
+            'word_all_explicit_markers_once': all(p['exactly_once'] for p in out['word']['paragraphs']),
+            'word_mean_pitch_within_0_1_pt_captured_metric': all(p['word_mean_within_0_1_pt_metric'] for p in pitches),
+            'visual_fidelity': 'NOT_ASSESSED_BY_TEXT_LAYER',
+        }
+        if args.app:
+            out['checks'].update(
+                app_expected_page_count=out['app']['page_count'] == manifest['expected_pages'],
+                app_all_explicit_markers_once=all(p['exactly_once'] for p in out['app']['paragraphs']),
+                app_mean_pitch_within_0_1_pt_word=all(p['app_mean_within_0_1_pt_word'] for p in pitches),
+            )
     result = args.output or args.directory/'font-metrics-evidence.json'
     result.write_text(json.dumps(out, indent=2)+'\n')
     print(result)
