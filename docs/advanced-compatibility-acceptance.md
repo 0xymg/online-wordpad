@@ -1,5 +1,7 @@
 # A7 advanced compatibility acceptance
 
+Latest increment: A7.2 column/mixed geometry is locally verified; final release acceptance is pending. See [A7.2 evidence](advanced-column-compatibility-acceptance.md) for the current eight-file report, expanded column markers, rendered comparisons and remaining note/font limits. The sections below retain the historical A7.1 capture; its eight mismatches are not the current A7.2 count.
+
 Status: A7.1 released and live acceptance passed on 2026-11-03 at `fd6dfb1`. A7 overall remains open. The frozen A0 corpus is refreshed against the A1–A6 implementation; this document does not declare general Word visual equivalence. Original DOCX, Word PDF, provenance, A0 application PDFs and baseline report remain unchanged.
 
 Compatibility has independent evidence axes: content/model retention; interactive/native editability; page/object geometry; visible rendering. PDF text tokens, PDF destinations and extracted text anchors answer different questions. None establishes editing support or whole-page visual fidelity.
@@ -35,7 +37,7 @@ Set `PLAYWRIGHT_MODULE`, `CHROMIUM_PATH` and use a Python with pypdf/pdfplumber 
 
 The report validates source/reference/application hashes. It separates page count/media boxes, token multiset, marker occurrence, destination geometry and text-layer anchors. GoTo checks resolve named/direct destinations and compare page, fit and coordinates within 0.75 pt; external URIs compare exactly. Annotation order is retained. Unknown actions remain unknown; equal link counts do not establish destination equivalence. Coordinate agreement does not establish semantic target identity or source click-rectangle equivalence. Text anchors remain `EXTRACTED_TEXT_ONLY`; visual status remains `NOT_ASSESSED` unless a separate rendered assessment supplies evidence.
 
-## Current frozen-corpus results
+## A7.1 frozen-corpus results (historical)
 
 Fresh local capture: all eight application PDFs exported from `http://localhost:3120` into `fixtures/compatibility/a7-app-pdfs`; each source/PDF hash passed provenance validation. Current machine-readable evidence: [a7-report.json](../fixtures/compatibility/a7-report.json) and [exports.json](../fixtures/compatibility/a7-app-pdfs/exports.json). Historical `baseline-report.json` remains an A0 snapshot.
 
