@@ -1,6 +1,6 @@
 # A5 note acceptance
 
-Status: A5a passed the local production-build gate on `codex/document-notes`; deployment/live verification pending. A5a endnotes and A5b real page footnotes are separate acceptance gates. This report does not mark the full A5 milestone complete.
+Status: A5a released in `7258ccf` on 2026-11-03. Vercel deployment succeeded and live editing/import/export/PDF smoke tests passed at https://wordpad.info. A5b development continues on `codex/page-footnotes`. A5a endnotes and A5b real page footnotes are separate acceptance gates. This report does not mark the full A5 milestone complete.
 
 ## A5a implemented and checked locally
 
@@ -31,5 +31,12 @@ Observed limit: the Word Online editor displayed lower Roman labels despite expl
 - Closed: 28 focused boundary checks cover partial Backspace/Delete joins, ReplaceAround leakage, cache-only edits, AllSelection replacement/undo, and paragraph/list section-boundary merge/undo. Section commands now unproject/edit/reproject inside one original history transaction.
 - Closed: `check-note-word-roundtrip.cjs` passes the actual Word-normalized fixture through product import/export/reimport, preserving the original note ID, both bodies and explicit decimal policy.
 - Closed: `check-note-output-snapshot.cjs` delays the actual exporter chunk, switches A→B, and confirms FILE_A.docx contains only the settled A content/note while the editor stays on B.
-- Final source checks and production build passed. Production deployment/live smoke tests are pending.
+- Final source checks and production build passed. Live `check-notes-ui.cjs` and `check-note-editing-ui.cjs` passed, covering native DOCX reopen, two-page searchable/linkable PDF, body editing/list/tab/formatting, history, numbering/placement, deletion/undo, read-only and document switching.
 - A5b remains gated for public creation/import/editing/conversion. Saved v5 footnotes have a bounded runtime for single-section one/two-column plain notes and basic lists; unsupported layouts fail with a visible alert and block output. Product PDF/DOCX checks cover two same-line owners, a 600-word continuation, body-before-notes reading order and four bidirectional links. A provisional third blank sheet was caught and removed; the two-column fixture now has exactly two nonempty sheets. Mixed sections/widths, three columns, object/table owners and nested/RTL/non-default-start note lists remain unverified or rejected. Do not describe full A5b as released.
+
+## Live release evidence
+
+- Commit: `7258ccf2be283b938efe6423f19058bb8560904f`; commit body contains no coauthor trailer.
+- [Vercel successful deployment](https://vercel.com/312sh/online-wordpad/E3ZUM7yt4cYbW2UiYBny7D3hSAVt).
+- Local production tests additionally passed the Word Online-normalized fixture and the gated two-column footnote PDF/DOCX fixture (two nonempty pages).
+- Known baseline local build warnings: missing local Better Auth configuration and Edge runtime deprecation; production build exits successfully. No account settings changed.

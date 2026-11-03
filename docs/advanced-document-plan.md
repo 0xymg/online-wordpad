@@ -174,3 +174,9 @@ Dört dondurulmuş gerçek Word örneği için uygulama PDF sayıları 6/1/5/3 o
 ## Uygulama kaydı — A4
 
 Model v4, kararlı hedef/alan kimlikleri, bookmark ve açıklama komutları, metin/numara/sayfa referansları, canlı bağlantılı TOC ve ortak çıktı güncelleme kapısı `c3f8a7e` ile canlıda. Word Online'da alan yenileme/kayıt ve iki gerçek dönüş dosyasıyla aç/kaydet/aç doğrulandı. PDF GoTo bağlantıları, 100 sayfaya geçiş, çok sayfalı TOC, mobil/RTL, kaynak koruma ve native çıktılar canlı kontrolden geçti. Desteklenen alanlar ile korunan/reddedilen karmaşık native yapılar ayrı raporlanır. Yük altında tekil bir geçici hizalama gözleminin nedeni açık kaldı; üç ardışık tekil canlı ölçüm kararlıydı. Ayrıntı `references-acceptance.md` içindedir. Sonraki A5 sözleşmesi `notes-implementation-plan.md` dosyasındadır.
+
+## A5a canlı kabul — 2026-11-03
+
+`7258ccf` ile sonnot düzenleyicisi, v5 not havuzu, bölüm/belge sonunda gösterim, gerçek native DOCX sonnotları ve bağlantılı PDF çıktısı canlıya alındı. Sol/Terra geliştirmesi; coauthor eklenmedi. Word Online dönüş örneği ile kimlik/gövde/numaralama politikası koruması, kaynak koruma, bölüm sınırı undo ve belge değiştirme sırasında sabit çıktı doğrulandı. Canlı ekle/düzenle/sil/undo, rich DOCX aç/kaydet/aç ve iki sayfalı PDF testleri geçti. Ayrıntılar `notes-acceptance.md` içinde.
+
+A5b tamamlanmış sayılmaz: dipnot oluşturma/içe aktarma/düzenleme/dönüşüm kapısı kapalı. Ortak sayfa altı ölçüm/rezerv ve tek/iki sütun devam çıktıları doğrulandı; `codex/page-footnotes` dalında karma bölüm/genişlik, zengin not satırları ve diğer destek sınırları geliştiriliyor. A6 APA 7 + IEEE ve A7 ileri uyumluluk bundan sonra gelir.
