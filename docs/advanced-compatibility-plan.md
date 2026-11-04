@@ -68,3 +68,7 @@ Acceptance: source/identity/history regressions, actual native import/edit/outpu
 Local production acceptance passes at `e2a2c57`; all eight manifest anchor gates and all 78 expanded page/column placements pass. See [A7.4 acceptance](advanced-reference-layout-acceptance.md) for immutable capture lineage, semantic navigation, remaining raw Word-cache/viewport differences, separator profile limits and release status.
 
 Released without coauthor trailers at `0373c6c`; live source-presentation/native reopening, explicit navigation, focus, footnote and protected-cache checks passed. Four live pages are pixel-identical to the local production release at 144 dpi. A7.4's measured scope is complete; broader matrix limits stay explicit.
+
+## A7.5 — measured 12 pt note separator finish
+
+The user requested closure of the remaining 12 pt rule residual with Sol/Terra. A shared native Arial paint calibration is validated against five existing Word controls and two newly generated held-out 12 pt column/content-position controls. All fourteen comparisons pass the unchanged 0.75 pt limit; all seven page geometries and every pixel outside tightly bounded rule rectangles are preserved. Full corpus geometry/navigation and native note protections pass production acceptance at `ca4dfc4`. [Acceptance and release status](advanced-note-separator-finish-acceptance.md).

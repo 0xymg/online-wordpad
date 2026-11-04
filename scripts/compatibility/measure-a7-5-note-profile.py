@@ -3,8 +3,10 @@
 
 Repeat --app-dir/--baseline-dir when captures are split between fixture groups.
 Rule gates use the original PDFium 4 px/pt intensity-weighted method. Body
-stability compares every pixel outside the union of narrow rule bands.
+stability compares every pixel outside bounded rule rectangles.
 """
+import sys
+sys.dont_write_bytecode = True
 import argparse
 import hashlib
 import json
@@ -105,16 +107,17 @@ def main():
                 for index, (a,b) in enumerate(zip(ap,bp)):
                     mask = np.ones(a.shape, dtype=bool)
                     if index == 0:
-                        # Full page width excludes only ±3pt around each Word rule.
+                        # Exclude only the bounded Word rule rectangle (±1pt x, ±3pt y).
                         for rect in rects:
-                            mask[max(0,int((rect['top']-3)*4)):int((rect['bottom']+3)*4),:] = False
+                            mask[max(0,int((rect['top']-3)*4)):int((rect['bottom']+3)*4),
+                                 max(0,int((rect['x0']-1)*4)):int((rect['x1']+1)*4)] = False
                     changed += int(np.count_nonzero((a != b) & mask))
             row['baseline'] = {'verification':baseline_verification, 'pdf':str(baseline.resolve()), 'sha256':digest(baseline),
-                               'same_page_geometry':stable, 'changed_pixels_outside_rule_bands':changed if stable else None,
+                               'same_page_geometry':stable, 'changed_pixels_outside_rule_rectangles':changed if stable else None,
                                'body_pixels_unchanged':stable and changed == 0}
         rows.append(row)
-    report = {'schema_version':1, 'application_revision':args.revision,
-              'method':'PDFium 4px/pt; original A7.4 fixed x=100..200pt, ±2pt Word rule window, >2% intensity mask; baseline body comparison excludes full-width ±3pt rule bands',
+    report = {'schema_version':2, 'application_revision':args.revision,
+              'method':'PDFium 4px/pt; original A7.4 fixed x=100..200pt, ±2pt Word rule window, >2% intensity mask; baseline body comparison excludes only Word vector x0..x1 ±1pt and top..bottom ±3pt rectangles',
               'all_baseline_bodies_unchanged':all(row['baseline']['body_pixels_unchanged'] for row in rows) if args.baseline_dir else None,
               'centroid_threshold_pt':.75, 'all_rules_pass':all(r['within_0_75pt'] for row in rows for r in row['rules']), 'results':rows}
     args.output.parent.mkdir(parents=True, exist_ok=True)

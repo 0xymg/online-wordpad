@@ -1,0 +1,116 @@
+{
+  "schema_version": 1,
+  "complete": true,
+  "base_url": "http://localhost:3119",
+  "browser_version": "156.0.8078.4",
+  "viewport": {
+    "width": 1450,
+    "height": 1050
+  },
+  "application_revision": "ca4dfc40ef7e71244dc23f02cdf708476e3e6352",
+  "selected_cases": [
+    "base-11",
+    "base-16",
+    "columns-base-11"
+  ],
+  "captured_at": "2026-11-04T00:53:18.282Z",
+  "results": [
+    {
+      "id": "base-11",
+      "source_sha256": "a650e8d23a0c2ccc75052013b6080f6229024233f891b3471bbeafadd15cae82",
+      "status": "EXPORTED",
+      "base_url": "http://localhost:3119",
+      "captured_at": "2026-11-04T00:53:05.925Z",
+      "geometry": {
+        "separator": {
+          "top": 409.90625,
+          "bottom": 426.765625,
+          "height": 16.859375
+        },
+        "rule": {
+          "top": 420.1041564941406,
+          "bottom": 420.7604064941406,
+          "height": 0.65625
+        },
+        "baseline": {
+          "top": 422.90625,
+          "bottom": 422.90625,
+          "height": 0
+        },
+        "font": "",
+        "lineHeight": "16.8652px",
+        "fontFamily": "Arial, sans-serif",
+        "fontSize": "14.6667px"
+      },
+      "pdf_sha256": "d13ec85850f362fcb529d28c85c004d7045e0ef8f752ec9f8de5e3606fe40541",
+      "pdf_bytes": 62035,
+      "page_errors": []
+    },
+    {
+      "id": "base-16",
+      "source_sha256": "74aa7b7077e9be142ba359478c00c15a9a90f14aff9c6a67b2550e264e9b04bd",
+      "status": "EXPORTED",
+      "base_url": "http://localhost:3119",
+      "captured_at": "2026-11-04T00:53:09.972Z",
+      "geometry": {
+        "separator": {
+          "top": 418.71875,
+          "bottom": 443.25,
+          "height": 24.53125
+        },
+        "rule": {
+          "top": 433.3541564941406,
+          "bottom": 434.3541564941406,
+          "height": 1
+        },
+        "baseline": {
+          "top": 437.71875,
+          "bottom": 437.71875,
+          "height": 0
+        },
+        "font": "",
+        "lineHeight": "24.5312px",
+        "fontFamily": "Arial, sans-serif",
+        "fontSize": "21.3333px"
+      },
+      "pdf_sha256": "75c87471547cc8b443d04e1c519e925b54425934eb3e2726e39351e20b928082",
+      "pdf_bytes": 70238,
+      "page_errors": []
+    },
+    {
+      "id": "columns-base-11",
+      "source_sha256": "9647c7d2d351988da224fe4c84cd9cc6cbc6e6b21990f8288383724728c4292b",
+      "status": "EXPORTED",
+      "base_url": "http://localhost:3119",
+      "captured_at": "2026-11-04T00:53:13.973Z",
+      "geometry": {
+        "separator": {
+          "top": 447.171875,
+          "bottom": 464.03125,
+          "height": 16.859375
+        },
+        "rule": {
+          "top": 457.3697814941406,
+          "bottom": 458.0260314941406,
+          "height": 0.65625
+        },
+        "baseline": {
+          "top": 460.171875,
+          "bottom": 460.171875,
+          "height": 0
+        },
+        "font": "",
+        "lineHeight": "16.8652px",
+        "fontFamily": "Arial, sans-serif",
+        "fontSize": "14.6667px"
+      },
+      "pdf_sha256": "1e06861e6dc78c162f5277633cd0075e7426883acc4c32adf7597dc9453d1ac2",
+      "pdf_bytes": 62925,
+      "page_errors": []
+    }
+  ],
+  "served_runtime_source_sha256": {
+    "lib/note-separator.ts": "b9df4d728a041a4dd0cee1d87832aee01c0b90b0006b44fc60e74ace870c8ecc"
+  },
+  "runtime_hash_basis": "Immutable production build served locally at3119; git show ca4dfc40ef7e71244dc23f02cdf708476e3e6352:lib/note-separator.ts"
+}

@@ -1,5 +1,7 @@
 # A7.4 native note separator evidence
 
+Latest: [A7.5 closes the measured 12 pt failure](advanced-note-separator-finish-acceptance.md) using the same threshold and two additional genuine Word controls. The values and limitations below preserve A7.4's original historical results.
+
 The A7.4 native separator profile is bounded to a regular Arial Normal style at 11–20 pt. It uses Arial's measured strikeout metrics for the rule thickness and the browser's font-derived midline for its placement. The rule is a derived decoration; canonical note bodies, identities and read-only guards are unchanged. Other font families, bold or italic Normal styles, sizes outside this range, empty separators and continuation separators retain their existing behavior.
 
 For native footnotes in the supported profile, a disposable separator and the actual first rendered line determine the rule's position. The planner reserves enough clearance for the measured rule, keeping bottom-anchored body text in place while avoiding overlap with main-story content. The column overlay carries the measured rule's physical position and thickness. Dark-mode ink follows the same semantic color as the separator widget.

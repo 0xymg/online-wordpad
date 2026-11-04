@@ -1,0 +1,18 @@
+{
+  "scale_pixels_per_pt": 4,
+  "method": "Identical Word-based crop coordinates for each actual PDF; no ink repositioning or resizing",
+  "sources": [
+    {
+      "pdf": "/Users/Yunus/Projects/online-wordpad/fixtures/compatibility/a7-4-note-metric-probes/base-12.word.pdf",
+      "sha256": "0ab5908dfb2bf28fd7dd54470806b739cf888216b8aa25ec0e24740d4ab1a81c"
+    },
+    {
+      "pdf": "/Users/Yunus/Projects/online-wordpad/fixtures/compatibility/a7-5-note-probes/baseline-metric/base-12.pdf",
+      "sha256": "52050bdbda5a16d71a738735d493a0f7801b807957fe1f697465b937e4f0ac10"
+    },
+    {
+      "pdf": "fixtures/compatibility/a7-5-note-probes/production-metric/base-12.pdf",
+      "sha256": "69b763accb57fa31d0804633f8bac7eb5c841d585dee42766a0601454385a10d"
+    }
+  ]
+}

@@ -210,3 +210,7 @@ Sol/Terra ile native içindekilerin sekme/girinti ve bağımsız alan biçimleri
 Yerel üretim kabulünde sekiz belgenin tamamı 1 CSS px metin ankrajı sınırını karşılıyor; 78 sütun işareti doğru sayfa/sütunda ve on bağlantı doğru görünür hedefte. Word'ün eski sayfa önbelleği, bağlantı sayısı ve görüntüleme koordinatı farkları ham raporda aynen tutuluyor. Yayın durumu ve sınırlar [A7.4 kabulünde](advanced-reference-layout-acceptance.md); Arial ayırıcı profilinin 12 pt ölçüm sınırı [ayırıcı kabulünde](advanced-note-separator-acceptance.md). Genel ve koşulsuz Word eşitliği kapsamı ayrı kalıyor.
 
 `0373c6c` ile coauthor eklenmeden yayımlandı. Canlı içindekiler/Word/HTML dönüşü, tıklayarak gezinme, menü odağı, gerçek Word dipnotu ve uyarısız yükle/PDF/yeniden aç kontrolleri geçti. Dört canlı PDF sayfası yerel kabul çıktılarıyla piksel düzeyinde aynı. A7.4 ölçülmüş kapsamıyla kapandı; destek matrisindeki daha geniş font/nesne ve koşulsuz Word eşitliği sınırları sürüyor.
+
+## A7.5 — 12 punto not çizgisi
+
+Sol/Terra ile ortak native çizgi çizimi düzeltildi. Üretim karşılaştırmasında dört punto ve iki yeni bağımsız 12 punto Word kontrolü dahil 14 çizginin tümü mevcut toleransı karşılıyor. Yedi örnekte çizgi dışındaki pikseller ve sayfa geometrisi değişmedi; sekiz belge/sütun/bağlantı kapıları ile Word/PDF dönüş ve veri koruma kontrolleri geçti. Önceki 12 punto sınır ihlali ölçülmüş kapsamıyla kapandı. [Kabul ve yayın durumu](advanced-note-separator-finish-acceptance.md).

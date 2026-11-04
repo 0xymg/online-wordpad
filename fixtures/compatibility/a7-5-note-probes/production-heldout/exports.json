@@ -1,0 +1,81 @@
+{
+  "schema_version": 1,
+  "complete": true,
+  "base_url": "http://localhost:3119",
+  "browser_version": "156.0.8078.4",
+  "viewport": {
+    "width": 1450,
+    "height": 1050
+  },
+  "application_revision": "ca4dfc40ef7e71244dc23f02cdf708476e3e6352",
+  "selected_cases": null,
+  "captured_at": "2026-11-04T00:54:04.642Z",
+  "results": [
+    {
+      "id": "columns-base-12",
+      "source_sha256": "9e1af129d8c84a5f66224c4292a9e7b196d5b22fb5810b301e8424044bbb532d",
+      "status": "EXPORTED",
+      "base_url": "http://localhost:3119",
+      "captured_at": "2026-11-04T00:53:56.130Z",
+      "geometry": {
+        "separator": {
+          "top": 453.234375,
+          "bottom": 471.625,
+          "height": 18.390625
+        },
+        "rule": {
+          "top": 464.0729064941406,
+          "bottom": 464.7291564941406,
+          "height": 0.65625
+        },
+        "baseline": {
+          "top": 467.234375,
+          "bottom": 467.234375,
+          "height": 0
+        },
+        "font": "",
+        "lineHeight": "18.3984px",
+        "fontFamily": "Arial, sans-serif",
+        "fontSize": "16px"
+      },
+      "pdf_sha256": "5282afa0eb73bb578bcb5347f821237f5d79db0f7670ccc44857476f1c4fd76d",
+      "pdf_bytes": 65647,
+      "page_errors": []
+    },
+    {
+      "id": "shifted-base-12",
+      "source_sha256": "cbc2dd724b859a1b0051e2fc5dfc9864ffd6bf411a1576481ff3d97a1ece6926",
+      "status": "EXPORTED",
+      "base_url": "http://localhost:3119",
+      "captured_at": "2026-11-04T00:54:00.509Z",
+      "geometry": {
+        "separator": {
+          "top": 467.3125,
+          "bottom": 485.703125,
+          "height": 18.390625
+        },
+        "rule": {
+          "top": 478.1510314941406,
+          "bottom": 478.8072814941406,
+          "height": 0.65625
+        },
+        "baseline": {
+          "top": 481.3125,
+          "bottom": 481.3125,
+          "height": 0
+        },
+        "font": "",
+        "lineHeight": "18.3984px",
+        "fontFamily": "Arial, sans-serif",
+        "fontSize": "16px"
+      },
+      "pdf_sha256": "1c0c65588e26c2f1541975e1309cef09db97fec26f7397b7a97aa77f8c11c441",
+      "pdf_bytes": 98578,
+      "page_errors": []
+    }
+  ],
+  "served_runtime_source_sha256": {
+    "lib/note-separator.ts": "b9df4d728a041a4dd0cee1d87832aee01c0b90b0006b44fc60e74ace870c8ecc"
+  },
+  "runtime_hash_basis": "Immutable production build served locally at3119; git show ca4dfc40ef7e71244dc23f02cdf708476e3e6352:lib/note-separator.ts"
+}
