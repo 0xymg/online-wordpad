@@ -214,6 +214,14 @@ class DocxBuilder {
 
   inlineChildren(node: PMNode): ParagraphChild[] {
     const out: ParagraphChild[] = [];
+    const nativeToc = !!node.attrs.tocOwnerId && node.attrs.tocSourceIndent !== null;
+    const sourceTocPresentation = (p: MarkProps) => {
+      if (nativeToc) {
+        p.color ??= colorToHex(node.attrs.styleText?.color || "#000000");
+        p.underline ??= !!node.attrs.styleText?.underline;
+      }
+      return p;
+    };
     const inlineMarks = (marks: readonly Mark[]) => {
       const p = readMarks(marks);
       // Plain HTML paragraph fonts are a CSS base, rather than a linked Word
@@ -223,7 +231,7 @@ class DocxBuilder {
         p.font ??= firstFontFamily(node.attrs.styleText.family);
         p.size ??= fontSizeHalfPoints(node.attrs.styleText.size ? `${node.attrs.styleText.size}pt` : undefined);
       }
-      return p;
+      return sourceTocPresentation(p);
     };
     if (node.attrs.docxProperties || node.attrs.styleId || node.attrs.styleText || node.attrs.lineHeight || Object.keys(node.attrs.paragraphFormat || {}).length) {
       const id = `EDTRLayout${this.paragraphProperties.length}`;
@@ -261,6 +269,7 @@ class DocxBuilder {
           p.underline = actual.underline === base.underline ? undefined : actual.underline;
           if (actual.color.toLowerCase() === String(base.color).toLowerCase()) p.color = undefined;
         }
+        sourceTocPresentation(p);
         const run = new TextRun({
           text: child.text || "",
           rightToLeft: textDirection(child.text || "") === "rtl",
@@ -276,7 +285,7 @@ class DocxBuilder {
           shading: p.highlight
             ? { type: ShadingType.CLEAR, fill: p.highlight }
             : undefined,
-          style: p.link ? "Hyperlink" : undefined,
+          style: p.link && !nativeToc ? "Hyperlink" : undefined,
         });
         if (p.link) {
           out.push(this.hyperlink(run, p.link));
@@ -289,7 +298,7 @@ class DocxBuilder {
           underline: p.underline === false ? { type: "none" } : p.underline ? {} : undefined, strike: p.strike, color: p.color,
           superScript: p.superScript, subScript: p.subScript,
           shading: p.highlight ? { type: ShadingType.CLEAR, fill: p.highlight } : undefined,
-          style: p.link ? "Hyperlink" : undefined });
+          style: p.link && !nativeToc ? "Hyperlink" : undefined });
         if (p.link) out.push(this.hyperlink(run, p.link)); else out.push(run);
       } else if (child.type.name === "bookmark_start" || child.type.name === "bookmark_end") {
         const id = String(child.attrs.targetId || "");
@@ -317,7 +326,7 @@ class DocxBuilder {
           underline: p.underline === false ? { type: "none" } : p.underline ? {} : undefined,
           strike: p.strike, color: p.color, superScript: p.superScript, subScript: p.subScript,
           shading: p.highlight ? { type: ShadingType.CLEAR, fill: p.highlight } : undefined,
-          style: p.link ? "Hyperlink" : undefined });
+          style: p.link && !nativeToc ? "Hyperlink" : undefined });
         if (p.link) out.push(this.hyperlink(run, p.link)); else out.push(run);
       } else if (child.type.name === "reference_field") {
         const attrs = child.attrs;
@@ -393,7 +402,7 @@ class DocxBuilder {
           underline: p.underline === false ? { type: "none" } : p.underline ? {} : undefined, strike: p.strike, color: p.color,
           superScript: p.superScript, subScript: p.subScript,
           shading: p.highlight ? { type: ShadingType.CLEAR, fill: p.highlight } : undefined,
-          style: p.link ? "Hyperlink" : undefined });
+          style: p.link && !nativeToc ? "Hyperlink" : undefined });
         run.addChildElement(new BuilderElement({ name: "w:br", attributes: { type: { key: "w:type", value: "column" } } }));
         if (p.link) out.push(this.hyperlink(run, p.link)); else out.push(run);
       } else if (child.type.name === "hard_break") {

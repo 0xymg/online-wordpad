@@ -1,0 +1,3543 @@
+{
+  "schema_version": 1,
+  "comparison": "Frozen Word versus app: expanded A7 column anchors",
+  "cases": [
+    {
+      "id": "columns",
+      "status": "MEASURED",
+      "reference_pdf": "fixtures/compatibility/references/columns.pdf",
+      "app_pdf": "fixtures/compatibility/a7-4-final-app-pdfs/columns.pdf",
+      "reference_sha256": "78ba2e0d7153dd7a51dae32f1566691e690e234b30ff59486669a27f09f6e263",
+      "app_sha256": "6d12495a581c1acc28b5ca0535962ddb2832b98831adcdc1c05f58970b3183c5",
+      "source_sha256": "05c6050e5be6317fdae35036cfdf8509b58a44f7c85e9525d3b122f15fc7cc0b",
+      "checks": {
+        "provenance_valid": true,
+        "page_count_equal": true,
+        "media_boxes_within_0_75pt": true,
+        "all_expanded_markers_once": true,
+        "expanded_marker_regions_equal": true,
+        "all_expanded_anchors_within_1_css_px": true
+      },
+      "page_counts": {
+        "word": 1,
+        "app": 1
+      },
+      "content_checks": {
+        "token_multisets_equal": true,
+        "expected_markers_once": true,
+        "link_count_equal": true,
+        "link_destination_geometry_equal": true
+      },
+      "source_equal_columns": {
+        "count": 2,
+        "left_pt": 90.0,
+        "width_pt": 198.0,
+        "gap_pt": 36.0
+      },
+      "expanded_marker_count": 26,
+      "missing_or_duplicate_markers": [],
+      "wrong_region_markers": [],
+      "same_region_max_absolute_delta_css_px": {
+        "x": 0.173,
+        "y": 0.436
+      },
+      "paragraph_pitch": {
+        "comparable_pairs": 24,
+        "mean_word_css_px": 52.142,
+        "mean_app_css_px": 52.118,
+        "pairs": [
+          {
+            "from": "COLUMN_00",
+            "to": "COLUMN_01",
+            "word_css_px": 52.373,
+            "app_css_px": 52.125,
+            "delta_css_px": -0.248
+          },
+          {
+            "from": "COLUMN_01",
+            "to": "COLUMN_02",
+            "word_css_px": 52.0,
+            "app_css_px": 52.109,
+            "delta_css_px": 0.109
+          },
+          {
+            "from": "COLUMN_02",
+            "to": "COLUMN_03",
+            "word_css_px": 52.027,
+            "app_css_px": 52.125,
+            "delta_css_px": 0.098
+          },
+          {
+            "from": "COLUMN_03",
+            "to": "COLUMN_04",
+            "word_css_px": 52.333,
+            "app_css_px": 52.124,
+            "delta_css_px": -0.209
+          },
+          {
+            "from": "COLUMN_04",
+            "to": "COLUMN_05",
+            "word_css_px": 52.027,
+            "app_css_px": 52.111,
+            "delta_css_px": 0.084
+          },
+          {
+            "from": "COLUMN_05",
+            "to": "COLUMN_06",
+            "word_css_px": 52.0,
+            "app_css_px": 52.124,
+            "delta_css_px": 0.124
+          },
+          {
+            "from": "COLUMN_06",
+            "to": "COLUMN_07",
+            "word_css_px": 52.373,
+            "app_css_px": 52.109,
+            "delta_css_px": -0.264
+          },
+          {
+            "from": "COLUMN_07",
+            "to": "COLUMN_08",
+            "word_css_px": 52.0,
+            "app_css_px": 52.125,
+            "delta_css_px": 0.125
+          },
+          {
+            "from": "COLUMN_08",
+            "to": "COLUMN_09",
+            "word_css_px": 52.36,
+            "app_css_px": 52.125,
+            "delta_css_px": -0.235
+          },
+          {
+            "from": "COLUMN_09",
+            "to": "COLUMN_10",
+            "word_css_px": 52.0,
+            "app_css_px": 52.109,
+            "delta_css_px": 0.109
+          },
+          {
+            "from": "COLUMN_10",
+            "to": "COLUMN_11",
+            "word_css_px": 52.04,
+            "app_css_px": 52.125,
+            "delta_css_px": 0.085
+          },
+          {
+            "from": "COLUMN_11",
+            "to": "COLUMN_12",
+            "word_css_px": 52.333,
+            "app_css_px": 52.109,
+            "delta_css_px": -0.224
+          },
+          {
+            "from": "COLUMN_12",
+            "to": "COLUMN_13",
+            "word_css_px": 52.027,
+            "app_css_px": 52.124,
+            "delta_css_px": 0.097
+          },
+          {
+            "from": "COLUMN_14",
+            "to": "COLUMN_15",
+            "word_css_px": 52.027,
+            "app_css_px": 52.109,
+            "delta_css_px": 0.082
+          },
+          {
+            "from": "COLUMN_15",
+            "to": "COLUMN_16",
+            "word_css_px": 52.333,
+            "app_css_px": 52.125,
+            "delta_css_px": -0.208
+          },
+          {
+            "from": "COLUMN_16",
+            "to": "COLUMN_17",
+            "word_css_px": 52.04,
+            "app_css_px": 52.109,
+            "delta_css_px": 0.069
+          },
+          {
+            "from": "COLUMN_17",
+            "to": "COLUMN_18",
+            "word_css_px": 52.0,
+            "app_css_px": 52.125,
+            "delta_css_px": 0.125
+          },
+          {
+            "from": "COLUMN_18",
+            "to": "COLUMN_19",
+            "word_css_px": 52.36,
+            "app_css_px": 52.124,
+            "delta_css_px": -0.236
+          },
+          {
+            "from": "COLUMN_19",
+            "to": "COLUMN_20",
+            "word_css_px": 52.0,
+            "app_css_px": 52.109,
+            "delta_css_px": 0.109
+          },
+          {
+            "from": "COLUMN_20",
+            "to": "COLUMN_21",
+            "word_css_px": 52.36,
+            "app_css_px": 52.125,
+            "delta_css_px": -0.235
+          },
+          {
+            "from": "COLUMN_21",
+            "to": "COLUMN_22",
+            "word_css_px": 52.0,
+            "app_css_px": 52.109,
+            "delta_css_px": 0.109
+          },
+          {
+            "from": "COLUMN_22",
+            "to": "COLUMN_23",
+            "word_css_px": 52.04,
+            "app_css_px": 52.125,
+            "delta_css_px": 0.085
+          },
+          {
+            "from": "COLUMN_23",
+            "to": "COLUMN_24",
+            "word_css_px": 52.333,
+            "app_css_px": 52.125,
+            "delta_css_px": -0.208
+          },
+          {
+            "from": "COLUMN_24",
+            "to": "COLUMN_25",
+            "word_css_px": 52.027,
+            "app_css_px": 52.109,
+            "delta_css_px": 0.082
+          }
+        ]
+      },
+      "relative_table_geometry": {},
+      "anchors": {
+        "COLUMN_00": {
+          "word": [
+            {
+              "page": 1,
+              "x_pt": 90.05,
+              "y_pt": 153.36
+            }
+          ],
+          "app": [
+            {
+              "page": 1,
+              "x_pt": 90.0,
+              "y_pt": 153.366
+            }
+          ],
+          "word_region": [
+            1,
+            0
+          ],
+          "app_region": [
+            1,
+            0
+          ],
+          "same_page": true,
+          "same_region": true,
+          "local_delta_css_px": {
+            "x": -0.067,
+            "y": 0.008
+          }
+        },
+        "COLUMN_01": {
+          "word": [
+            {
+              "page": 1,
+              "x_pt": 90.05,
+              "y_pt": 192.64
+            }
+          ],
+          "app": [
+            {
+              "page": 1,
+              "x_pt": 90.0,
+              "y_pt": 192.46
+            }
+          ],
+          "word_region": [
+            1,
+            0
+          ],
+          "app_region": [
+            1,
+            0
+          ],
+          "same_page": true,
+          "same_region": true,
+          "local_delta_css_px": {
+            "x": -0.067,
+            "y": -0.24
+          }
+        },
+        "COLUMN_02": {
+          "word": [
+            {
+              "page": 1,
+              "x_pt": 90.05,
+              "y_pt": 231.64
+            }
+          ],
+          "app": [
+            {
+              "page": 1,
+              "x_pt": 90.0,
+              "y_pt": 231.542
+            }
+          ],
+          "word_region": [
+            1,
+            0
+          ],
+          "app_region": [
+            1,
+            0
+          ],
+          "same_page": true,
+          "same_region": true,
+          "local_delta_css_px": {
+            "x": -0.067,
+            "y": -0.131
+          }
+        },
+        "COLUMN_03": {
+          "word": [
+            {
+              "page": 1,
+              "x_pt": 90.05,
+              "y_pt": 270.66
+            }
+          ],
+          "app": [
+            {
+              "page": 1,
+              "x_pt": 90.0,
+              "y_pt": 270.636
+            }
+          ],
+          "word_region": [
+            1,
+            0
+          ],
+          "app_region": [
+            1,
+            0
+          ],
+          "same_page": true,
+          "same_region": true,
+          "local_delta_css_px": {
+            "x": -0.067,
+            "y": -0.032
+          }
+        },
+        "COLUMN_04": {
+          "word": [
+            {
+              "page": 1,
+              "x_pt": 90.05,
+              "y_pt": 309.91
+            }
+          ],
+          "app": [
+            {
+              "page": 1,
+              "x_pt": 90.0,
+              "y_pt": 309.729
+            }
+          ],
+          "word_region": [
+            1,
+            0
+          ],
+          "app_region": [
+            1,
+            0
+          ],
+          "same_page": true,
+          "same_region": true,
+          "local_delta_css_px": {
+            "x": -0.067,
+            "y": -0.241
+          }
+        },
+        "COLUMN_05": {
+          "word": [
+            {
+              "page": 1,
+              "x_pt": 90.05,
+              "y_pt": 348.93
+            }
+          ],
+          "app": [
+            {
+              "page": 1,
+              "x_pt": 90.0,
+              "y_pt": 348.812
+            }
+          ],
+          "word_region": [
+            1,
+            0
+          ],
+          "app_region": [
+            1,
+            0
+          ],
+          "same_page": true,
+          "same_region": true,
+          "local_delta_css_px": {
+            "x": -0.067,
+            "y": -0.157
+          }
+        },
+        "COLUMN_06": {
+          "word": [
+            {
+              "page": 1,
+              "x_pt": 90.05,
+              "y_pt": 387.93
+            }
+          ],
+          "app": [
+            {
+              "page": 1,
+              "x_pt": 90.0,
+              "y_pt": 387.905
+            }
+          ],
+          "word_region": [
+            1,
+            0
+          ],
+          "app_region": [
+            1,
+            0
+          ],
+          "same_page": true,
+          "same_region": true,
+          "local_delta_css_px": {
+            "x": -0.067,
+            "y": -0.033
+          }
+        },
+        "COLUMN_07": {
+          "word": [
+            {
+              "page": 1,
+              "x_pt": 90.05,
+              "y_pt": 427.21
+            }
+          ],
+          "app": [
+            {
+              "page": 1,
+              "x_pt": 90.0,
+              "y_pt": 426.987
+            }
+          ],
+          "word_region": [
+            1,
+            0
+          ],
+          "app_region": [
+            1,
+            0
+          ],
+          "same_page": true,
+          "same_region": true,
+          "local_delta_css_px": {
+            "x": -0.067,
+            "y": -0.297
+          }
+        },
+        "COLUMN_08": {
+          "word": [
+            {
+              "page": 1,
+              "x_pt": 90.05,
+              "y_pt": 466.21
+            }
+          ],
+          "app": [
+            {
+              "page": 1,
+              "x_pt": 90.0,
+              "y_pt": 466.081
+            }
+          ],
+          "word_region": [
+            1,
+            0
+          ],
+          "app_region": [
+            1,
+            0
+          ],
+          "same_page": true,
+          "same_region": true,
+          "local_delta_css_px": {
+            "x": -0.067,
+            "y": -0.172
+          }
+        },
+        "COLUMN_09": {
+          "word": [
+            {
+              "page": 1,
+              "x_pt": 90.05,
+              "y_pt": 505.48
+            }
+          ],
+          "app": [
+            {
+              "page": 1,
+              "x_pt": 90.0,
+              "y_pt": 505.175
+            }
+          ],
+          "word_region": [
+            1,
+            0
+          ],
+          "app_region": [
+            1,
+            0
+          ],
+          "same_page": true,
+          "same_region": true,
+          "local_delta_css_px": {
+            "x": -0.067,
+            "y": -0.407
+          }
+        },
+        "COLUMN_10": {
+          "word": [
+            {
+              "page": 1,
+              "x_pt": 90.05,
+              "y_pt": 544.48
+            }
+          ],
+          "app": [
+            {
+              "page": 1,
+              "x_pt": 90.0,
+              "y_pt": 544.257
+            }
+          ],
+          "word_region": [
+            1,
+            0
+          ],
+          "app_region": [
+            1,
+            0
+          ],
+          "same_page": true,
+          "same_region": true,
+          "local_delta_css_px": {
+            "x": -0.067,
+            "y": -0.297
+          }
+        },
+        "COLUMN_11": {
+          "word": [
+            {
+              "page": 1,
+              "x_pt": 90.05,
+              "y_pt": 583.51
+            }
+          ],
+          "app": [
+            {
+              "page": 1,
+              "x_pt": 90.0,
+              "y_pt": 583.351
+            }
+          ],
+          "word_region": [
+            1,
+            0
+          ],
+          "app_region": [
+            1,
+            0
+          ],
+          "same_page": true,
+          "same_region": true,
+          "local_delta_css_px": {
+            "x": -0.067,
+            "y": -0.212
+          }
+        },
+        "COLUMN_12": {
+          "word": [
+            {
+              "page": 1,
+              "x_pt": 90.05,
+              "y_pt": 622.76
+            }
+          ],
+          "app": [
+            {
+              "page": 1,
+              "x_pt": 90.0,
+              "y_pt": 622.433
+            }
+          ],
+          "word_region": [
+            1,
+            0
+          ],
+          "app_region": [
+            1,
+            0
+          ],
+          "same_page": true,
+          "same_region": true,
+          "local_delta_css_px": {
+            "x": -0.067,
+            "y": -0.436
+          }
+        },
+        "COLUMN_13": {
+          "word": [
+            {
+              "page": 1,
+              "x_pt": 90.05,
+              "y_pt": 661.78
+            }
+          ],
+          "app": [
+            {
+              "page": 1,
+              "x_pt": 90.0,
+              "y_pt": 661.526
+            }
+          ],
+          "word_region": [
+            1,
+            0
+          ],
+          "app_region": [
+            1,
+            0
+          ],
+          "same_page": true,
+          "same_region": true,
+          "local_delta_css_px": {
+            "x": -0.067,
+            "y": -0.339
+          }
+        },
+        "COLUMN_14": {
+          "word": [
+            {
+              "page": 1,
+              "x_pt": 324.13,
+              "y_pt": 73.59
+            }
+          ],
+          "app": [
+            {
+              "page": 1,
+              "x_pt": 324.0,
+              "y_pt": 73.831
+            }
+          ],
+          "word_region": [
+            1,
+            1
+          ],
+          "app_region": [
+            1,
+            1
+          ],
+          "same_page": true,
+          "same_region": true,
+          "local_delta_css_px": {
+            "x": -0.173,
+            "y": 0.321
+          }
+        },
+        "COLUMN_15": {
+          "word": [
+            {
+              "page": 1,
+              "x_pt": 324.13,
+              "y_pt": 112.61
+            }
+          ],
+          "app": [
+            {
+              "page": 1,
+              "x_pt": 324.0,
+              "y_pt": 112.913
+            }
+          ],
+          "word_region": [
+            1,
+            1
+          ],
+          "app_region": [
+            1,
+            1
+          ],
+          "same_page": true,
+          "same_region": true,
+          "local_delta_css_px": {
+            "x": -0.173,
+            "y": 0.404
+          }
+        },
+        "COLUMN_16": {
+          "word": [
+            {
+              "page": 1,
+              "x_pt": 324.13,
+              "y_pt": 151.86
+            }
+          ],
+          "app": [
+            {
+              "page": 1,
+              "x_pt": 324.0,
+              "y_pt": 152.007
+            }
+          ],
+          "word_region": [
+            1,
+            1
+          ],
+          "app_region": [
+            1,
+            1
+          ],
+          "same_page": true,
+          "same_region": true,
+          "local_delta_css_px": {
+            "x": -0.173,
+            "y": 0.196
+          }
+        },
+        "COLUMN_17": {
+          "word": [
+            {
+              "page": 1,
+              "x_pt": 324.13,
+              "y_pt": 190.89
+            }
+          ],
+          "app": [
+            {
+              "page": 1,
+              "x_pt": 324.0,
+              "y_pt": 191.089
+            }
+          ],
+          "word_region": [
+            1,
+            1
+          ],
+          "app_region": [
+            1,
+            1
+          ],
+          "same_page": true,
+          "same_region": true,
+          "local_delta_css_px": {
+            "x": -0.173,
+            "y": 0.265
+          }
+        },
+        "COLUMN_18": {
+          "word": [
+            {
+              "page": 1,
+              "x_pt": 324.13,
+              "y_pt": 229.89
+            }
+          ],
+          "app": [
+            {
+              "page": 1,
+              "x_pt": 324.0,
+              "y_pt": 230.183
+            }
+          ],
+          "word_region": [
+            1,
+            1
+          ],
+          "app_region": [
+            1,
+            1
+          ],
+          "same_page": true,
+          "same_region": true,
+          "local_delta_css_px": {
+            "x": -0.173,
+            "y": 0.391
+          }
+        },
+        "COLUMN_19": {
+          "word": [
+            {
+              "page": 1,
+              "x_pt": 324.13,
+              "y_pt": 269.16
+            }
+          ],
+          "app": [
+            {
+              "page": 1,
+              "x_pt": 324.0,
+              "y_pt": 269.276
+            }
+          ],
+          "word_region": [
+            1,
+            1
+          ],
+          "app_region": [
+            1,
+            1
+          ],
+          "same_page": true,
+          "same_region": true,
+          "local_delta_css_px": {
+            "x": -0.173,
+            "y": 0.155
+          }
+        },
+        "COLUMN_20": {
+          "word": [
+            {
+              "page": 1,
+              "x_pt": 324.13,
+              "y_pt": 308.16
+            }
+          ],
+          "app": [
+            {
+              "page": 1,
+              "x_pt": 324.0,
+              "y_pt": 308.358
+            }
+          ],
+          "word_region": [
+            1,
+            1
+          ],
+          "app_region": [
+            1,
+            1
+          ],
+          "same_page": true,
+          "same_region": true,
+          "local_delta_css_px": {
+            "x": -0.173,
+            "y": 0.264
+          }
+        },
+        "COLUMN_21": {
+          "word": [
+            {
+              "page": 1,
+              "x_pt": 324.13,
+              "y_pt": 347.43
+            }
+          ],
+          "app": [
+            {
+              "page": 1,
+              "x_pt": 324.0,
+              "y_pt": 347.452
+            }
+          ],
+          "word_region": [
+            1,
+            1
+          ],
+          "app_region": [
+            1,
+            1
+          ],
+          "same_page": true,
+          "same_region": true,
+          "local_delta_css_px": {
+            "x": -0.173,
+            "y": 0.029
+          }
+        },
+        "COLUMN_22": {
+          "word": [
+            {
+              "page": 1,
+              "x_pt": 324.13,
+              "y_pt": 386.43
+            }
+          ],
+          "app": [
+            {
+              "page": 1,
+              "x_pt": 324.0,
+              "y_pt": 386.534
+            }
+          ],
+          "word_region": [
+            1,
+            1
+          ],
+          "app_region": [
+            1,
+            1
+          ],
+          "same_page": true,
+          "same_region": true,
+          "local_delta_css_px": {
+            "x": -0.173,
+            "y": 0.139
+          }
+        },
+        "COLUMN_23": {
+          "word": [
+            {
+              "page": 1,
+              "x_pt": 324.13,
+              "y_pt": 425.46
+            }
+          ],
+          "app": [
+            {
+              "page": 1,
+              "x_pt": 324.0,
+              "y_pt": 425.628
+            }
+          ],
+          "word_region": [
+            1,
+            1
+          ],
+          "app_region": [
+            1,
+            1
+          ],
+          "same_page": true,
+          "same_region": true,
+          "local_delta_css_px": {
+            "x": -0.173,
+            "y": 0.224
+          }
+        },
+        "COLUMN_24": {
+          "word": [
+            {
+              "page": 1,
+              "x_pt": 324.13,
+              "y_pt": 464.71
+            }
+          ],
+          "app": [
+            {
+              "page": 1,
+              "x_pt": 324.0,
+              "y_pt": 464.722
+            }
+          ],
+          "word_region": [
+            1,
+            1
+          ],
+          "app_region": [
+            1,
+            1
+          ],
+          "same_page": true,
+          "same_region": true,
+          "local_delta_css_px": {
+            "x": -0.173,
+            "y": 0.016
+          }
+        },
+        "COLUMN_25": {
+          "word": [
+            {
+              "page": 1,
+              "x_pt": 324.13,
+              "y_pt": 503.73
+            }
+          ],
+          "app": [
+            {
+              "page": 1,
+              "x_pt": 324.0,
+              "y_pt": 503.804
+            }
+          ],
+          "word_region": [
+            1,
+            1
+          ],
+          "app_region": [
+            1,
+            1
+          ],
+          "same_page": true,
+          "same_region": true,
+          "local_delta_css_px": {
+            "x": -0.173,
+            "y": 0.099
+          }
+        }
+      }
+    },
+    {
+      "id": "table-columns",
+      "status": "MEASURED",
+      "reference_pdf": "fixtures/compatibility/references/table-columns.pdf",
+      "app_pdf": "fixtures/compatibility/a7-4-final-app-pdfs/table-columns.pdf",
+      "reference_sha256": "6c86b34faea30723e6e89d7fb41740672051d5cb199de9ddb84c2e6d3aeb16c5",
+      "app_sha256": "84772b4b005f3d571fb3a5737339782f127bfa1dd7e0f4f7ba8ed5fb7c49ac60",
+      "source_sha256": "f4df883b288bfd03e45f1b67ea4f7aa0615ea9924f1ae7db68f47f599cca64ce",
+      "checks": {
+        "provenance_valid": true,
+        "page_count_equal": true,
+        "media_boxes_within_0_75pt": true,
+        "all_expanded_markers_once": true,
+        "expanded_marker_regions_equal": true,
+        "all_expanded_anchors_within_1_css_px": true
+      },
+      "page_counts": {
+        "word": 1,
+        "app": 1
+      },
+      "content_checks": {
+        "token_multisets_equal": true,
+        "expected_markers_once": true,
+        "link_count_equal": true,
+        "link_destination_geometry_equal": true
+      },
+      "source_equal_columns": {
+        "count": 2,
+        "left_pt": 90.0,
+        "width_pt": 198.0,
+        "gap_pt": 36.0
+      },
+      "expanded_marker_count": 30,
+      "missing_or_duplicate_markers": [],
+      "wrong_region_markers": [],
+      "same_region_max_absolute_delta_css_px": {
+        "x": 0.483,
+        "y": 0.777
+      },
+      "paragraph_pitch": {
+        "comparable_pairs": 24,
+        "mean_word_css_px": 52.142,
+        "mean_app_css_px": 52.118,
+        "pairs": [
+          {
+            "from": "COLUMN_00",
+            "to": "COLUMN_01",
+            "word_css_px": 52.373,
+            "app_css_px": 52.125,
+            "delta_css_px": -0.248
+          },
+          {
+            "from": "COLUMN_01",
+            "to": "COLUMN_02",
+            "word_css_px": 52.0,
+            "app_css_px": 52.109,
+            "delta_css_px": 0.109
+          },
+          {
+            "from": "COLUMN_02",
+            "to": "COLUMN_03",
+            "word_css_px": 52.027,
+            "app_css_px": 52.125,
+            "delta_css_px": 0.098
+          },
+          {
+            "from": "COLUMN_03",
+            "to": "COLUMN_04",
+            "word_css_px": 52.333,
+            "app_css_px": 52.124,
+            "delta_css_px": -0.209
+          },
+          {
+            "from": "COLUMN_04",
+            "to": "COLUMN_05",
+            "word_css_px": 52.027,
+            "app_css_px": 52.111,
+            "delta_css_px": 0.084
+          },
+          {
+            "from": "COLUMN_05",
+            "to": "COLUMN_06",
+            "word_css_px": 52.0,
+            "app_css_px": 52.124,
+            "delta_css_px": 0.124
+          },
+          {
+            "from": "COLUMN_06",
+            "to": "COLUMN_07",
+            "word_css_px": 52.373,
+            "app_css_px": 52.109,
+            "delta_css_px": -0.264
+          },
+          {
+            "from": "COLUMN_07",
+            "to": "COLUMN_08",
+            "word_css_px": 52.0,
+            "app_css_px": 52.125,
+            "delta_css_px": 0.125
+          },
+          {
+            "from": "COLUMN_08",
+            "to": "COLUMN_09",
+            "word_css_px": 52.36,
+            "app_css_px": 52.125,
+            "delta_css_px": -0.235
+          },
+          {
+            "from": "COLUMN_09",
+            "to": "COLUMN_10",
+            "word_css_px": 52.0,
+            "app_css_px": 52.109,
+            "delta_css_px": 0.109
+          },
+          {
+            "from": "COLUMN_10",
+            "to": "COLUMN_11",
+            "word_css_px": 52.04,
+            "app_css_px": 52.125,
+            "delta_css_px": 0.085
+          },
+          {
+            "from": "COLUMN_11",
+            "to": "COLUMN_12",
+            "word_css_px": 52.333,
+            "app_css_px": 52.109,
+            "delta_css_px": -0.224
+          },
+          {
+            "from": "COLUMN_12",
+            "to": "COLUMN_13",
+            "word_css_px": 52.027,
+            "app_css_px": 52.124,
+            "delta_css_px": 0.097
+          },
+          {
+            "from": "COLUMN_14",
+            "to": "COLUMN_15",
+            "word_css_px": 52.027,
+            "app_css_px": 52.109,
+            "delta_css_px": 0.082
+          },
+          {
+            "from": "COLUMN_15",
+            "to": "COLUMN_16",
+            "word_css_px": 52.333,
+            "app_css_px": 52.125,
+            "delta_css_px": -0.208
+          },
+          {
+            "from": "COLUMN_16",
+            "to": "COLUMN_17",
+            "word_css_px": 52.04,
+            "app_css_px": 52.109,
+            "delta_css_px": 0.069
+          },
+          {
+            "from": "COLUMN_17",
+            "to": "COLUMN_18",
+            "word_css_px": 52.0,
+            "app_css_px": 52.125,
+            "delta_css_px": 0.125
+          },
+          {
+            "from": "COLUMN_18",
+            "to": "COLUMN_19",
+            "word_css_px": 52.36,
+            "app_css_px": 52.124,
+            "delta_css_px": -0.236
+          },
+          {
+            "from": "COLUMN_19",
+            "to": "COLUMN_20",
+            "word_css_px": 52.0,
+            "app_css_px": 52.109,
+            "delta_css_px": 0.109
+          },
+          {
+            "from": "COLUMN_20",
+            "to": "COLUMN_21",
+            "word_css_px": 52.36,
+            "app_css_px": 52.125,
+            "delta_css_px": -0.235
+          },
+          {
+            "from": "COLUMN_21",
+            "to": "COLUMN_22",
+            "word_css_px": 52.0,
+            "app_css_px": 52.109,
+            "delta_css_px": 0.109
+          },
+          {
+            "from": "COLUMN_22",
+            "to": "COLUMN_23",
+            "word_css_px": 52.04,
+            "app_css_px": 52.125,
+            "delta_css_px": 0.085
+          },
+          {
+            "from": "COLUMN_23",
+            "to": "COLUMN_24",
+            "word_css_px": 52.333,
+            "app_css_px": 52.125,
+            "delta_css_px": -0.208
+          },
+          {
+            "from": "COLUMN_24",
+            "to": "COLUMN_25",
+            "word_css_px": 52.027,
+            "app_css_px": 52.109,
+            "delta_css_px": 0.082
+          }
+        ]
+      },
+      "relative_table_geometry": {
+        "table_first_row_width": {
+          "word": {
+            "x_css_px": 115.387,
+            "y_css_px": 0.0
+          },
+          "app": {
+            "x_css_px": 115.0,
+            "y_css_px": 0.0
+          },
+          "delta_css_px": {
+            "x_css_px": -0.387,
+            "y_css_px": 0.0
+          }
+        },
+        "table_first_column_row_pitch": {
+          "word": {
+            "x_css_px": 0.0,
+            "y_css_px": 17.667
+          },
+          "app": {
+            "x_css_px": 0.0,
+            "y_css_px": 17.86
+          },
+          "delta_css_px": {
+            "x_css_px": 0.0,
+            "y_css_px": 0.193
+          }
+        },
+        "table_inset_from_last_paragraph": {
+          "word": {
+            "x_css_px": 0.0,
+            "y_css_px": 53.0
+          },
+          "app": {
+            "x_css_px": 0.656,
+            "y_css_px": 52.124
+          },
+          "delta_css_px": {
+            "x_css_px": 0.656,
+            "y_css_px": -0.876
+          }
+        }
+      },
+      "anchors": {
+        "COLUMN_00": {
+          "word": [
+            {
+              "page": 1,
+              "x_pt": 90.05,
+              "y_pt": 153.36
+            }
+          ],
+          "app": [
+            {
+              "page": 1,
+              "x_pt": 90.0,
+              "y_pt": 153.366
+            }
+          ],
+          "word_region": [
+            1,
+            0
+          ],
+          "app_region": [
+            1,
+            0
+          ],
+          "same_page": true,
+          "same_region": true,
+          "local_delta_css_px": {
+            "x": -0.067,
+            "y": 0.008
+          }
+        },
+        "COLUMN_01": {
+          "word": [
+            {
+              "page": 1,
+              "x_pt": 90.05,
+              "y_pt": 192.64
+            }
+          ],
+          "app": [
+            {
+              "page": 1,
+              "x_pt": 90.0,
+              "y_pt": 192.46
+            }
+          ],
+          "word_region": [
+            1,
+            0
+          ],
+          "app_region": [
+            1,
+            0
+          ],
+          "same_page": true,
+          "same_region": true,
+          "local_delta_css_px": {
+            "x": -0.067,
+            "y": -0.24
+          }
+        },
+        "COLUMN_02": {
+          "word": [
+            {
+              "page": 1,
+              "x_pt": 90.05,
+              "y_pt": 231.64
+            }
+          ],
+          "app": [
+            {
+              "page": 1,
+              "x_pt": 90.0,
+              "y_pt": 231.542
+            }
+          ],
+          "word_region": [
+            1,
+            0
+          ],
+          "app_region": [
+            1,
+            0
+          ],
+          "same_page": true,
+          "same_region": true,
+          "local_delta_css_px": {
+            "x": -0.067,
+            "y": -0.131
+          }
+        },
+        "COLUMN_03": {
+          "word": [
+            {
+              "page": 1,
+              "x_pt": 90.05,
+              "y_pt": 270.66
+            }
+          ],
+          "app": [
+            {
+              "page": 1,
+              "x_pt": 90.0,
+              "y_pt": 270.636
+            }
+          ],
+          "word_region": [
+            1,
+            0
+          ],
+          "app_region": [
+            1,
+            0
+          ],
+          "same_page": true,
+          "same_region": true,
+          "local_delta_css_px": {
+            "x": -0.067,
+            "y": -0.032
+          }
+        },
+        "COLUMN_04": {
+          "word": [
+            {
+              "page": 1,
+              "x_pt": 90.05,
+              "y_pt": 309.91
+            }
+          ],
+          "app": [
+            {
+              "page": 1,
+              "x_pt": 90.0,
+              "y_pt": 309.729
+            }
+          ],
+          "word_region": [
+            1,
+            0
+          ],
+          "app_region": [
+            1,
+            0
+          ],
+          "same_page": true,
+          "same_region": true,
+          "local_delta_css_px": {
+            "x": -0.067,
+            "y": -0.241
+          }
+        },
+        "COLUMN_05": {
+          "word": [
+            {
+              "page": 1,
+              "x_pt": 90.05,
+              "y_pt": 348.93
+            }
+          ],
+          "app": [
+            {
+              "page": 1,
+              "x_pt": 90.0,
+              "y_pt": 348.812
+            }
+          ],
+          "word_region": [
+            1,
+            0
+          ],
+          "app_region": [
+            1,
+            0
+          ],
+          "same_page": true,
+          "same_region": true,
+          "local_delta_css_px": {
+            "x": -0.067,
+            "y": -0.157
+          }
+        },
+        "COLUMN_06": {
+          "word": [
+            {
+              "page": 1,
+              "x_pt": 90.05,
+              "y_pt": 387.93
+            }
+          ],
+          "app": [
+            {
+              "page": 1,
+              "x_pt": 90.0,
+              "y_pt": 387.905
+            }
+          ],
+          "word_region": [
+            1,
+            0
+          ],
+          "app_region": [
+            1,
+            0
+          ],
+          "same_page": true,
+          "same_region": true,
+          "local_delta_css_px": {
+            "x": -0.067,
+            "y": -0.033
+          }
+        },
+        "COLUMN_07": {
+          "word": [
+            {
+              "page": 1,
+              "x_pt": 90.05,
+              "y_pt": 427.21
+            }
+          ],
+          "app": [
+            {
+              "page": 1,
+              "x_pt": 90.0,
+              "y_pt": 426.987
+            }
+          ],
+          "word_region": [
+            1,
+            0
+          ],
+          "app_region": [
+            1,
+            0
+          ],
+          "same_page": true,
+          "same_region": true,
+          "local_delta_css_px": {
+            "x": -0.067,
+            "y": -0.297
+          }
+        },
+        "COLUMN_08": {
+          "word": [
+            {
+              "page": 1,
+              "x_pt": 90.05,
+              "y_pt": 466.21
+            }
+          ],
+          "app": [
+            {
+              "page": 1,
+              "x_pt": 90.0,
+              "y_pt": 466.081
+            }
+          ],
+          "word_region": [
+            1,
+            0
+          ],
+          "app_region": [
+            1,
+            0
+          ],
+          "same_page": true,
+          "same_region": true,
+          "local_delta_css_px": {
+            "x": -0.067,
+            "y": -0.172
+          }
+        },
+        "COLUMN_09": {
+          "word": [
+            {
+              "page": 1,
+              "x_pt": 90.05,
+              "y_pt": 505.48
+            }
+          ],
+          "app": [
+            {
+              "page": 1,
+              "x_pt": 90.0,
+              "y_pt": 505.175
+            }
+          ],
+          "word_region": [
+            1,
+            0
+          ],
+          "app_region": [
+            1,
+            0
+          ],
+          "same_page": true,
+          "same_region": true,
+          "local_delta_css_px": {
+            "x": -0.067,
+            "y": -0.407
+          }
+        },
+        "COLUMN_10": {
+          "word": [
+            {
+              "page": 1,
+              "x_pt": 90.05,
+              "y_pt": 544.48
+            }
+          ],
+          "app": [
+            {
+              "page": 1,
+              "x_pt": 90.0,
+              "y_pt": 544.257
+            }
+          ],
+          "word_region": [
+            1,
+            0
+          ],
+          "app_region": [
+            1,
+            0
+          ],
+          "same_page": true,
+          "same_region": true,
+          "local_delta_css_px": {
+            "x": -0.067,
+            "y": -0.297
+          }
+        },
+        "COLUMN_11": {
+          "word": [
+            {
+              "page": 1,
+              "x_pt": 90.05,
+              "y_pt": 583.51
+            }
+          ],
+          "app": [
+            {
+              "page": 1,
+              "x_pt": 90.0,
+              "y_pt": 583.351
+            }
+          ],
+          "word_region": [
+            1,
+            0
+          ],
+          "app_region": [
+            1,
+            0
+          ],
+          "same_page": true,
+          "same_region": true,
+          "local_delta_css_px": {
+            "x": -0.067,
+            "y": -0.212
+          }
+        },
+        "COLUMN_12": {
+          "word": [
+            {
+              "page": 1,
+              "x_pt": 90.05,
+              "y_pt": 622.76
+            }
+          ],
+          "app": [
+            {
+              "page": 1,
+              "x_pt": 90.0,
+              "y_pt": 622.433
+            }
+          ],
+          "word_region": [
+            1,
+            0
+          ],
+          "app_region": [
+            1,
+            0
+          ],
+          "same_page": true,
+          "same_region": true,
+          "local_delta_css_px": {
+            "x": -0.067,
+            "y": -0.436
+          }
+        },
+        "COLUMN_13": {
+          "word": [
+            {
+              "page": 1,
+              "x_pt": 90.05,
+              "y_pt": 661.78
+            }
+          ],
+          "app": [
+            {
+              "page": 1,
+              "x_pt": 90.0,
+              "y_pt": 661.526
+            }
+          ],
+          "word_region": [
+            1,
+            0
+          ],
+          "app_region": [
+            1,
+            0
+          ],
+          "same_page": true,
+          "same_region": true,
+          "local_delta_css_px": {
+            "x": -0.067,
+            "y": -0.339
+          }
+        },
+        "COLUMN_14": {
+          "word": [
+            {
+              "page": 1,
+              "x_pt": 324.13,
+              "y_pt": 73.59
+            }
+          ],
+          "app": [
+            {
+              "page": 1,
+              "x_pt": 324.0,
+              "y_pt": 73.831
+            }
+          ],
+          "word_region": [
+            1,
+            1
+          ],
+          "app_region": [
+            1,
+            1
+          ],
+          "same_page": true,
+          "same_region": true,
+          "local_delta_css_px": {
+            "x": -0.173,
+            "y": 0.321
+          }
+        },
+        "COLUMN_15": {
+          "word": [
+            {
+              "page": 1,
+              "x_pt": 324.13,
+              "y_pt": 112.61
+            }
+          ],
+          "app": [
+            {
+              "page": 1,
+              "x_pt": 324.0,
+              "y_pt": 112.913
+            }
+          ],
+          "word_region": [
+            1,
+            1
+          ],
+          "app_region": [
+            1,
+            1
+          ],
+          "same_page": true,
+          "same_region": true,
+          "local_delta_css_px": {
+            "x": -0.173,
+            "y": 0.404
+          }
+        },
+        "COLUMN_16": {
+          "word": [
+            {
+              "page": 1,
+              "x_pt": 324.13,
+              "y_pt": 151.86
+            }
+          ],
+          "app": [
+            {
+              "page": 1,
+              "x_pt": 324.0,
+              "y_pt": 152.007
+            }
+          ],
+          "word_region": [
+            1,
+            1
+          ],
+          "app_region": [
+            1,
+            1
+          ],
+          "same_page": true,
+          "same_region": true,
+          "local_delta_css_px": {
+            "x": -0.173,
+            "y": 0.196
+          }
+        },
+        "COLUMN_17": {
+          "word": [
+            {
+              "page": 1,
+              "x_pt": 324.13,
+              "y_pt": 190.89
+            }
+          ],
+          "app": [
+            {
+              "page": 1,
+              "x_pt": 324.0,
+              "y_pt": 191.089
+            }
+          ],
+          "word_region": [
+            1,
+            1
+          ],
+          "app_region": [
+            1,
+            1
+          ],
+          "same_page": true,
+          "same_region": true,
+          "local_delta_css_px": {
+            "x": -0.173,
+            "y": 0.265
+          }
+        },
+        "COLUMN_18": {
+          "word": [
+            {
+              "page": 1,
+              "x_pt": 324.13,
+              "y_pt": 229.89
+            }
+          ],
+          "app": [
+            {
+              "page": 1,
+              "x_pt": 324.0,
+              "y_pt": 230.183
+            }
+          ],
+          "word_region": [
+            1,
+            1
+          ],
+          "app_region": [
+            1,
+            1
+          ],
+          "same_page": true,
+          "same_region": true,
+          "local_delta_css_px": {
+            "x": -0.173,
+            "y": 0.391
+          }
+        },
+        "COLUMN_19": {
+          "word": [
+            {
+              "page": 1,
+              "x_pt": 324.13,
+              "y_pt": 269.16
+            }
+          ],
+          "app": [
+            {
+              "page": 1,
+              "x_pt": 324.0,
+              "y_pt": 269.276
+            }
+          ],
+          "word_region": [
+            1,
+            1
+          ],
+          "app_region": [
+            1,
+            1
+          ],
+          "same_page": true,
+          "same_region": true,
+          "local_delta_css_px": {
+            "x": -0.173,
+            "y": 0.155
+          }
+        },
+        "COLUMN_20": {
+          "word": [
+            {
+              "page": 1,
+              "x_pt": 324.13,
+              "y_pt": 308.16
+            }
+          ],
+          "app": [
+            {
+              "page": 1,
+              "x_pt": 324.0,
+              "y_pt": 308.358
+            }
+          ],
+          "word_region": [
+            1,
+            1
+          ],
+          "app_region": [
+            1,
+            1
+          ],
+          "same_page": true,
+          "same_region": true,
+          "local_delta_css_px": {
+            "x": -0.173,
+            "y": 0.264
+          }
+        },
+        "COLUMN_21": {
+          "word": [
+            {
+              "page": 1,
+              "x_pt": 324.13,
+              "y_pt": 347.43
+            }
+          ],
+          "app": [
+            {
+              "page": 1,
+              "x_pt": 324.0,
+              "y_pt": 347.452
+            }
+          ],
+          "word_region": [
+            1,
+            1
+          ],
+          "app_region": [
+            1,
+            1
+          ],
+          "same_page": true,
+          "same_region": true,
+          "local_delta_css_px": {
+            "x": -0.173,
+            "y": 0.029
+          }
+        },
+        "COLUMN_22": {
+          "word": [
+            {
+              "page": 1,
+              "x_pt": 324.13,
+              "y_pt": 386.43
+            }
+          ],
+          "app": [
+            {
+              "page": 1,
+              "x_pt": 324.0,
+              "y_pt": 386.534
+            }
+          ],
+          "word_region": [
+            1,
+            1
+          ],
+          "app_region": [
+            1,
+            1
+          ],
+          "same_page": true,
+          "same_region": true,
+          "local_delta_css_px": {
+            "x": -0.173,
+            "y": 0.139
+          }
+        },
+        "COLUMN_23": {
+          "word": [
+            {
+              "page": 1,
+              "x_pt": 324.13,
+              "y_pt": 425.46
+            }
+          ],
+          "app": [
+            {
+              "page": 1,
+              "x_pt": 324.0,
+              "y_pt": 425.628
+            }
+          ],
+          "word_region": [
+            1,
+            1
+          ],
+          "app_region": [
+            1,
+            1
+          ],
+          "same_page": true,
+          "same_region": true,
+          "local_delta_css_px": {
+            "x": -0.173,
+            "y": 0.224
+          }
+        },
+        "COLUMN_24": {
+          "word": [
+            {
+              "page": 1,
+              "x_pt": 324.13,
+              "y_pt": 464.71
+            }
+          ],
+          "app": [
+            {
+              "page": 1,
+              "x_pt": 324.0,
+              "y_pt": 464.722
+            }
+          ],
+          "word_region": [
+            1,
+            1
+          ],
+          "app_region": [
+            1,
+            1
+          ],
+          "same_page": true,
+          "same_region": true,
+          "local_delta_css_px": {
+            "x": -0.173,
+            "y": 0.016
+          }
+        },
+        "COLUMN_25": {
+          "word": [
+            {
+              "page": 1,
+              "x_pt": 324.13,
+              "y_pt": 503.73
+            }
+          ],
+          "app": [
+            {
+              "page": 1,
+              "x_pt": 324.0,
+              "y_pt": 503.804
+            }
+          ],
+          "word_region": [
+            1,
+            1
+          ],
+          "app_region": [
+            1,
+            1
+          ],
+          "same_page": true,
+          "same_region": true,
+          "local_delta_css_px": {
+            "x": -0.173,
+            "y": 0.099
+          }
+        },
+        "TABLE_A": {
+          "word": [
+            {
+              "page": 1,
+              "x_pt": 324.13,
+              "y_pt": 543.48
+            }
+          ],
+          "app": [
+            {
+              "page": 1,
+              "x_pt": 324.492,
+              "y_pt": 542.897
+            }
+          ],
+          "word_region": [
+            1,
+            1
+          ],
+          "app_region": [
+            1,
+            1
+          ],
+          "same_page": true,
+          "same_region": true,
+          "local_delta_css_px": {
+            "x": 0.483,
+            "y": -0.777
+          }
+        },
+        "TABLE_B": {
+          "word": [
+            {
+              "page": 1,
+              "x_pt": 410.67,
+              "y_pt": 543.48
+            }
+          ],
+          "app": [
+            {
+              "page": 1,
+              "x_pt": 410.742,
+              "y_pt": 542.897
+            }
+          ],
+          "word_region": [
+            1,
+            1
+          ],
+          "app_region": [
+            1,
+            1
+          ],
+          "same_page": true,
+          "same_region": true,
+          "local_delta_css_px": {
+            "x": 0.096,
+            "y": -0.777
+          }
+        },
+        "TABLE_C": {
+          "word": [
+            {
+              "page": 1,
+              "x_pt": 324.13,
+              "y_pt": 556.73
+            }
+          ],
+          "app": [
+            {
+              "page": 1,
+              "x_pt": 324.492,
+              "y_pt": 556.292
+            }
+          ],
+          "word_region": [
+            1,
+            1
+          ],
+          "app_region": [
+            1,
+            1
+          ],
+          "same_page": true,
+          "same_region": true,
+          "local_delta_css_px": {
+            "x": 0.483,
+            "y": -0.584
+          }
+        },
+        "TABLE_D": {
+          "word": [
+            {
+              "page": 1,
+              "x_pt": 410.67,
+              "y_pt": 556.73
+            }
+          ],
+          "app": [
+            {
+              "page": 1,
+              "x_pt": 410.742,
+              "y_pt": 556.292
+            }
+          ],
+          "word_region": [
+            1,
+            1
+          ],
+          "app_region": [
+            1,
+            1
+          ],
+          "same_page": true,
+          "same_region": true,
+          "local_delta_css_px": {
+            "x": 0.096,
+            "y": -0.584
+          }
+        }
+      }
+    },
+    {
+      "id": "mixed",
+      "status": "MEASURED",
+      "reference_pdf": "fixtures/compatibility/references/mixed.pdf",
+      "app_pdf": "fixtures/compatibility/a7-4-final-app-pdfs/mixed.pdf",
+      "reference_sha256": "7dd412a2ae75e38680a1dc134f41ac563a38d5ad4ac9081e215aeef478d2ef6d",
+      "app_sha256": "fd42051cf121794ff693b68a1e74310af2e9331d577dfa6e9c40b91383852582",
+      "source_sha256": "e0cf199ae6e900fa5cc3aad546d80d1c50348e579b6258fbaeec092cbd63baf7",
+      "checks": {
+        "provenance_valid": true,
+        "page_count_equal": true,
+        "media_boxes_within_0_75pt": true,
+        "all_expanded_markers_once": true,
+        "expanded_marker_regions_equal": true,
+        "all_expanded_anchors_within_1_css_px": true
+      },
+      "page_counts": {
+        "word": 2,
+        "app": 2
+      },
+      "content_checks": {
+        "token_multisets_equal": false,
+        "expected_markers_once": true,
+        "link_count_equal": false,
+        "link_destination_geometry_equal": false
+      },
+      "source_equal_columns": {
+        "count": 2,
+        "left_pt": 90.0,
+        "width_pt": 198.0,
+        "gap_pt": 36.0
+      },
+      "expanded_marker_count": 37,
+      "missing_or_duplicate_markers": [],
+      "wrong_region_markers": [],
+      "same_region_max_absolute_delta_css_px": {
+        "x": 0.483,
+        "y": 0.916
+      },
+      "paragraph_pitch": {
+        "comparable_pairs": 24,
+        "mean_word_css_px": 52.143,
+        "mean_app_css_px": 52.119,
+        "pairs": [
+          {
+            "from": "COLUMN_00",
+            "to": "COLUMN_01",
+            "word_css_px": 52.04,
+            "app_css_px": 52.125,
+            "delta_css_px": 0.085
+          },
+          {
+            "from": "COLUMN_01",
+            "to": "COLUMN_02",
+            "word_css_px": 52.0,
+            "app_css_px": 52.109,
+            "delta_css_px": 0.109
+          },
+          {
+            "from": "COLUMN_02",
+            "to": "COLUMN_03",
+            "word_css_px": 52.36,
+            "app_css_px": 52.125,
+            "delta_css_px": -0.235
+          },
+          {
+            "from": "COLUMN_03",
+            "to": "COLUMN_04",
+            "word_css_px": 52.0,
+            "app_css_px": 52.124,
+            "delta_css_px": 0.124
+          },
+          {
+            "from": "COLUMN_04",
+            "to": "COLUMN_05",
+            "word_css_px": 52.04,
+            "app_css_px": 52.109,
+            "delta_css_px": 0.069
+          },
+          {
+            "from": "COLUMN_05",
+            "to": "COLUMN_06",
+            "word_css_px": 52.333,
+            "app_css_px": 52.125,
+            "delta_css_px": -0.208
+          },
+          {
+            "from": "COLUMN_06",
+            "to": "COLUMN_07",
+            "word_css_px": 52.027,
+            "app_css_px": 52.125,
+            "delta_css_px": 0.098
+          },
+          {
+            "from": "COLUMN_07",
+            "to": "COLUMN_08",
+            "word_css_px": 52.333,
+            "app_css_px": 52.109,
+            "delta_css_px": -0.224
+          },
+          {
+            "from": "COLUMN_08",
+            "to": "COLUMN_09",
+            "word_css_px": 52.04,
+            "app_css_px": 52.125,
+            "delta_css_px": 0.085
+          },
+          {
+            "from": "COLUMN_09",
+            "to": "COLUMN_10",
+            "word_css_px": 52.0,
+            "app_css_px": 52.109,
+            "delta_css_px": 0.109
+          },
+          {
+            "from": "COLUMN_10",
+            "to": "COLUMN_11",
+            "word_css_px": 52.367,
+            "app_css_px": 52.125,
+            "delta_css_px": -0.242
+          },
+          {
+            "from": "COLUMN_12",
+            "to": "COLUMN_13",
+            "word_css_px": 52.027,
+            "app_css_px": 52.109,
+            "delta_css_px": 0.082
+          },
+          {
+            "from": "COLUMN_13",
+            "to": "COLUMN_14",
+            "word_css_px": 52.333,
+            "app_css_px": 52.125,
+            "delta_css_px": -0.208
+          },
+          {
+            "from": "COLUMN_14",
+            "to": "COLUMN_15",
+            "word_css_px": 52.04,
+            "app_css_px": 52.109,
+            "delta_css_px": 0.069
+          },
+          {
+            "from": "COLUMN_15",
+            "to": "COLUMN_16",
+            "word_css_px": 52.0,
+            "app_css_px": 52.125,
+            "delta_css_px": 0.125
+          },
+          {
+            "from": "COLUMN_16",
+            "to": "COLUMN_17",
+            "word_css_px": 52.36,
+            "app_css_px": 52.124,
+            "delta_css_px": -0.236
+          },
+          {
+            "from": "COLUMN_17",
+            "to": "COLUMN_18",
+            "word_css_px": 52.0,
+            "app_css_px": 52.109,
+            "delta_css_px": 0.109
+          },
+          {
+            "from": "COLUMN_18",
+            "to": "COLUMN_19",
+            "word_css_px": 52.36,
+            "app_css_px": 52.125,
+            "delta_css_px": -0.235
+          },
+          {
+            "from": "COLUMN_19",
+            "to": "COLUMN_20",
+            "word_css_px": 52.0,
+            "app_css_px": 52.109,
+            "delta_css_px": 0.109
+          },
+          {
+            "from": "COLUMN_20",
+            "to": "COLUMN_21",
+            "word_css_px": 52.04,
+            "app_css_px": 52.125,
+            "delta_css_px": 0.085
+          },
+          {
+            "from": "COLUMN_21",
+            "to": "COLUMN_22",
+            "word_css_px": 52.333,
+            "app_css_px": 52.125,
+            "delta_css_px": -0.208
+          },
+          {
+            "from": "COLUMN_22",
+            "to": "COLUMN_23",
+            "word_css_px": 52.027,
+            "app_css_px": 52.109,
+            "delta_css_px": 0.082
+          },
+          {
+            "from": "COLUMN_23",
+            "to": "COLUMN_24",
+            "word_css_px": 52.0,
+            "app_css_px": 52.124,
+            "delta_css_px": 0.124
+          },
+          {
+            "from": "COLUMN_24",
+            "to": "COLUMN_25",
+            "word_css_px": 52.373,
+            "app_css_px": 52.125,
+            "delta_css_px": -0.248
+          }
+        ]
+      },
+      "relative_table_geometry": {
+        "table_first_row_width": {
+          "word": {
+            "x_css_px": 115.387,
+            "y_css_px": 0.0
+          },
+          "app": {
+            "x_css_px": 115.0,
+            "y_css_px": 0.0
+          },
+          "delta_css_px": {
+            "x_css_px": -0.387,
+            "y_css_px": 0.0
+          }
+        },
+        "table_first_column_row_pitch": {
+          "word": {
+            "x_css_px": 0.0,
+            "y_css_px": 17.333
+          },
+          "app": {
+            "x_css_px": 0.0,
+            "y_css_px": 17.86
+          },
+          "delta_css_px": {
+            "x_css_px": 0.0,
+            "y_css_px": 0.527
+          }
+        },
+        "table_inset_from_last_paragraph": {
+          "word": {
+            "x_css_px": 0.0,
+            "y_css_px": 53.0
+          },
+          "app": {
+            "x_css_px": 0.656,
+            "y_css_px": 52.109
+          },
+          "delta_css_px": {
+            "x_css_px": 0.656,
+            "y_css_px": -0.891
+          }
+        }
+      },
+      "anchors": {
+        "COLUMN_00": {
+          "word": [
+            {
+              "page": 1,
+              "x_pt": 90.05,
+              "y_pt": 257.88
+            }
+          ],
+          "app": [
+            {
+              "page": 1,
+              "x_pt": 90.0,
+              "y_pt": 257.452
+            }
+          ],
+          "word_region": [
+            1,
+            0
+          ],
+          "app_region": [
+            1,
+            0
+          ],
+          "same_page": true,
+          "same_region": true,
+          "local_delta_css_px": {
+            "x": -0.067,
+            "y": -0.571
+          }
+        },
+        "COLUMN_01": {
+          "word": [
+            {
+              "page": 1,
+              "x_pt": 90.05,
+              "y_pt": 296.91
+            }
+          ],
+          "app": [
+            {
+              "page": 1,
+              "x_pt": 90.0,
+              "y_pt": 296.546
+            }
+          ],
+          "word_region": [
+            1,
+            0
+          ],
+          "app_region": [
+            1,
+            0
+          ],
+          "same_page": true,
+          "same_region": true,
+          "local_delta_css_px": {
+            "x": -0.067,
+            "y": -0.485
+          }
+        },
+        "COLUMN_02": {
+          "word": [
+            {
+              "page": 1,
+              "x_pt": 90.05,
+              "y_pt": 335.91
+            }
+          ],
+          "app": [
+            {
+              "page": 1,
+              "x_pt": 90.0,
+              "y_pt": 335.628
+            }
+          ],
+          "word_region": [
+            1,
+            0
+          ],
+          "app_region": [
+            1,
+            0
+          ],
+          "same_page": true,
+          "same_region": true,
+          "local_delta_css_px": {
+            "x": -0.067,
+            "y": -0.376
+          }
+        },
+        "COLUMN_03": {
+          "word": [
+            {
+              "page": 1,
+              "x_pt": 90.05,
+              "y_pt": 375.18
+            }
+          ],
+          "app": [
+            {
+              "page": 1,
+              "x_pt": 90.0,
+              "y_pt": 374.722
+            }
+          ],
+          "word_region": [
+            1,
+            0
+          ],
+          "app_region": [
+            1,
+            0
+          ],
+          "same_page": true,
+          "same_region": true,
+          "local_delta_css_px": {
+            "x": -0.067,
+            "y": -0.611
+          }
+        },
+        "COLUMN_04": {
+          "word": [
+            {
+              "page": 1,
+              "x_pt": 90.05,
+              "y_pt": 414.18
+            }
+          ],
+          "app": [
+            {
+              "page": 1,
+              "x_pt": 90.0,
+              "y_pt": 413.815
+            }
+          ],
+          "word_region": [
+            1,
+            0
+          ],
+          "app_region": [
+            1,
+            0
+          ],
+          "same_page": true,
+          "same_region": true,
+          "local_delta_css_px": {
+            "x": -0.067,
+            "y": -0.487
+          }
+        },
+        "COLUMN_05": {
+          "word": [
+            {
+              "page": 1,
+              "x_pt": 90.05,
+              "y_pt": 453.21
+            }
+          ],
+          "app": [
+            {
+              "page": 1,
+              "x_pt": 90.0,
+              "y_pt": 452.897
+            }
+          ],
+          "word_region": [
+            1,
+            0
+          ],
+          "app_region": [
+            1,
+            0
+          ],
+          "same_page": true,
+          "same_region": true,
+          "local_delta_css_px": {
+            "x": -0.067,
+            "y": -0.417
+          }
+        },
+        "COLUMN_06": {
+          "word": [
+            {
+              "page": 1,
+              "x_pt": 90.05,
+              "y_pt": 492.46
+            }
+          ],
+          "app": [
+            {
+              "page": 1,
+              "x_pt": 90.0,
+              "y_pt": 491.991
+            }
+          ],
+          "word_region": [
+            1,
+            0
+          ],
+          "app_region": [
+            1,
+            0
+          ],
+          "same_page": true,
+          "same_region": true,
+          "local_delta_css_px": {
+            "x": -0.067,
+            "y": -0.625
+          }
+        },
+        "COLUMN_07": {
+          "word": [
+            {
+              "page": 1,
+              "x_pt": 90.05,
+              "y_pt": 531.48
+            }
+          ],
+          "app": [
+            {
+              "page": 1,
+              "x_pt": 90.0,
+              "y_pt": 531.085
+            }
+          ],
+          "word_region": [
+            1,
+            0
+          ],
+          "app_region": [
+            1,
+            0
+          ],
+          "same_page": true,
+          "same_region": true,
+          "local_delta_css_px": {
+            "x": -0.067,
+            "y": -0.527
+          }
+        },
+        "COLUMN_08": {
+          "word": [
+            {
+              "page": 1,
+              "x_pt": 90.05,
+              "y_pt": 570.73
+            }
+          ],
+          "app": [
+            {
+              "page": 1,
+              "x_pt": 90.0,
+              "y_pt": 570.167
+            }
+          ],
+          "word_region": [
+            1,
+            0
+          ],
+          "app_region": [
+            1,
+            0
+          ],
+          "same_page": true,
+          "same_region": true,
+          "local_delta_css_px": {
+            "x": -0.067,
+            "y": -0.751
+          }
+        },
+        "COLUMN_09": {
+          "word": [
+            {
+              "page": 1,
+              "x_pt": 90.05,
+              "y_pt": 609.76
+            }
+          ],
+          "app": [
+            {
+              "page": 1,
+              "x_pt": 90.0,
+              "y_pt": 609.261
+            }
+          ],
+          "word_region": [
+            1,
+            0
+          ],
+          "app_region": [
+            1,
+            0
+          ],
+          "same_page": true,
+          "same_region": true,
+          "local_delta_css_px": {
+            "x": -0.067,
+            "y": -0.665
+          }
+        },
+        "COLUMN_10": {
+          "word": [
+            {
+              "page": 1,
+              "x_pt": 90.05,
+              "y_pt": 648.76
+            }
+          ],
+          "app": [
+            {
+              "page": 1,
+              "x_pt": 90.0,
+              "y_pt": 648.343
+            }
+          ],
+          "word_region": [
+            1,
+            0
+          ],
+          "app_region": [
+            1,
+            0
+          ],
+          "same_page": true,
+          "same_region": true,
+          "local_delta_css_px": {
+            "x": -0.067,
+            "y": -0.556
+          }
+        },
+        "COLUMN_11": {
+          "word": [
+            {
+              "page": 1,
+              "x_pt": 90.05,
+              "y_pt": 688.035
+            }
+          ],
+          "app": [
+            {
+              "page": 1,
+              "x_pt": 90.0,
+              "y_pt": 687.437
+            }
+          ],
+          "word_region": [
+            1,
+            0
+          ],
+          "app_region": [
+            1,
+            0
+          ],
+          "same_page": true,
+          "same_region": true,
+          "local_delta_css_px": {
+            "x": -0.067,
+            "y": -0.797
+          }
+        },
+        "COLUMN_12": {
+          "word": [
+            {
+              "page": 1,
+              "x_pt": 324.13,
+              "y_pt": 73.59
+            }
+          ],
+          "app": [
+            {
+              "page": 1,
+              "x_pt": 324.0,
+              "y_pt": 73.831
+            }
+          ],
+          "word_region": [
+            1,
+            1
+          ],
+          "app_region": [
+            1,
+            1
+          ],
+          "same_page": true,
+          "same_region": true,
+          "local_delta_css_px": {
+            "x": -0.173,
+            "y": 0.321
+          }
+        },
+        "COLUMN_13": {
+          "word": [
+            {
+              "page": 1,
+              "x_pt": 324.13,
+              "y_pt": 112.61
+            }
+          ],
+          "app": [
+            {
+              "page": 1,
+              "x_pt": 324.0,
+              "y_pt": 112.913
+            }
+          ],
+          "word_region": [
+            1,
+            1
+          ],
+          "app_region": [
+            1,
+            1
+          ],
+          "same_page": true,
+          "same_region": true,
+          "local_delta_css_px": {
+            "x": -0.173,
+            "y": 0.404
+          }
+        },
+        "COLUMN_14": {
+          "word": [
+            {
+              "page": 1,
+              "x_pt": 324.13,
+              "y_pt": 151.86
+            }
+          ],
+          "app": [
+            {
+              "page": 1,
+              "x_pt": 324.0,
+              "y_pt": 152.007
+            }
+          ],
+          "word_region": [
+            1,
+            1
+          ],
+          "app_region": [
+            1,
+            1
+          ],
+          "same_page": true,
+          "same_region": true,
+          "local_delta_css_px": {
+            "x": -0.173,
+            "y": 0.196
+          }
+        },
+        "COLUMN_15": {
+          "word": [
+            {
+              "page": 1,
+              "x_pt": 324.13,
+              "y_pt": 190.89
+            }
+          ],
+          "app": [
+            {
+              "page": 1,
+              "x_pt": 324.0,
+              "y_pt": 191.089
+            }
+          ],
+          "word_region": [
+            1,
+            1
+          ],
+          "app_region": [
+            1,
+            1
+          ],
+          "same_page": true,
+          "same_region": true,
+          "local_delta_css_px": {
+            "x": -0.173,
+            "y": 0.265
+          }
+        },
+        "COLUMN_16": {
+          "word": [
+            {
+              "page": 1,
+              "x_pt": 324.13,
+              "y_pt": 229.89
+            }
+          ],
+          "app": [
+            {
+              "page": 1,
+              "x_pt": 324.0,
+              "y_pt": 230.183
+            }
+          ],
+          "word_region": [
+            1,
+            1
+          ],
+          "app_region": [
+            1,
+            1
+          ],
+          "same_page": true,
+          "same_region": true,
+          "local_delta_css_px": {
+            "x": -0.173,
+            "y": 0.391
+          }
+        },
+        "COLUMN_17": {
+          "word": [
+            {
+              "page": 1,
+              "x_pt": 324.13,
+              "y_pt": 269.16
+            }
+          ],
+          "app": [
+            {
+              "page": 1,
+              "x_pt": 324.0,
+              "y_pt": 269.276
+            }
+          ],
+          "word_region": [
+            1,
+            1
+          ],
+          "app_region": [
+            1,
+            1
+          ],
+          "same_page": true,
+          "same_region": true,
+          "local_delta_css_px": {
+            "x": -0.173,
+            "y": 0.155
+          }
+        },
+        "COLUMN_18": {
+          "word": [
+            {
+              "page": 1,
+              "x_pt": 324.13,
+              "y_pt": 308.16
+            }
+          ],
+          "app": [
+            {
+              "page": 1,
+              "x_pt": 324.0,
+              "y_pt": 308.358
+            }
+          ],
+          "word_region": [
+            1,
+            1
+          ],
+          "app_region": [
+            1,
+            1
+          ],
+          "same_page": true,
+          "same_region": true,
+          "local_delta_css_px": {
+            "x": -0.173,
+            "y": 0.264
+          }
+        },
+        "COLUMN_19": {
+          "word": [
+            {
+              "page": 1,
+              "x_pt": 324.13,
+              "y_pt": 347.43
+            }
+          ],
+          "app": [
+            {
+              "page": 1,
+              "x_pt": 324.0,
+              "y_pt": 347.452
+            }
+          ],
+          "word_region": [
+            1,
+            1
+          ],
+          "app_region": [
+            1,
+            1
+          ],
+          "same_page": true,
+          "same_region": true,
+          "local_delta_css_px": {
+            "x": -0.173,
+            "y": 0.029
+          }
+        },
+        "COLUMN_20": {
+          "word": [
+            {
+              "page": 1,
+              "x_pt": 324.13,
+              "y_pt": 386.43
+            }
+          ],
+          "app": [
+            {
+              "page": 1,
+              "x_pt": 324.0,
+              "y_pt": 386.534
+            }
+          ],
+          "word_region": [
+            1,
+            1
+          ],
+          "app_region": [
+            1,
+            1
+          ],
+          "same_page": true,
+          "same_region": true,
+          "local_delta_css_px": {
+            "x": -0.173,
+            "y": 0.139
+          }
+        },
+        "COLUMN_21": {
+          "word": [
+            {
+              "page": 1,
+              "x_pt": 324.13,
+              "y_pt": 425.46
+            }
+          ],
+          "app": [
+            {
+              "page": 1,
+              "x_pt": 324.0,
+              "y_pt": 425.628
+            }
+          ],
+          "word_region": [
+            1,
+            1
+          ],
+          "app_region": [
+            1,
+            1
+          ],
+          "same_page": true,
+          "same_region": true,
+          "local_delta_css_px": {
+            "x": -0.173,
+            "y": 0.224
+          }
+        },
+        "COLUMN_22": {
+          "word": [
+            {
+              "page": 1,
+              "x_pt": 324.13,
+              "y_pt": 464.71
+            }
+          ],
+          "app": [
+            {
+              "page": 1,
+              "x_pt": 324.0,
+              "y_pt": 464.722
+            }
+          ],
+          "word_region": [
+            1,
+            1
+          ],
+          "app_region": [
+            1,
+            1
+          ],
+          "same_page": true,
+          "same_region": true,
+          "local_delta_css_px": {
+            "x": -0.173,
+            "y": 0.016
+          }
+        },
+        "COLUMN_23": {
+          "word": [
+            {
+              "page": 1,
+              "x_pt": 324.13,
+              "y_pt": 503.73
+            }
+          ],
+          "app": [
+            {
+              "page": 1,
+              "x_pt": 324.0,
+              "y_pt": 503.804
+            }
+          ],
+          "word_region": [
+            1,
+            1
+          ],
+          "app_region": [
+            1,
+            1
+          ],
+          "same_page": true,
+          "same_region": true,
+          "local_delta_css_px": {
+            "x": -0.173,
+            "y": 0.099
+          }
+        },
+        "COLUMN_24": {
+          "word": [
+            {
+              "page": 1,
+              "x_pt": 324.13,
+              "y_pt": 542.73
+            }
+          ],
+          "app": [
+            {
+              "page": 1,
+              "x_pt": 324.0,
+              "y_pt": 542.897
+            }
+          ],
+          "word_region": [
+            1,
+            1
+          ],
+          "app_region": [
+            1,
+            1
+          ],
+          "same_page": true,
+          "same_region": true,
+          "local_delta_css_px": {
+            "x": -0.173,
+            "y": 0.223
+          }
+        },
+        "COLUMN_25": {
+          "word": [
+            {
+              "page": 1,
+              "x_pt": 324.13,
+              "y_pt": 582.01
+            }
+          ],
+          "app": [
+            {
+              "page": 1,
+              "x_pt": 324.0,
+              "y_pt": 581.991
+            }
+          ],
+          "word_region": [
+            1,
+            1
+          ],
+          "app_region": [
+            1,
+            1
+          ],
+          "same_page": true,
+          "same_region": true,
+          "local_delta_css_px": {
+            "x": -0.173,
+            "y": -0.025
+          }
+        },
+        "CROSSREF_END": {
+          "word": [
+            {
+              "page": 2,
+              "x_pt": 193.83,
+              "y_pt": 264.14
+            }
+          ],
+          "app": [
+            {
+              "page": 2,
+              "x_pt": 193.852,
+              "y_pt": 264.062
+            }
+          ],
+          "word_region": [
+            2,
+            0
+          ],
+          "app_region": [
+            2,
+            0
+          ],
+          "same_page": true,
+          "same_region": true,
+          "local_delta_css_px": {
+            "x": 0.029,
+            "y": -0.104
+          }
+        },
+        "CROSSREF_START": {
+          "word": [
+            {
+              "page": 2,
+              "x_pt": 90.05,
+              "y_pt": 249.64
+            }
+          ],
+          "app": [
+            {
+              "page": 2,
+              "x_pt": 90.0,
+              "y_pt": 249.519
+            }
+          ],
+          "word_region": [
+            2,
+            0
+          ],
+          "app_region": [
+            2,
+            0
+          ],
+          "same_page": true,
+          "same_region": true,
+          "local_delta_css_px": {
+            "x": -0.067,
+            "y": -0.161
+          }
+        },
+        "ENDNOTE_BODY": {
+          "word": [
+            {
+              "page": 2,
+              "x_pt": 90.05,
+              "y_pt": 301.41
+            }
+          ],
+          "app": [
+            {
+              "page": 2,
+              "x_pt": 90.0,
+              "y_pt": 301.245
+            }
+          ],
+          "word_region": [
+            2,
+            0
+          ],
+          "app_region": [
+            2,
+            0
+          ],
+          "same_page": true,
+          "same_region": true,
+          "local_delta_css_px": {
+            "x": -0.067,
+            "y": -0.22
+          }
+        },
+        "FOOTNOTE_BODY": {
+          "word": [
+            {
+              "page": 2,
+              "x_pt": 90.05,
+              "y_pt": 697.285
+            }
+          ],
+          "app": [
+            {
+              "page": 2,
+              "x_pt": 90.0,
+              "y_pt": 697.28
+            }
+          ],
+          "word_region": [
+            2,
+            0
+          ],
+          "app_region": [
+            2,
+            0
+          ],
+          "same_page": true,
+          "same_region": true,
+          "local_delta_css_px": {
+            "x": -0.067,
+            "y": -0.007
+          }
+        },
+        "NOTE_ANCHOR": {
+          "word": [
+            {
+              "page": 2,
+              "x_pt": 90.05,
+              "y_pt": 73.59
+            }
+          ],
+          "app": [
+            {
+              "page": 2,
+              "x_pt": 90.0,
+              "y_pt": 73.831
+            }
+          ],
+          "word_region": [
+            2,
+            0
+          ],
+          "app_region": [
+            2,
+            0
+          ],
+          "same_page": true,
+          "same_region": true,
+          "local_delta_css_px": {
+            "x": -0.067,
+            "y": 0.321
+          }
+        },
+        "TABLE_A": {
+          "word": [
+            {
+              "page": 1,
+              "x_pt": 324.13,
+              "y_pt": 621.76
+            }
+          ],
+          "app": [
+            {
+              "page": 1,
+              "x_pt": 324.492,
+              "y_pt": 621.073
+            }
+          ],
+          "word_region": [
+            1,
+            1
+          ],
+          "app_region": [
+            1,
+            1
+          ],
+          "same_page": true,
+          "same_region": true,
+          "local_delta_css_px": {
+            "x": 0.483,
+            "y": -0.916
+          }
+        },
+        "TABLE_B": {
+          "word": [
+            {
+              "page": 1,
+              "x_pt": 410.67,
+              "y_pt": 621.76
+            }
+          ],
+          "app": [
+            {
+              "page": 1,
+              "x_pt": 410.742,
+              "y_pt": 621.073
+            }
+          ],
+          "word_region": [
+            1,
+            1
+          ],
+          "app_region": [
+            1,
+            1
+          ],
+          "same_page": true,
+          "same_region": true,
+          "local_delta_css_px": {
+            "x": 0.096,
+            "y": -0.916
+          }
+        },
+        "TABLE_C": {
+          "word": [
+            {
+              "page": 1,
+              "x_pt": 324.13,
+              "y_pt": 634.76
+            }
+          ],
+          "app": [
+            {
+              "page": 1,
+              "x_pt": 324.492,
+              "y_pt": 634.468
+            }
+          ],
+          "word_region": [
+            1,
+            1
+          ],
+          "app_region": [
+            1,
+            1
+          ],
+          "same_page": true,
+          "same_region": true,
+          "local_delta_css_px": {
+            "x": 0.483,
+            "y": -0.389
+          }
+        },
+        "TABLE_D": {
+          "word": [
+            {
+              "page": 1,
+              "x_pt": 410.67,
+              "y_pt": 634.76
+            }
+          ],
+          "app": [
+            {
+              "page": 1,
+              "x_pt": 410.742,
+              "y_pt": 634.468
+            }
+          ],
+          "word_region": [
+            1,
+            1
+          ],
+          "app_region": [
+            1,
+            1
+          ],
+          "same_page": true,
+          "same_region": true,
+          "local_delta_css_px": {
+            "x": 0.096,
+            "y": -0.389
+          }
+        },
+        "TABS_END": {
+          "word": [
+            {
+              "page": 1,
+              "x_pt": 230.042,
+              "y_pt": 153.36
+            }
+          ],
+          "app": [
+            {
+              "page": 1,
+              "x_pt": 229.934,
+              "y_pt": 153.366
+            }
+          ],
+          "word_region": [
+            1,
+            0
+          ],
+          "app_region": [
+            1,
+            0
+          ],
+          "same_page": true,
+          "same_region": true,
+          "local_delta_css_px": {
+            "x": -0.144,
+            "y": 0.008
+          }
+        },
+        "TABS_START": {
+          "word": [
+            {
+              "page": 1,
+              "x_pt": 90.05,
+              "y_pt": 153.36
+            }
+          ],
+          "app": [
+            {
+              "page": 1,
+              "x_pt": 90.0,
+              "y_pt": 153.366
+            }
+          ],
+          "word_region": [
+            1,
+            0
+          ],
+          "app_region": [
+            1,
+            0
+          ],
+          "same_page": true,
+          "same_region": true,
+          "local_delta_css_px": {
+            "x": -0.067,
+            "y": 0.008
+          }
+        }
+      }
+    }
+  ],
+  "limits": [
+    "EXTRACTED_TEXT_ONLY: no visible glyph, border or whole-page fidelity score.",
+    "Columns are physical zero-based indices from left; this focused corpus has one equal-column source section.",
+    "Local deltas are omitted for wrong-page/column anchors; a coordinate subtraction across pages is not vertical drift.",
+    "Paragraph pitch uses only adjacent markers sharing a region within each PDF. Region accuracy and local spacing are independent.",
+    "MEASURED covers geometry checks listed here. Content/link differences remain separately reported; editability/model retention are not assessed."
+  ]
+}

@@ -2289,7 +2289,7 @@ export default function Editor({
     const safe = (file.name || "document").replace(/[^\w.\- ]+/g, "").trim() || "document";
     const { docToDocxBlob, docToRtf, docToMarkdown, downloadBlob } = await import("@/lib/doc-export");
     if (fmt === "html") {
-      const blob = new Blob([`<!DOCTYPE html><html><head><meta charset="utf-8"><title>${file.name}</title></head><body style="font-family:${DEFAULT_DOCUMENT_FONT_CSS};max-width:800px;margin:40px auto;padding:20px">${html}</body></html>`], { type: "text/html" });
+      const blob = new Blob([`<!DOCTYPE html><html><head><meta charset="utf-8"><title>${file.name}</title><style>[data-toc-owner-id][data-toc-source-indent] a{color:inherit;text-decoration:none}</style></head><body style="font-family:${DEFAULT_DOCUMENT_FONT_CSS};max-width:800px;margin:40px auto;padding:20px">${html}</body></html>`], { type: "text/html" });
       downloadBlob(blob, `${safe}.html`);
     } else if (fmt === "txt") {
       const { docToText } = await import("@/lib/note-text-export");

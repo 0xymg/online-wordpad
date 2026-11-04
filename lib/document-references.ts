@@ -258,9 +258,15 @@ export function updateTableOfContents(pos: number, levels: number[]): Command { 
   const node = state.doc.nodeAt(pos), normalized = normalizeTocLevels(levels); if (!node?.attrs.toc || !normalized.length) return false;
   if (dispatch) dispatch(commandTransaction(state.tr.setNodeMarkup(pos, undefined, { ...node.attrs, toc: { fieldId: node.attrs.toc.fieldId, levels: normalized } }))); return true;
 }; }
-export function navigateReferenceTarget(targetId: string): Command { return (state, dispatch) => {
+export function navigateReferenceTarget(targetId: string): Command { return (state, dispatch, view) => {
   const result = lookupReferenceTarget(collectReferenceIndex(state.doc), targetId); if (result.status !== "ok") return false;
-  if (dispatch) dispatch(state.tr.setSelection(TextSelection.near(state.doc.resolve(Math.min(state.doc.content.size, result.target.pos + 1)))).scrollIntoView()); return true;
+  if (dispatch) {
+    dispatch(state.tr.setSelection(TextSelection.near(state.doc.resolve(Math.min(state.doc.content.size, result.target.pos + 1)))).scrollIntoView());
+    // Native TOC entries are read-only. Their click can leave browser focus on
+    // the page body; synchronize browser selection with the chosen target.
+    view?.focus();
+  }
+  return true;
 }; }
 /** Clipboard provenance belongs to this editor instance and is invalidated on
  * full document loads, including reopening the same saved document identity. */

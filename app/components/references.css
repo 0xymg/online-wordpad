@@ -11,3 +11,7 @@
 }
 /* ProseMirror's terminal-atom caret helper must occupy no layout space. */
 .ProseMirror img.ProseMirror-separator { display: inline !important; border: none !important; margin: 0 !important; width: 0 !important; height: 0 !important; }
+
+/* A live native TOC link keeps its imported run presentation. Explicit color
+   and underline marks surrounding the anchor continue to supply their ink. */
+.pm-page .ProseMirror [data-toc-owner-id][data-toc-source-indent] a { color: inherit; text-decoration: none; }

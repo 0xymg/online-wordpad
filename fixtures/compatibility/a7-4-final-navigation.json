@@ -1,0 +1,139 @@
+{
+  "schema_version": 1,
+  "purpose": "semantic physical-target visibility; does not replace raw Word viewport/link-count comparisons",
+  "cases": [
+    {
+      "case": "notes",
+      "status": "PASS",
+      "sha256": "f161b13b76f01817809d06b2505da51561c6b05dc281f1e4f091c77e06589f48",
+      "targets": {
+        "FOOTNOTE_BODY": {
+          "page": 1,
+          "x": 90.0,
+          "top": 697.2802537353516,
+          "bottom": 708.2802787353515
+        },
+        "ENDNOTE_BODY": {
+          "page": 1,
+          "x": 90.0,
+          "top": 160.6552537353516,
+          "bottom": 171.65527873535154
+        }
+      },
+      "links": [
+        {
+          "page": 1,
+          "fit": "/XYZ",
+          "x": 90.0,
+          "top": 696.19921875,
+          "zoom": 0.0
+        },
+        {
+          "page": 1,
+          "fit": "/XYZ",
+          "x": 90.0,
+          "top": 159.57421875,
+          "zoom": 0.0
+        }
+      ]
+    },
+    {
+      "case": "crossrefs-toc",
+      "status": "PASS",
+      "sha256": "84943f98bb6bb5409c1780dff04afd91fa14898f0f334103264496cdd08075c4",
+      "targets": {
+        "TARGET_HEADING": {
+          "page": 1,
+          "x": 90.0,
+          "top": 162.6503709228516,
+          "bottom": 176.65039592285154
+        }
+      },
+      "links": [
+        {
+          "page": 1,
+          "fit": "/XYZ",
+          "x": 90.0,
+          "top": 160.93359375,
+          "zoom": 0.0
+        },
+        {
+          "page": 1,
+          "fit": "/XYZ",
+          "x": 90.0,
+          "top": 160.93359375,
+          "zoom": 0.0
+        },
+        {
+          "page": 1,
+          "fit": "/XYZ",
+          "x": 90.0,
+          "top": 160.93359375,
+          "zoom": 0.0
+        }
+      ]
+    },
+    {
+      "case": "mixed",
+      "status": "PASS",
+      "sha256": "fd42051cf121794ff693b68a1e74310af2e9331d577dfa6e9c40b91383852582",
+      "targets": {
+        "FOOTNOTE_BODY": {
+          "page": 2,
+          "x": 90.0,
+          "top": 697.2802537353516,
+          "bottom": 708.2802787353515
+        },
+        "ENDNOTE_BODY": {
+          "page": 2,
+          "x": 90.0,
+          "top": 301.24509748535155,
+          "bottom": 312.24512248535154
+        },
+        "TARGET_HEADING": {
+          "page": 2,
+          "x": 90.0,
+          "top": 231.6386521728516,
+          "bottom": 245.63867717285154
+        }
+      },
+      "links": [
+        {
+          "page": 2,
+          "fit": "/XYZ",
+          "x": 90.0,
+          "top": 696.19921875,
+          "zoom": 0.0
+        },
+        {
+          "page": 2,
+          "fit": "/XYZ",
+          "x": 90.0,
+          "top": 300.1640625,
+          "zoom": 0.0
+        },
+        {
+          "page": 2,
+          "fit": "/XYZ",
+          "x": 90.0,
+          "top": 229.921875,
+          "zoom": 0.0
+        },
+        {
+          "page": 2,
+          "fit": "/XYZ",
+          "x": 90.0,
+          "top": 229.921875,
+          "zoom": 0.0
+        },
+        {
+          "page": 2,
+          "fit": "/XYZ",
+          "x": 90.0,
+          "top": 229.921875,
+          "zoom": 0.0
+        }
+      ]
+    }
+  ]
+}
