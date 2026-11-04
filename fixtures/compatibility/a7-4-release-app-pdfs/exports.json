@@ -1,0 +1,95 @@
+{
+  "schema_version": 1,
+  "complete": true,
+  "base_url": "http://localhost:3119",
+  "browser_version": "156.0.8078.4",
+  "viewport": {
+    "width": 1450,
+    "height": 1050
+  },
+  "application_revision": "e2a2c57e9bffdfea53a2af8e5b003bb2af432d81",
+  "selected_cases": null,
+  "captured_at": "2026-11-04T00:12:46.109Z",
+  "results": [
+    {
+      "id": "basic",
+      "source_sha256": "2845d91783af52023ef345b2d73eebdb0beac55fc7d6b298dbeb6d3ace3a632a",
+      "status": "EXPORTED",
+      "base_url": "http://localhost:3119",
+      "captured_at": "2026-11-04T00:12:10.582Z",
+      "pdf_sha256": "4d283b56eb5c5ae59dc968ff44ccf5871261c9fdd502a88e4a0eb7ac90391b22",
+      "pdf_bytes": 74718,
+      "page_errors": []
+    },
+    {
+      "id": "mixed-sections",
+      "source_sha256": "00c0f5cc4f512e199e496e3f37c1350dc7cf6a55c8772cee46e3e976ac574205",
+      "status": "EXPORTED",
+      "base_url": "http://localhost:3119",
+      "captured_at": "2026-11-04T00:12:14.659Z",
+      "pdf_sha256": "6da5b9a575c3131285bae221f5844cce988f31957ba4526eca2b4c40171d44b2",
+      "pdf_bytes": 147697,
+      "page_errors": []
+    },
+    {
+      "id": "tabs-leaders",
+      "source_sha256": "4362a9d94b991bc391db4323f4bf4b66573d2fe643abb69ab9ee9ce37b71ed22",
+      "status": "EXPORTED",
+      "base_url": "http://localhost:3119",
+      "captured_at": "2026-11-04T00:12:19.401Z",
+      "pdf_sha256": "4c24dd43432d4b48192d335db7032be6e9cf2ebaaf13d03a9692cc34843c8092",
+      "pdf_bytes": 58432,
+      "page_errors": []
+    },
+    {
+      "id": "columns",
+      "source_sha256": "05c6050e5be6317fdae35036cfdf8509b58a44f7c85e9525d3b122f15fc7cc0b",
+      "status": "EXPORTED",
+      "base_url": "http://localhost:3119",
+      "captured_at": "2026-11-04T00:12:23.361Z",
+      "pdf_sha256": "2e1f75929f006b76bdd4f1d60be68f741ba3495e3f11c9e80bbf825144b23ee4",
+      "pdf_bytes": 526442,
+      "page_errors": []
+    },
+    {
+      "id": "table-columns",
+      "source_sha256": "f4df883b288bfd03e45f1b67ea4f7aa0615ea9924f1ae7db68f47f599cca64ce",
+      "status": "EXPORTED",
+      "base_url": "http://localhost:3119",
+      "captured_at": "2026-11-04T00:12:27.849Z",
+      "pdf_sha256": "cae2cf4ba92e63f8845ef90b4b61b5a2e4fbaa96ac7569898e66c73b792f3b71",
+      "pdf_bytes": 532834,
+      "page_errors": []
+    },
+    {
+      "id": "notes",
+      "source_sha256": "a650e8d23a0c2ccc75052013b6080f6229024233f891b3471bbeafadd15cae82",
+      "status": "EXPORTED",
+      "base_url": "http://localhost:3119",
+      "captured_at": "2026-11-04T00:12:32.328Z",
+      "pdf_sha256": "71f4a7ecdee968c08d9d6296499ec25ab836f8c6464d6a32a356669f350d25a8",
+      "pdf_bytes": 62029,
+      "page_errors": []
+    },
+    {
+      "id": "crossrefs-toc",
+      "source_sha256": "9f72432930bbbbd4fc4ef454fb2a82a611dd17158ca4b7f73421a4318d776ecf",
+      "status": "EXPORTED",
+      "base_url": "http://localhost:3119",
+      "captured_at": "2026-11-04T00:12:36.319Z",
+      "pdf_sha256": "1d6ebbb0f9f020a524af5ef0f70dfd3d0a8564167fe28cf88399c4dc70d5f853",
+      "pdf_bytes": 77928,
+      "page_errors": []
+    },
+    {
+      "id": "mixed",
+      "source_sha256": "e0cf199ae6e900fa5cc3aad546d80d1c50348e579b6258fbaeec092cbd63baf7",
+      "status": "EXPORTED",
+      "base_url": "http://localhost:3119",
+      "captured_at": "2026-11-04T00:12:40.602Z",
+      "pdf_sha256": "d439372e2073c2e5d66e077a38a9cc6eec19390cb6f3d15d9e847309ca63f03d",
+      "pdf_bytes": 712675,
+      "page_errors": []
+    }
+  ]
+}

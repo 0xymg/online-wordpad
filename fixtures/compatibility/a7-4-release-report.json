@@ -1,0 +1,1946 @@
+{
+  "schema_version": 2,
+  "comparison": "Word Online reference PDF versus EDTRDocs PDF",
+  "source_manifest": "fixtures/compatibility/manifest.json",
+  "reference_profile": {
+    "reference_application": "Microsoft Word Online",
+    "capture_date": "2026-11-03 UTC (2026-11-02 America/Toronto)",
+    "browser_and_version": "Codex in-app browser; exact engine version is not exposed by the supported UI tools",
+    "browser_version_verified": false,
+    "paper_settings": "Native Word Online PDF export; paper sizes and margins from each source DOCX section, no browser print overrides",
+    "fonts": "Arial explicitly specified in document defaults, Normal, Title, Subtitle and Heading 1-9",
+    "limitations": [
+      "Word Online build number and browser engine version were not exposed; capture date and source/PDF hashes identify this reference snapshot.",
+      "These are Microsoft Word-generated PDFs, not browser print or LibreOffice substitutes."
+    ]
+  },
+  "profile_status": "RECORDED",
+  "profile_missing": [],
+  "summary": {
+    "MEASURED": 5,
+    "MISMATCH": 3
+  },
+  "cases": [
+    {
+      "id": "basic",
+      "source_sha256": "2845d91783af52023ef345b2d73eebdb0beac55fc7d6b298dbeb6d3ace3a632a",
+      "status": "MEASURED",
+      "visual_status": "NOT_ASSESSED",
+      "editability_status": "NOT_ASSESSED",
+      "model_retention_status": "NOT_ASSESSED",
+      "reference_pdf": "fixtures/compatibility/references/basic.pdf",
+      "app_pdf": "fixtures/compatibility/a7-4-release-app-pdfs/basic.pdf",
+      "checks": {
+        "page_count_equal": true,
+        "media_boxes_within_0_75pt": true,
+        "token_multisets_equal": true,
+        "expected_markers_once": true,
+        "link_count_equal": true,
+        "link_destination_geometry_equal": true,
+        "text_anchors_within_1_css_px": true
+      },
+      "provenance": {
+        "source_sha256_matches": true,
+        "reference_pdf_sha256_matches": true
+      },
+      "expected_marker_counts": {
+        "BASIC_START": {
+          "word": 1,
+          "app": 1
+        },
+        "BASIC_END": {
+          "word": 1,
+          "app": 1
+        }
+      },
+      "missing_tokens": {},
+      "extra_tokens": {},
+      "media_box_deltas": [
+        {
+          "page": 1,
+          "delta_pt": [
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "within_tolerance": true
+        }
+      ],
+      "reference": {
+        "sha256": "dfa916b2584a36b22ef8152ea78ecf4a3f0038f55ee065b9ea4ed374b21acec0",
+        "page_count": 1,
+        "pages": [
+          {
+            "page": 1,
+            "media_box_pt": [
+              0.0,
+              0.0,
+              612.0,
+              792.0
+            ],
+            "link_count": 0
+          }
+        ],
+        "link_count": 0,
+        "link_targets": []
+      },
+      "app": {
+        "sha256": "4d283b56eb5c5ae59dc968ff44ccf5871261c9fdd502a88e4a0eb7ac90391b22",
+        "page_count": 1,
+        "pages": [
+          {
+            "page": 1,
+            "media_box_pt": [
+              0.0,
+              0.0,
+              612.0,
+              792.0
+            ],
+            "link_count": 0
+          }
+        ],
+        "link_count": 0,
+        "link_targets": []
+      },
+      "evidence_axes": {
+        "content_text": "MATCH",
+        "pagination": "MATCH",
+        "link_destinations": "NOT_APPLICABLE",
+        "text_anchor_geometry": "MATCH",
+        "visible_rendering": "NOT_ASSESSED",
+        "editability": "NOT_ASSESSED",
+        "model_retention": "NOT_ASSESSED"
+      },
+      "text_anchor_positions": {
+        "status": "EXTRACTED_TEXT_ONLY",
+        "anchors": {
+          "BASIC_START": {
+            "word": [
+              {
+                "page": 1,
+                "x_pt": 72.025,
+                "y_pt": 123.61
+              }
+            ],
+            "app": [
+              {
+                "page": 1,
+                "x_pt": 72.0,
+                "y_pt": 123.472
+              }
+            ],
+            "same_page": true,
+            "delta_css_px": {
+              "x": -0.033,
+              "y": -0.184
+            }
+          },
+          "BASIC_END": {
+            "word": [
+              {
+                "page": 1,
+                "x_pt": 72.025,
+                "y_pt": 148.11
+              }
+            ],
+            "app": [
+              {
+                "page": 1,
+                "x_pt": 72.0,
+                "y_pt": 148.011
+              }
+            ],
+            "same_page": true,
+            "delta_css_px": {
+              "x": -0.033,
+              "y": -0.132
+            }
+          }
+        }
+      },
+      "profile": {
+        "reference_application": "Microsoft Word Online",
+        "capture_date": "2026-11-03 UTC (2026-11-02 America/Toronto)",
+        "browser_and_version": "Codex in-app browser; exact engine version is not exposed by the supported UI tools",
+        "browser_version_verified": false,
+        "paper_settings": "Native Word Online PDF export; paper sizes and margins from each source DOCX section, no browser print overrides",
+        "fonts": "Arial explicitly specified in document defaults, Normal, Title, Subtitle and Heading 1-9",
+        "limitations": [
+          "Word Online build number and browser engine version were not exposed; capture date and source/PDF hashes identify this reference snapshot.",
+          "These are Microsoft Word-generated PDFs, not browser print or LibreOffice substitutes."
+        ]
+      },
+      "reference_provenance": {
+        "reference_application": "Microsoft Word Online",
+        "captured_at": "2026-11-03T02:24:27.584412+00:00",
+        "font_profile": "Arial, explicit document defaults and all used paragraph styles",
+        "source_sha256": "2845d91783af52023ef345b2d73eebdb0beac55fc7d6b298dbeb6d3ace3a632a",
+        "pdf_sha256": "dfa916b2584a36b22ef8152ea78ecf4a3f0038f55ee065b9ea4ed374b21acec0",
+        "capture_method": "Word Online File > Export > Download as PDF > Download, authenticated browser UI",
+        "private_document_url_omitted": true
+      }
+    },
+    {
+      "id": "mixed-sections",
+      "source_sha256": "00c0f5cc4f512e199e496e3f37c1350dc7cf6a55c8772cee46e3e976ac574205",
+      "status": "MEASURED",
+      "visual_status": "NOT_ASSESSED",
+      "editability_status": "NOT_ASSESSED",
+      "model_retention_status": "NOT_ASSESSED",
+      "reference_pdf": "fixtures/compatibility/references/mixed-sections.pdf",
+      "app_pdf": "fixtures/compatibility/a7-4-release-app-pdfs/mixed-sections.pdf",
+      "checks": {
+        "page_count_equal": true,
+        "media_boxes_within_0_75pt": true,
+        "token_multisets_equal": true,
+        "expected_markers_once": true,
+        "link_count_equal": true,
+        "link_destination_geometry_equal": true,
+        "text_anchors_within_1_css_px": true
+      },
+      "provenance": {
+        "source_sha256_matches": true,
+        "reference_pdf_sha256_matches": true
+      },
+      "expected_marker_counts": {
+        "SECTION_ONE": {
+          "word": 1,
+          "app": 1
+        },
+        "SECTION_TWO": {
+          "word": 1,
+          "app": 1
+        },
+        "SECTION_THREE": {
+          "word": 1,
+          "app": 1
+        }
+      },
+      "missing_tokens": {},
+      "extra_tokens": {},
+      "media_box_deltas": [
+        {
+          "page": 1,
+          "delta_pt": [
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "within_tolerance": true
+        },
+        {
+          "page": 2,
+          "delta_pt": [
+            0.0,
+            0.0,
+            -0.05,
+            -0.05
+          ],
+          "within_tolerance": true
+        },
+        {
+          "page": 3,
+          "delta_pt": [
+            0.0,
+            0.0,
+            -0.05,
+            -0.05
+          ],
+          "within_tolerance": true
+        }
+      ],
+      "reference": {
+        "sha256": "36f41d7e8bfb976680e641130997d471d16d368a396b09ee1c3490e27b85c19f",
+        "page_count": 3,
+        "pages": [
+          {
+            "page": 1,
+            "media_box_pt": [
+              0.0,
+              0.0,
+              612.0,
+              792.0
+            ],
+            "link_count": 0
+          },
+          {
+            "page": 2,
+            "media_box_pt": [
+              0.0,
+              0.0,
+              841.75,
+              595.5
+            ],
+            "link_count": 0
+          },
+          {
+            "page": 3,
+            "media_box_pt": [
+              0.0,
+              0.0,
+              595.5,
+              841.75
+            ],
+            "link_count": 0
+          }
+        ],
+        "link_count": 0,
+        "link_targets": []
+      },
+      "app": {
+        "sha256": "6da5b9a575c3131285bae221f5844cce988f31957ba4526eca2b4c40171d44b2",
+        "page_count": 3,
+        "pages": [
+          {
+            "page": 1,
+            "media_box_pt": [
+              0.0,
+              0.0,
+              612.0,
+              792.0
+            ],
+            "link_count": 0
+          },
+          {
+            "page": 2,
+            "media_box_pt": [
+              0.0,
+              0.0,
+              841.7,
+              595.45
+            ],
+            "link_count": 0
+          },
+          {
+            "page": 3,
+            "media_box_pt": [
+              0.0,
+              0.0,
+              595.45,
+              841.7
+            ],
+            "link_count": 0
+          }
+        ],
+        "link_count": 0,
+        "link_targets": []
+      },
+      "evidence_axes": {
+        "content_text": "MATCH",
+        "pagination": "MATCH",
+        "link_destinations": "NOT_APPLICABLE",
+        "text_anchor_geometry": "MATCH",
+        "visible_rendering": "NOT_ASSESSED",
+        "editability": "NOT_ASSESSED",
+        "model_retention": "NOT_ASSESSED"
+      },
+      "text_anchor_positions": {
+        "status": "EXTRACTED_TEXT_ONLY",
+        "anchors": {
+          "SECTION_ONE": {
+            "word": [
+              {
+                "page": 1,
+                "x_pt": 72.025,
+                "y_pt": 123.61
+              }
+            ],
+            "app": [
+              {
+                "page": 1,
+                "x_pt": 72.0,
+                "y_pt": 123.472
+              }
+            ],
+            "same_page": true,
+            "delta_css_px": {
+              "x": -0.033,
+              "y": -0.184
+            }
+          },
+          "SECTION_TWO": {
+            "word": [
+              {
+                "page": 2,
+                "x_pt": 90.025,
+                "y_pt": 73.59
+              }
+            ],
+            "app": [
+              {
+                "page": 2,
+                "x_pt": 90.0,
+                "y_pt": 73.819
+              }
+            ],
+            "same_page": true,
+            "delta_css_px": {
+              "x": -0.033,
+              "y": 0.305
+            }
+          },
+          "SECTION_THREE": {
+            "word": [
+              {
+                "page": 3,
+                "x_pt": 90.05,
+                "y_pt": 73.59
+              }
+            ],
+            "app": [
+              {
+                "page": 3,
+                "x_pt": 90.0,
+                "y_pt": 73.819
+              }
+            ],
+            "same_page": true,
+            "delta_css_px": {
+              "x": -0.067,
+              "y": 0.305
+            }
+          }
+        }
+      },
+      "profile": {
+        "reference_application": "Microsoft Word Online",
+        "capture_date": "2026-11-03 UTC (2026-11-02 America/Toronto)",
+        "browser_and_version": "Codex in-app browser; exact engine version is not exposed by the supported UI tools",
+        "browser_version_verified": false,
+        "paper_settings": "Native Word Online PDF export; paper sizes and margins from each source DOCX section, no browser print overrides",
+        "fonts": "Arial explicitly specified in document defaults, Normal, Title, Subtitle and Heading 1-9",
+        "limitations": [
+          "Word Online build number and browser engine version were not exposed; capture date and source/PDF hashes identify this reference snapshot.",
+          "These are Microsoft Word-generated PDFs, not browser print or LibreOffice substitutes."
+        ]
+      },
+      "reference_provenance": {
+        "reference_application": "Microsoft Word Online",
+        "captured_at": "2026-11-03T02:24:27.584941+00:00",
+        "font_profile": "Arial, explicit document defaults and all used paragraph styles",
+        "source_sha256": "00c0f5cc4f512e199e496e3f37c1350dc7cf6a55c8772cee46e3e976ac574205",
+        "pdf_sha256": "36f41d7e8bfb976680e641130997d471d16d368a396b09ee1c3490e27b85c19f",
+        "capture_method": "Word Online File > Export > Download as PDF > Download, authenticated browser UI",
+        "private_document_url_omitted": true
+      }
+    },
+    {
+      "id": "tabs-leaders",
+      "source_sha256": "4362a9d94b991bc391db4323f4bf4b66573d2fe643abb69ab9ee9ce37b71ed22",
+      "status": "MEASURED",
+      "visual_status": "NOT_ASSESSED",
+      "editability_status": "NOT_ASSESSED",
+      "model_retention_status": "NOT_ASSESSED",
+      "reference_pdf": "fixtures/compatibility/references/tabs-leaders.pdf",
+      "app_pdf": "fixtures/compatibility/a7-4-release-app-pdfs/tabs-leaders.pdf",
+      "checks": {
+        "page_count_equal": true,
+        "media_boxes_within_0_75pt": true,
+        "token_multisets_equal": true,
+        "expected_markers_once": true,
+        "link_count_equal": true,
+        "link_destination_geometry_equal": true,
+        "text_anchors_within_1_css_px": true
+      },
+      "provenance": {
+        "source_sha256_matches": true,
+        "reference_pdf_sha256_matches": true
+      },
+      "expected_marker_counts": {
+        "TABS_START": {
+          "word": 1,
+          "app": 1
+        },
+        "TABS_END": {
+          "word": 1,
+          "app": 1
+        }
+      },
+      "missing_tokens": {},
+      "extra_tokens": {},
+      "media_box_deltas": [
+        {
+          "page": 1,
+          "delta_pt": [
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "within_tolerance": true
+        }
+      ],
+      "reference": {
+        "sha256": "b1847c3ef7895bc9ec7f2dbcb3309c2800ad284aa5692ea6de4cfee46b2eecd5",
+        "page_count": 1,
+        "pages": [
+          {
+            "page": 1,
+            "media_box_pt": [
+              0.0,
+              0.0,
+              612.0,
+              792.0
+            ],
+            "link_count": 0
+          }
+        ],
+        "link_count": 0,
+        "link_targets": []
+      },
+      "app": {
+        "sha256": "4c24dd43432d4b48192d335db7032be6e9cf2ebaaf13d03a9692cc34843c8092",
+        "page_count": 1,
+        "pages": [
+          {
+            "page": 1,
+            "media_box_pt": [
+              0.0,
+              0.0,
+              612.0,
+              792.0
+            ],
+            "link_count": 0
+          }
+        ],
+        "link_count": 0,
+        "link_targets": []
+      },
+      "evidence_axes": {
+        "content_text": "MATCH",
+        "pagination": "MATCH",
+        "link_destinations": "NOT_APPLICABLE",
+        "text_anchor_geometry": "MATCH",
+        "visible_rendering": "NOT_ASSESSED",
+        "editability": "NOT_ASSESSED",
+        "model_retention": "NOT_ASSESSED"
+      },
+      "text_anchor_positions": {
+        "status": "EXTRACTED_TEXT_ONLY",
+        "anchors": {
+          "TABS_START": {
+            "word": [
+              {
+                "page": 1,
+                "x_pt": 90.05,
+                "y_pt": 123.61
+              }
+            ],
+            "app": [
+              {
+                "page": 1,
+                "x_pt": 90.0,
+                "y_pt": 123.472
+              }
+            ],
+            "same_page": true,
+            "delta_css_px": {
+              "x": -0.067,
+              "y": -0.184
+            }
+          },
+          "TABS_END": {
+            "word": [
+              {
+                "page": 1,
+                "x_pt": 396.362,
+                "y_pt": 123.61
+              }
+            ],
+            "app": [
+              {
+                "page": 1,
+                "x_pt": 396.328,
+                "y_pt": 123.472
+              }
+            ],
+            "same_page": true,
+            "delta_css_px": {
+              "x": -0.045,
+              "y": -0.184
+            }
+          }
+        }
+      },
+      "profile": {
+        "reference_application": "Microsoft Word Online",
+        "capture_date": "2026-11-03 UTC (2026-11-02 America/Toronto)",
+        "browser_and_version": "Codex in-app browser; exact engine version is not exposed by the supported UI tools",
+        "browser_version_verified": false,
+        "paper_settings": "Native Word Online PDF export; paper sizes and margins from each source DOCX section, no browser print overrides",
+        "fonts": "Arial explicitly specified in document defaults, Normal, Title, Subtitle and Heading 1-9",
+        "limitations": [
+          "Word Online build number and browser engine version were not exposed; capture date and source/PDF hashes identify this reference snapshot.",
+          "These are Microsoft Word-generated PDFs, not browser print or LibreOffice substitutes."
+        ]
+      },
+      "reference_provenance": {
+        "reference_application": "Microsoft Word Online",
+        "captured_at": "2026-11-03T02:24:27.585231+00:00",
+        "font_profile": "Arial, explicit document defaults and all used paragraph styles",
+        "source_sha256": "4362a9d94b991bc391db4323f4bf4b66573d2fe643abb69ab9ee9ce37b71ed22",
+        "pdf_sha256": "b1847c3ef7895bc9ec7f2dbcb3309c2800ad284aa5692ea6de4cfee46b2eecd5",
+        "capture_method": "Word Online File > Export > Download as PDF > Download, authenticated browser UI",
+        "private_document_url_omitted": true
+      }
+    },
+    {
+      "id": "columns",
+      "source_sha256": "05c6050e5be6317fdae35036cfdf8509b58a44f7c85e9525d3b122f15fc7cc0b",
+      "status": "MEASURED",
+      "visual_status": "NOT_ASSESSED",
+      "editability_status": "NOT_ASSESSED",
+      "model_retention_status": "NOT_ASSESSED",
+      "reference_pdf": "fixtures/compatibility/references/columns.pdf",
+      "app_pdf": "fixtures/compatibility/a7-4-release-app-pdfs/columns.pdf",
+      "checks": {
+        "page_count_equal": true,
+        "media_boxes_within_0_75pt": true,
+        "token_multisets_equal": true,
+        "expected_markers_once": true,
+        "link_count_equal": true,
+        "link_destination_geometry_equal": true,
+        "text_anchors_within_1_css_px": true
+      },
+      "provenance": {
+        "source_sha256_matches": true,
+        "reference_pdf_sha256_matches": true
+      },
+      "expected_marker_counts": {
+        "COLUMN_00": {
+          "word": 1,
+          "app": 1
+        },
+        "COLUMN_25": {
+          "word": 1,
+          "app": 1
+        }
+      },
+      "missing_tokens": {},
+      "extra_tokens": {},
+      "media_box_deltas": [
+        {
+          "page": 1,
+          "delta_pt": [
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "within_tolerance": true
+        }
+      ],
+      "reference": {
+        "sha256": "78ba2e0d7153dd7a51dae32f1566691e690e234b30ff59486669a27f09f6e263",
+        "page_count": 1,
+        "pages": [
+          {
+            "page": 1,
+            "media_box_pt": [
+              0.0,
+              0.0,
+              612.0,
+              792.0
+            ],
+            "link_count": 0
+          }
+        ],
+        "link_count": 0,
+        "link_targets": []
+      },
+      "app": {
+        "sha256": "2e1f75929f006b76bdd4f1d60be68f741ba3495e3f11c9e80bbf825144b23ee4",
+        "page_count": 1,
+        "pages": [
+          {
+            "page": 1,
+            "media_box_pt": [
+              0.0,
+              0.0,
+              612.0,
+              792.0
+            ],
+            "link_count": 0
+          }
+        ],
+        "link_count": 0,
+        "link_targets": []
+      },
+      "evidence_axes": {
+        "content_text": "MATCH",
+        "pagination": "MATCH",
+        "link_destinations": "NOT_APPLICABLE",
+        "text_anchor_geometry": "MATCH",
+        "visible_rendering": "NOT_ASSESSED",
+        "editability": "NOT_ASSESSED",
+        "model_retention": "NOT_ASSESSED"
+      },
+      "text_anchor_positions": {
+        "status": "EXTRACTED_TEXT_ONLY",
+        "anchors": {
+          "COLUMN_00": {
+            "word": [
+              {
+                "page": 1,
+                "x_pt": 90.05,
+                "y_pt": 153.36
+              }
+            ],
+            "app": [
+              {
+                "page": 1,
+                "x_pt": 90.0,
+                "y_pt": 153.366
+              }
+            ],
+            "same_page": true,
+            "delta_css_px": {
+              "x": -0.067,
+              "y": 0.008
+            }
+          },
+          "COLUMN_25": {
+            "word": [
+              {
+                "page": 1,
+                "x_pt": 324.13,
+                "y_pt": 503.73
+              }
+            ],
+            "app": [
+              {
+                "page": 1,
+                "x_pt": 324.0,
+                "y_pt": 503.804
+              }
+            ],
+            "same_page": true,
+            "delta_css_px": {
+              "x": -0.173,
+              "y": 0.099
+            }
+          }
+        }
+      },
+      "profile": {
+        "reference_application": "Microsoft Word Online",
+        "capture_date": "2026-11-03 UTC (2026-11-02 America/Toronto)",
+        "browser_and_version": "Codex in-app browser; exact engine version is not exposed by the supported UI tools",
+        "browser_version_verified": false,
+        "paper_settings": "Native Word Online PDF export; paper sizes and margins from each source DOCX section, no browser print overrides",
+        "fonts": "Arial explicitly specified in document defaults, Normal, Title, Subtitle and Heading 1-9",
+        "limitations": [
+          "Word Online build number and browser engine version were not exposed; capture date and source/PDF hashes identify this reference snapshot.",
+          "These are Microsoft Word-generated PDFs, not browser print or LibreOffice substitutes."
+        ]
+      },
+      "reference_provenance": {
+        "reference_application": "Microsoft Word Online",
+        "captured_at": "2026-11-03T02:24:27.585497+00:00",
+        "font_profile": "Arial, explicit document defaults and all used paragraph styles",
+        "source_sha256": "05c6050e5be6317fdae35036cfdf8509b58a44f7c85e9525d3b122f15fc7cc0b",
+        "pdf_sha256": "78ba2e0d7153dd7a51dae32f1566691e690e234b30ff59486669a27f09f6e263",
+        "capture_method": "Word Online File > Export > Download as PDF > Download, authenticated browser UI",
+        "private_document_url_omitted": true
+      }
+    },
+    {
+      "id": "table-columns",
+      "source_sha256": "f4df883b288bfd03e45f1b67ea4f7aa0615ea9924f1ae7db68f47f599cca64ce",
+      "status": "MEASURED",
+      "visual_status": "NOT_ASSESSED",
+      "editability_status": "NOT_ASSESSED",
+      "model_retention_status": "NOT_ASSESSED",
+      "reference_pdf": "fixtures/compatibility/references/table-columns.pdf",
+      "app_pdf": "fixtures/compatibility/a7-4-release-app-pdfs/table-columns.pdf",
+      "checks": {
+        "page_count_equal": true,
+        "media_boxes_within_0_75pt": true,
+        "token_multisets_equal": true,
+        "expected_markers_once": true,
+        "link_count_equal": true,
+        "link_destination_geometry_equal": true,
+        "text_anchors_within_1_css_px": true
+      },
+      "provenance": {
+        "source_sha256_matches": true,
+        "reference_pdf_sha256_matches": true
+      },
+      "expected_marker_counts": {
+        "TABLE_A": {
+          "word": 1,
+          "app": 1
+        },
+        "TABLE_B": {
+          "word": 1,
+          "app": 1
+        },
+        "TABLE_C": {
+          "word": 1,
+          "app": 1
+        },
+        "TABLE_D": {
+          "word": 1,
+          "app": 1
+        }
+      },
+      "missing_tokens": {},
+      "extra_tokens": {},
+      "media_box_deltas": [
+        {
+          "page": 1,
+          "delta_pt": [
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "within_tolerance": true
+        }
+      ],
+      "reference": {
+        "sha256": "6c86b34faea30723e6e89d7fb41740672051d5cb199de9ddb84c2e6d3aeb16c5",
+        "page_count": 1,
+        "pages": [
+          {
+            "page": 1,
+            "media_box_pt": [
+              0.0,
+              0.0,
+              612.0,
+              792.0
+            ],
+            "link_count": 0
+          }
+        ],
+        "link_count": 0,
+        "link_targets": []
+      },
+      "app": {
+        "sha256": "cae2cf4ba92e63f8845ef90b4b61b5a2e4fbaa96ac7569898e66c73b792f3b71",
+        "page_count": 1,
+        "pages": [
+          {
+            "page": 1,
+            "media_box_pt": [
+              0.0,
+              0.0,
+              612.0,
+              792.0
+            ],
+            "link_count": 0
+          }
+        ],
+        "link_count": 0,
+        "link_targets": []
+      },
+      "evidence_axes": {
+        "content_text": "MATCH",
+        "pagination": "MATCH",
+        "link_destinations": "NOT_APPLICABLE",
+        "text_anchor_geometry": "MATCH",
+        "visible_rendering": "NOT_ASSESSED",
+        "editability": "NOT_ASSESSED",
+        "model_retention": "NOT_ASSESSED"
+      },
+      "text_anchor_positions": {
+        "status": "EXTRACTED_TEXT_ONLY",
+        "anchors": {
+          "TABLE_A": {
+            "word": [
+              {
+                "page": 1,
+                "x_pt": 324.13,
+                "y_pt": 543.48
+              }
+            ],
+            "app": [
+              {
+                "page": 1,
+                "x_pt": 324.492,
+                "y_pt": 542.897
+              }
+            ],
+            "same_page": true,
+            "delta_css_px": {
+              "x": 0.483,
+              "y": -0.777
+            }
+          },
+          "TABLE_B": {
+            "word": [
+              {
+                "page": 1,
+                "x_pt": 410.67,
+                "y_pt": 543.48
+              }
+            ],
+            "app": [
+              {
+                "page": 1,
+                "x_pt": 410.742,
+                "y_pt": 542.897
+              }
+            ],
+            "same_page": true,
+            "delta_css_px": {
+              "x": 0.096,
+              "y": -0.777
+            }
+          },
+          "TABLE_C": {
+            "word": [
+              {
+                "page": 1,
+                "x_pt": 324.13,
+                "y_pt": 556.73
+              }
+            ],
+            "app": [
+              {
+                "page": 1,
+                "x_pt": 324.492,
+                "y_pt": 556.292
+              }
+            ],
+            "same_page": true,
+            "delta_css_px": {
+              "x": 0.483,
+              "y": -0.584
+            }
+          },
+          "TABLE_D": {
+            "word": [
+              {
+                "page": 1,
+                "x_pt": 410.67,
+                "y_pt": 556.73
+              }
+            ],
+            "app": [
+              {
+                "page": 1,
+                "x_pt": 410.742,
+                "y_pt": 556.292
+              }
+            ],
+            "same_page": true,
+            "delta_css_px": {
+              "x": 0.096,
+              "y": -0.584
+            }
+          }
+        }
+      },
+      "profile": {
+        "reference_application": "Microsoft Word Online",
+        "capture_date": "2026-11-03 UTC (2026-11-02 America/Toronto)",
+        "browser_and_version": "Codex in-app browser; exact engine version is not exposed by the supported UI tools",
+        "browser_version_verified": false,
+        "paper_settings": "Native Word Online PDF export; paper sizes and margins from each source DOCX section, no browser print overrides",
+        "fonts": "Arial explicitly specified in document defaults, Normal, Title, Subtitle and Heading 1-9",
+        "limitations": [
+          "Word Online build number and browser engine version were not exposed; capture date and source/PDF hashes identify this reference snapshot.",
+          "These are Microsoft Word-generated PDFs, not browser print or LibreOffice substitutes."
+        ]
+      },
+      "reference_provenance": {
+        "reference_application": "Microsoft Word Online",
+        "captured_at": "2026-11-03T02:24:27.585741+00:00",
+        "font_profile": "Arial, explicit document defaults and all used paragraph styles",
+        "source_sha256": "f4df883b288bfd03e45f1b67ea4f7aa0615ea9924f1ae7db68f47f599cca64ce",
+        "pdf_sha256": "6c86b34faea30723e6e89d7fb41740672051d5cb199de9ddb84c2e6d3aeb16c5",
+        "capture_method": "Word Online File > Export > Download as PDF > Download, authenticated browser UI",
+        "private_document_url_omitted": true
+      }
+    },
+    {
+      "id": "notes",
+      "source_sha256": "a650e8d23a0c2ccc75052013b6080f6229024233f891b3471bbeafadd15cae82",
+      "status": "MISMATCH",
+      "visual_status": "NOT_ASSESSED",
+      "editability_status": "NOT_ASSESSED",
+      "model_retention_status": "NOT_ASSESSED",
+      "reference_pdf": "fixtures/compatibility/references/notes.pdf",
+      "app_pdf": "fixtures/compatibility/a7-4-release-app-pdfs/notes.pdf",
+      "checks": {
+        "page_count_equal": true,
+        "media_boxes_within_0_75pt": true,
+        "token_multisets_equal": true,
+        "expected_markers_once": true,
+        "link_count_equal": true,
+        "link_destination_geometry_equal": false,
+        "text_anchors_within_1_css_px": true
+      },
+      "provenance": {
+        "source_sha256_matches": true,
+        "reference_pdf_sha256_matches": true
+      },
+      "expected_marker_counts": {
+        "NOTE_ANCHOR": {
+          "word": 1,
+          "app": 1
+        },
+        "FOOTNOTE_BODY": {
+          "word": 1,
+          "app": 1
+        },
+        "ENDNOTE_BODY": {
+          "word": 1,
+          "app": 1
+        }
+      },
+      "missing_tokens": {},
+      "extra_tokens": {},
+      "media_box_deltas": [
+        {
+          "page": 1,
+          "delta_pt": [
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "within_tolerance": true
+        }
+      ],
+      "reference": {
+        "sha256": "681232c93e5c36127923668ac4e816a8196e437189bad3d3bf4a1bbf933e84d7",
+        "page_count": 1,
+        "pages": [
+          {
+            "page": 1,
+            "media_box_pt": [
+              0.0,
+              0.0,
+              612.0,
+              792.0
+            ],
+            "link_count": 2
+          }
+        ],
+        "link_count": 2,
+        "link_targets": [
+          {
+            "kind": "GoTo",
+            "page": 1,
+            "fit": "/XYZ",
+            "coordinates": [
+              87.0,
+              96.0,
+              0.0
+            ]
+          },
+          {
+            "kind": "GoTo",
+            "page": 1,
+            "fit": "/XYZ",
+            "coordinates": [
+              87.0,
+              632.0,
+              0.0
+            ]
+          }
+        ]
+      },
+      "app": {
+        "sha256": "71f4a7ecdee968c08d9d6296499ec25ab836f8c6464d6a32a356669f350d25a8",
+        "page_count": 1,
+        "pages": [
+          {
+            "page": 1,
+            "media_box_pt": [
+              0.0,
+              0.0,
+              612.0,
+              792.0
+            ],
+            "link_count": 2
+          }
+        ],
+        "link_count": 2,
+        "link_targets": [
+          {
+            "kind": "GoTo",
+            "page": 1,
+            "fit": "/XYZ",
+            "coordinates": [
+              90.0,
+              95.80078125,
+              0.0
+            ]
+          },
+          {
+            "kind": "GoTo",
+            "page": 1,
+            "fit": "/XYZ",
+            "coordinates": [
+              90.0,
+              632.42578125,
+              0.0
+            ]
+          }
+        ]
+      },
+      "evidence_axes": {
+        "content_text": "MATCH",
+        "pagination": "MATCH",
+        "link_destinations": "MISMATCH",
+        "text_anchor_geometry": "MATCH",
+        "visible_rendering": "NOT_ASSESSED",
+        "editability": "NOT_ASSESSED",
+        "model_retention": "NOT_ASSESSED"
+      },
+      "text_anchor_positions": {
+        "status": "EXTRACTED_TEXT_ONLY",
+        "anchors": {
+          "NOTE_ANCHOR": {
+            "word": [
+              {
+                "page": 1,
+                "x_pt": 90.05,
+                "y_pt": 123.61
+              }
+            ],
+            "app": [
+              {
+                "page": 1,
+                "x_pt": 90.0,
+                "y_pt": 123.472
+              }
+            ],
+            "same_page": true,
+            "delta_css_px": {
+              "x": -0.067,
+              "y": -0.184
+            }
+          },
+          "FOOTNOTE_BODY": {
+            "word": [
+              {
+                "page": 1,
+                "x_pt": 90.05,
+                "y_pt": 697.285
+              }
+            ],
+            "app": [
+              {
+                "page": 1,
+                "x_pt": 90.0,
+                "y_pt": 697.28
+              }
+            ],
+            "same_page": true,
+            "delta_css_px": {
+              "x": -0.067,
+              "y": -0.007
+            }
+          },
+          "ENDNOTE_BODY": {
+            "word": [
+              {
+                "page": 1,
+                "x_pt": 90.05,
+                "y_pt": 160.61
+              }
+            ],
+            "app": [
+              {
+                "page": 1,
+                "x_pt": 90.0,
+                "y_pt": 160.655
+              }
+            ],
+            "same_page": true,
+            "delta_css_px": {
+              "x": -0.067,
+              "y": 0.06
+            }
+          }
+        }
+      },
+      "profile": {
+        "reference_application": "Microsoft Word Online",
+        "capture_date": "2026-11-03 UTC (2026-11-02 America/Toronto)",
+        "browser_and_version": "Codex in-app browser; exact engine version is not exposed by the supported UI tools",
+        "browser_version_verified": false,
+        "paper_settings": "Native Word Online PDF export; paper sizes and margins from each source DOCX section, no browser print overrides",
+        "fonts": "Arial explicitly specified in document defaults, Normal, Title, Subtitle and Heading 1-9",
+        "limitations": [
+          "Word Online build number and browser engine version were not exposed; capture date and source/PDF hashes identify this reference snapshot.",
+          "These are Microsoft Word-generated PDFs, not browser print or LibreOffice substitutes."
+        ]
+      },
+      "reference_provenance": {
+        "reference_application": "Microsoft Word Online",
+        "captured_at": "2026-11-03T02:24:27.586033+00:00",
+        "font_profile": "Arial, explicit document defaults and all used paragraph styles",
+        "source_sha256": "a650e8d23a0c2ccc75052013b6080f6229024233f891b3471bbeafadd15cae82",
+        "pdf_sha256": "681232c93e5c36127923668ac4e816a8196e437189bad3d3bf4a1bbf933e84d7",
+        "capture_method": "Word Online File > Export > Download as PDF > Download, authenticated browser UI",
+        "private_document_url_omitted": true
+      }
+    },
+    {
+      "id": "crossrefs-toc",
+      "source_sha256": "9f72432930bbbbd4fc4ef454fb2a82a611dd17158ca4b7f73421a4318d776ecf",
+      "status": "MISMATCH",
+      "visual_status": "NOT_ASSESSED",
+      "editability_status": "NOT_ASSESSED",
+      "model_retention_status": "NOT_ASSESSED",
+      "reference_pdf": "fixtures/compatibility/references/crossrefs-toc.pdf",
+      "app_pdf": "fixtures/compatibility/a7-4-release-app-pdfs/crossrefs-toc.pdf",
+      "checks": {
+        "page_count_equal": true,
+        "media_boxes_within_0_75pt": true,
+        "token_multisets_equal": true,
+        "expected_markers_once": true,
+        "link_count_equal": false,
+        "link_destination_geometry_equal": false,
+        "text_anchors_within_1_css_px": true
+      },
+      "provenance": {
+        "source_sha256_matches": true,
+        "reference_pdf_sha256_matches": true
+      },
+      "expected_marker_counts": {
+        "CROSSREF_START": {
+          "word": 1,
+          "app": 1
+        },
+        "CROSSREF_END": {
+          "word": 1,
+          "app": 1
+        }
+      },
+      "missing_tokens": {},
+      "extra_tokens": {},
+      "media_box_deltas": [
+        {
+          "page": 1,
+          "delta_pt": [
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "within_tolerance": true
+        }
+      ],
+      "reference": {
+        "sha256": "2dfb99ed440821cd460a8dd28739d7bae4ff89cb31d2fbb5f038293a573a30b7",
+        "page_count": 1,
+        "pages": [
+          {
+            "page": 1,
+            "media_box_pt": [
+              0.0,
+              0.0,
+              612.0,
+              792.0
+            ],
+            "link_count": 1
+          }
+        ],
+        "link_count": 1,
+        "link_targets": [
+          {
+            "kind": "GoTo",
+            "page": 1,
+            "fit": "/XYZ",
+            "coordinates": [
+              87.0,
+              645.0,
+              0.0
+            ]
+          }
+        ]
+      },
+      "app": {
+        "sha256": "1d6ebbb0f9f020a524af5ef0f70dfd3d0a8564167fe28cf88399c4dc70d5f853",
+        "page_count": 1,
+        "pages": [
+          {
+            "page": 1,
+            "media_box_pt": [
+              0.0,
+              0.0,
+              612.0,
+              792.0
+            ],
+            "link_count": 3
+          }
+        ],
+        "link_count": 3,
+        "link_targets": [
+          {
+            "kind": "GoTo",
+            "page": 1,
+            "fit": "/XYZ",
+            "coordinates": [
+              90.0,
+              631.06640625,
+              0.0
+            ]
+          },
+          {
+            "kind": "GoTo",
+            "page": 1,
+            "fit": "/XYZ",
+            "coordinates": [
+              90.0,
+              631.06640625,
+              0.0
+            ]
+          },
+          {
+            "kind": "GoTo",
+            "page": 1,
+            "fit": "/XYZ",
+            "coordinates": [
+              90.0,
+              631.06640625,
+              0.0
+            ]
+          }
+        ]
+      },
+      "evidence_axes": {
+        "content_text": "MATCH",
+        "pagination": "MATCH",
+        "link_destinations": "MISMATCH",
+        "text_anchor_geometry": "MATCH",
+        "visible_rendering": "NOT_ASSESSED",
+        "editability": "NOT_ASSESSED",
+        "model_retention": "NOT_ASSESSED"
+      },
+      "text_anchor_positions": {
+        "status": "EXTRACTED_TEXT_ONLY",
+        "anchors": {
+          "CROSSREF_START": {
+            "word": [
+              {
+                "page": 1,
+                "x_pt": 90.05,
+                "y_pt": 180.61
+              }
+            ],
+            "app": [
+              {
+                "page": 1,
+                "x_pt": 90.0,
+                "y_pt": 180.53
+              }
+            ],
+            "same_page": true,
+            "delta_css_px": {
+              "x": -0.067,
+              "y": -0.107
+            }
+          },
+          "CROSSREF_END": {
+            "word": [
+              {
+                "page": 1,
+                "x_pt": 300.13,
+                "y_pt": 180.61
+              }
+            ],
+            "app": [
+              {
+                "page": 1,
+                "x_pt": 300.152,
+                "y_pt": 180.53
+              }
+            ],
+            "same_page": true,
+            "delta_css_px": {
+              "x": 0.029,
+              "y": -0.107
+            }
+          }
+        }
+      },
+      "profile": {
+        "reference_application": "Microsoft Word Online",
+        "capture_date": "2026-11-03 UTC (2026-11-02 America/Toronto)",
+        "browser_and_version": "Codex in-app browser; exact engine version is not exposed by the supported UI tools",
+        "browser_version_verified": false,
+        "paper_settings": "Native Word Online PDF export; paper sizes and margins from each source DOCX section, no browser print overrides",
+        "fonts": "Arial explicitly specified in document defaults, Normal, Title, Subtitle and Heading 1-9",
+        "limitations": [
+          "Word Online build number and browser engine version were not exposed; capture date and source/PDF hashes identify this reference snapshot.",
+          "These are Microsoft Word-generated PDFs, not browser print or LibreOffice substitutes."
+        ]
+      },
+      "reference_provenance": {
+        "reference_application": "Microsoft Word Online",
+        "captured_at": "2026-11-03T02:24:27.586302+00:00",
+        "font_profile": "Arial, explicit document defaults and all used paragraph styles",
+        "source_sha256": "9f72432930bbbbd4fc4ef454fb2a82a611dd17158ca4b7f73421a4318d776ecf",
+        "pdf_sha256": "2dfb99ed440821cd460a8dd28739d7bae4ff89cb31d2fbb5f038293a573a30b7",
+        "capture_method": "Word Online File > Export > Download as PDF > Download, authenticated browser UI",
+        "private_document_url_omitted": true
+      }
+    },
+    {
+      "id": "mixed",
+      "source_sha256": "e0cf199ae6e900fa5cc3aad546d80d1c50348e579b6258fbaeec092cbd63baf7",
+      "status": "MISMATCH",
+      "visual_status": "NOT_ASSESSED",
+      "editability_status": "NOT_ASSESSED",
+      "model_retention_status": "NOT_ASSESSED",
+      "reference_pdf": "fixtures/compatibility/references/mixed.pdf",
+      "app_pdf": "fixtures/compatibility/a7-4-release-app-pdfs/mixed.pdf",
+      "checks": {
+        "page_count_equal": true,
+        "media_boxes_within_0_75pt": true,
+        "token_multisets_equal": false,
+        "expected_markers_once": true,
+        "link_count_equal": false,
+        "link_destination_geometry_equal": false,
+        "text_anchors_within_1_css_px": true
+      },
+      "provenance": {
+        "source_sha256_matches": true,
+        "reference_pdf_sha256_matches": true
+      },
+      "expected_marker_counts": {
+        "TABS_START": {
+          "word": 1,
+          "app": 1
+        },
+        "TABS_END": {
+          "word": 1,
+          "app": 1
+        },
+        "COLUMN_00": {
+          "word": 1,
+          "app": 1
+        },
+        "COLUMN_25": {
+          "word": 1,
+          "app": 1
+        },
+        "TABLE_A": {
+          "word": 1,
+          "app": 1
+        },
+        "TABLE_B": {
+          "word": 1,
+          "app": 1
+        },
+        "TABLE_C": {
+          "word": 1,
+          "app": 1
+        },
+        "TABLE_D": {
+          "word": 1,
+          "app": 1
+        },
+        "NOTE_ANCHOR": {
+          "word": 1,
+          "app": 1
+        },
+        "FOOTNOTE_BODY": {
+          "word": 1,
+          "app": 1
+        },
+        "ENDNOTE_BODY": {
+          "word": 1,
+          "app": 1
+        },
+        "CROSSREF_START": {
+          "word": 1,
+          "app": 1
+        },
+        "CROSSREF_END": {
+          "word": 1,
+          "app": 1
+        }
+      },
+      "missing_tokens": {
+        "1": 1
+      },
+      "extra_tokens": {
+        "2": 1
+      },
+      "media_box_deltas": [
+        {
+          "page": 1,
+          "delta_pt": [
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "within_tolerance": true
+        },
+        {
+          "page": 2,
+          "delta_pt": [
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "within_tolerance": true
+        }
+      ],
+      "reference": {
+        "sha256": "7dd412a2ae75e38680a1dc134f41ac563a38d5ad4ac9081e215aeef478d2ef6d",
+        "page_count": 2,
+        "pages": [
+          {
+            "page": 1,
+            "media_box_pt": [
+              0.0,
+              0.0,
+              612.0,
+              792.0
+            ],
+            "link_count": 0
+          },
+          {
+            "page": 2,
+            "media_box_pt": [
+              0.0,
+              0.0,
+              612.0,
+              792.0
+            ],
+            "link_count": 3
+          }
+        ],
+        "link_count": 3,
+        "link_targets": [
+          {
+            "kind": "GoTo",
+            "page": 2,
+            "fit": "/XYZ",
+            "coordinates": [
+              87.0,
+              96.0,
+              0.0
+            ]
+          },
+          {
+            "kind": "GoTo",
+            "page": 2,
+            "fit": "/XYZ",
+            "coordinates": [
+              87.0,
+              492.0,
+              0.0
+            ]
+          },
+          {
+            "kind": "GoTo",
+            "page": 2,
+            "fit": "/XYZ",
+            "coordinates": [
+              87.0,
+              576.0,
+              0.0
+            ]
+          }
+        ]
+      },
+      "app": {
+        "sha256": "d439372e2073c2e5d66e077a38a9cc6eec19390cb6f3d15d9e847309ca63f03d",
+        "page_count": 2,
+        "pages": [
+          {
+            "page": 1,
+            "media_box_pt": [
+              0.0,
+              0.0,
+              612.0,
+              792.0
+            ],
+            "link_count": 0
+          },
+          {
+            "page": 2,
+            "media_box_pt": [
+              0.0,
+              0.0,
+              612.0,
+              792.0
+            ],
+            "link_count": 5
+          }
+        ],
+        "link_count": 5,
+        "link_targets": [
+          {
+            "kind": "GoTo",
+            "page": 2,
+            "fit": "/XYZ",
+            "coordinates": [
+              90.0,
+              95.80078125,
+              0.0
+            ]
+          },
+          {
+            "kind": "GoTo",
+            "page": 2,
+            "fit": "/XYZ",
+            "coordinates": [
+              90.0,
+              491.8359375,
+              0.0
+            ]
+          },
+          {
+            "kind": "GoTo",
+            "page": 2,
+            "fit": "/XYZ",
+            "coordinates": [
+              90.0,
+              562.078125,
+              0.0
+            ]
+          },
+          {
+            "kind": "GoTo",
+            "page": 2,
+            "fit": "/XYZ",
+            "coordinates": [
+              90.0,
+              562.078125,
+              0.0
+            ]
+          },
+          {
+            "kind": "GoTo",
+            "page": 2,
+            "fit": "/XYZ",
+            "coordinates": [
+              90.0,
+              562.078125,
+              0.0
+            ]
+          }
+        ]
+      },
+      "evidence_axes": {
+        "content_text": "MISMATCH",
+        "pagination": "MATCH",
+        "link_destinations": "MISMATCH",
+        "text_anchor_geometry": "MATCH",
+        "visible_rendering": "NOT_ASSESSED",
+        "editability": "NOT_ASSESSED",
+        "model_retention": "NOT_ASSESSED"
+      },
+      "text_anchor_positions": {
+        "status": "EXTRACTED_TEXT_ONLY",
+        "anchors": {
+          "TABS_START": {
+            "word": [
+              {
+                "page": 1,
+                "x_pt": 90.05,
+                "y_pt": 153.36
+              }
+            ],
+            "app": [
+              {
+                "page": 1,
+                "x_pt": 90.0,
+                "y_pt": 153.366
+              }
+            ],
+            "same_page": true,
+            "delta_css_px": {
+              "x": -0.067,
+              "y": 0.008
+            }
+          },
+          "TABS_END": {
+            "word": [
+              {
+                "page": 1,
+                "x_pt": 230.042,
+                "y_pt": 153.36
+              }
+            ],
+            "app": [
+              {
+                "page": 1,
+                "x_pt": 229.934,
+                "y_pt": 153.366
+              }
+            ],
+            "same_page": true,
+            "delta_css_px": {
+              "x": -0.144,
+              "y": 0.008
+            }
+          },
+          "COLUMN_00": {
+            "word": [
+              {
+                "page": 1,
+                "x_pt": 90.05,
+                "y_pt": 257.88
+              }
+            ],
+            "app": [
+              {
+                "page": 1,
+                "x_pt": 90.0,
+                "y_pt": 257.452
+              }
+            ],
+            "same_page": true,
+            "delta_css_px": {
+              "x": -0.067,
+              "y": -0.571
+            }
+          },
+          "COLUMN_25": {
+            "word": [
+              {
+                "page": 1,
+                "x_pt": 324.13,
+                "y_pt": 582.01
+              }
+            ],
+            "app": [
+              {
+                "page": 1,
+                "x_pt": 324.0,
+                "y_pt": 581.991
+              }
+            ],
+            "same_page": true,
+            "delta_css_px": {
+              "x": -0.173,
+              "y": -0.025
+            }
+          },
+          "TABLE_A": {
+            "word": [
+              {
+                "page": 1,
+                "x_pt": 324.13,
+                "y_pt": 621.76
+              }
+            ],
+            "app": [
+              {
+                "page": 1,
+                "x_pt": 324.492,
+                "y_pt": 621.073
+              }
+            ],
+            "same_page": true,
+            "delta_css_px": {
+              "x": 0.483,
+              "y": -0.916
+            }
+          },
+          "TABLE_B": {
+            "word": [
+              {
+                "page": 1,
+                "x_pt": 410.67,
+                "y_pt": 621.76
+              }
+            ],
+            "app": [
+              {
+                "page": 1,
+                "x_pt": 410.742,
+                "y_pt": 621.073
+              }
+            ],
+            "same_page": true,
+            "delta_css_px": {
+              "x": 0.096,
+              "y": -0.916
+            }
+          },
+          "TABLE_C": {
+            "word": [
+              {
+                "page": 1,
+                "x_pt": 324.13,
+                "y_pt": 634.76
+              }
+            ],
+            "app": [
+              {
+                "page": 1,
+                "x_pt": 324.492,
+                "y_pt": 634.468
+              }
+            ],
+            "same_page": true,
+            "delta_css_px": {
+              "x": 0.483,
+              "y": -0.389
+            }
+          },
+          "TABLE_D": {
+            "word": [
+              {
+                "page": 1,
+                "x_pt": 410.67,
+                "y_pt": 634.76
+              }
+            ],
+            "app": [
+              {
+                "page": 1,
+                "x_pt": 410.742,
+                "y_pt": 634.468
+              }
+            ],
+            "same_page": true,
+            "delta_css_px": {
+              "x": 0.096,
+              "y": -0.389
+            }
+          },
+          "NOTE_ANCHOR": {
+            "word": [
+              {
+                "page": 2,
+                "x_pt": 90.05,
+                "y_pt": 73.59
+              }
+            ],
+            "app": [
+              {
+                "page": 2,
+                "x_pt": 90.0,
+                "y_pt": 73.831
+              }
+            ],
+            "same_page": true,
+            "delta_css_px": {
+              "x": -0.067,
+              "y": 0.321
+            }
+          },
+          "FOOTNOTE_BODY": {
+            "word": [
+              {
+                "page": 2,
+                "x_pt": 90.05,
+                "y_pt": 697.285
+              }
+            ],
+            "app": [
+              {
+                "page": 2,
+                "x_pt": 90.0,
+                "y_pt": 697.28
+              }
+            ],
+            "same_page": true,
+            "delta_css_px": {
+              "x": -0.067,
+              "y": -0.007
+            }
+          },
+          "ENDNOTE_BODY": {
+            "word": [
+              {
+                "page": 2,
+                "x_pt": 90.05,
+                "y_pt": 301.41
+              }
+            ],
+            "app": [
+              {
+                "page": 2,
+                "x_pt": 90.0,
+                "y_pt": 301.245
+              }
+            ],
+            "same_page": true,
+            "delta_css_px": {
+              "x": -0.067,
+              "y": -0.22
+            }
+          },
+          "CROSSREF_START": {
+            "word": [
+              {
+                "page": 2,
+                "x_pt": 90.05,
+                "y_pt": 249.64
+              }
+            ],
+            "app": [
+              {
+                "page": 2,
+                "x_pt": 90.0,
+                "y_pt": 249.519
+              }
+            ],
+            "same_page": true,
+            "delta_css_px": {
+              "x": -0.067,
+              "y": -0.161
+            }
+          },
+          "CROSSREF_END": {
+            "word": [
+              {
+                "page": 2,
+                "x_pt": 193.83,
+                "y_pt": 264.14
+              }
+            ],
+            "app": [
+              {
+                "page": 2,
+                "x_pt": 193.852,
+                "y_pt": 264.062
+              }
+            ],
+            "same_page": true,
+            "delta_css_px": {
+              "x": 0.029,
+              "y": -0.104
+            }
+          }
+        }
+      },
+      "profile": {
+        "reference_application": "Microsoft Word Online",
+        "capture_date": "2026-11-03 UTC (2026-11-02 America/Toronto)",
+        "browser_and_version": "Codex in-app browser; exact engine version is not exposed by the supported UI tools",
+        "browser_version_verified": false,
+        "paper_settings": "Native Word Online PDF export; paper sizes and margins from each source DOCX section, no browser print overrides",
+        "fonts": "Arial explicitly specified in document defaults, Normal, Title, Subtitle and Heading 1-9",
+        "limitations": [
+          "Word Online build number and browser engine version were not exposed; capture date and source/PDF hashes identify this reference snapshot.",
+          "These are Microsoft Word-generated PDFs, not browser print or LibreOffice substitutes."
+        ]
+      },
+      "reference_provenance": {
+        "reference_application": "Microsoft Word Online",
+        "captured_at": "2026-11-03T02:24:27.586994+00:00",
+        "font_profile": "Arial, explicit document defaults and all used paragraph styles",
+        "source_sha256": "e0cf199ae6e900fa5cc3aad546d80d1c50348e579b6258fbaeec092cbd63baf7",
+        "pdf_sha256": "7dd412a2ae75e38680a1dc134f41ac563a38d5ad4ac9081e215aeef478d2ef6d",
+        "capture_method": "Word Online File > Export > Download as PDF > Download, authenticated browser UI",
+        "private_document_url_omitted": true
+      }
+    }
+  ],
+  "limits": [
+    "MEASURED covers listed checks only; it does not assert visual fidelity or editing support.",
+    "Link destination checks resolve direct/named GoTo page/fit/coordinates within 0.75 pt and exact URI, in annotation order; unresolved actions remain unknown. This does not establish semantic target identity or clickable source rectangles.",
+    "Token extraction may vary by PDF text encoding.",
+    "Text anchor coordinates come from extractable PDF text and can differ from visible glyphs; they are not a visual comparison."
+  ]
+}

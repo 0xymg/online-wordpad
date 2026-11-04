@@ -64,3 +64,5 @@ The user requested completion of these two remaining areas with the established 
 - Measure separator geometry against independently varied genuine Word Online outputs. Keep Word-only unsupported controls separate from supported import fixtures. Do not turn an inconclusive diagnostic or a fixed fixture offset into a claimed general rule.
 
 Acceptance: source/identity/history regressions, actual native import/edit/output/reopen, all eight frozen corpus exports with unchanged old evidence, expanded column/anchor and visible-artwork inspection, a production build and live checks. Semantic navigation (correct visible target and physical page) is recorded separately from Word's viewport coordinates and original cached-link count; the original raw report is never filtered or reclassified to hide these differences.
+
+Local production acceptance passes at `e2a2c57`; all eight manifest anchor gates and all 78 expanded page/column placements pass. See [A7.4 acceptance](advanced-reference-layout-acceptance.md) for immutable capture lineage, semantic navigation, remaining raw Word-cache/viewport differences, separator profile limits and release status.

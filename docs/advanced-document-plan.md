@@ -202,3 +202,9 @@ Sol/Terra ile kaynak not işaretleri, normal/üst simge biçimi, gövdede numara
 Üretim derlemesi ve yerel gerçek arayüz/DOCX/PDF kabulü geçti. Donmuş not örneğinin tüm metin ankrajları 0,184 CSS px içinde; bağlantı hedef koordinatları hâlâ farklı. 78 sütun işareti doğru sayfa/sütunda. Küçük çizgi/ankraj farkları, güncellenmiş alanların görünümü, bağlantı hedefleri ve daha geniş font/yazı kapsamı A7 altında açık. Yayın ve canlı kabul durumu [advanced-note-font-compatibility-acceptance.md](advanced-note-font-compatibility-acceptance.md), gerçek font kanıtları [advanced-font-compatibility-acceptance.md](advanced-font-compatibility-acceptance.md) içinde.
 
 `5ed905e` ile coauthor eklenmeden yayımlandı. Not içe aktarımındaki gereksiz koruma uyarısı da giderildi; canlıda uyarısız yükle/PDF/yeniden aç, font değiştir/geri al, gerçek Word dipnotu, beş fontun 15 satır aralığı ve kaynakça testleri geçti. A7.3 kapandı; genel A7 kabulü açık.
+
+## A7.4 — bağlantılar, içindekiler ve kalan ölçülmüş yerleşim
+
+Sol/Terra ile native içindekilerin sekme/girinti ve bağımsız alan biçimleri, kaynak bağlantı görünümü, Word harf aralığı eşikleri, gerçek PDF hedefleri ve açık kullanıcı gezinmesinin tarayıcı seçimi düzeltildi. Sütunlarda doğal satır üst boşluğu ve ayırıcıların fiziksel konumu korunuyor; dipnot çizgisi için ölçülmüş boşluk ayrılıyor.
+
+Yerel üretim kabulünde sekiz belgenin tamamı 1 CSS px metin ankrajı sınırını karşılıyor; 78 sütun işareti doğru sayfa/sütunda ve on bağlantı doğru görünür hedefte. Word'ün eski sayfa önbelleği, bağlantı sayısı ve görüntüleme koordinatı farkları ham raporda aynen tutuluyor. Yayın durumu ve sınırlar [A7.4 kabulünde](advanced-reference-layout-acceptance.md); Arial ayırıcı profilinin 12 pt ölçüm sınırı [ayırıcı kabulünde](advanced-note-separator-acceptance.md). Genel ve koşulsuz Word eşitliği kapsamı ayrı kalıyor.

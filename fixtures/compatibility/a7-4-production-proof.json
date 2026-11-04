@@ -1,0 +1,31 @@
+{
+  "base_url": "http://localhost:3119",
+  "application_revision": "e2a2c57e9bffdfea53a2af8e5b003bb2af432d81",
+  "captured_at": "2026-11-04T00:13:02.335Z",
+  "browser_version": "156.0.8078.4",
+  "source_sha256": "e0cf199ae6e900fa5cc3aad546d80d1c50348e579b6258fbaeec092cbd63baf7",
+  "pdf_sha256": "f58602c876b55962ab78cb3128563821c59e800fc450160ceeb0c9071c2217a9",
+  "screenshot_sha256": "ced1551436f1883fae077ab7aff91de17b63fdac7f21402ca8943d9924934eae",
+  "checks": {
+    "current_toc_page_two": true,
+    "toc_click_selects_actual_heading": true,
+    "note_and_field_identities_retained": true,
+    "pdf_export": true,
+    "zero_note_reference_or_column_errors": true,
+    "saved_state": true
+  },
+  "facts": {
+    "notes": [
+      "nte_0a32501ef6eb4b61ba14350bf4269583",
+      "nte_407fc6af575a4cf0bef607965dad1abf"
+    ],
+    "toc": "TARGET_HEADING\t2",
+    "ids": [
+      "fld_233a6a99c25d410da9de6d90b6ac15d1",
+      "fld_0b583f8290a74562aeb56da88ad23a31"
+    ],
+    "referenceError": null,
+    "columnError": null,
+    "noteErrors": []
+  }
+}
