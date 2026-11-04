@@ -1,0 +1,33 @@
+{
+  "schema_version": 1,
+  "tested_release": "0373c6c1dbdfe5da8c1bbb6f8f35fcb3fa847e92",
+  "runtime_revision": "e2a2c57e9bffdfea53a2af8e5b003bb2af432d81",
+  "base_url": "https://wordpad.info",
+  "deployment": "https://vercel.com/312sh/online-wordpad/3oxr3F7mur1hRZpbgam9hEvJ9prJ",
+  "recorded_at": "2026-11-04T00:21:41.387987+00:00",
+  "checks": {
+    "native_toc_current_page_two_plain_ink_and_line_fit": true,
+    "native_toc_edit_reload_docx_reopen_ids": true,
+    "standalone_html_source_ink": true,
+    "explicit_navigation_actual_browser_target": true,
+    "reference_menu_dialog_and_newer_focus": true,
+    "ten_pdf_links_correct_visible_target_and_page": true,
+    "live_four_pdf_pages_pixel_identical_to_release_at_144dpi": true,
+    "real_word_footnotes_native_docx_pdf_600_words_once_four_links": true,
+    "note_import_pdf_reload_zero_errors_and_16_protection_guards": true,
+    "saved_screenshot_after_all_scroll_actions": true,
+    "no_coauthor_trailers": true
+  },
+  "artifacts": {
+    "native_toc": "t2C9rN",
+    "native_docx_sha256": "fd74783df834d9bf55d58db9e652b508282f225f171e6400de3d59053882ba79",
+    "native_html_sha256": "7507f978ba7943cce858a5b6fef7ffd0b19a2a7d17f6df4d6d8a6f484da8f590",
+    "real_word_footnotes": "SNfN8B",
+    "metric_projection": "skRl9B",
+    "proof": "a7-4-live-proof.json",
+    "navigation": "a7-4-live-navigation.json",
+    "pdf_exports": "a7-4-live-app-pdfs/exports.json",
+    "screenshot": "a7-4-live-references.png",
+    "screenshot_sha256": "4cc9d9b0f0a8d36654cb4cbb4d382b5880c82eae88e88ffecfebb04e0ae3e3d1"
+  }
+}

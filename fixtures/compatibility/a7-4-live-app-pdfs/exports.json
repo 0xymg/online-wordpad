@@ -1,0 +1,49 @@
+{
+  "schema_version": 1,
+  "complete": true,
+  "base_url": "https://wordpad.info",
+  "browser_version": "156.0.8078.4",
+  "viewport": {
+    "width": 1450,
+    "height": 1050
+  },
+  "application_revision": "0373c6c1dbdfe5da8c1bbb6f8f35fcb3fa847e92",
+  "selected_cases": [
+    "notes",
+    "crossrefs-toc",
+    "mixed"
+  ],
+  "captured_at": "2026-11-04T00:18:26.602Z",
+  "results": [
+    {
+      "id": "notes",
+      "source_sha256": "a650e8d23a0c2ccc75052013b6080f6229024233f891b3471bbeafadd15cae82",
+      "status": "EXPORTED",
+      "base_url": "https://wordpad.info",
+      "captured_at": "2026-11-04T00:18:10.744Z",
+      "pdf_sha256": "be9e6041ba19673d821b3fc3e75c6058fff653b58f4afd541bf533114b0222c2",
+      "pdf_bytes": 62029,
+      "page_errors": []
+    },
+    {
+      "id": "crossrefs-toc",
+      "source_sha256": "9f72432930bbbbd4fc4ef454fb2a82a611dd17158ca4b7f73421a4318d776ecf",
+      "status": "EXPORTED",
+      "base_url": "https://wordpad.info",
+      "captured_at": "2026-11-04T00:18:15.738Z",
+      "pdf_sha256": "4e7ac433727f323e39813b1e128004fa200df6200fe3aa4ee1bc676ba225e1cc",
+      "pdf_bytes": 77928,
+      "page_errors": []
+    },
+    {
+      "id": "mixed",
+      "source_sha256": "e0cf199ae6e900fa5cc3aad546d80d1c50348e579b6258fbaeec092cbd63baf7",
+      "status": "EXPORTED",
+      "base_url": "https://wordpad.info",
+      "captured_at": "2026-11-04T00:18:20.577Z",
+      "pdf_sha256": "6a5224ff7485844494b46331bb7f2a0def016403330e9c984702f466d7a4e388",
+      "pdf_bytes": 712675,
+      "page_errors": []
+    }
+  ]
+}

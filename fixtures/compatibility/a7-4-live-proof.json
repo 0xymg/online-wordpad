@@ -1,0 +1,31 @@
+{
+  "base_url": "https://wordpad.info",
+  "application_revision": "0373c6c1dbdfe5da8c1bbb6f8f35fcb3fa847e92",
+  "captured_at": "2026-11-04T00:19:10.507Z",
+  "browser_version": "156.0.8078.4",
+  "source_sha256": "e0cf199ae6e900fa5cc3aad546d80d1c50348e579b6258fbaeec092cbd63baf7",
+  "pdf_sha256": "9b4978a5d54162a3689a9a5077dd797eb8daa651dde8f2cf2f080571233392e0",
+  "screenshot_sha256": "4cc9d9b0f0a8d36654cb4cbb4d382b5880c82eae88e88ffecfebb04e0ae3e3d1",
+  "checks": {
+    "current_toc_page_two": true,
+    "toc_click_selects_actual_heading": true,
+    "note_and_field_identities_retained": true,
+    "pdf_export": true,
+    "zero_note_reference_or_column_errors": true,
+    "saved_state": true
+  },
+  "facts": {
+    "notes": [
+      "nte_64bef67355154b8fad918e7070909e34",
+      "nte_e0a693a336764197a40ef02c83fc7388"
+    ],
+    "toc": "TARGET_HEADING\t2",
+    "ids": [
+      "fld_70fde09682bb468f96174ef0d5d28158",
+      "fld_9d0a3c5c025e426aa718bec0c58445c5"
+    ],
+    "referenceError": null,
+    "columnError": null,
+    "noteErrors": []
+  }
+}

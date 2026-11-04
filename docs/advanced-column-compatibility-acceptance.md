@@ -1,5 +1,7 @@
 # A7.2 column and mixed geometry evidence
 
+Latest: [A7.4 production/live acceptance](advanced-reference-layout-acceptance.md) closes all three expanded 1 CSS px gates, including mixed's horizontal field residual, with all 78 page/column assignments retained. The development and A7.2 sections below preserve their original intermediate results.
+
 ## A7.4 natural line leading correction (development evidence)
 
 The expanded A7.3 residual was not entirely a font-renderer difference. Natural column measurement used the browser's text-range font box as the line origin, dropping its measured displacement inside the CSS line box. An imported Arial 11 pt automatic 1.15 paragraph has a 19.3951 CSS px line box and a text-range top 1 CSS px below the content-box top in the captured Chromium. Relocating that font box to the column origin discarded the natural leading. The correction preserves the measured displacement for every ordinary line without changing occupied line heights, source formatting, font metrics or fixture-specific offsets. The endnote rule is translated using its measured position relative to the source paragraph and text fragment, preserving the rule independently of glyph leading.

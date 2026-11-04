@@ -1,6 +1,6 @@
 # A7.4 references and residual document geometry
 
-Implemented with the approved Sol/Terra workflow. The requested reference/TOC presentation and measured column/note corrections pass local production acceptance at `e2a2c57e9bffdfea53a2af8e5b003bb2af432d81`. Live release acceptance is recorded below when completed. This increment does not assert arbitrary Word layout or font equivalence.
+Implemented with the approved Sol/Terra workflow. The requested reference/TOC presentation and measured column/note corrections pass local production acceptance at `e2a2c57e9bffdfea53a2af8e5b003bb2af432d81` and live acceptance at release `0373c6c`. This increment closes its measured profile, not arbitrary Word layout or font equivalence.
 
 ## Reference presentation and navigation
 
@@ -43,7 +43,7 @@ Production build and TypeScript pass. Focused lint passes; pre-existing broad Ed
 
 Native kerning/presentation55 verifies threshold inheritance, resize/exact undo, notes/clipboard, marked tabs, running fragments, unlinked paragraph bases, DOCX result-format reopening, native plain/explicit styled TOC links and authored defaults. Native TOC public import → rename → reload → idle → DOCX export/reopen passes with current page two and source identities/tabs, including the mixed near-edge single-line regression. Standalone HTML retains native TOC ink. Full LTR/RTL/right/center/decimal/leader tab workflows, zoom, persistence and five exports pass. The historical six-cycle reference update/menu/dialog focus regression also passes.
 
-[Production proof](../fixtures/compatibility/a7-4-production-proof.json) and [saved screenshot](../fixtures/compatibility/a7-4-production-references.png) cover actual mixed DOCX import, clicking the TOC into the real heading/browser selection, current page two, real PDF download, stable note/field IDs and zero note/reference/column errors.
+[Production proof](../fixtures/compatibility/a7-4-production-proof.json) and [screenshot](../fixtures/compatibility/a7-4-production-references.png) cover actual mixed DOCX import, clicking the TOC into the real heading/browser selection, current page two, real PDF download, stable note/field IDs and zero note/reference/column errors. The original proof checked Saved before scrolling; the final live proof below waits for the visible Saved state after every scroll action as well.
 
 The final runtime also passes real Word footnote import → native DOCX → reopen → PDF, with all 600 words and the second body once, four GoTo links and continuation pages (`Nx7M6F`); native import/PDF/Escape/reload emits zero note errors and all sixteen font-edit/undo/protected-cache checks pass (`GD5rlD`). The [full column-page comparison](../fixtures/compatibility/a7-4-release-columns-visible-comparison.png) was rendered and inspected alongside the complete note pages.
 
@@ -51,4 +51,10 @@ The first `f45f544` eight-file capture exposed tab width/probe regressions and i
 
 ## Release
 
-Local acceptance is complete. Deployment and live acceptance are pending at this record revision. The broader arbitrary-font/script/object, continuation-separator and exact Word viewport policies remain outside this increment's proven profile.
+Release [`0373c6c`](https://github.com/0xymg/online-wordpad/commit/0373c6c1dbdfe5da8c1bbb6f8f35fcb3fa847e92) completed its [Vercel deployment](https://vercel.com/312sh/online-wordpad/3oxr3F7mur1hRZpbgam9hEvJ9prJ) without coauthor trailers. Its application/runtime tree is identical to the locally accepted `e2a2c57`; intervening files are evidence/documentation.
+
+Actual tests against `https://wordpad.info` passed native TOC current page two/source ink/near-edge fitting, editing/reload/native DOCX reopening and standalone HTML (`t2C9rN`); the six-cycle typing/newer-control/menu/dialog focus check; real Word footnote import/native DOCX/PDF with 600 words and the second body once/four links/continuation (`SNfN8B`); and zero-error native note import/PDF/Escape/reload with sixteen metric/font-edit/undo/protection checks (`skRl9B`). Explicit user TOC navigation selects the real browser heading, identities stay stable, and the final screenshot waits for visible Saved after all scrolling.
+
+[Live acceptance](../fixtures/compatibility/a7-4-live-acceptance.json), [navigation](../fixtures/compatibility/a7-4-live-navigation.json), [proof](../fixtures/compatibility/a7-4-live-proof.json) and [saved live screenshot](../fixtures/compatibility/a7-4-live-references.png) retain hashes and runtime/capture provenance. All ten links in the three live PDF cases reach their correct visible physical target. All four live PDF pages render pixel-identically to the frozen local release pages at 144 dpi.
+
+A7.4's requested reference/presentation and measured geometry increment is complete. The broader arbitrary-font/script/object, continuation-separator, 12 pt rule residual and exact Word viewport policies remain explicit limits of the support matrix.
