@@ -14,10 +14,11 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--app', type=Path, required=True)
     parser.add_argument('--output', type=Path, required=True)
+    parser.add_argument('--label', default='A7.3 (current capture)')
     args = parser.parse_args()
     root = Path(__file__).resolve().parents[2] / 'fixtures/compatibility'
     dirs = [root / 'references', root / 'a7-2-app-pdfs', args.app]
-    labels = ['Word Online (frozen reference)', 'A7.2 (previous release)', 'A7.3 (current capture)']
+    labels = ['Word Online (frozen reference)', 'A7.2 (previous release)', args.label]
     font = ImageFont.load_default(size=20)
     cache = {}
 

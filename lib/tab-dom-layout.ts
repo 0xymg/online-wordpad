@@ -45,7 +45,10 @@ function measure(chunks: Chunk[], separator: string | null, probe: HTMLElement):
     if (separator) { const at = text.indexOf(separator); if (at >= 0) { text = text.slice(0, at); done = true; } }
     if (text) {
       const el = document.createElement("span"), style = chunk.style;
-      el.style.font = style.font; el.style.letterSpacing = style.letterSpacing; el.style.wordSpacing = style.wordSpacing;
+      // Non-default kerning makes computed font shorthand empty in Chromium.
+      // Copy its independent metrics so probes retain the actual run font.
+      for (const property of ["font-family","font-size","font-weight","font-style","font-stretch","font-variant"]) el.style.setProperty(property,style.getPropertyValue(property));
+      el.style.letterSpacing = style.letterSpacing; el.style.wordSpacing = style.wordSpacing;
       el.style.fontKerning = style.fontKerning; el.style.fontFeatureSettings = style.fontFeatureSettings;
       el.style.fontVariant = style.fontVariant; el.style.textTransform = style.textTransform;
       el.textContent = text; probe.appendChild(el);
@@ -76,6 +79,12 @@ export function measureTabParagraph(dom: HTMLElement, node: PMNode, geometry: Ta
     const segment = align === "decimal" ? (segmentDirection === entryGeometry.direction ? prefix : total - prefix) : total;
     const offset = align === "center" ? segment / 2 : segment;
     let width = Math.max(0, Math.min(entryGeometry.availableWidthTwips / 15, (position - current) / 15 - offset));
+    // Word can retreat an aligned tab when the complete following field fits
+    // on this line but its requested alignment would push the tail past the
+    // text edge. Shorten only the tab gap; never squeeze glyphs or prevent a
+    // genuinely overlong field from wrapping.
+    const availableGap = entryGeometry.availableWidthTwips / 15 - current / 15 - total;
+    if (total > 0 && availableGap >= 0) width = Math.min(width, availableGap);
     if (!entry.implicit && afterImplicit) {
       const text = entry.chunks.map(chunk => chunk.text).join("");
       const token = /^[+\-0-9٠-٩۰-۹.,٫]+/u.exec(text)?.[0];

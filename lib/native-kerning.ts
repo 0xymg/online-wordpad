@@ -27,7 +27,7 @@ export function nativeKerningPlugin(): Plugin {
     if (previous === state.doc) return cached;
     previous = state.doc; const decorations: Decoration[] = [];
     state.doc.descendants((node, pos, parent) => {
-      if (!node.isInline || node.type.name.startsWith('bookmark_')) return;
+      if (!node.isInline || ['tab','hard_break','column_break','image'].includes(node.type.name) || node.type.name.startsWith('bookmark_')) return;
       const threshold = nativeKerningValue(node.marks.find(m => m.type.name === 'nativeKerning')?.attrs.threshold ?? parent?.attrs.styleText?.kerning);
       if (threshold === undefined) return;
       const size = pointSize(node.marks.find(m => m.type.name === 'fontSize')?.attrs.size, parent?.attrs.styleText?.size || 12);
