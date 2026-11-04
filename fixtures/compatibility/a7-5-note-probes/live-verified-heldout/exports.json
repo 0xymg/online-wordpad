@@ -1,0 +1,155 @@
+{
+  "schema_version": 1,
+  "complete": true,
+  "base_url": "https://wordpad.info",
+  "browser_version": "156.0.8078.4",
+  "viewport": {
+    "width": 1450,
+    "height": 1050
+  },
+  "application_revision": "8daa1dea5ce1e7a11dac6aebfe4e6aa0a3d91114",
+  "selected_cases": null,
+  "captured_at": "2026-11-04T01:01:46.789Z",
+  "results": [
+    {
+      "id": "columns-base-12",
+      "source_sha256": "9e1af129d8c84a5f66224c4292a9e7b196d5b22fb5810b301e8424044bbb532d",
+      "status": "EXPORTED",
+      "base_url": "https://wordpad.info",
+      "captured_at": "2026-11-04T01:01:37.225Z",
+      "served_response_url": "https://wordpad.info/pad",
+      "served_base_host": "wordpad.info",
+      "served_asset_paths": [
+        "https://wordpad.info/7ec31fd9973dcd16/script.js",
+        "https://wordpad.info/_next/static/immutable/chunks/0-p8wyyw7p3rd.js",
+        "https://wordpad.info/_next/static/immutable/chunks/0c0hxoamwjsbw.js",
+        "https://wordpad.info/_next/static/immutable/chunks/0rdpp21f57on7.js",
+        "https://wordpad.info/_next/static/immutable/chunks/0rura2dvbrz82.js",
+        "https://wordpad.info/_next/static/immutable/chunks/0tic7-8vowl0m.js",
+        "https://wordpad.info/_next/static/immutable/chunks/0u2fif0wk2otz.js",
+        "https://wordpad.info/_next/static/immutable/chunks/0ws7t_wz4dvp7.js",
+        "https://wordpad.info/_next/static/immutable/chunks/1-wavzm_r1ww9.js",
+        "https://wordpad.info/_next/static/immutable/chunks/11ui2dcg_9cwp.css",
+        "https://wordpad.info/_next/static/immutable/chunks/12wpd8pc097nj.js",
+        "https://wordpad.info/_next/static/immutable/chunks/13f4xxn6njhj6.js",
+        "https://wordpad.info/_next/static/immutable/chunks/161oe_-kaljk-.js",
+        "https://wordpad.info/_next/static/immutable/chunks/1h35ma2wpu443.css",
+        "https://wordpad.info/_next/static/immutable/chunks/1qkgrxqcrfyzv.js",
+        "https://wordpad.info/_next/static/immutable/chunks/1t-4vgj0a53c4.js",
+        "https://wordpad.info/_next/static/immutable/chunks/21xgadud-no8w.js",
+        "https://wordpad.info/_next/static/immutable/chunks/28h7y2lho-gxs.js",
+        "https://wordpad.info/_next/static/immutable/chunks/2a1sk9w4p6tti.js",
+        "https://wordpad.info/_next/static/immutable/chunks/2a3071iwlz595.js",
+        "https://wordpad.info/_next/static/immutable/chunks/2cdrcpqj4sa8z.js",
+        "https://wordpad.info/_next/static/immutable/chunks/2corl6wyj4669.js",
+        "https://wordpad.info/_next/static/immutable/chunks/2f8dk3h56wru5.js",
+        "https://wordpad.info/_next/static/immutable/chunks/2n5bv9p3-l876.js",
+        "https://wordpad.info/_next/static/immutable/chunks/2sd8w4-5q6htt.js",
+        "https://wordpad.info/_next/static/immutable/chunks/2ton2_pf4qzbv.css",
+        "https://wordpad.info/_next/static/immutable/chunks/3-yfrdt56749_.js",
+        "https://wordpad.info/_next/static/immutable/chunks/32v70pic0dpz-.js",
+        "https://wordpad.info/_next/static/immutable/chunks/3505ho3k_qesm.js",
+        "https://wordpad.info/_next/static/immutable/chunks/3v_vmp01m8xc8.js",
+        "https://wordpad.info/_next/static/immutable/chunks/turbopack-1zshz0u9bmusp.js",
+        "https://wordpad.info/_vercel/insights/script.js",
+        "https://www.googletagmanager.com/gtag/js"
+      ],
+      "served_asset_fingerprint_sha256": "2abe047cff117a16a550b3ee81b4c451421e0f7e0fde220959f65041699eb17d",
+      "revision_basis": "APP_REVISION is the expected deployment revision supplied by operator; served asset fingerprint independently identifies the frontend loaded for this case",
+      "geometry": {
+        "separator": {
+          "top": 453.234375,
+          "bottom": 471.625,
+          "height": 18.390625
+        },
+        "rule": {
+          "top": 464.0729064941406,
+          "bottom": 464.7291564941406,
+          "height": 0.65625
+        },
+        "baseline": {
+          "top": 467.234375,
+          "bottom": 467.234375,
+          "height": 0
+        },
+        "font": "",
+        "lineHeight": "18.3984px",
+        "fontFamily": "Arial, sans-serif",
+        "fontSize": "16px"
+      },
+      "pdf_sha256": "fa765c3488db30a2da3bcec1e7f21f8fc1bfae822f99ac501c79f60bdb1adc18",
+      "pdf_bytes": 65649,
+      "page_errors": []
+    },
+    {
+      "id": "shifted-base-12",
+      "source_sha256": "cbc2dd724b859a1b0051e2fc5dfc9864ffd6bf411a1576481ff3d97a1ece6926",
+      "status": "EXPORTED",
+      "base_url": "https://wordpad.info",
+      "captured_at": "2026-11-04T01:01:42.034Z",
+      "served_response_url": "https://wordpad.info/pad",
+      "served_base_host": "wordpad.info",
+      "served_asset_paths": [
+        "https://wordpad.info/7ec31fd9973dcd16/script.js",
+        "https://wordpad.info/_next/static/immutable/chunks/0-p8wyyw7p3rd.js",
+        "https://wordpad.info/_next/static/immutable/chunks/0c0hxoamwjsbw.js",
+        "https://wordpad.info/_next/static/immutable/chunks/0rdpp21f57on7.js",
+        "https://wordpad.info/_next/static/immutable/chunks/0rura2dvbrz82.js",
+        "https://wordpad.info/_next/static/immutable/chunks/0tic7-8vowl0m.js",
+        "https://wordpad.info/_next/static/immutable/chunks/0u2fif0wk2otz.js",
+        "https://wordpad.info/_next/static/immutable/chunks/0ws7t_wz4dvp7.js",
+        "https://wordpad.info/_next/static/immutable/chunks/1-wavzm_r1ww9.js",
+        "https://wordpad.info/_next/static/immutable/chunks/11ui2dcg_9cwp.css",
+        "https://wordpad.info/_next/static/immutable/chunks/12wpd8pc097nj.js",
+        "https://wordpad.info/_next/static/immutable/chunks/13f4xxn6njhj6.js",
+        "https://wordpad.info/_next/static/immutable/chunks/161oe_-kaljk-.js",
+        "https://wordpad.info/_next/static/immutable/chunks/1h35ma2wpu443.css",
+        "https://wordpad.info/_next/static/immutable/chunks/1qkgrxqcrfyzv.js",
+        "https://wordpad.info/_next/static/immutable/chunks/1t-4vgj0a53c4.js",
+        "https://wordpad.info/_next/static/immutable/chunks/21xgadud-no8w.js",
+        "https://wordpad.info/_next/static/immutable/chunks/28h7y2lho-gxs.js",
+        "https://wordpad.info/_next/static/immutable/chunks/2a1sk9w4p6tti.js",
+        "https://wordpad.info/_next/static/immutable/chunks/2a3071iwlz595.js",
+        "https://wordpad.info/_next/static/immutable/chunks/2cdrcpqj4sa8z.js",
+        "https://wordpad.info/_next/static/immutable/chunks/2corl6wyj4669.js",
+        "https://wordpad.info/_next/static/immutable/chunks/2f8dk3h56wru5.js",
+        "https://wordpad.info/_next/static/immutable/chunks/2n5bv9p3-l876.js",
+        "https://wordpad.info/_next/static/immutable/chunks/2sd8w4-5q6htt.js",
+        "https://wordpad.info/_next/static/immutable/chunks/2ton2_pf4qzbv.css",
+        "https://wordpad.info/_next/static/immutable/chunks/3-yfrdt56749_.js",
+        "https://wordpad.info/_next/static/immutable/chunks/32v70pic0dpz-.js",
+        "https://wordpad.info/_next/static/immutable/chunks/3505ho3k_qesm.js",
+        "https://wordpad.info/_next/static/immutable/chunks/3v_vmp01m8xc8.js",
+        "https://wordpad.info/_next/static/immutable/chunks/turbopack-1zshz0u9bmusp.js",
+        "https://wordpad.info/_vercel/insights/script.js",
+        "https://www.googletagmanager.com/gtag/js"
+      ],
+      "served_asset_fingerprint_sha256": "2abe047cff117a16a550b3ee81b4c451421e0f7e0fde220959f65041699eb17d",
+      "revision_basis": "APP_REVISION is the expected deployment revision supplied by operator; served asset fingerprint independently identifies the frontend loaded for this case",
+      "geometry": {
+        "separator": {
+          "top": 467.3125,
+          "bottom": 485.703125,
+          "height": 18.390625
+        },
+        "rule": {
+          "top": 478.1510314941406,
+          "bottom": 478.8072814941406,
+          "height": 0.65625
+        },
+        "baseline": {
+          "top": 481.3125,
+          "bottom": 481.3125,
+          "height": 0
+        },
+        "font": "",
+        "lineHeight": "18.3984px",
+        "fontFamily": "Arial, sans-serif",
+        "fontSize": "16px"
+      },
+      "pdf_sha256": "37e91ef7d396bea2c7cfb1801c0b4a318c092acf705eed6fb2571fd3df4699c0",
+      "pdf_bytes": 98579,
+      "page_errors": []
+    }
+  ]
+}

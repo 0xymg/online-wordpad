@@ -46,10 +46,17 @@ def verify_export(source, pdf):
         raise ValueError(f'{pdf}: incomplete export provenance')
     if record['source_sha256'] != digest(source) or record['pdf_sha256'] != digest(pdf):
         raise ValueError(f'{pdf}: export provenance hash mismatch')
+    if record.get('served_asset_fingerprint_sha256'):
+        payload = json.dumps(record['served_asset_paths'], separators=(',', ':'), ensure_ascii=False).encode()
+        if hashlib.sha256(payload).hexdigest() != record['served_asset_fingerprint_sha256']:
+            raise ValueError(f'{pdf}: served asset fingerprint mismatch')
     if not report.get('application_revision'):
         raise ValueError(f'{pdf}: missing application revision')
     return {'application_revision':report['application_revision'], 'export_hashes_verified':True,
-            'base_url':report['base_url'], 'captured_at':record['captured_at']}
+            'base_url':report['base_url'], 'captured_at':record['captured_at'],
+            'served_asset_fingerprint_sha256':record.get('served_asset_fingerprint_sha256'),
+            'served_response_url':record.get('served_response_url'),
+            'revision_basis':record.get('revision_basis','Operator-supplied expected application revision')}
 
 def render(path):
     with pdfium.PdfDocument(path) as pdf:
@@ -70,6 +77,7 @@ def main():
     parser.add_argument('--baseline-dir', action='append', default=[])
     parser.add_argument('--probe-dir', action='append', default=[], help='Additional fixture directories with manifests and captured Word PDFs')
     parser.add_argument('--output', type=Path, required=True)
+    parser.add_argument('--require-asset-fingerprint', action='store_true', help='Require one independently recorded served frontend fingerprint across every app capture')
     parser.add_argument('--revision', required=True, help='Exact application revision plus description of working changes')
     args = parser.parse_args()
     rows = []
@@ -116,7 +124,10 @@ def main():
                                'same_page_geometry':stable, 'changed_pixels_outside_rule_rectangles':changed if stable else None,
                                'body_pixels_unchanged':stable and changed == 0}
         rows.append(row)
-    report = {'schema_version':2, 'application_revision':args.revision,
+    fingerprints = {row['verification']['application_export']['served_asset_fingerprint_sha256'] for row in rows}
+    if args.require_asset_fingerprint and (None in fingerprints or len(fingerprints) != 1):
+        raise ValueError(f'Missing or mixed served frontend asset fingerprints: {fingerprints}')
+    report = {'served_asset_fingerprints':sorted(f for f in fingerprints if f), 'schema_version':2, 'application_revision':args.revision,
               'method':'PDFium 4px/pt; original A7.4 fixed x=100..200pt, ±2pt Word rule window, >2% intensity mask; baseline body comparison excludes only Word vector x0..x1 ±1pt and top..bottom ±3pt rectangles',
               'all_baseline_bodies_unchanged':all(row['baseline']['body_pixels_unchanged'] for row in rows) if args.baseline_dir else None,
               'centroid_threshold_pt':.75, 'all_rules_pass':all(r['within_0_75pt'] for row in rows for r in row['rules']), 'results':rows}

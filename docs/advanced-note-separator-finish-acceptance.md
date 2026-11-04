@@ -1,6 +1,6 @@
 # A7.5 — closing the measured 12 pt separator residual
 
-The user requested this remaining correction with Sol/Terra. Runtime `ca4dfc40ef7e71244dc23f02cdf708476e3e6352` passes local production acceptance. The existing regular Arial 11–20 pt native separator profile receives one shared half-point downward paint calibration. There is no 12 pt, fixture-name or page-position branch. This is an empirical native-character paint calibration against genuine Word outputs, not a claimed derivation of Word's unobserved separator baseline.
+The user requested this remaining correction with Sol/Terra. Runtime `ca4dfc40ef7e71244dc23f02cdf708476e3e6352` passes local production and live acceptance. The existing regular Arial 11–20 pt native separator profile receives one shared half-point downward paint calibration. There is no 12 pt, fixture-name or page-position branch. This is an empirical native-character paint calibration against genuine Word outputs, not a claimed derivation of Word's unobserved separator baseline.
 
 The shared factory supplies endnotes, measured footnote clearance/painting and physical column overlays. Saved content, note identities and policies are unchanged. Unsupported fonts/sizes/styles, authored appearance, empty separators and continuation rules retain their previous behavior.
 
@@ -34,4 +34,12 @@ The complete eight-file [production export](../fixtures/compatibility/a7-5-app-p
 
 ## Release
 
-Local production acceptance is complete. Deployment and live acceptance are recorded here once finished.
+Release [`8daa1de`](https://github.com/0xymg/online-wordpad/commit/8daa1dea5ce1e7a11dac6aebfe4e6aa0a3d91114) completed [Vercel deployment](https://vercel.com/312sh/online-wordpad/BmCTCcjWvEgjZmQtSgyvmkA2Ad1t) without coauthor trailers. Its runtime/application files match the immutable locally accepted `ca4dfc4` build.
+
+The initial live capture encountered mixed previous/new frontend assets during rollout and failed the rule gate. It is retained with an explicit warning in `live-measurements.json` and is excluded from acceptance. The exporter now records each response URL and the actual sorted script/stylesheet asset fingerprint; the measurement gate verifies the fingerprint hash and requires the same frontend across every accepted case. `APP_REVISION` remains operator-supplied expected revision rather than claiming to prove the served commit.
+
+The [verified live measurement](../fixtures/compatibility/a7-5-note-probes/live-verified-measurements.json) covers all seven controls with one served frontend fingerprint, `2abe047cff117a16a550b3ee81b4c451421e0f7e0fde220959f65041699eb17d`. All fourteen comparisons pass the unchanged 0.75 pt gate (maximum absolute error 0.50 pt); every pixel outside the bounded rule rectangles is unchanged from the baseline. A separate [whole-page comparison](../fixtures/compatibility/a7-5-note-probes/live-verified-production-equality.json) shows all seven live PDFs are pixel-identical to the immutable production outputs, with no exclusion masks.
+
+Fresh live functional repeats after the verified captures pass the real Word footnote import/DOCX/reopen/PDF/continuation flow (`iq3q6M`) and all sixteen metric, font edit/undo, content/identity/cache and note-error protections (`WbJyFp`). Their outputs are archived with hashes in the [live acceptance record](../fixtures/compatibility/a7-5-live-acceptance.json). The actual-PDF [live Word/Önce/Sonra figure](../fixtures/compatibility/a7-5-note-probes/live-12pt-comparison.png) retains source hashes and fixed crop coordinates.
+
+The requested 12 pt separator gate is closed locally and live. Earlier evidence and the broader support-matrix limits remain recorded.

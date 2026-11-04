@@ -1,0 +1,80 @@
+{
+  "schema_version": 1,
+  "complete": true,
+  "base_url": "https://wordpad.info",
+  "browser_version": "156.0.8078.4",
+  "viewport": {
+    "width": 1450,
+    "height": 1050
+  },
+  "application_revision": "8daa1dea5ce1e7a11dac6aebfe4e6aa0a3d91114",
+  "selected_cases": [
+    "base-12",
+    "base-20"
+  ],
+  "captured_at": "2026-11-04T01:00:54.444Z",
+  "results": [
+    {
+      "id": "base-12",
+      "source_sha256": "123c75b2ab73d120b24f4417700becb9cd403fee530ae8582f3207a1ddf095f0",
+      "status": "EXPORTED",
+      "base_url": "https://wordpad.info",
+      "captured_at": "2026-11-04T01:00:45.161Z",
+      "geometry": {
+        "separator": {
+          "top": 411.671875,
+          "bottom": 430.0625,
+          "height": 18.390625
+        },
+        "rule": {
+          "top": 422.5104064941406,
+          "bottom": 423.1666564941406,
+          "height": 0.65625
+        },
+        "baseline": {
+          "top": 425.671875,
+          "bottom": 425.671875,
+          "height": 0
+        },
+        "font": "",
+        "lineHeight": "18.3984px",
+        "fontFamily": "Arial, sans-serif",
+        "fontSize": "16px"
+      },
+      "pdf_sha256": "99d09bf321ad48433e827a011eb6d8c5780e3ed507a9832ee3249c27278dfd93",
+      "pdf_bytes": 63407,
+      "page_errors": []
+    },
+    {
+      "id": "base-20",
+      "source_sha256": "07427de99206390698382a8cf36c48b103f9a387608f455e2fc4f7076988f84d",
+      "status": "EXPORTED",
+      "base_url": "https://wordpad.info",
+      "captured_at": "2026-11-04T01:00:49.727Z",
+      "geometry": {
+        "separator": {
+          "top": 425.78125,
+          "bottom": 456.4375,
+          "height": 30.65625
+        },
+        "rule": {
+          "top": 444.1979064941406,
+          "bottom": 445.5260314941406,
+          "height": 1.328125
+        },
+        "baseline": {
+          "top": 449.78125,
+          "bottom": 449.78125,
+          "height": 0
+        },
+        "font": "",
+        "lineHeight": "30.6641px",
+        "fontFamily": "Arial, sans-serif",
+        "fontSize": "26.6667px"
+      },
+      "pdf_sha256": "5f375d9ba8a20674606afaeda29df18080038480855c9726bc01be7ad1f3f3ce",
+      "pdf_bytes": 79855,
+      "page_errors": []
+    }
+  ]
+}

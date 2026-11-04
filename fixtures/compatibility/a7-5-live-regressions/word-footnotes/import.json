@@ -1,0 +1,1045 @@
+{
+  "type": "doc",
+  "attrs": {
+    "layout": {
+      "width": 12240,
+      "height": 15840,
+      "margins": {
+        "top": 1440,
+        "right": 1440,
+        "bottom": 1440,
+        "left": 1440
+      },
+      "pageNumbers": "off",
+      "pageNumberFormat": "plain",
+      "evenAndOddHeaders": false,
+      "defaultTabStop": 720,
+      "decimalSeparator": ".",
+      "section": "<w:sectPr xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:type w:val=\"nextPage\"/><w:pgSz w:w=\"12240\" w:h=\"15840\"/><w:pgMar w:top=\"1440\" w:right=\"1440\" w:bottom=\"1440\" w:left=\"1440\"/><w:pgNumType w:fmt=\"decimal\" w:start=\"1\"/><w:cols w:equalWidth=\"1\" w:space=\"720\" w:num=\"2\" w:sep=\"0\"/></w:sectPr>",
+      "source": "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",
+      "styles": {
+        "Title": {
+          "name": "Title",
+          "basedOn": "Normal",
+          "paragraph": {},
+          "text": {
+            "size": 28
+          }
+        },
+        "Heading1": {
+          "name": "heading 1",
+          "basedOn": "Normal",
+          "paragraph": {},
+          "text": {
+            "size": 16,
+            "color": "#2E74B5"
+          }
+        },
+        "Heading2": {
+          "name": "heading 2",
+          "basedOn": "Normal",
+          "paragraph": {},
+          "text": {
+            "size": 13,
+            "color": "#2E74B5"
+          }
+        },
+        "Heading3": {
+          "name": "heading 3",
+          "basedOn": "Normal",
+          "paragraph": {},
+          "text": {
+            "size": 12,
+            "color": "#1F4D78"
+          }
+        },
+        "Heading4": {
+          "name": "heading 4",
+          "basedOn": "Normal",
+          "paragraph": {},
+          "text": {
+            "color": "#2E74B5",
+            "italic": true
+          }
+        },
+        "Heading5": {
+          "name": "heading 5",
+          "basedOn": "Normal",
+          "paragraph": {},
+          "text": {
+            "color": "#2E74B5"
+          }
+        },
+        "Heading6": {
+          "name": "heading 6",
+          "basedOn": "Normal",
+          "paragraph": {},
+          "text": {
+            "color": "#1F4D78"
+          }
+        },
+        "Strong": {
+          "name": "Strong",
+          "basedOn": "Normal",
+          "paragraph": {},
+          "text": {
+            "bold": true
+          }
+        },
+        "ListParagraph": {
+          "name": "List Paragraph",
+          "basedOn": "Normal",
+          "paragraph": {},
+          "text": {}
+        },
+        "FootnoteText": {
+          "name": "footnote text",
+          "basedOn": "Normal",
+          "paragraph": {
+            "after": 0,
+            "lineMode": "multiple",
+            "lineValue": 1,
+            "lineBasis": "font"
+          },
+          "text": {
+            "size": 10
+          },
+          "rawParagraphProperties": "<w:pPr xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:spacing w:after=\"0\" w:line=\"240\" w:lineRule=\"auto\"/></w:pPr>"
+        }
+      },
+      "sectionMargins": {
+        "0": {
+          "top": 1440,
+          "right": 1440,
+          "bottom": 1440,
+          "left": 1440
+        }
+      },
+      "running": {},
+      "overrides": {
+        "margins": false,
+        "orientation": false
+      }
+    },
+    "documentModel": {
+      "version": 7,
+      "sources": {},
+      "bibliography": {
+        "style": "apa7",
+        "locale": "en-US",
+        "includeUncited": false
+      },
+      "id": "doc_f124cc4141034a7b80b8b879fbb2695f",
+      "finalSectionId": "sec_11111111111111111111111111111111",
+      "sections": {
+        "sec_11111111111111111111111111111111": {
+          "page": {
+            "width": 12240,
+            "height": 15840,
+            "margins": {
+              "top": 1440,
+              "right": 1440,
+              "bottom": 1440,
+              "left": 1440
+            }
+          },
+          "start": "nextPage",
+          "numbering": {
+            "start": 1,
+            "format": "decimal"
+          },
+          "rawProperties": "<w:sectPr xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:type w:val=\"nextPage\"/><w:pgSz w:w=\"12240\" w:h=\"15840\" w:orient=\"portrait\"/><w:pgMar w:top=\"1440\" w:right=\"1440\" w:bottom=\"1440\" w:left=\"1440\"/><w:pgNumType w:fmt=\"decimal\" w:start=\"1\"/><w:cols w:equalWidth=\"1\" w:space=\"720\" w:num=\"2\" w:sep=\"0\"/></w:sectPr>",
+          "running": {},
+          "columns": {
+            "kind": "equal",
+            "count": 2,
+            "space": 720,
+            "separator": false
+          },
+          "flowDirection": "ltr",
+          "notePolicy": {}
+        }
+      },
+      "notes": {
+        "nte_aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa": {
+          "kind": "footnote",
+          "body": {
+            "type": "doc",
+            "attrs": {
+              "layout": null,
+              "documentModel": null
+            },
+            "content": [
+              {
+                "type": "paragraph",
+                "attrs": {
+                  "docxProperties": "<w:pPr xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:ind w:firstLine=\"0\"/><w:spacing w:before=\"0\" w:after=\"0\" w:line=\"240\" w:lineRule=\"auto\"/></w:pPr>",
+                  "layoutStyle": "margin-top:0pt;margin-bottom:0pt;line-height:normal",
+                  "sectionEndId": null,
+                  "targetId": null,
+                  "targetKind": null,
+                  "captionLabel": null,
+                  "toc": null,
+                  "tocOwnerId": null,
+                  "tocTargetId": null,
+                  "tocSourceIndent": null,
+                  "noteOwnerId": null,
+                  "noteBlock": null,
+                  "noteScope": null,
+                  "noteSectionId": null,
+                  "bibliography": null,
+                  "bibliographyOwnerId": null,
+                  "bibliographyEntry": null,
+                  "bibliographySourceIds": null,
+                  "styleId": null,
+                  "styleText": {
+                    "kerning": 0,
+                    "family": "Calibri, Carlito, Arial, sans-serif",
+                    "size": 12
+                  },
+                  "styleParagraph": {},
+                  "tableStyleParagraph": {},
+                  "paragraphFormat": {},
+                  "lineMetricFamily": null,
+                  "textAlign": "left",
+                  "indent": 0,
+                  "lineHeight": null
+                },
+                "content": [
+                  {
+                    "type": "text",
+                    "marks": [
+                      {
+                        "type": "fontSize",
+                        "attrs": {
+                          "size": "12pt"
+                        }
+                      },
+                      {
+                        "type": "fontFamily",
+                        "attrs": {
+                          "family": "Calibri, Carlito, Arial, sans-serif"
+                        }
+                      },
+                      {
+                        "type": "nativeKerning",
+                        "attrs": {
+                          "threshold": 0
+                        }
+                      }
+                    ],
+                    "text": "FOOTNOTE_LONG TAIL0 TAIL1 TAIL2 TAIL3 TAIL4 TAIL5 TAIL6 TAIL7 TAIL8 TAIL9 TAIL10 TAIL11 TAIL12 TAIL13 TAIL14 TAIL15 TAIL16 TAIL17 TAIL18 TAIL19 TAIL20 TAIL21 TAIL22 TAIL23 TAIL24 TAIL25 TAIL26 TAIL27 TAIL28 TAIL29 TAIL30 TAIL31 TAIL32 TAIL33 TAIL34 TAIL35 TAIL36 TAIL37 TAIL38 TAIL39 TAIL40 TAIL41 TAIL42 TAIL43 TAIL44 TAIL45 TAIL46 TAIL47 TAIL48 TAIL49 TAIL50 TAIL51 TAIL52 TAIL53 TAIL54 TAIL55 TAIL56 TAIL57 TAIL58 TAIL59 TAIL60 TAIL61 TAIL62 TAIL63 TAIL64 TAIL65 TAIL66 TAIL67 TAIL68 TAIL69 TAIL70 TAIL71 TAIL72 TAIL73 TAIL74 TAIL75 TAIL76 TAIL77 TAIL78 TAIL79 TAIL80 TAIL81 TAIL82 TAIL83 TAIL84 TAIL85 TAIL86 TAIL87 TAIL88 TAIL89 TAIL90 TAIL91 TAIL92 TAIL93 TAIL94 TAIL95 TAIL96 TAIL97 TAIL98 TAIL99 TAIL100 TAIL101 TAIL102 TAIL103 TAIL104 TAIL105 TAIL106 TAIL107 TAIL108 TAIL109 TAIL110 TAIL111 TAIL112 TAIL113 TAIL114 TAIL115 TAIL116 TAIL117 TAIL118 TAIL119 TAIL120 TAIL121 TAIL122 TAIL123 TAIL124 TAIL125 TAIL126 TAIL127 TAIL128 TAIL129 TAIL130 TAIL131 TAIL132 TAIL133 TAIL134 TAIL135 TAIL136 TAIL137 TAIL138 TAIL139 TAIL140 TAIL141 TAIL142 TAIL143 TAIL144 TAIL145 TAIL146 TAIL147 TAIL148 TAIL149 TAIL150 TAIL151 TAIL152 TAIL153 TAIL154 TAIL155 TAIL156 TAIL157 TAIL158 TAIL159 TAIL160 TAIL161 TAIL162 TAIL163 TAIL164 TAIL165 TAIL166 TAIL167 TAIL168 TAIL169 TAIL170 TAIL171 TAIL172 TAIL173 TAIL174 TAIL175 TAIL176 TAIL177 TAIL178 TAIL179 TAIL180 TAIL181 TAIL182 TAIL183 TAIL184 TAIL185 TAIL186 TAIL187 TAIL188 TAIL189 TAIL190 TAIL191 TAIL192 TAIL193 TAIL194 TAIL195 TAIL196 TAIL197 TAIL198 TAIL199 TAIL200 TAIL201 TAIL202 TAIL203 TAIL204 TAIL205 TAIL206 TAIL207 TAIL208 TAIL209 TAIL210 TAIL211 TAIL212 TAIL213 TAIL214 TAIL215 TAIL216 TAIL217 TAIL218 TAIL219 TAIL220 TAIL221 TAIL222 TAIL223 TAIL224 TAIL225 TAIL226 TAIL227 TAIL228 TAIL229 TAIL230 TAIL231 TAIL232 TAIL233 TAIL234 TAIL235 TAIL236 TAIL237 TAIL238 TAIL239 TAIL240 TAIL241 TAIL242 TAIL243 TAIL244 TAIL245 TAIL246 TAIL247 TAIL248 TAIL249 TAIL250 TAIL251 TAIL252 TAIL253 TAIL254 TAIL255 TAIL256 TAIL257 TAIL258 TAIL259 TAIL260 TAIL261 TAIL262 TAIL263 TAIL264 TAIL265 TAIL266 TAIL267 TAIL268 TAIL269 TAIL270 TAIL271 TAIL272 TAIL273 TAIL274 TAIL275 TAIL276 TAIL277 TAIL278 TAIL279 TAIL280 TAIL281 TAIL282 TAIL283 TAIL284 TAIL285 TAIL286 TAIL287 TAIL288 TAIL289 TAIL290 TAIL291 TAIL292 TAIL293 TAIL294 TAIL295 TAIL296 TAIL297 TAIL298 TAIL299 TAIL300 TAIL301 TAIL302 TAIL303 TAIL304 TAIL305 TAIL306 TAIL307 TAIL308 TAIL309 TAIL310 TAIL311 TAIL312 TAIL313 TAIL314 TAIL315 TAIL316 TAIL317 TAIL318 TAIL319 TAIL320 TAIL321 TAIL322 TAIL323 TAIL324 TAIL325 TAIL326 TAIL327 TAIL328 TAIL329 TAIL330 TAIL331 TAIL332 TAIL333 TAIL334 TAIL335 TAIL336 TAIL337 TAIL338 TAIL339 TAIL340 TAIL341 TAIL342 TAIL343 TAIL344 TAIL345 TAIL346 TAIL347 TAIL348 TAIL349 TAIL350 TAIL351 TAIL352 TAIL353 TAIL354 TAIL355 TAIL356 TAIL357 TAIL358 TAIL359 TAIL360 TAIL361 TAIL362 TAIL363 TAIL364 TAIL365 TAIL366 TAIL367 TAIL368 TAIL369 TAIL370 TAIL371 TAIL372 TAIL373 TAIL374 TAIL375 TAIL376 TAIL377 TAIL378 TAIL379 TAIL380 TAIL381 TAIL382 TAIL383 TAIL384 TAIL385 TAIL386 TAIL387 TAIL388 TAIL389 TAIL390 TAIL391 TAIL392 TAIL393 TAIL394 TAIL395 TAIL396 TAIL397 TAIL398 TAIL399 TAIL400 TAIL401 TAIL402 TAIL403 TAIL404 TAIL405 TAIL406 TAIL407 TAIL408 TAIL409 TAIL410 TAIL411 TAIL412 TAIL413 TAIL414 TAIL415 TAIL416 TAIL417 TAIL418 TAIL419 TAIL420 TAIL421 TAIL422 TAIL423 TAIL424 TAIL425 TAIL426 TAIL427 TAIL428 TAIL429 TAIL430 TAIL431 TAIL432 TAIL433 TAIL434 TAIL435 TAIL436 TAIL437 TAIL438 TAIL439 TAIL440 TAIL441 TAIL442 TAIL443 TAIL444 TAIL445 TAIL446 TAIL447 TAIL448 TAIL449 TAIL450 TAIL451 TAIL452 TAIL453 TAIL454 TAIL455 TAIL456 TAIL457 TAIL458 TAIL459 TAIL460 TAIL461 TAIL462 TAIL463 TAIL464 TAIL465 TAIL466 TAIL467 TAIL468 TAIL469 TAIL470 TAIL471 TAIL472 TAIL473 TAIL474 TAIL475 TAIL476 TAIL477 TAIL478 TAIL479 TAIL480 TAIL481 TAIL482 TAIL483 TAIL484 TAIL485 TAIL486 TAIL487 TAIL488 TAIL489 TAIL490 TAIL491 TAIL492 TAIL493 TAIL494 TAIL495 TAIL496 TAIL497 TAIL498 TAIL499 TAIL500 TAIL501 TAIL502 TAIL503 TAIL504 TAIL505 TAIL506 TAIL507 TAIL508 TAIL509 TAIL510 TAIL511 TAIL512 TAIL513 TAIL514 TAIL515 TAIL516 TAIL517 TAIL518 TAIL519 TAIL520 TAIL521 TAIL522 TAIL523 TAIL524 TAIL525 TAIL526 TAIL527 TAIL528 TAIL529 TAIL530 TAIL531 TAIL532 TAIL533 TAIL534 TAIL535 TAIL536 TAIL537 TAIL538 TAIL539 TAIL540 TAIL541 TAIL542 TAIL543 TAIL544 TAIL545 TAIL546 TAIL547 TAIL548 TAIL549 TAIL550 TAIL551 TAIL552 TAIL553 TAIL554 TAIL555 TAIL556 TAIL557 TAIL558 TAIL559 TAIL560 TAIL561 TAIL562 TAIL563 TAIL564 TAIL565 TAIL566 TAIL567 TAIL568 TAIL569 TAIL570 TAIL571 TAIL572 TAIL573 TAIL574 TAIL575 TAIL576 TAIL577 TAIL578 TAIL579 TAIL580 TAIL581 TAIL582 TAIL583 TAIL584 TAIL585 TAIL586 TAIL587 TAIL588 TAIL589 TAIL590 TAIL591 TAIL592 TAIL593 TAIL594 TAIL595 TAIL596 TAIL597 TAIL598 TAIL599"
+                  }
+                ]
+              }
+            ]
+          },
+          "presentation": {
+            "version": 1,
+            "bodyReference": {
+              "marks": [
+                {
+                  "type": "fontSize",
+                  "attrs": {
+                    "size": "12pt"
+                  }
+                },
+                {
+                  "type": "fontFamily",
+                  "attrs": {
+                    "family": "Calibri, Carlito, Arial, sans-serif"
+                  }
+                },
+                {
+                  "type": "superscript"
+                },
+                {
+                  "type": "nativeKerning",
+                  "attrs": {
+                    "threshold": 0
+                  }
+                }
+              ]
+            },
+            "separators": {
+              "separator": "none",
+              "continuationSeparator": "none"
+            }
+          },
+          "native": {
+            "partUri": "word/footnotes.xml",
+            "nativeId": "1"
+          }
+        },
+        "nte_bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb": {
+          "kind": "footnote",
+          "body": {
+            "type": "doc",
+            "attrs": {
+              "layout": null,
+              "documentModel": null
+            },
+            "content": [
+              {
+                "type": "paragraph",
+                "attrs": {
+                  "docxProperties": "<w:pPr xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:spacing w:before=\"0\" w:after=\"0\" w:line=\"240\" w:lineRule=\"auto\"/></w:pPr>",
+                  "layoutStyle": "margin-top:0pt;margin-bottom:0pt;line-height:normal",
+                  "sectionEndId": null,
+                  "targetId": null,
+                  "targetKind": null,
+                  "captionLabel": null,
+                  "toc": null,
+                  "tocOwnerId": null,
+                  "tocTargetId": null,
+                  "tocSourceIndent": null,
+                  "noteOwnerId": null,
+                  "noteBlock": null,
+                  "noteScope": null,
+                  "noteSectionId": null,
+                  "bibliography": null,
+                  "bibliographyOwnerId": null,
+                  "bibliographyEntry": null,
+                  "bibliographySourceIds": null,
+                  "styleId": null,
+                  "styleText": {
+                    "kerning": 0,
+                    "family": "Calibri, Carlito, Arial, sans-serif",
+                    "size": 12
+                  },
+                  "styleParagraph": {},
+                  "tableStyleParagraph": {},
+                  "paragraphFormat": {},
+                  "lineMetricFamily": null,
+                  "textAlign": "left",
+                  "indent": 0,
+                  "lineHeight": null
+                },
+                "content": [
+                  {
+                    "type": "text",
+                    "marks": [
+                      {
+                        "type": "fontSize",
+                        "attrs": {
+                          "size": "12pt"
+                        }
+                      },
+                      {
+                        "type": "fontFamily",
+                        "attrs": {
+                          "family": "Calibri, Carlito, Arial, sans-serif"
+                        }
+                      },
+                      {
+                        "type": "nativeKerning",
+                        "attrs": {
+                          "threshold": 0
+                        }
+                      }
+                    ],
+                    "text": "FOOTNOTE_SECOND"
+                  }
+                ]
+              }
+            ]
+          },
+          "presentation": {
+            "version": 1,
+            "bodyReference": {
+              "marks": [
+                {
+                  "type": "fontSize",
+                  "attrs": {
+                    "size": "12pt"
+                  }
+                },
+                {
+                  "type": "fontFamily",
+                  "attrs": {
+                    "family": "Calibri, Carlito, Arial, sans-serif"
+                  }
+                },
+                {
+                  "type": "superscript"
+                },
+                {
+                  "type": "nativeKerning",
+                  "attrs": {
+                    "threshold": 0
+                  }
+                }
+              ]
+            },
+            "separators": {
+              "separator": "none",
+              "continuationSeparator": "none"
+            }
+          },
+          "native": {
+            "partUri": "word/footnotes.xml",
+            "nativeId": "2"
+          }
+        }
+      },
+      "notePolicy": {
+        "footnote": {
+          "restart": "continuous",
+          "start": 1,
+          "format": "decimal",
+          "placement": "pageBottom"
+        },
+        "endnote": {
+          "restart": "continuous",
+          "start": 1,
+          "format": "decimal",
+          "placement": "documentEnd"
+        }
+      }
+    }
+  },
+  "content": [
+    {
+      "type": "paragraph",
+      "attrs": {
+        "docxProperties": "<w:pPr xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:spacing w:before=\"0\" w:after=\"0\" w:line=\"240\" w:lineRule=\"auto\"/></w:pPr>",
+        "layoutStyle": "margin-top:0pt;margin-bottom:0pt;line-height:normal",
+        "sectionEndId": null,
+        "targetId": null,
+        "targetKind": null,
+        "captionLabel": null,
+        "toc": null,
+        "tocOwnerId": null,
+        "tocTargetId": null,
+        "tocSourceIndent": null,
+        "noteOwnerId": null,
+        "noteBlock": null,
+        "noteScope": null,
+        "noteSectionId": null,
+        "bibliography": null,
+        "bibliographyOwnerId": null,
+        "bibliographyEntry": null,
+        "bibliographySourceIds": null,
+        "styleId": null,
+        "styleText": {
+          "kerning": 0,
+          "family": "Calibri, Carlito, Arial, sans-serif",
+          "size": 12
+        },
+        "styleParagraph": {},
+        "tableStyleParagraph": {},
+        "paragraphFormat": {},
+        "lineMetricFamily": "",
+        "textAlign": "left",
+        "indent": 0,
+        "lineHeight": null
+      },
+      "content": [
+        {
+          "type": "text",
+          "marks": [
+            {
+              "type": "fontSize",
+              "attrs": {
+                "size": "12pt"
+              }
+            },
+            {
+              "type": "fontFamily",
+              "attrs": {
+                "family": "Calibri, Carlito, Arial, sans-serif"
+              }
+            },
+            {
+              "type": "nativeKerning",
+              "attrs": {
+                "threshold": 0
+              }
+            }
+          ],
+          "text": "BODY_OWNER_ONE "
+        },
+        {
+          "type": "note_reference",
+          "attrs": {
+            "noteId": "nte_aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+            "cachedLabel": "1"
+          },
+          "marks": [
+            {
+              "type": "fontSize",
+              "attrs": {
+                "size": "12pt"
+              }
+            },
+            {
+              "type": "fontFamily",
+              "attrs": {
+                "family": "Calibri, Carlito, Arial, sans-serif"
+              }
+            },
+            {
+              "type": "superscript"
+            },
+            {
+              "type": "nativeKerning",
+              "attrs": {
+                "threshold": 0
+              }
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "marks": [
+            {
+              "type": "fontSize",
+              "attrs": {
+                "size": "12pt"
+              }
+            },
+            {
+              "type": "fontFamily",
+              "attrs": {
+                "family": "Calibri, Carlito, Arial, sans-serif"
+              }
+            },
+            {
+              "type": "nativeKerning",
+              "attrs": {
+                "threshold": 0
+              }
+            }
+          ],
+          "text": " BODY_OWNER_TWO "
+        },
+        {
+          "type": "note_reference",
+          "attrs": {
+            "noteId": "nte_bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+            "cachedLabel": "2"
+          },
+          "marks": [
+            {
+              "type": "fontSize",
+              "attrs": {
+                "size": "12pt"
+              }
+            },
+            {
+              "type": "fontFamily",
+              "attrs": {
+                "family": "Calibri, Carlito, Arial, sans-serif"
+              }
+            },
+            {
+              "type": "superscript"
+            },
+            {
+              "type": "nativeKerning",
+              "attrs": {
+                "threshold": 0
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "attrs": {
+        "docxProperties": "<w:pPr xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:spacing w:before=\"0\" w:after=\"0\" w:line=\"240\" w:lineRule=\"auto\"/></w:pPr>",
+        "layoutStyle": "margin-top:0pt;margin-bottom:0pt;line-height:normal",
+        "sectionEndId": null,
+        "targetId": null,
+        "targetKind": null,
+        "captionLabel": null,
+        "toc": null,
+        "tocOwnerId": null,
+        "tocTargetId": null,
+        "tocSourceIndent": null,
+        "noteOwnerId": null,
+        "noteBlock": null,
+        "noteScope": null,
+        "noteSectionId": null,
+        "bibliography": null,
+        "bibliographyOwnerId": null,
+        "bibliographyEntry": null,
+        "bibliographySourceIds": null,
+        "styleId": null,
+        "styleText": {
+          "kerning": 0,
+          "family": "Calibri, Carlito, Arial, sans-serif",
+          "size": 12
+        },
+        "styleParagraph": {},
+        "tableStyleParagraph": {},
+        "paragraphFormat": {},
+        "lineMetricFamily": "calibri",
+        "textAlign": "left",
+        "indent": 0,
+        "lineHeight": null
+      },
+      "content": [
+        {
+          "type": "text",
+          "marks": [
+            {
+              "type": "fontSize",
+              "attrs": {
+                "size": "12pt"
+              }
+            },
+            {
+              "type": "fontFamily",
+              "attrs": {
+                "family": "Calibri, Carlito, Arial, sans-serif"
+              }
+            },
+            {
+              "type": "nativeKerning",
+              "attrs": {
+                "threshold": 0
+              }
+            }
+          ],
+          "text": "MAIN_PARAGRAPH_0"
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "attrs": {
+        "docxProperties": "<w:pPr xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:spacing w:before=\"0\" w:after=\"0\" w:line=\"240\" w:lineRule=\"auto\"/></w:pPr>",
+        "layoutStyle": "margin-top:0pt;margin-bottom:0pt;line-height:normal",
+        "sectionEndId": null,
+        "targetId": null,
+        "targetKind": null,
+        "captionLabel": null,
+        "toc": null,
+        "tocOwnerId": null,
+        "tocTargetId": null,
+        "tocSourceIndent": null,
+        "noteOwnerId": null,
+        "noteBlock": null,
+        "noteScope": null,
+        "noteSectionId": null,
+        "bibliography": null,
+        "bibliographyOwnerId": null,
+        "bibliographyEntry": null,
+        "bibliographySourceIds": null,
+        "styleId": null,
+        "styleText": {
+          "kerning": 0,
+          "family": "Calibri, Carlito, Arial, sans-serif",
+          "size": 12
+        },
+        "styleParagraph": {},
+        "tableStyleParagraph": {},
+        "paragraphFormat": {},
+        "lineMetricFamily": "calibri",
+        "textAlign": "left",
+        "indent": 0,
+        "lineHeight": null
+      },
+      "content": [
+        {
+          "type": "text",
+          "marks": [
+            {
+              "type": "fontSize",
+              "attrs": {
+                "size": "12pt"
+              }
+            },
+            {
+              "type": "fontFamily",
+              "attrs": {
+                "family": "Calibri, Carlito, Arial, sans-serif"
+              }
+            },
+            {
+              "type": "nativeKerning",
+              "attrs": {
+                "threshold": 0
+              }
+            }
+          ],
+          "text": "MAIN_PARAGRAPH_1"
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "attrs": {
+        "docxProperties": "<w:pPr xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:spacing w:before=\"0\" w:after=\"0\" w:line=\"240\" w:lineRule=\"auto\"/></w:pPr>",
+        "layoutStyle": "margin-top:0pt;margin-bottom:0pt;line-height:normal",
+        "sectionEndId": null,
+        "targetId": null,
+        "targetKind": null,
+        "captionLabel": null,
+        "toc": null,
+        "tocOwnerId": null,
+        "tocTargetId": null,
+        "tocSourceIndent": null,
+        "noteOwnerId": null,
+        "noteBlock": null,
+        "noteScope": null,
+        "noteSectionId": null,
+        "bibliography": null,
+        "bibliographyOwnerId": null,
+        "bibliographyEntry": null,
+        "bibliographySourceIds": null,
+        "styleId": null,
+        "styleText": {
+          "kerning": 0,
+          "family": "Calibri, Carlito, Arial, sans-serif",
+          "size": 12
+        },
+        "styleParagraph": {},
+        "tableStyleParagraph": {},
+        "paragraphFormat": {},
+        "lineMetricFamily": "calibri",
+        "textAlign": "left",
+        "indent": 0,
+        "lineHeight": null
+      },
+      "content": [
+        {
+          "type": "text",
+          "marks": [
+            {
+              "type": "fontSize",
+              "attrs": {
+                "size": "12pt"
+              }
+            },
+            {
+              "type": "fontFamily",
+              "attrs": {
+                "family": "Calibri, Carlito, Arial, sans-serif"
+              }
+            },
+            {
+              "type": "nativeKerning",
+              "attrs": {
+                "threshold": 0
+              }
+            }
+          ],
+          "text": "MAIN_PARAGRAPH_2"
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "attrs": {
+        "docxProperties": "<w:pPr xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:spacing w:before=\"0\" w:after=\"0\" w:line=\"240\" w:lineRule=\"auto\"/></w:pPr>",
+        "layoutStyle": "margin-top:0pt;margin-bottom:0pt;line-height:normal",
+        "sectionEndId": null,
+        "targetId": null,
+        "targetKind": null,
+        "captionLabel": null,
+        "toc": null,
+        "tocOwnerId": null,
+        "tocTargetId": null,
+        "tocSourceIndent": null,
+        "noteOwnerId": null,
+        "noteBlock": null,
+        "noteScope": null,
+        "noteSectionId": null,
+        "bibliography": null,
+        "bibliographyOwnerId": null,
+        "bibliographyEntry": null,
+        "bibliographySourceIds": null,
+        "styleId": null,
+        "styleText": {
+          "kerning": 0,
+          "family": "Calibri, Carlito, Arial, sans-serif",
+          "size": 12
+        },
+        "styleParagraph": {},
+        "tableStyleParagraph": {},
+        "paragraphFormat": {},
+        "lineMetricFamily": "calibri",
+        "textAlign": "left",
+        "indent": 0,
+        "lineHeight": null
+      },
+      "content": [
+        {
+          "type": "text",
+          "marks": [
+            {
+              "type": "fontSize",
+              "attrs": {
+                "size": "12pt"
+              }
+            },
+            {
+              "type": "fontFamily",
+              "attrs": {
+                "family": "Calibri, Carlito, Arial, sans-serif"
+              }
+            },
+            {
+              "type": "nativeKerning",
+              "attrs": {
+                "threshold": 0
+              }
+            }
+          ],
+          "text": "MAIN_PARAGRAPH_3"
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "attrs": {
+        "docxProperties": "<w:pPr xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:spacing w:before=\"0\" w:after=\"0\" w:line=\"240\" w:lineRule=\"auto\"/></w:pPr>",
+        "layoutStyle": "margin-top:0pt;margin-bottom:0pt;line-height:normal",
+        "sectionEndId": null,
+        "targetId": null,
+        "targetKind": null,
+        "captionLabel": null,
+        "toc": null,
+        "tocOwnerId": null,
+        "tocTargetId": null,
+        "tocSourceIndent": null,
+        "noteOwnerId": null,
+        "noteBlock": null,
+        "noteScope": null,
+        "noteSectionId": null,
+        "bibliography": null,
+        "bibliographyOwnerId": null,
+        "bibliographyEntry": null,
+        "bibliographySourceIds": null,
+        "styleId": null,
+        "styleText": {
+          "kerning": 0,
+          "family": "Calibri, Carlito, Arial, sans-serif",
+          "size": 12
+        },
+        "styleParagraph": {},
+        "tableStyleParagraph": {},
+        "paragraphFormat": {},
+        "lineMetricFamily": "calibri",
+        "textAlign": "left",
+        "indent": 0,
+        "lineHeight": null
+      },
+      "content": [
+        {
+          "type": "text",
+          "marks": [
+            {
+              "type": "fontSize",
+              "attrs": {
+                "size": "12pt"
+              }
+            },
+            {
+              "type": "fontFamily",
+              "attrs": {
+                "family": "Calibri, Carlito, Arial, sans-serif"
+              }
+            },
+            {
+              "type": "nativeKerning",
+              "attrs": {
+                "threshold": 0
+              }
+            }
+          ],
+          "text": "MAIN_PARAGRAPH_4"
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "attrs": {
+        "docxProperties": "<w:pPr xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:spacing w:before=\"0\" w:after=\"0\" w:line=\"240\" w:lineRule=\"auto\"/></w:pPr>",
+        "layoutStyle": "margin-top:0pt;margin-bottom:0pt;line-height:normal",
+        "sectionEndId": null,
+        "targetId": null,
+        "targetKind": null,
+        "captionLabel": null,
+        "toc": null,
+        "tocOwnerId": null,
+        "tocTargetId": null,
+        "tocSourceIndent": null,
+        "noteOwnerId": null,
+        "noteBlock": null,
+        "noteScope": null,
+        "noteSectionId": null,
+        "bibliography": null,
+        "bibliographyOwnerId": null,
+        "bibliographyEntry": null,
+        "bibliographySourceIds": null,
+        "styleId": null,
+        "styleText": {
+          "kerning": 0,
+          "family": "Calibri, Carlito, Arial, sans-serif",
+          "size": 12
+        },
+        "styleParagraph": {},
+        "tableStyleParagraph": {},
+        "paragraphFormat": {},
+        "lineMetricFamily": "calibri",
+        "textAlign": "left",
+        "indent": 0,
+        "lineHeight": null
+      },
+      "content": [
+        {
+          "type": "text",
+          "marks": [
+            {
+              "type": "fontSize",
+              "attrs": {
+                "size": "12pt"
+              }
+            },
+            {
+              "type": "fontFamily",
+              "attrs": {
+                "family": "Calibri, Carlito, Arial, sans-serif"
+              }
+            },
+            {
+              "type": "nativeKerning",
+              "attrs": {
+                "threshold": 0
+              }
+            }
+          ],
+          "text": "MAIN_PARAGRAPH_5"
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "attrs": {
+        "docxProperties": "<w:pPr xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:spacing w:before=\"0\" w:after=\"0\" w:line=\"240\" w:lineRule=\"auto\"/></w:pPr>",
+        "layoutStyle": "margin-top:0pt;margin-bottom:0pt;line-height:normal",
+        "sectionEndId": null,
+        "targetId": null,
+        "targetKind": null,
+        "captionLabel": null,
+        "toc": null,
+        "tocOwnerId": null,
+        "tocTargetId": null,
+        "tocSourceIndent": null,
+        "noteOwnerId": null,
+        "noteBlock": null,
+        "noteScope": null,
+        "noteSectionId": null,
+        "bibliography": null,
+        "bibliographyOwnerId": null,
+        "bibliographyEntry": null,
+        "bibliographySourceIds": null,
+        "styleId": null,
+        "styleText": {
+          "kerning": 0,
+          "family": "Calibri, Carlito, Arial, sans-serif",
+          "size": 12
+        },
+        "styleParagraph": {},
+        "tableStyleParagraph": {},
+        "paragraphFormat": {},
+        "lineMetricFamily": "calibri",
+        "textAlign": "left",
+        "indent": 0,
+        "lineHeight": null
+      },
+      "content": [
+        {
+          "type": "text",
+          "marks": [
+            {
+              "type": "fontSize",
+              "attrs": {
+                "size": "12pt"
+              }
+            },
+            {
+              "type": "fontFamily",
+              "attrs": {
+                "family": "Calibri, Carlito, Arial, sans-serif"
+              }
+            },
+            {
+              "type": "nativeKerning",
+              "attrs": {
+                "threshold": 0
+              }
+            }
+          ],
+          "text": "MAIN_PARAGRAPH_6"
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "attrs": {
+        "docxProperties": "<w:pPr xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:spacing w:before=\"0\" w:after=\"0\" w:line=\"240\" w:lineRule=\"auto\"/></w:pPr>",
+        "layoutStyle": "margin-top:0pt;margin-bottom:0pt;line-height:normal",
+        "sectionEndId": null,
+        "targetId": null,
+        "targetKind": null,
+        "captionLabel": null,
+        "toc": null,
+        "tocOwnerId": null,
+        "tocTargetId": null,
+        "tocSourceIndent": null,
+        "noteOwnerId": null,
+        "noteBlock": null,
+        "noteScope": null,
+        "noteSectionId": null,
+        "bibliography": null,
+        "bibliographyOwnerId": null,
+        "bibliographyEntry": null,
+        "bibliographySourceIds": null,
+        "styleId": null,
+        "styleText": {
+          "kerning": 0,
+          "family": "Calibri, Carlito, Arial, sans-serif",
+          "size": 12
+        },
+        "styleParagraph": {},
+        "tableStyleParagraph": {},
+        "paragraphFormat": {},
+        "lineMetricFamily": "calibri",
+        "textAlign": "left",
+        "indent": 0,
+        "lineHeight": null
+      },
+      "content": [
+        {
+          "type": "text",
+          "marks": [
+            {
+              "type": "fontSize",
+              "attrs": {
+                "size": "12pt"
+              }
+            },
+            {
+              "type": "fontFamily",
+              "attrs": {
+                "family": "Calibri, Carlito, Arial, sans-serif"
+              }
+            },
+            {
+              "type": "nativeKerning",
+              "attrs": {
+                "threshold": 0
+              }
+            }
+          ],
+          "text": "MAIN_PARAGRAPH_7"
+        }
+      ]
+    }
+  ]
+}

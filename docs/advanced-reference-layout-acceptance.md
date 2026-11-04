@@ -1,5 +1,7 @@
 # A7.4 references and residual document geometry
 
+Subsequent closure: A7.5 resolves the 12 pt rule residual recorded below, with fourteen passing comparisons and live acceptance at `8daa1de`; see [final separator acceptance](advanced-note-separator-finish-acceptance.md). This document preserves A7.4 history.
+
 Implemented with the approved Sol/Terra workflow. The requested reference/TOC presentation and measured column/note corrections pass local production acceptance at `e2a2c57e9bffdfea53a2af8e5b003bb2af432d81` and live acceptance at release `0373c6c`. This increment closes its measured profile, not arbitrary Word layout or font equivalence.
 
 ## Reference presentation and navigation

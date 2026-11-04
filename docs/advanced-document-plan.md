@@ -214,3 +214,5 @@ Yerel üretim kabulünde sekiz belgenin tamamı 1 CSS px metin ankrajı sınır�
 ## A7.5 — 12 punto not çizgisi
 
 Sol/Terra ile ortak native çizgi çizimi düzeltildi. Üretim karşılaştırmasında dört punto ve iki yeni bağımsız 12 punto Word kontrolü dahil 14 çizginin tümü mevcut toleransı karşılıyor. Yedi örnekte çizgi dışındaki pikseller ve sayfa geometrisi değişmedi; sekiz belge/sütun/bağlantı kapıları ile Word/PDF dönüş ve veri koruma kontrolleri geçti. Önceki 12 punto sınır ihlali ölçülmüş kapsamıyla kapandı. [Kabul ve yayın durumu](advanced-note-separator-finish-acceptance.md).
+
+`8daa1de` ile coauthor eklenmeden yayımlandı. Aynı canlı sürümden alınan yedi örnekte 14 çizgi ölçümü geçti; çıktılar yerel üretimle piksel düzeyinde aynı. Gerçek Word dipnotu ve 16 veri/font koruma kontrolü canlıda da geçti. 12 punto işi kapandı.

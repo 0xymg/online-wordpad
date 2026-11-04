@@ -1,0 +1,65 @@
+{
+  "schema_version": 1,
+  "expected_live_revision": "8daa1dea5ce1e7a11dac6aebfe4e6aa0a3d91114",
+  "immutable_local_revision": "ca4dfc40ef7e71244dc23f02cdf708476e3e6352",
+  "method": "PDFium4pixels/point grayscale every page every pixel; no exclusion masks",
+  "all_pixel_identical": true,
+  "results": [
+    {
+      "id": "base-11",
+      "live_pdf_sha256": "19933e98addd19d5eda8e7fb04dbb093b3e4eee3a2f96be78f946786c4664ee6",
+      "production_pdf_sha256": "d13ec85850f362fcb529d28c85c004d7045e0ef8f752ec9f8de5e3606fe40541",
+      "same_page_geometry": true,
+      "all_page_changed_pixels": 0,
+      "pixel_identical": true
+    },
+    {
+      "id": "base-16",
+      "live_pdf_sha256": "826373fe27c9f7f67fc3e1b01516ecae7eb41f87a049eb29af99495dd75cac75",
+      "production_pdf_sha256": "75c87471547cc8b443d04e1c519e925b54425934eb3e2726e39351e20b928082",
+      "same_page_geometry": true,
+      "all_page_changed_pixels": 0,
+      "pixel_identical": true
+    },
+    {
+      "id": "columns-base-11",
+      "live_pdf_sha256": "799078128ddc1ebf97cef8c8c5b645a34a55f20c3a821cbf429e6bf6faaf7684",
+      "production_pdf_sha256": "1e06861e6dc78c162f5277633cd0075e7426883acc4c32adf7597dc9453d1ac2",
+      "same_page_geometry": true,
+      "all_page_changed_pixels": 0,
+      "pixel_identical": true
+    },
+    {
+      "id": "base-12",
+      "live_pdf_sha256": "33900c008ee9430d025ac37eed9699b6b53c4ebbd33eb9ae21779ac31189eecd",
+      "production_pdf_sha256": "69b763accb57fa31d0804633f8bac7eb5c841d585dee42766a0601454385a10d",
+      "same_page_geometry": true,
+      "all_page_changed_pixels": 0,
+      "pixel_identical": true
+    },
+    {
+      "id": "base-20",
+      "live_pdf_sha256": "3fdfde5e03a86c523e294caf74117e7b1121525032d1cd4831a63b458a6f01fc",
+      "production_pdf_sha256": "473f0c699040baf05c863bef0419732e3bdf099fe2bc15cbf57b43f855b6484c",
+      "same_page_geometry": true,
+      "all_page_changed_pixels": 0,
+      "pixel_identical": true
+    },
+    {
+      "id": "columns-base-12",
+      "live_pdf_sha256": "fa765c3488db30a2da3bcec1e7f21f8fc1bfae822f99ac501c79f60bdb1adc18",
+      "production_pdf_sha256": "5282afa0eb73bb578bcb5347f821237f5d79db0f7670ccc44857476f1c4fd76d",
+      "same_page_geometry": true,
+      "all_page_changed_pixels": 0,
+      "pixel_identical": true
+    },
+    {
+      "id": "shifted-base-12",
+      "live_pdf_sha256": "37e91ef7d396bea2c7cfb1801c0b4a318c092acf705eed6fb2571fd3df4699c0",
+      "production_pdf_sha256": "1c0c65588e26c2f1541975e1309cef09db97fec26f7397b7a97aa77f8c11c441",
+      "same_page_geometry": true,
+      "all_page_changed_pixels": 0,
+      "pixel_identical": true
+    }
+  ]
+}

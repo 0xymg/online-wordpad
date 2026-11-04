@@ -72,3 +72,5 @@ Released without coauthor trailers at `0373c6c`; live source-presentation/native
 ## A7.5 — measured 12 pt note separator finish
 
 The user requested closure of the remaining 12 pt rule residual with Sol/Terra. A shared native Arial paint calibration is validated against five existing Word controls and two newly generated held-out 12 pt column/content-position controls. All fourteen comparisons pass the unchanged 0.75 pt limit; all seven page geometries and every pixel outside tightly bounded rule rectangles are preserved. Full corpus geometry/navigation and native note protections pass production acceptance at `ca4dfc4`. [Acceptance and release status](advanced-note-separator-finish-acceptance.md).
+
+Released without coauthor trailers at `8daa1de`. All seven verified live pages match the immutable production build pixel-for-pixel; fourteen rule gates, baseline body protection and fresh native note/metric regressions pass. The initial mixed-rollout capture remains negative evidence.

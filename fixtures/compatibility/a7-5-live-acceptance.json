@@ -1,0 +1,84 @@
+{
+  "schema_version": 1,
+  "base_url": "https://wordpad.info",
+  "verified_release_revision": "8daa1dea5ce1e7a11dac6aebfe4e6aa0a3d91114",
+  "runtime_revision": "ca4dfc40ef7e71244dc23f02cdf708476e3e6352",
+  "vercel_status": "success",
+  "vercel_status_url": "https://vercel.com/312sh/online-wordpad/BmCTCcjWvEgjZmQtSgyvmkA2Ad1t",
+  "served_asset_fingerprints": [
+    "2abe047cff117a16a550b3ee81b4c451421e0f7e0fde220959f65041699eb17d"
+  ],
+  "case_count": 7,
+  "rule_count": 14,
+  "centroid_threshold_pt": 0.75,
+  "maximum_absolute_centroid_delta_pt": 0.5,
+  "all_rules_pass": true,
+  "all_baseline_bodies_unchanged": true,
+  "all_live_pages_pixel_identical_to_immutable_production": true,
+  "live_regressions": [
+    {
+      "script": "check-note-word-footnotes-ui.cjs",
+      "passed": true,
+      "original_artifact": "edtr-word-footnotes-ui-iq3q6M",
+      "checks": "Real Word import, enabled editor, canonical IDs/body, native DOCX download/reopen, PDF 600 words plus second body exactly once, four GoTo links and continuation pages"
+    },
+    {
+      "script": "check-note-metric-projection.cjs",
+      "passed": true,
+      "original_artifact": "edtr-note-metrics-WbJyFp",
+      "checks": "Native import/PDF/Escape/reload without note errors; sixteen flat/nested metric, font edit/undo and protected content/identity/cache checks"
+    }
+  ],
+  "initial_live_capture_disposition": "Rejected: live-measurements.json records mixed old/new frontend rollout and all_rules_pass=false. Retained as negative evidence. Only live-verified-* captures are accepted.",
+  "scope": "Empirical native regular Arial 11\u201320pt calibration. This is bounded tolerance acceptance, not universal zero-error Word equivalence.",
+  "artifacts": [
+    {
+      "path": "fixtures/compatibility/a7-5-live-regressions/word-footnotes/import.json",
+      "sha256": "010eb642f9a343b4b190f530d7da640e8688001d5477771f88b487aa6a57e60d"
+    },
+    {
+      "path": "fixtures/compatibility/a7-5-live-regressions/word-footnotes/pdf-text.json",
+      "sha256": "34aec6e194c7df90120ac57dd279eedad7b36d3691e32e8b5cbfa3f57fa8bcae"
+    },
+    {
+      "path": "fixtures/compatibility/a7-5-live-regressions/word-footnotes/native-word-import.png",
+      "sha256": "c871b7d9a98e2909c97c81ecff7fbc0f059544cf6d3f5ab9b55a5a4d9fdb5a0c"
+    },
+    {
+      "path": "fixtures/compatibility/a7-5-live-regressions/word-footnotes/word-footnotes.pdf",
+      "sha256": "2ec40d5f250a4eda98c5307519b75d3a29bca1a59f74aa640a3c3a920516e49a"
+    },
+    {
+      "path": "fixtures/compatibility/a7-5-live-regressions/word-footnotes/word-footnotes-roundtrip.docx",
+      "sha256": "c2c83106f7f6e215689e0b9f913033983b16946d8ff27f7a906e19ba2fdd9fa4"
+    },
+    {
+      "path": "fixtures/compatibility/a7-5-live-regressions/metric-projection/result.json",
+      "sha256": "9f5b43baec9a5f732affec07a9d4c453422794f200b1fd517588d8461844fce2"
+    },
+    {
+      "path": "fixtures/compatibility/a7-5-live-regressions/metric-projection/clean-notes.png",
+      "sha256": "2d73b792a9885c0c7f69badb6cbd07179c83f44f2d54d5228d6d02d2a63082ab"
+    },
+    {
+      "path": "fixtures/compatibility/a7-5-live-regressions/metric-projection/notes.pdf",
+      "sha256": "209ee2a45ea38c7758624c77e2a032b2200f93758262aa1e511819911ca527d1"
+    },
+    {
+      "path": "fixtures/compatibility/a7-5-note-probes/live-verified-measurements.json",
+      "sha256": "f5525e7847aa1e37ff86cca8d8d7268602fc52c498a1c4fb94cf0c41a99ef51e"
+    },
+    {
+      "path": "fixtures/compatibility/a7-5-note-probes/live-verified-production-equality.json",
+      "sha256": "43e7a149120bb9248f8434861d7d6932cdf174a70acb8bbd47acba08e3c84c49"
+    },
+    {
+      "path": "fixtures/compatibility/a7-5-note-probes/live-12pt-comparison.png",
+      "sha256": "806c7653caf8a02e84eabc8e5a5c1cc46725941d013987ab898f60bfcd3429d2"
+    },
+    {
+      "path": "fixtures/compatibility/a7-5-note-probes/live-12pt-comparison.provenance.json",
+      "sha256": "06afafdcdee34589170a8e3957497ec2c45a053bcefe12b627351f2267caba4c"
+    }
+  ]
+}

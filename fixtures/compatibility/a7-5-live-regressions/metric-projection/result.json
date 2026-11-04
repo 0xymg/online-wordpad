@@ -1,0 +1,34 @@
+{
+  "checks": [
+    "flat and nested generated paragraphs derive Arial metrics before any append refresh",
+    "initial metric projection never writes into canonical note bodies",
+    "ordinary main-story edit produces no cache-only metric warning",
+    "main-story metric refresh preserves source note bodies",
+    "canonical font edit is accepted",
+    "canonical font edit is accepted",
+    "font edits refresh both flat and nested projected metric caches",
+    "font-only edits redraw paragraph CSS using the changed metric profile",
+    "legitimate canonical font edits do not trigger read-only errors",
+    "both note font edits remain undoable",
+    "undo restores exact note graph, source body, generated cache and identities",
+    "undo redraws the original paragraph metrics",
+    "real partial generated text edits are rejected and still report a read-only error",
+    "cache-only metadata writes remain rejected without a metric bypass",
+    "generated owner identity changes remain rejected intact",
+    "all refused cache edits leave the canonical source pool unchanged"
+  ],
+  "blocked": [
+    {
+      "code": "generated-note-readonly",
+      "message": "Edit this note in the note editor, or select the complete note block with the surrounding text"
+    },
+    {
+      "code": "generated-note-readonly",
+      "message": "Edit this note in the note editor"
+    },
+    {
+      "code": "generated-note-readonly",
+      "message": "Edit this note in the note editor, or select the complete note block with the surrounding text"
+    }
+  ]
+}

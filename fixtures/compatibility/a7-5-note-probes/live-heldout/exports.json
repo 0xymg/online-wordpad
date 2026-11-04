@@ -1,0 +1,83 @@
+{
+  "schema_version": 1,
+  "complete": true,
+  "base_url": "https://wordpad.info",
+  "browser_version": "156.0.8078.4",
+  "viewport": {
+    "width": 1450,
+    "height": 1050
+  },
+  "application_revision": "8daa1dea5ce1e7a11dac6aebfe4e6aa0a3d91114",
+  "selected_cases": null,
+  "captured_at": "2026-11-04T01:00:00.193Z",
+  "results": [
+    {
+      "id": "columns-base-12",
+      "source_sha256": "9e1af129d8c84a5f66224c4292a9e7b196d5b22fb5810b301e8424044bbb532d",
+      "status": "EXPORTED",
+      "base_url": "https://wordpad.info",
+      "captured_at": "2026-11-04T00:59:50.687Z",
+      "geometry": {
+        "separator": {
+          "top": 453.234375,
+          "bottom": 471.625,
+          "height": 18.390625
+        },
+        "rule": {
+          "top": 464.0729064941406,
+          "bottom": 464.7291564941406,
+          "height": 0.65625
+        },
+        "baseline": {
+          "top": 467.234375,
+          "bottom": 467.234375,
+          "height": 0
+        },
+        "font": "",
+        "lineHeight": "18.3984px",
+        "fontFamily": "Arial, sans-serif",
+        "fontSize": "16px"
+      },
+      "pdf_sha256": "f759ae05a29c10c9262f6616ce69115a6457ac8d2e7259cca389a0065278c9e7",
+      "pdf_bytes": 65648,
+      "page_errors": []
+    },
+    {
+      "id": "shifted-base-12",
+      "source_sha256": "cbc2dd724b859a1b0051e2fc5dfc9864ffd6bf411a1576481ff3d97a1ece6926",
+      "status": "EXPORTED",
+      "base_url": "https://wordpad.info",
+      "captured_at": "2026-11-04T00:59:55.588Z",
+      "geometry": {
+        "separator": {
+          "top": 467.3125,
+          "bottom": 485.703125,
+          "height": 18.390625
+        },
+        "rule": {
+          "top": 478.1510314941406,
+          "bottom": 478.8072814941406,
+          "height": 0.65625
+        },
+        "baseline": {
+          "top": 481.3125,
+          "bottom": 481.3125,
+          "height": 0
+        },
+        "font": "",
+        "lineHeight": "18.3984px",
+        "fontFamily": "Arial, sans-serif",
+        "fontSize": "16px"
+      },
+      "pdf_sha256": "f6875d60d19676e8ead7ea090613a7897ed943bec412780c6b67b3ed782ad8ef",
+      "pdf_bytes": 98577,
+      "page_errors": []
+    }
+  ],
+  "served_runtime_source_sha256": {
+    "lib/note-separator.ts": "b9df4d728a041a4dd0cee1d87832aee01c0b90b0006b44fc60e74ace870c8ecc"
+  },
+  "runtime_hash_basis": "Deployed production revision supplied by root, git show 8daa1dea5ce1e7a11dac6aebfe4e6aa0a3d91114:lib/note-separator.ts",
+  "deployment_url": "https://vercel.com/312sh/online-wordpad/58N2aw2wZRro4PdESHhXJncsvqUJ",
+  "deployment_consistency_warning": "First four live exports match pre-deployment331 separator pixels, final three exports match calibrated production. Revision is intended deployed revision supplied by root, not proof all requests reached it. Preserve as mixed-rollout negative evidence."
+}
