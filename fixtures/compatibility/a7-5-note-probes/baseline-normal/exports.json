@@ -1,0 +1,116 @@
+{
+  "schema_version": 1,
+  "complete": true,
+  "base_url": "https://wordpad.info",
+  "browser_version": "156.0.8078.4",
+  "viewport": {
+    "width": 1450,
+    "height": 1050
+  },
+  "application_revision": "33165d5-production-pre-A75",
+  "selected_cases": [
+    "base-11",
+    "base-16",
+    "columns-base-11"
+  ],
+  "captured_at": "2026-11-04T00:47:42.146Z",
+  "results": [
+    {
+      "id": "base-11",
+      "source_sha256": "a650e8d23a0c2ccc75052013b6080f6229024233f891b3471bbeafadd15cae82",
+      "status": "EXPORTED",
+      "base_url": "https://wordpad.info",
+      "captured_at": "2026-11-04T00:47:25.632Z",
+      "geometry": {
+        "separator": {
+          "top": 409.90625,
+          "bottom": 426.765625,
+          "height": 16.859375
+        },
+        "rule": {
+          "top": 419.4375,
+          "bottom": 420.09375,
+          "height": 0.65625
+        },
+        "baseline": {
+          "top": 422.90625,
+          "bottom": 422.90625,
+          "height": 0
+        },
+        "font": "",
+        "lineHeight": "16.8652px",
+        "fontFamily": "Arial, sans-serif",
+        "fontSize": "14.6667px"
+      },
+      "pdf_sha256": "92cbd0ea30784cb94b73b421714ff4198ff00bf455c413038c895d7a27da4b9d",
+      "pdf_bytes": 62035,
+      "page_errors": []
+    },
+    {
+      "id": "base-16",
+      "source_sha256": "74aa7b7077e9be142ba359478c00c15a9a90f14aff9c6a67b2550e264e9b04bd",
+      "status": "EXPORTED",
+      "base_url": "https://wordpad.info",
+      "captured_at": "2026-11-04T00:47:32.350Z",
+      "geometry": {
+        "separator": {
+          "top": 418.71875,
+          "bottom": 443.25,
+          "height": 24.53125
+        },
+        "rule": {
+          "top": 432.6875,
+          "bottom": 433.6875,
+          "height": 1
+        },
+        "baseline": {
+          "top": 437.71875,
+          "bottom": 437.71875,
+          "height": 0
+        },
+        "font": "",
+        "lineHeight": "24.5312px",
+        "fontFamily": "Arial, sans-serif",
+        "fontSize": "21.3333px"
+      },
+      "pdf_sha256": "3ab45b13363c10351071c77e54f735361be03066c966f9df447dd9b0976d4701",
+      "pdf_bytes": 70238,
+      "page_errors": []
+    },
+    {
+      "id": "columns-base-11",
+      "source_sha256": "9647c7d2d351988da224fe4c84cd9cc6cbc6e6b21990f8288383724728c4292b",
+      "status": "EXPORTED",
+      "base_url": "https://wordpad.info",
+      "captured_at": "2026-11-04T00:47:37.123Z",
+      "geometry": {
+        "separator": {
+          "top": 447.171875,
+          "bottom": 464.03125,
+          "height": 16.859375
+        },
+        "rule": {
+          "top": 456.703125,
+          "bottom": 457.359375,
+          "height": 0.65625
+        },
+        "baseline": {
+          "top": 460.171875,
+          "bottom": 460.171875,
+          "height": 0
+        },
+        "font": "",
+        "lineHeight": "16.8652px",
+        "fontFamily": "Arial, sans-serif",
+        "fontSize": "14.6667px"
+      },
+      "pdf_sha256": "6af504287f46ef3daa865b009b13db710e660ce87d823b58bb9426786067746b",
+      "pdf_bytes": 62924,
+      "page_errors": []
+    }
+  ],
+  "served_runtime_source_sha256": {
+    "lib/note-separator.ts": "d95212483d180cc0602f929168136fcfa93e5327a4630c6723010acd4dc3b61e"
+  },
+  "runtime_hash_basis": "git show 33165d5:lib/note-separator.ts; production deployment revision supplied by root"
+}

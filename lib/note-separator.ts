@@ -20,11 +20,14 @@ export function createNativeNoteSeparator(owner: Document, normalStyle: NormalSt
   // Use Arial's strikeout metrics for this bounded native profile.
   // Its rendered approximation is measured against Word at 11, 12,
   // 16 and 20 pt; other font/size profiles keep their prior behavior.
+  // A half-point downward paint calibration compensates for the difference
+  // between the browser midline and Word’s native separator placement. It is
+  // shared by every size and flow in this profile; see A7.5 measurements.
   const arialProfile = nativeArialSeparatorProfile(normalStyle);
   const thickness = Math.round(normal.size * 102 / 2048 * 4) / 4;
   line.className = 'pm-endnote-separator-rule';
   line.style.cssText = arialProfile
-    ? `display:inline-block;vertical-align:middle;transform:translateY(100%);width:min(2in,100%);height:${thickness}pt;background:currentColor;`
+    ? `display:inline-block;vertical-align:middle;transform:translateY(calc(100% + 0.5pt));width:min(2in,100%);height:${thickness}pt;background:currentColor;`
     : 'display:inline-block;vertical-align:baseline;width:min(2in,100%);height:0;border-top:0.5pt solid currentColor;';
   block.appendChild(line); return block;
 }

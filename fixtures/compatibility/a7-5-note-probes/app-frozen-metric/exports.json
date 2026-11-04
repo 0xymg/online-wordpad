@@ -1,0 +1,84 @@
+{
+  "schema_version": 1,
+  "complete": true,
+  "base_url": "http://localhost:3120",
+  "browser_version": "156.0.8078.4",
+  "viewport": {
+    "width": 1450,
+    "height": 1050
+  },
+  "application_revision": "33165d5+shared-half-point-separator-calibration",
+  "selected_cases": [
+    "base-12",
+    "base-20"
+  ],
+  "captured_at": "2026-11-04T00:47:05.242Z",
+  "results": [
+    {
+      "id": "base-12",
+      "source_sha256": "123c75b2ab73d120b24f4417700becb9cd403fee530ae8582f3207a1ddf095f0",
+      "status": "EXPORTED",
+      "base_url": "http://localhost:3120",
+      "captured_at": "2026-11-04T00:46:56.024Z",
+      "geometry": {
+        "separator": {
+          "top": 411.671875,
+          "bottom": 430.0625,
+          "height": 18.390625
+        },
+        "rule": {
+          "top": 422.5104064941406,
+          "bottom": 423.1666564941406,
+          "height": 0.65625
+        },
+        "baseline": {
+          "top": 425.671875,
+          "bottom": 425.671875,
+          "height": 0
+        },
+        "font": "",
+        "lineHeight": "18.3984px",
+        "fontFamily": "Arial, sans-serif",
+        "fontSize": "16px"
+      },
+      "pdf_sha256": "2563631ff1e24e763fba098c33049963ae49355f505434e86f8c2dccf1235ca5",
+      "pdf_bytes": 63405,
+      "page_errors": []
+    },
+    {
+      "id": "base-20",
+      "source_sha256": "07427de99206390698382a8cf36c48b103f9a387608f455e2fc4f7076988f84d",
+      "status": "EXPORTED",
+      "base_url": "http://localhost:3120",
+      "captured_at": "2026-11-04T00:47:00.620Z",
+      "geometry": {
+        "separator": {
+          "top": 425.78125,
+          "bottom": 456.4375,
+          "height": 30.65625
+        },
+        "rule": {
+          "top": 444.1979064941406,
+          "bottom": 445.5260314941406,
+          "height": 1.328125
+        },
+        "baseline": {
+          "top": 449.78125,
+          "bottom": 449.78125,
+          "height": 0
+        },
+        "font": "",
+        "lineHeight": "30.6641px",
+        "fontFamily": "Arial, sans-serif",
+        "fontSize": "26.6667px"
+      },
+      "pdf_sha256": "f4a9bd6497667490115679d36e408d402adfd594cd91985c834d65eddea9ab3d",
+      "pdf_bytes": 79854,
+      "page_errors": []
+    }
+  ],
+  "working_copy_runtime_source_sha256": {
+    "lib/note-separator.ts": "b9df4d728a041a4dd0cee1d87832aee01c0b90b0006b44fc60e74ace870c8ecc"
+  },
+  "runtime_hash_basis": "Local working-copy runtime source at capture; served local dev application"
+}

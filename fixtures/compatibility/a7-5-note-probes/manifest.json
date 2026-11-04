@@ -1,0 +1,36 @@
+{
+  "schema_version": 1,
+  "source": "../notes.docx",
+  "source_sha256": "a650e8d23a0c2ccc75052013b6080f6229024233f891b3471bbeafadd15cae82",
+  "description": "Held-out A7.5 controls generated after the shared half-point calibration: 12pt two-column and independent changed preceding main-story content. Frozen A7.4 originals untouched.",
+  "cases": [
+    {
+      "id": "columns-base-12",
+      "source": "columns-base-12.docx",
+      "sha256": "9e1af129d8c84a5f66224c4292a9e7b196d5b22fb5810b301e8424044bbb532d",
+      "normal_size_pt": 12,
+      "columns": 2,
+      "changed_preceding_main_content": false,
+      "markers": [
+        "FOOTNOTE_BODY",
+        "ENDNOTE_BODY"
+      ],
+      "word_reference_status": "CAPTURED",
+      "word_pdf_sha256": "90604b956a817a191491282853549f3a2a6248de3f49047df4879fb92915e015"
+    },
+    {
+      "id": "shifted-base-12",
+      "source": "shifted-base-12.docx",
+      "sha256": "cbc2dd724b859a1b0051e2fc5dfc9864ffd6bf411a1576481ff3d97a1ece6926",
+      "normal_size_pt": 12,
+      "columns": 1,
+      "changed_preceding_main_content": true,
+      "markers": [
+        "FOOTNOTE_BODY",
+        "ENDNOTE_BODY"
+      ],
+      "word_reference_status": "CAPTURED",
+      "word_pdf_sha256": "aa5981de9faab8f99f9da87c46826a3b831cf9aff02c77c921dbf5c8f32dcc85"
+    }
+  ]
+}

@@ -1,0 +1,21 @@
+{
+  "reference_application": "Word Online",
+  "capture_method": "Root agent uploaded exact source; File > Export > Download as PDF > Download in UI; completed download copied without alteration",
+  "source": "columns-base-12.docx",
+  "source_sha256": "9e1af129d8c84a5f66224c4292a9e7b196d5b22fb5810b301e8424044bbb532d",
+  "pdf": "columns-base-12.word.pdf",
+  "pdf_sha256": "90604b956a817a191491282853549f3a2a6248de3f49047df4879fb92915e015",
+  "captured_at_utc": "2026-11-04T00:48:14.980224+00:00",
+  "capture_timestamp_basis": "download file modification time",
+  "pdf_metadata": {
+    "Author": "EDTRDocs compatibility fixtures",
+    "Creator": "Microsoft Word",
+    "CreationDate": "D:20261103164814-08'00'",
+    "ModDate": "D:20261103164814-08'00'"
+  },
+  "fonts": [
+    "BCDEEE+ArialMT",
+    "BCDFEE+ArialMT"
+  ],
+  "paper_settings": "source document settings"
+}

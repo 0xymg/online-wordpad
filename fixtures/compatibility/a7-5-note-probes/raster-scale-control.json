@@ -1,0 +1,79 @@
+{
+  "schema_version": 1,
+  "description": "Independent PDFium scale control on untouched A7.4 frozen Word/application PDFs. Intensity weighted x=100..200pt, \u00b12pt Word rule window, >2% mask. Values are application minus Word endnote/footnote centroids in pt; shared half-point runtime fix absent in these inputs.",
+  "results": {
+    "base-11": {
+      "2": [
+        -0.3364,
+        -0.3329
+      ],
+      "4": [
+        -0.3828,
+        -0.625
+      ],
+      "8": [
+        -0.3819,
+        -0.625
+      ],
+      "16": [
+        -0.4453,
+        -0.625
+      ]
+    },
+    "base-12": {
+      "2": [
+        -0.8364,
+        -0.6671
+      ],
+      "4": [
+        -0.8828,
+        -0.875
+      ],
+      "8": [
+        -0.8819,
+        -0.875
+      ],
+      "16": [
+        -0.9453,
+        -0.875
+      ]
+    },
+    "base-16": {
+      "2": [
+        -0.0829,
+        -0.0829
+      ],
+      "4": [
+        -0.25,
+        -0.25
+      ],
+      "8": [
+        -0.25,
+        -0.25
+      ],
+      "16": [
+        -0.3125,
+        -0.25
+      ]
+    },
+    "base-20": {
+      "2": [
+        -0.5039,
+        0.0829
+      ],
+      "4": [
+        -0.2516,
+        -0.125
+      ],
+      "8": [
+        -0.2527,
+        -0.125
+      ],
+      "16": [
+        -0.3141,
+        -0.125
+      ]
+    }
+  },
+  "conclusion": "12pt residual persists at increasing render density, so source raster placement rather than only comparison render quantization contributes. Shared calibration remains empirical."
+}

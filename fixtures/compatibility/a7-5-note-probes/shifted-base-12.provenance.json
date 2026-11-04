@@ -1,0 +1,21 @@
+{
+  "reference_application": "Word Online",
+  "capture_method": "Root agent uploaded exact source; File > Export > Download as PDF > Download in UI; completed download copied without alteration",
+  "source": "shifted-base-12.docx",
+  "source_sha256": "cbc2dd724b859a1b0051e2fc5dfc9864ffd6bf411a1576481ff3d97a1ece6926",
+  "pdf": "shifted-base-12.word.pdf",
+  "pdf_sha256": "aa5981de9faab8f99f9da87c46826a3b831cf9aff02c77c921dbf5c8f32dcc85",
+  "captured_at_utc": "2026-11-04T00:48:58.703639+00:00",
+  "capture_timestamp_basis": "download file modification time",
+  "pdf_metadata": {
+    "Author": "EDTRDocs compatibility fixtures",
+    "Creator": "Microsoft Word",
+    "CreationDate": "D:20261103164858-08'00'",
+    "ModDate": "D:20261103164858-08'00'"
+  },
+  "fonts": [
+    "BCDEEE+ArialMT",
+    "BCDFEE+ArialMT"
+  ],
+  "paper_settings": "source document settings"
+}

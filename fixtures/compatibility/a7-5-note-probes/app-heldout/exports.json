@@ -1,0 +1,81 @@
+{
+  "schema_version": 1,
+  "complete": true,
+  "base_url": "http://localhost:3120",
+  "browser_version": "156.0.8078.4",
+  "viewport": {
+    "width": 1450,
+    "height": 1050
+  },
+  "application_revision": "33165d5+shared-half-point-separator-calibration",
+  "selected_cases": null,
+  "captured_at": "2026-11-04T00:47:15.332Z",
+  "results": [
+    {
+      "id": "columns-base-12",
+      "source_sha256": "9e1af129d8c84a5f66224c4292a9e7b196d5b22fb5810b301e8424044bbb532d",
+      "status": "EXPORTED",
+      "base_url": "http://localhost:3120",
+      "captured_at": "2026-11-04T00:47:05.603Z",
+      "geometry": {
+        "separator": {
+          "top": 453.234375,
+          "bottom": 471.625,
+          "height": 18.390625
+        },
+        "rule": {
+          "top": 464.0729064941406,
+          "bottom": 464.7291564941406,
+          "height": 0.65625
+        },
+        "baseline": {
+          "top": 467.234375,
+          "bottom": 467.234375,
+          "height": 0
+        },
+        "font": "",
+        "lineHeight": "18.3984px",
+        "fontFamily": "Arial, sans-serif",
+        "fontSize": "16px"
+      },
+      "pdf_sha256": "abafa92efe7b240b318d5858fe594e57abe94c1ecc98a18407ec04445e0329d3",
+      "pdf_bytes": 65648,
+      "page_errors": []
+    },
+    {
+      "id": "shifted-base-12",
+      "source_sha256": "cbc2dd724b859a1b0051e2fc5dfc9864ffd6bf411a1576481ff3d97a1ece6926",
+      "status": "EXPORTED",
+      "base_url": "http://localhost:3120",
+      "captured_at": "2026-11-04T00:47:10.615Z",
+      "geometry": {
+        "separator": {
+          "top": 467.3125,
+          "bottom": 485.703125,
+          "height": 18.390625
+        },
+        "rule": {
+          "top": 478.1510314941406,
+          "bottom": 478.8072814941406,
+          "height": 0.65625
+        },
+        "baseline": {
+          "top": 481.3125,
+          "bottom": 481.3125,
+          "height": 0
+        },
+        "font": "",
+        "lineHeight": "18.3984px",
+        "fontFamily": "Arial, sans-serif",
+        "fontSize": "16px"
+      },
+      "pdf_sha256": "e12ff9da8e04675b9cd901f03323b8fe1a01ff375482ff8149c374b7e472f878",
+      "pdf_bytes": 98578,
+      "page_errors": []
+    }
+  ],
+  "working_copy_runtime_source_sha256": {
+    "lib/note-separator.ts": "b9df4d728a041a4dd0cee1d87832aee01c0b90b0006b44fc60e74ace870c8ecc"
+  },
+  "runtime_hash_basis": "Local working-copy runtime source at capture; served local dev application"
+}

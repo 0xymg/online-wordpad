@@ -1,0 +1,360 @@
+{
+  "schema_version": 1,
+  "application_revision": "33165d5-production-pre-A75",
+  "method": "PDFium 4px/pt; original A7.4 fixed x=100..200pt, \u00b12pt Word rule window, >2% intensity mask; baseline body comparison excludes full-width \u00b13pt rule bands",
+  "all_baseline_bodies_unchanged": null,
+  "centroid_threshold_pt": 0.75,
+  "all_rules_pass": false,
+  "results": [
+    {
+      "id": "base-11",
+      "source_sha256": "a650e8d23a0c2ccc75052013b6080f6229024233f891b3471bbeafadd15cae82",
+      "word_pdf_sha256": "513bba4487c459203a5cae9b910d176833a58d636be1e593ba5a1ae8344bb4e3",
+      "verification": {
+        "source_manifest_verified": true,
+        "word_provenance_verified": true,
+        "application_export": {
+          "application_revision": "33165d5-production-pre-A75",
+          "export_hashes_verified": true,
+          "base_url": "https://wordpad.info",
+          "captured_at": "2026-11-04T00:47:25.632Z"
+        }
+      },
+      "app_pdf": "/Users/Yunus/Projects/online-wordpad/fixtures/compatibility/a7-5-note-probes/baseline-normal/base-11.pdf",
+      "app_pdf_sha256": "92cbd0ea30784cb94b73b421714ff4198ff00bf455c413038c895d7a27da4b9d",
+      "page_count": 1,
+      "rules": [
+        {
+          "story": "endnote",
+          "word_vector_top_pt": 154.04999999999995,
+          "word_vector_height_pt": 0.5,
+          "word": {
+            "centroid_pt": 154.25,
+            "coverage_pt": 0.5
+          },
+          "app": {
+            "centroid_pt": 153.8671568627451,
+            "coverage_pt": 0.75
+          },
+          "centroid_delta_pt": -0.3828431372548948,
+          "within_0_75pt": true
+        },
+        {
+          "story": "footnote",
+          "word_vector_top_pt": 690.73,
+          "word_vector_height_pt": 0.5,
+          "word": {
+            "centroid_pt": 691.0,
+            "coverage_pt": 0.5
+          },
+          "app": {
+            "centroid_pt": 690.375,
+            "coverage_pt": 0.75
+          },
+          "centroid_delta_pt": -0.625,
+          "within_0_75pt": true
+        }
+      ]
+    },
+    {
+      "id": "columns-base-11",
+      "source_sha256": "9647c7d2d351988da224fe4c84cd9cc6cbc6e6b21990f8288383724728c4292b",
+      "word_pdf_sha256": "658c37c3a3254590fe00b8b82ff08d468ea7925696935c7b270d6734226bcea5",
+      "verification": {
+        "source_manifest_verified": true,
+        "word_provenance_verified": true,
+        "application_export": {
+          "application_revision": "33165d5-production-pre-A75",
+          "export_hashes_verified": true,
+          "base_url": "https://wordpad.info",
+          "captured_at": "2026-11-04T00:47:37.123Z"
+        }
+      },
+      "app_pdf": "/Users/Yunus/Projects/online-wordpad/fixtures/compatibility/a7-5-note-probes/baseline-normal/columns-base-11.pdf",
+      "app_pdf_sha256": "6af504287f46ef3daa865b009b13db710e660ce87d823b58bb9426786067746b",
+      "page_count": 1,
+      "rules": [
+        {
+          "story": "endnote",
+          "word_vector_top_pt": 168.79999999999995,
+          "word_vector_height_pt": 0.5,
+          "word": {
+            "centroid_pt": 169.0,
+            "coverage_pt": 0.5
+          },
+          "app": {
+            "centroid_pt": 168.375,
+            "coverage_pt": 0.75
+          },
+          "centroid_delta_pt": -0.625,
+          "within_0_75pt": true
+        },
+        {
+          "story": "footnote",
+          "word_vector_top_pt": 690.73,
+          "word_vector_height_pt": 0.5,
+          "word": {
+            "centroid_pt": 691.0,
+            "coverage_pt": 0.5
+          },
+          "app": {
+            "centroid_pt": 690.375,
+            "coverage_pt": 0.75
+          },
+          "centroid_delta_pt": -0.625,
+          "within_0_75pt": true
+        }
+      ]
+    },
+    {
+      "id": "base-12",
+      "source_sha256": "123c75b2ab73d120b24f4417700becb9cd403fee530ae8582f3207a1ddf095f0",
+      "word_pdf_sha256": "0ab5908dfb2bf28fd7dd54470806b739cf888216b8aa25ec0e24740d4ab1a81c",
+      "verification": {
+        "source_manifest_verified": true,
+        "word_provenance_verified": true,
+        "application_export": {
+          "application_revision": "33165d5-production-pre-A75",
+          "export_hashes_verified": true,
+          "base_url": "https://wordpad.info",
+          "captured_at": "2026-11-04T00:47:53.875Z"
+        }
+      },
+      "app_pdf": "/Users/Yunus/Projects/online-wordpad/fixtures/compatibility/a7-5-note-probes/baseline-metric/base-12.pdf",
+      "app_pdf_sha256": "52050bdbda5a16d71a738735d493a0f7801b807957fe1f697465b937e4f0ac10",
+      "page_count": 1,
+      "rules": [
+        {
+          "story": "endnote",
+          "word_vector_top_pt": 156.04999999999995,
+          "word_vector_height_pt": 0.5,
+          "word": {
+            "centroid_pt": 156.25,
+            "coverage_pt": 0.5
+          },
+          "app": {
+            "centroid_pt": 155.3671568627451,
+            "coverage_pt": 0.75
+          },
+          "centroid_delta_pt": -0.8828431372548948,
+          "within_0_75pt": false
+        },
+        {
+          "story": "footnote",
+          "word_vector_top_pt": 688.73,
+          "word_vector_height_pt": 0.5,
+          "word": {
+            "centroid_pt": 689.0,
+            "coverage_pt": 0.5
+          },
+          "app": {
+            "centroid_pt": 688.125,
+            "coverage_pt": 0.75
+          },
+          "centroid_delta_pt": -0.875,
+          "within_0_75pt": false
+        }
+      ]
+    },
+    {
+      "id": "base-16",
+      "source_sha256": "74aa7b7077e9be142ba359478c00c15a9a90f14aff9c6a67b2550e264e9b04bd",
+      "word_pdf_sha256": "f1f44b5ab287130f91a49f6178b81ca66599ec6f0f94bbf6e28c5b4ef50772d5",
+      "verification": {
+        "source_manifest_verified": true,
+        "word_provenance_verified": true,
+        "application_export": {
+          "application_revision": "33165d5-production-pre-A75",
+          "export_hashes_verified": true,
+          "base_url": "https://wordpad.info",
+          "captured_at": "2026-11-04T00:47:32.350Z"
+        }
+      },
+      "app_pdf": "/Users/Yunus/Projects/online-wordpad/fixtures/compatibility/a7-5-note-probes/baseline-normal/base-16.pdf",
+      "app_pdf_sha256": "3ab45b13363c10351071c77e54f735361be03066c966f9df447dd9b0976d4701",
+      "page_count": 1,
+      "rules": [
+        {
+          "story": "endnote",
+          "word_vector_top_pt": 163.79999999999995,
+          "word_vector_height_pt": 0.75,
+          "word": {
+            "centroid_pt": 164.125,
+            "coverage_pt": 0.75
+          },
+          "app": {
+            "centroid_pt": 163.875,
+            "coverage_pt": 0.75
+          },
+          "centroid_delta_pt": -0.25,
+          "within_0_75pt": true
+        },
+        {
+          "story": "footnote",
+          "word_vector_top_pt": 681.23,
+          "word_vector_height_pt": 0.75,
+          "word": {
+            "centroid_pt": 681.625,
+            "coverage_pt": 0.75
+          },
+          "app": {
+            "centroid_pt": 681.375,
+            "coverage_pt": 0.75
+          },
+          "centroid_delta_pt": -0.25,
+          "within_0_75pt": true
+        }
+      ]
+    },
+    {
+      "id": "base-20",
+      "source_sha256": "07427de99206390698382a8cf36c48b103f9a387608f455e2fc4f7076988f84d",
+      "word_pdf_sha256": "ba3de1c445f6acc5e56c117ef3acad8273d72f070098a50fba2ea7328ba98e6d",
+      "verification": {
+        "source_manifest_verified": true,
+        "word_provenance_verified": true,
+        "application_export": {
+          "application_revision": "33165d5-production-pre-A75",
+          "export_hashes_verified": true,
+          "base_url": "https://wordpad.info",
+          "captured_at": "2026-11-04T00:47:58.622Z"
+        }
+      },
+      "app_pdf": "/Users/Yunus/Projects/online-wordpad/fixtures/compatibility/a7-5-note-probes/baseline-metric/base-20.pdf",
+      "app_pdf_sha256": "6ae748cdab33fd254b75a2792a04d9a7742ad382d487d197282d5152e267140b",
+      "page_count": 1,
+      "rules": [
+        {
+          "story": "endnote",
+          "word_vector_top_pt": 171.79999999999995,
+          "word_vector_height_pt": 1.0,
+          "word": {
+            "centroid_pt": 172.25,
+            "coverage_pt": 1.0
+          },
+          "app": {
+            "centroid_pt": 171.9983617300131,
+            "coverage_pt": 1.496078431372549
+          },
+          "centroid_delta_pt": -0.2516382699868984,
+          "within_0_75pt": true
+        },
+        {
+          "story": "footnote",
+          "word_vector_top_pt": 674.23,
+          "word_vector_height_pt": 1.0,
+          "word": {
+            "centroid_pt": 674.75,
+            "coverage_pt": 1.0
+          },
+          "app": {
+            "centroid_pt": 674.625,
+            "coverage_pt": 0.75
+          },
+          "centroid_delta_pt": -0.125,
+          "within_0_75pt": true
+        }
+      ]
+    },
+    {
+      "id": "columns-base-12",
+      "source_sha256": "9e1af129d8c84a5f66224c4292a9e7b196d5b22fb5810b301e8424044bbb532d",
+      "word_pdf_sha256": "90604b956a817a191491282853549f3a2a6248de3f49047df4879fb92915e015",
+      "verification": {
+        "source_manifest_verified": true,
+        "word_provenance_verified": true,
+        "application_export": {
+          "application_revision": "33165d5-production-pre-A75",
+          "export_hashes_verified": true,
+          "base_url": "https://wordpad.info",
+          "captured_at": "2026-11-04T00:48:09.780Z"
+        }
+      },
+      "app_pdf": "/Users/Yunus/Projects/online-wordpad/fixtures/compatibility/a7-5-note-probes/baseline-heldout/columns-base-12.pdf",
+      "app_pdf_sha256": "06ad3a07f244caf25410b243213e674e1ad4a476782e94fdabe22d5f4f160ad9",
+      "page_count": 1,
+      "rules": [
+        {
+          "story": "endnote",
+          "word_vector_top_pt": 172.04999999999995,
+          "word_vector_height_pt": 0.5,
+          "word": {
+            "centroid_pt": 172.25,
+            "coverage_pt": 0.5
+          },
+          "app": {
+            "centroid_pt": 171.375,
+            "coverage_pt": 0.75
+          },
+          "centroid_delta_pt": -0.875,
+          "within_0_75pt": false
+        },
+        {
+          "story": "footnote",
+          "word_vector_top_pt": 688.73,
+          "word_vector_height_pt": 0.5,
+          "word": {
+            "centroid_pt": 689.0,
+            "coverage_pt": 0.5
+          },
+          "app": {
+            "centroid_pt": 688.125,
+            "coverage_pt": 0.75
+          },
+          "centroid_delta_pt": -0.875,
+          "within_0_75pt": false
+        }
+      ]
+    },
+    {
+      "id": "shifted-base-12",
+      "source_sha256": "cbc2dd724b859a1b0051e2fc5dfc9864ffd6bf411a1576481ff3d97a1ece6926",
+      "word_pdf_sha256": "aa5981de9faab8f99f9da87c46826a3b831cf9aff02c77c921dbf5c8f32dcc85",
+      "verification": {
+        "source_manifest_verified": true,
+        "word_provenance_verified": true,
+        "application_export": {
+          "application_revision": "33165d5-production-pre-A75",
+          "export_hashes_verified": true,
+          "base_url": "https://wordpad.info",
+          "captured_at": "2026-11-04T00:48:14.581Z"
+        }
+      },
+      "app_pdf": "/Users/Yunus/Projects/online-wordpad/fixtures/compatibility/a7-5-note-probes/baseline-heldout/shifted-base-12.pdf",
+      "app_pdf_sha256": "d803c96e903b857b993d55701ee60866fa3a88e9cec99e20229a6dd5de99fe5e",
+      "page_count": 1,
+      "rules": [
+        {
+          "story": "endnote",
+          "word_vector_top_pt": 197.83000000000004,
+          "word_vector_height_pt": 0.5,
+          "word": {
+            "centroid_pt": 198.0,
+            "coverage_pt": 0.5
+          },
+          "app": {
+            "centroid_pt": 197.3671568627451,
+            "coverage_pt": 0.75
+          },
+          "centroid_delta_pt": -0.6328431372548948,
+          "within_0_75pt": true
+        },
+        {
+          "story": "footnote",
+          "word_vector_top_pt": 688.73,
+          "word_vector_height_pt": 0.5,
+          "word": {
+            "centroid_pt": 689.0,
+            "coverage_pt": 0.5
+          },
+          "app": {
+            "centroid_pt": 688.125,
+            "coverage_pt": 0.75
+          },
+          "centroid_delta_pt": -0.875,
+          "within_0_75pt": false
+        }
+      ]
+    }
+  ]
+}

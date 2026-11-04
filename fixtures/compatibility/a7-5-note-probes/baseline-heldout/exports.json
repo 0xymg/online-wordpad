@@ -1,0 +1,81 @@
+{
+  "schema_version": 1,
+  "complete": true,
+  "base_url": "https://wordpad.info",
+  "browser_version": "156.0.8078.4",
+  "viewport": {
+    "width": 1450,
+    "height": 1050
+  },
+  "application_revision": "33165d5-production-pre-A75",
+  "selected_cases": null,
+  "captured_at": "2026-11-04T00:48:19.133Z",
+  "results": [
+    {
+      "id": "columns-base-12",
+      "source_sha256": "9e1af129d8c84a5f66224c4292a9e7b196d5b22fb5810b301e8424044bbb532d",
+      "status": "EXPORTED",
+      "base_url": "https://wordpad.info",
+      "captured_at": "2026-11-04T00:48:09.780Z",
+      "geometry": {
+        "separator": {
+          "top": 453.234375,
+          "bottom": 471.625,
+          "height": 18.390625
+        },
+        "rule": {
+          "top": 463.40625,
+          "bottom": 464.0625,
+          "height": 0.65625
+        },
+        "baseline": {
+          "top": 467.234375,
+          "bottom": 467.234375,
+          "height": 0
+        },
+        "font": "",
+        "lineHeight": "18.3984px",
+        "fontFamily": "Arial, sans-serif",
+        "fontSize": "16px"
+      },
+      "pdf_sha256": "06ad3a07f244caf25410b243213e674e1ad4a476782e94fdabe22d5f4f160ad9",
+      "pdf_bytes": 65649,
+      "page_errors": []
+    },
+    {
+      "id": "shifted-base-12",
+      "source_sha256": "cbc2dd724b859a1b0051e2fc5dfc9864ffd6bf411a1576481ff3d97a1ece6926",
+      "status": "EXPORTED",
+      "base_url": "https://wordpad.info",
+      "captured_at": "2026-11-04T00:48:14.581Z",
+      "geometry": {
+        "separator": {
+          "top": 467.3125,
+          "bottom": 485.703125,
+          "height": 18.390625
+        },
+        "rule": {
+          "top": 477.484375,
+          "bottom": 478.140625,
+          "height": 0.65625
+        },
+        "baseline": {
+          "top": 481.3125,
+          "bottom": 481.3125,
+          "height": 0
+        },
+        "font": "",
+        "lineHeight": "18.3984px",
+        "fontFamily": "Arial, sans-serif",
+        "fontSize": "16px"
+      },
+      "pdf_sha256": "d803c96e903b857b993d55701ee60866fa3a88e9cec99e20229a6dd5de99fe5e",
+      "pdf_bytes": 98579,
+      "page_errors": []
+    }
+  ],
+  "served_runtime_source_sha256": {
+    "lib/note-separator.ts": "d95212483d180cc0602f929168136fcfa93e5327a4630c6723010acd4dc3b61e"
+  },
+  "runtime_hash_basis": "git show 33165d5:lib/note-separator.ts; production deployment revision supplied by root"
+}

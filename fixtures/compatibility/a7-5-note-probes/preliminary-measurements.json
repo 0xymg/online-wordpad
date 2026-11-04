@@ -1,0 +1,244 @@
+{
+  "schema_version": 1,
+  "application_revision": "33165d5+shared-half-point-calibration",
+  "method": "PDFium 4px/pt; original A7.4 fixed x=100..200pt, \u00b12pt Word rule window, >2% intensity mask; baseline body comparison excludes full-width \u00b13pt rule bands",
+  "centroid_threshold_pt": 0.75,
+  "all_rules_pass": true,
+  "results": [
+    {
+      "id": "base-11",
+      "source_sha256": "a650e8d23a0c2ccc75052013b6080f6229024233f891b3471bbeafadd15cae82",
+      "word_pdf_sha256": "513bba4487c459203a5cae9b910d176833a58d636be1e593ba5a1ae8344bb4e3",
+      "app_pdf": "/Users/Yunus/Projects/online-wordpad/fixtures/compatibility/a7-5-note-probes/app-frozen-normal/base-11.pdf",
+      "app_pdf_sha256": "6ca43fe7843368e9b9e02c68288eee0d200e183d7dfb4ad3df1af35b4cc7c5c8",
+      "page_count": 1,
+      "rules": [
+        {
+          "story": "endnote",
+          "word_vector_top_pt": 154.04999999999995,
+          "word_vector_height_pt": 0.5,
+          "word": {
+            "centroid_pt": 154.25,
+            "coverage_pt": 0.5
+          },
+          "app": {
+            "centroid_pt": 154.3671568627451,
+            "coverage_pt": 0.75
+          },
+          "centroid_delta_pt": 0.11715686274510517,
+          "within_0_75pt": true
+        },
+        {
+          "story": "footnote",
+          "word_vector_top_pt": 690.73,
+          "word_vector_height_pt": 0.5,
+          "word": {
+            "centroid_pt": 691.0,
+            "coverage_pt": 0.5
+          },
+          "app": {
+            "centroid_pt": 691.125,
+            "coverage_pt": 0.75
+          },
+          "centroid_delta_pt": 0.125,
+          "within_0_75pt": true
+        }
+      ],
+      "baseline": {
+        "pdf": "/Users/Yunus/Projects/online-wordpad/fixtures/compatibility/a7-4-note-probes/app-pdfs/base-11.pdf",
+        "sha256": "0af7639dd09f9f2831cb18d6d38f8200f3f45358dd48ff7039f8c8451e016a2e",
+        "same_page_geometry": true,
+        "changed_pixels_outside_rule_bands": 0,
+        "body_pixels_unchanged": true
+      }
+    },
+    {
+      "id": "columns-base-11",
+      "source_sha256": "9647c7d2d351988da224fe4c84cd9cc6cbc6e6b21990f8288383724728c4292b",
+      "word_pdf_sha256": "658c37c3a3254590fe00b8b82ff08d468ea7925696935c7b270d6734226bcea5",
+      "app_pdf": "/Users/Yunus/Projects/online-wordpad/fixtures/compatibility/a7-5-note-probes/app-frozen-normal/columns-base-11.pdf",
+      "app_pdf_sha256": "7c0ed3137b41c18a4b6446104b733bbe434c18d79cc1e4c93ca452c4ad6c6cfa",
+      "page_count": 1,
+      "rules": [
+        {
+          "story": "endnote",
+          "word_vector_top_pt": 168.79999999999995,
+          "word_vector_height_pt": 0.5,
+          "word": {
+            "centroid_pt": 169.0,
+            "coverage_pt": 0.5
+          },
+          "app": {
+            "centroid_pt": 169.125,
+            "coverage_pt": 0.75
+          },
+          "centroid_delta_pt": 0.125,
+          "within_0_75pt": true
+        },
+        {
+          "story": "footnote",
+          "word_vector_top_pt": 690.73,
+          "word_vector_height_pt": 0.5,
+          "word": {
+            "centroid_pt": 691.0,
+            "coverage_pt": 0.5
+          },
+          "app": {
+            "centroid_pt": 691.125,
+            "coverage_pt": 0.75
+          },
+          "centroid_delta_pt": 0.125,
+          "within_0_75pt": true
+        }
+      ],
+      "baseline": {
+        "pdf": "/Users/Yunus/Projects/online-wordpad/fixtures/compatibility/a7-4-note-probes/app-pdfs/columns-base-11.pdf",
+        "sha256": "5c0e099cea3b14631b72236ba73eafd1599ca73baa8e7aa36548fee86000f1dc",
+        "same_page_geometry": true,
+        "changed_pixels_outside_rule_bands": 0,
+        "body_pixels_unchanged": true
+      }
+    },
+    {
+      "id": "base-12",
+      "source_sha256": "123c75b2ab73d120b24f4417700becb9cd403fee530ae8582f3207a1ddf095f0",
+      "word_pdf_sha256": "0ab5908dfb2bf28fd7dd54470806b739cf888216b8aa25ec0e24740d4ab1a81c",
+      "app_pdf": "/Users/Yunus/Projects/online-wordpad/fixtures/compatibility/a7-5-note-probes/app-frozen-metric/base-12.pdf",
+      "app_pdf_sha256": "2563631ff1e24e763fba098c33049963ae49355f505434e86f8c2dccf1235ca5",
+      "page_count": 1,
+      "rules": [
+        {
+          "story": "endnote",
+          "word_vector_top_pt": 156.04999999999995,
+          "word_vector_height_pt": 0.5,
+          "word": {
+            "centroid_pt": 156.25,
+            "coverage_pt": 0.5
+          },
+          "app": {
+            "centroid_pt": 155.8671568627451,
+            "coverage_pt": 0.75
+          },
+          "centroid_delta_pt": -0.3828431372548948,
+          "within_0_75pt": true
+        },
+        {
+          "story": "footnote",
+          "word_vector_top_pt": 688.73,
+          "word_vector_height_pt": 0.5,
+          "word": {
+            "centroid_pt": 689.0,
+            "coverage_pt": 0.5
+          },
+          "app": {
+            "centroid_pt": 688.875,
+            "coverage_pt": 0.75
+          },
+          "centroid_delta_pt": -0.125,
+          "within_0_75pt": true
+        }
+      ],
+      "baseline": {
+        "pdf": "/Users/Yunus/Projects/online-wordpad/fixtures/compatibility/a7-4-note-metric-probes/app-pdfs/base-12.pdf",
+        "sha256": "b6ac483d9784ff27cd7bdfedd9d2f43414b1c3877fd4257e22083196a9078233",
+        "same_page_geometry": true,
+        "changed_pixels_outside_rule_bands": 0,
+        "body_pixels_unchanged": true
+      }
+    },
+    {
+      "id": "base-16",
+      "source_sha256": "74aa7b7077e9be142ba359478c00c15a9a90f14aff9c6a67b2550e264e9b04bd",
+      "word_pdf_sha256": "f1f44b5ab287130f91a49f6178b81ca66599ec6f0f94bbf6e28c5b4ef50772d5",
+      "app_pdf": "/Users/Yunus/Projects/online-wordpad/fixtures/compatibility/a7-5-note-probes/app-frozen-normal/base-16.pdf",
+      "app_pdf_sha256": "e2c9067f8a7a2e3b4617ec3db23040d5c721f8b40220eb455a1482ee665b298a",
+      "page_count": 1,
+      "rules": [
+        {
+          "story": "endnote",
+          "word_vector_top_pt": 163.79999999999995,
+          "word_vector_height_pt": 0.75,
+          "word": {
+            "centroid_pt": 164.125,
+            "coverage_pt": 0.75
+          },
+          "app": {
+            "centroid_pt": 164.375,
+            "coverage_pt": 0.75
+          },
+          "centroid_delta_pt": 0.25,
+          "within_0_75pt": true
+        },
+        {
+          "story": "footnote",
+          "word_vector_top_pt": 681.23,
+          "word_vector_height_pt": 0.75,
+          "word": {
+            "centroid_pt": 681.625,
+            "coverage_pt": 0.75
+          },
+          "app": {
+            "centroid_pt": 682.125,
+            "coverage_pt": 0.75
+          },
+          "centroid_delta_pt": 0.5,
+          "within_0_75pt": true
+        }
+      ],
+      "baseline": {
+        "pdf": "/Users/Yunus/Projects/online-wordpad/fixtures/compatibility/a7-4-note-probes/app-pdfs/base-16.pdf",
+        "sha256": "e7a6ceaa81f79b0cb0c4cab77cc3b97ef4f9b4dab1982a06084721d51b6ef1e5",
+        "same_page_geometry": true,
+        "changed_pixels_outside_rule_bands": 0,
+        "body_pixels_unchanged": true
+      }
+    },
+    {
+      "id": "base-20",
+      "source_sha256": "07427de99206390698382a8cf36c48b103f9a387608f455e2fc4f7076988f84d",
+      "word_pdf_sha256": "ba3de1c445f6acc5e56c117ef3acad8273d72f070098a50fba2ea7328ba98e6d",
+      "app_pdf": "/Users/Yunus/Projects/online-wordpad/fixtures/compatibility/a7-5-note-probes/app-frozen-metric/base-20.pdf",
+      "app_pdf_sha256": "f4a9bd6497667490115679d36e408d402adfd594cd91985c834d65eddea9ab3d",
+      "page_count": 1,
+      "rules": [
+        {
+          "story": "endnote",
+          "word_vector_top_pt": 171.79999999999995,
+          "word_vector_height_pt": 1.0,
+          "word": {
+            "centroid_pt": 172.25,
+            "coverage_pt": 1.0
+          },
+          "app": {
+            "centroid_pt": 172.4983617300131,
+            "coverage_pt": 1.496078431372549
+          },
+          "centroid_delta_pt": 0.24836173001310158,
+          "within_0_75pt": true
+        },
+        {
+          "story": "footnote",
+          "word_vector_top_pt": 674.23,
+          "word_vector_height_pt": 1.0,
+          "word": {
+            "centroid_pt": 674.75,
+            "coverage_pt": 1.0
+          },
+          "app": {
+            "centroid_pt": 674.625,
+            "coverage_pt": 0.75
+          },
+          "centroid_delta_pt": -0.125,
+          "within_0_75pt": true
+        }
+      ],
+      "baseline": {
+        "pdf": "/Users/Yunus/Projects/online-wordpad/fixtures/compatibility/a7-4-note-metric-probes/app-pdfs/base-20.pdf",
+        "sha256": "6b6a01288d8bafc93648daaa97b4c2946089acd44b92ca93aae142859dc4111f",
+        "same_page_geometry": true,
+        "changed_pixels_outside_rule_bands": 0,
+        "body_pixels_unchanged": true
+      }
+    }
+  ]
+}
